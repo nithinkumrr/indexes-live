@@ -69,33 +69,32 @@ export default function HeroSection({ data, region }) {
             const gain   = d ? d.changePct >= 0 : true;
             return (
               <div key={market.id} className={`hero-card ${status === 'live' ? 'hero-card-live' : ''} ${market.giftCard ? 'hero-card-gift' : ''}`}>
-                <div className="hero-card-inner">
-                  {/* LEFT — identity + numbers */}
-                  <div className="hero-card-left">
+                <div className="hero-card-top">
+                  <div>
                     <div className="hero-exchange">{market.exchange} · {market.country}</div>
                     <div className="hero-name">
                       {market.name}
                       {market.note && <span className="hero-note-tag"> · {market.note}</span>}
                     </div>
-                    <div className="hero-price">
-                      {d ? formatPrice(d.price, market.category === 'commodity') : '—'}
-                      {market.unit && <span className="hero-unit">{market.unit}</span>}
-                    </div>
-                    <div className="hero-changes">
-                      <span className={`hero-abs ${gain ? 'gain' : 'loss'}`}>{d ? formatChange(d.change) : '—'}</span>
-                      <span className={`hero-pct-badge ${gain ? 'gain-bg' : 'loss-bg'}`}>
-                        {d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}
-                      </span>
-                    </div>
-                    <div className="hero-footer">
-                      <span className="hero-localtime">{getLocalTime(market.tz)}</span>
-                      <StatusPill status={status} />
-                    </div>
                   </div>
-                  {/* RIGHT — chart */}
-                  <div className="hero-card-right">
-                    {d && <Sparkline points={d.spark} gain={gain} height={80} />}
-                  </div>
+                  <StatusPill status={status} />
+                </div>
+                <div className="hero-price">
+                  {d ? formatPrice(d.price, market.category === 'commodity') : '—'}
+                  {market.unit && <span className="hero-unit">{market.unit}</span>}
+                </div>
+                <div className="hero-changes">
+                  <span className={`hero-abs ${gain ? 'gain' : 'loss'}`}>{d ? formatChange(d.change) : '—'}</span>
+                  <span className={`hero-pct-badge ${gain ? 'gain-bg' : 'loss-bg'}`}>
+                    {d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}
+                  </span>
+                </div>
+                <div className="hero-spark">
+                  {d && <Sparkline points={d.spark} gain={gain} height={60} />}
+                </div>
+                <div className="hero-footer">
+                  <span className="hero-localtime">{getLocalTime(market.tz)}</span>
+                  <span className="hero-prev">Prev. close: {d ? formatPrice(d.prevClose, market.category === 'commodity') : '—'}</span>
                 </div>
               </div>
             );
