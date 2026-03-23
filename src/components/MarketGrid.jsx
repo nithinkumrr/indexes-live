@@ -9,10 +9,10 @@ const STATUS_ORDER = { live: 0, pre: 1, closed: 2 };
 
 // Regions that sit side-by-side in one row
 const PAIRED_REGIONS = [['Europe', 'Americas']];
-const SOLO_REGIONS   = ['Asia', 'MEA'];
+const SOLO_REGIONS   = ['Asia'];
+const SOLO_BOTTOM    = ['MEA'];
 const COMMODITY_REGIONS = ['Commodity'];
 
-// How many columns inside each panel
 const PANEL_COLS = {
   Asia:      6,
   Europe:    4,
@@ -35,8 +35,9 @@ export default function MarketGrid({ data }) {
     })
     .sort((a, b) => (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2));
 
-  const soloRegions = tab === 'equities' ? SOLO_REGIONS : COMMODITY_REGIONS;
-  const pairedRows  = tab === 'equities' ? PAIRED_REGIONS : [];
+  const soloRegions  = tab === 'equities' ? SOLO_REGIONS : COMMODITY_REGIONS;
+  const bottomRegions = tab === 'equities' ? SOLO_BOTTOM : [];
+  const pairedRows   = tab === 'equities' ? PAIRED_REGIONS : [];
 
   const renderCard = ({ market, status }) => {
     const d    = data[market.id];
@@ -128,6 +129,21 @@ export default function MarketGrid({ data }) {
       {allMarkets.length === 0 && (
         <div className="grid-empty">No {filter === 'live' ? 'live' : 'closed'} markets right now.</div>
       )}
+
+      {/* Bottom solo regions (MEA) */}
+      {bottomRegions.map(region => {
+        const regionMarkets = allMarkets.filter(({ market }) => market.region === region);
+        if (!regionMarkets.length) return null;
+        const cols = PANEL_COLS[region] || 4;
+        return (
+          <div key={region} className="grid-region">
+            <div className="grid-region-label">{region.toUpperCase()}</div>
+            <div className={`market-grid grid-cols-${cols}`}>
+              {regionMarkets.map(renderCard)}
+            </div>
+          </div>
+        );
+      })}
     </section>
   );
 }
