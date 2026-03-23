@@ -90,7 +90,7 @@ export default function HeroSection({ data, region }) {
                   </span>
                 </div>
                 <div className="hero-spark">
-                  {d && <Sparkline points={d.spark} gain={gain} width={market.giftCard ? 300 : 200} height={market.giftCard ? 60 : 44} />}
+                  {d && <Sparkline points={d.spark} gain={gain} width={market.giftCard ? 300 : 200} height={market.giftCard ? 44 : 34} />}
                 </div>
                 <div className="hero-footer">
                   <span className="hero-localtime">{getLocalTime(market.tz)}</span>
