@@ -1,5 +1,4 @@
-// src/components/CurrencyStrip.jsx
-// Single row: CURRENCIES | CRYPTO — no gaps, sparklines on each item
+// src/components/CurrencyStrip.jsx — equal-width items, full stretch, sparklines
 import { MARKETS, CURRENCY_STRIP_IDS, CRYPTO_IDS } from '../data/markets';
 import { formatPct } from '../utils/format';
 import Sparkline from './Sparkline';
@@ -42,7 +41,7 @@ function Item({ market, data, isCrypto }) {
           </span>
         )}
         {d?.spark && (
-          <Sparkline points={d.spark} gain={displayGain} width={52} height={18} />
+          <Sparkline points={d.spark} gain={displayGain} width={56} height={18} />
         )}
       </div>
     </div>
@@ -55,13 +54,18 @@ export default function FxCryptoStrip({ data }) {
 
   return (
     <div className="fxrow-strip">
+      {/* CURRENCIES */}
       <div className="fxrow-section-label">CURRENCIES</div>
       <div className="fxrow-group">
         {fxMarkets.map(m => <Item key={m.id} market={m} data={data} isCrypto={false} />)}
       </div>
+
+      {/* Divider */}
       <div className="fxrow-divider" />
+
+      {/* CRYPTO */}
       <div className="fxrow-section-label fxrow-crypto-label">CRYPTO</div>
-      <div className="fxrow-group">
+      <div className="fxrow-group fxrow-group-crypto">
         {cryptoMarkets.map(m => <Item key={m.id} market={m} data={data} isCrypto={true} />)}
       </div>
     </div>

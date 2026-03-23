@@ -88,19 +88,21 @@ export const MARKETS = [
 
 // 7 clocks — trader order: Mumbai anchor, then follow the sun
 export const WORLD_CLOCKS = [
-  { city: 'MUMBAI',    tz: 'Asia/Kolkata',          label: 'IST',  primary: true },
-  { city: 'SYDNEY',    tz: 'Australia/Sydney',       label: 'AEDT' },
-  { city: 'TOKYO',     tz: 'Asia/Tokyo',             label: 'JST'  },
-  { city: 'HONG KONG', tz: 'Asia/Hong_Kong',         label: 'HKT'  },
-  { city: 'SEOUL',     tz: 'Asia/Seoul',             label: 'KST'  },
-  { city: 'SINGAPORE', tz: 'Asia/Singapore',         label: 'SGT'  },
-  { city: 'DUBAI',     tz: 'Asia/Dubai',             label: 'GST'  },
-  { city: 'RIYADH',    tz: 'Asia/Riyadh',            label: 'AST'  },
-  { city: 'LONDON',    tz: 'Europe/London',          label: 'GMT'  },
-  { city: 'FRANKFURT', tz: 'Europe/Berlin',          label: 'CET'  },
-  { city: 'NEW YORK',  tz: 'America/New_York',       label: 'EST'  },
-  { city: 'TORONTO',   tz: 'America/Toronto',        label: 'EST'  },
-  { city: 'SÃO PAULO', tz: 'America/Sao_Paulo',      label: 'BRT'  },
+  // Core 8 — always visible, ordered by trading session
+  { city: 'MUMBAI',    tz: 'Asia/Kolkata',        label: 'IST',  primary: true },
+  { city: 'TOKYO',     tz: 'Asia/Tokyo',           label: 'JST'  },
+  { city: 'HONG KONG', tz: 'Asia/Hong_Kong',       label: 'HKT'  },
+  { city: 'SINGAPORE', tz: 'Asia/Singapore',       label: 'SGT'  },
+  { city: 'DUBAI',     tz: 'Asia/Dubai',           label: 'GST'  },
+  { city: 'LONDON',    tz: 'Europe/London',        label: 'GMT'  },
+  { city: 'FRANKFURT', tz: 'Europe/Berlin',        label: 'CET'  },
+  { city: 'NEW YORK',  tz: 'America/New_York',     label: 'EST'  },
+  // Secondary — scroll right
+  { city: 'SYDNEY',    tz: 'Australia/Sydney',     label: 'AEDT' },
+  { city: 'SEOUL',     tz: 'Asia/Seoul',           label: 'KST'  },
+  { city: 'RIYADH',    tz: 'Asia/Riyadh',          label: 'AST'  },
+  { city: 'TORONTO',   tz: 'America/Toronto',      label: 'EST'  },
+  { city: 'SÃO PAULO', tz: 'America/Sao_Paulo',    label: 'BRT'  },
 ];
 
 export const ALERT_EVENTS = [

@@ -789,16 +789,18 @@ body {
 }
 .clocks-strip::-webkit-scrollbar { display: none; }
 .clock-cell {
-  flex: 1; min-width: 120px; flex-shrink: 0;
+  flex: 1; min-width: 118px; max-width: 160px; flex-shrink: 0;
   padding: 8px 14px; border-right: 1px solid var(--border);
   display: flex; flex-direction: column; gap: 1px;
 }
+/* Secondary clocks (9th onwards) — fixed width, slightly faded */
+.clock-cell:nth-child(n+9) { flex: 0 0 128px; opacity: 0.6; }
+.clock-cell:nth-child(n+9):hover { opacity: 1; transition: opacity 0.2s; }
 .clock-cell:last-child { border-right: none; }
 .clock-primary { background: rgba(255,153,51,0.06); border-bottom: 2px solid var(--india); }
 .clock-city { font-family: var(--mono); font-size: 9px; letter-spacing: 1.2px; color: var(--text3); }
 .clock-time { font-family: var(--mono); font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: 0.5px; }
 .clock-meta { font-family: var(--mono); font-size: 9px; color: var(--text3); }
-
 /* ─── BELL ALERTS ────────────────────────────────────────────────────── */
 .bell-btn {
   display: flex; align-items: center; gap: 6px;
@@ -926,37 +928,40 @@ body {
 
 .fxrow-section-label {
   font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: var(--text3);
-  padding: 0 12px; display: flex; align-items: center; justify-content: center;
+  padding: 0 14px; display: flex; align-items: center; justify-content: center;
   border-right: 1px solid var(--border); white-space: nowrap; flex-shrink: 0;
-  min-width: 82px; background: var(--bg3);
+  width: 82px; background: var(--bg3);
 }
 .fxrow-crypto-label { background: rgba(74,158,255,0.04); color: var(--accent); }
 
-/* Groups fill their space — no gap */
+/* Each group takes equal share of remaining space — items inside split it evenly */
 .fxrow-group {
-  display: flex; flex: 1;
+  display: flex; flex: 1; min-width: 0;
 }
-.fxrow-group:last-of-type { flex: 0 0 auto; }
+/* Crypto group: 4 items vs 6 currency items — let it be slightly narrower */
+.fxrow-group-crypto { flex: 0.68; }
 
 .fxrow-divider {
-  width: 1px; flex-shrink: 0;
-  background: var(--border2); margin: 4px 0;
+  width: 1px; flex-shrink: 0; background: var(--border2); margin: 4px 0;
 }
 
+/* Each item takes exactly equal share of its group */
 .fxrow-item {
+  flex: 1; min-width: 0;
   display: flex; flex-direction: column; justify-content: center; gap: 1px;
-  padding: 7px 14px; border-right: 1px solid var(--border);
-  flex-shrink: 0; min-width: 95px; transition: background 0.15s;
+  padding: 7px 10px; border-right: 1px solid var(--border);
+  transition: background 0.15s; overflow: hidden;
 }
 .fxrow-item:hover { background: var(--bg3); }
+.fxrow-item:last-child { border-right: none; }
 
 .fxrow-top   { display: flex; align-items: center; gap: 4px; }
-.fxrow-flag  { font-size: 12px; }
-.fxrow-name  { font-family: var(--mono); font-size: 9px; color: var(--text3); }
-.fxrow-price { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 2px; }
+.fxrow-flag  { font-size: 12px; flex-shrink: 0; }
+.fxrow-name  { font-family: var(--mono); font-size: 9px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fxrow-price { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 2px; white-space: nowrap; }
 .fxrow-unit  { font-size: 8px; color: var(--text3); font-weight: 400; }
 .fxrow-bottom{ display: flex; align-items: center; gap: 6px; margin-top: 1px; }
-.fxrow-pct   { font-family: var(--mono); font-size: 9px; font-weight: 600; }
+.fxrow-pct   { font-family: var(--mono); font-size: 9px; font-weight: 600; white-space: nowrap; }
 
 /* ─── WORLD BENCHMARKS ───────────────────────────────────────────────── */
 .wb-section { padding: 16px 24px 0; border-bottom: 1px solid var(--border); }
@@ -972,8 +977,8 @@ body {
   overflow: hidden; margin-bottom: 16px;
 }
 .wb-card {
-  background: var(--bg2); padding: 12px 14px;
-  display: flex; flex-direction: column; gap: 3px; transition: background 0.15s;
+  background: var(--bg2); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 4px; transition: background 0.15s;
 }
 .wb-card:hover { background: var(--bg3); }
 .wb-live { border-top: 2px solid var(--live); }
@@ -989,6 +994,7 @@ body {
 .wb-pct  { font-family: var(--mono); font-size: 11px; font-weight: 600; }
 .wb-vix  { border: 1px solid rgba(245,158,11,0.2); background: rgba(245,158,11,0.02) !important; }
 .wb-vix-label { font-size: 9px; opacity: 0.8; margin-left: 2px; }
+.wb-spark { margin-top: 8px; }
 
 /* ─── GRID TOP BAR ────────────────────────────────────────────────────── */
 .grid-section { padding: 0 24px 48px; }
