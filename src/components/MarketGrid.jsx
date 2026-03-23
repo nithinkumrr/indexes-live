@@ -97,7 +97,7 @@ export default function MarketGrid({ data }) {
                       <span className={`mc-abs ${gain ? 'gain' : 'loss'}`}>{d ? formatChange(d.change) : ''}</span>
                       <span className={`mc-pct ${gain ? 'gain' : 'loss'}`}>{d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}</span>
                     </div>
-                    {d && <div className="mc-spark"><Sparkline points={d.spark} gain={gain} height={20} /></div>}
+                    {d && <div className="mc-spark"><Sparkline points={d.spark} gain={gain} height={32} /></div>}
                   </div>
                 );
               })}
