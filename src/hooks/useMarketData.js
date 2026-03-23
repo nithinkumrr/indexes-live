@@ -88,7 +88,25 @@ export function useMarketData() {
   const dataRef = useRef({});
 
   const fetchMarket = useCallback(async (market) => {
-    // Skip API entirely for markets known to be unavailable on Yahoo Finance
+    // Gift Nifty — use dedicated NSE India endpoint
+    if (market.id === 'giftnifty') {
+      try {
+        const res = await fetch('/api/giftnifty');
+        if (!res.ok) throw new Error('Gift Nifty API error');
+        const json = await res.json();
+        if (json.price && !isNaN(json.price)) {
+          const price     = json.price;
+          const prevClose = json.prevClose || price;
+          const change    = json.change || 0;
+          const changePct = json.changePct || 0;
+          const spark     = makeSpark(price, changePct);
+          return { price, prevClose, change, changePct, spark, simulated: false };
+        }
+      } catch { /* fall through to simulation */ }
+      return simulateData(market, dataRef.current[market.id]);
+    }
+
+    // Skip Yahoo API for markets with no coverage
     if (market.simulation) {
       return simulateData(market, dataRef.current[market.id]);
     }
