@@ -17,7 +17,7 @@ const PANEL_COLS = {
   Asia:      6,
   Europe:    4,
   Americas:  3,
-  MEA:       4,
+  MEA:       5,
   Commodity: 4,
 };
 
