@@ -1,46 +1,86 @@
 // src/components/HeroSection.jsx
-// Geo-detected hero — 4 big cards based on visitor's region
-import { useMemo } from 'react';
-import { MARKETS, HERO_BY_REGION, COMMODITY_STRIP_IDS, detectRegion } from '../data/markets';
+import { useState, useEffect } from 'react';
+import { MARKETS, HERO_BY_REGION, COMMODITY_STRIP_IDS } from '../data/markets';
 import { formatPrice, formatChange, formatPct } from '../utils/format';
-import { getStatus, getLocalTime } from '../utils/timezone';
+import { getStatus, getLocalTime, getIndiaMarketStatus, formatDuration } from '../utils/timezone';
 import Sparkline from './Sparkline';
+import CurrencyStrip from './CurrencyStrip';
 
-const REGION_LABELS = {
-  INDIA: { flag: '🇮🇳', label: 'INDIA', note: 'Primary market · INR' },
-  US: { flag: '🇺🇸', label: 'UNITED STATES', note: 'Primary market · USD' },
-  EUROPE: { flag: '🇪🇺', label: 'EUROPE', note: 'Major European indices' },
-  JAPAN: { flag: '🇯🇵', label: 'JAPAN + GLOBAL', note: 'TSE · NYSE · LSE' },
-  CHINA: { flag: '🇨🇳', label: 'GREATER CHINA', note: 'SSE · HKEX' },
-  ASIA: { flag: '🌏', label: 'ASIA PACIFIC', note: 'Regional benchmarks' },
-  AMERICAS: { flag: '🌎', label: 'AMERICAS', note: 'NYSE · NASDAQ · B3' },
-  MEA: { flag: '🌍', label: 'MIDDLE EAST & AFRICA', note: 'Regional benchmarks' },
-  GLOBAL: { flag: '🌐', label: 'GLOBAL', note: 'World benchmarks' },
+const REGION_META = {
+  INDIA:    { flag: '🇮🇳', label: 'INDIA',               note: 'NSE · BSE · NSE IFSC' },
+  US:       { flag: '🇺🇸', label: 'UNITED STATES',       note: 'NYSE · NASDAQ' },
+  EUROPE:   { flag: '🇪🇺', label: 'EUROPE',              note: 'LSE · XETRA · Euronext' },
+  JAPAN:    { flag: '🇯🇵', label: 'JAPAN',               note: 'TSE · Osaka' },
+  CHINA:    { flag: '🇨🇳', label: 'GREATER CHINA',       note: 'SSE · HKEX' },
+  ASIA:     { flag: '🌏',  label: 'ASIA PACIFIC',        note: 'Regional benchmarks' },
+  AMERICAS: { flag: '🌎',  label: 'AMERICAS',            note: 'NYSE · NASDAQ · B3' },
+  MEA:      { flag: '🌍',  label: 'MIDDLE EAST & AFRICA',note: 'Tadawul · DFM · JSE' },
+  GLOBAL:   { flag: '🌐',  label: 'GLOBAL TOP 4',        note: 'World benchmarks' },
 };
 
-export default function HeroSection({ data }) {
-  const region = useMemo(() => detectRegion(), []);
-  const heroIds = HERO_BY_REGION[region] || HERO_BY_REGION.GLOBAL;
-  const heroMarkets = heroIds.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
-  const stripMarkets = COMMODITY_STRIP_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
-  const rl = REGION_LABELS[region] || REGION_LABELS.GLOBAL;
+function NSECountdown() {
+  const [status, setStatus] = useState(() => getIndiaMarketStatus());
+  useEffect(() => {
+    const id = setInterval(() => setStatus(getIndiaMarketStatus()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const secs     = Math.max(0, Math.floor(status.secondsLeft));
+  const display  = formatDuration(secs);
+  const isOpen   = status.status === 'open';
+  const isPre    = status.status === 'pre';
+  const progress = status.secsTotal ? Math.max(0, Math.min(1, 1 - secs / status.secsTotal)) : 0;
 
   return (
-    <>
+    <div className={`nse-bar ${isOpen ? 'nse-open' : isPre ? 'nse-pre' : 'nse-closed'}`}>
+      <div className="nse-bar-left">
+        {isOpen && <span className="live-pulse" style={{ marginRight: 8 }} />}
+        <span className="nse-label">
+          {isOpen ? 'NSE LIVE' : isPre ? 'PRE-OPEN' : status.status === 'weekend' ? 'WEEKEND' : 'NEXT OPEN'}
+        </span>
+        <span className="nse-time">{display}</span>
+        <span className="nse-sub">
+          {isOpen ? 'Closes 15:30 IST' : isPre ? 'Opens at 09:15 IST' : 'Opens 09:15 IST Mon–Fri'}
+        </span>
+      </div>
+      {isOpen && (
+        <div className="nse-progress">
+          <span className="nse-prog-label">09:15</span>
+          <div className="nse-prog-track">
+            <div className="nse-prog-fill" style={{ width: `${progress * 100}%` }} />
+          </div>
+          <span className="nse-prog-label">15:30</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function HeroSection({ data, region }) {
+  const heroIds     = HERO_BY_REGION[region] || HERO_BY_REGION.GLOBAL;
+  const heroMarkets = heroIds.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
+  const stripMarkets = COMMODITY_STRIP_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
+  const meta    = REGION_META[region] || REGION_META.GLOBAL;
+  const isIndia = region === 'INDIA';
+
+  return (
+    <div className="hero-wrapper">
+      {isIndia && <NSECountdown />}
+
       <section className="hero-section">
         <div className="hero-header">
           <div className="hero-badge">
-            <span className="hero-flag">{rl.flag}</span>
-            {rl.label}
+            <span className="hero-flag">{meta.flag}</span>
+            {meta.label}
           </div>
-          <div className="hero-note">{rl.note}</div>
+          <div className="hero-note">{meta.note}</div>
         </div>
 
         <div className="hero-cards">
           {heroMarkets.map(market => {
-            const d = data[market.id];
+            const d      = data[market.id];
             const status = getStatus(market);
-            const gain = d ? d.changePct >= 0 : true;
+            const gain   = d ? d.changePct >= 0 : true;
             const localTime = getLocalTime(market.tz);
 
             return (
@@ -84,10 +124,10 @@ export default function HeroSection({ data }) {
         </div>
       </section>
 
-      {/* Commodity benchmark strip — always visible */}
+      {/* Commodity strip — Gold · Silver · Crude · Nat Gas · Copper */}
       <div className="commodity-strip">
         {stripMarkets.map(market => {
-          const d = data[market.id];
+          const d    = data[market.id];
           const gain = d ? d.changePct >= 0 : true;
           return (
             <div key={market.id} className="commodity-strip-item">
@@ -104,7 +144,10 @@ export default function HeroSection({ data }) {
           );
         })}
       </div>
-    </>
+
+      {/* Currency strip — USD/INR · DXY · EUR/USD · GBP/USD · USD/JPY · USD/CNY · BTC */}
+      <CurrencyStrip data={data} />
+    </div>
   );
 }
 
