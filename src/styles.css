@@ -901,23 +901,23 @@ body {
 /* ─── COMMODITY STRIP ────────────────────────────────────────────────── */
 .commodity-strip {
   display: flex; align-items: stretch;
-  background: var(--bg3); border-top: 1px solid var(--border);
+  background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
   overflow-x: auto; scrollbar-width: none;
 }
 .commodity-strip::-webkit-scrollbar { display: none; }
-/* Label on the left — same style as .fxrow-section-label */
 .commodity-strip-label {
   font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: var(--text3);
   padding: 0 14px; display: flex; align-items: center; justify-content: center;
   border-right: 1px solid var(--border); white-space: nowrap; flex-shrink: 0;
   width: 90px; background: var(--bg3);
 }
-/* Items share the remaining width equally — no fixed padding, no shrink */
 .commodity-strip-item {
   flex: 1; min-width: 0;
   display: flex; align-items: center; justify-content: center; gap: 7px;
-  padding: 9px 12px; border-right: 1px solid var(--border); white-space: nowrap;
+  padding: 10px 12px; border-right: 1px solid var(--border); white-space: nowrap;
+  transition: background 0.15s;
 }
+.commodity-strip-item:hover { background: var(--bg3); }
 .commodity-strip-item:last-child { border-right: none; }
 .cs-flag  { font-size: 14px; flex-shrink: 0; }
 .cs-name  { font-family: var(--mono); font-size: 12px; color: var(--text2); }
@@ -928,7 +928,7 @@ body {
 /* ─── FX + CRYPTO SINGLE ROW ─────────────────────────────────────────── */
 .fxrow-strip {
   display: flex; align-items: stretch; overflow-x: auto; scrollbar-width: none;
-  background: var(--bg2); border-top: 1px solid var(--border);
+  background: var(--bg2); border-bottom: 1px solid var(--border);
 }
 .fxrow-strip::-webkit-scrollbar { display: none; }
 
@@ -938,24 +938,21 @@ body {
   border-right: 1px solid var(--border); white-space: nowrap; flex-shrink: 0;
   width: 82px; background: var(--bg3);
 }
-.fxrow-crypto-label { background: rgba(74,158,255,0.04); color: var(--accent); }
+.fxrow-crypto-label { color: var(--accent); }
 
-/* Each group takes equal share of remaining space — items inside split it evenly */
 .fxrow-group {
   display: flex; flex: 1; min-width: 0;
 }
-/* Crypto group: 4 items vs 6 currency items — let it be slightly narrower */
 .fxrow-group-crypto { flex: 0.68; }
 
 .fxrow-divider {
-  width: 1px; flex-shrink: 0; background: var(--border2); margin: 4px 0;
+  width: 1px; flex-shrink: 0; background: var(--border); margin: 0;
 }
 
-/* Each item takes exactly equal share of its group */
 .fxrow-item {
   flex: 1; min-width: 0;
   display: flex; flex-direction: column; justify-content: center; gap: 1px;
-  padding: 7px 10px; border-right: 1px solid var(--border);
+  padding: 8px 10px; border-right: 1px solid var(--border);
   transition: background 0.15s; overflow: hidden;
 }
 .fxrow-item:hover { background: var(--bg3); }
@@ -966,7 +963,7 @@ body {
 .fxrow-name  { font-family: var(--mono); font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fxrow-price { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 2px; white-space: nowrap; }
 .fxrow-unit  { font-size: 8px; color: var(--text3); font-weight: 400; }
-.fxrow-bottom{ display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+.fxrow-bottom{ display: flex; align-items: center; gap: 6px; margin-top: 2px; }
 .fxrow-pct   { font-family: var(--mono); font-size: 11px; font-weight: 600; white-space: nowrap; }
 
 /* ─── WORLD BENCHMARKS ───────────────────────────────────────────────── */
