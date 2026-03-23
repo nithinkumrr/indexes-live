@@ -1,4 +1,3 @@
-// src/App.jsx
 import { useMemo } from 'react';
 import { useMarketData } from './hooks/useMarketData';
 import { detectRegion } from './data/markets';
@@ -13,15 +12,12 @@ import Footer from './components/Footer';
 export default function App() {
   const region = useMemo(() => detectRegion(), []);
   const { data, loading, lastUpdate, usingSimulation } = useMarketData();
-
   return (
     <div className="app">
       <Header lastUpdate={lastUpdate} usingSimulation={usingSimulation} />
       <Ticker data={data} />
       <WorldClocks />
-      {/* Hero always comes first — your market, front and center */}
       <HeroSection data={data} region={region} />
-      {/* World benchmarks below — secondary context */}
       <WorldBenchmarks data={data} region={region} />
       <MarketGrid data={data} />
       <Footer usingSimulation={usingSimulation} />

@@ -1,10 +1,11 @@
 // src/components/HeroSection.jsx
+// NSE countdown is inline with the INDIA header — saves vertical space
 import { useState, useEffect } from 'react';
 import { MARKETS, HERO_BY_REGION, COMMODITY_STRIP_IDS } from '../data/markets';
 import { formatPrice, formatChange, formatPct } from '../utils/format';
 import { getStatus, getLocalTime, getIndiaMarketStatus, formatDuration } from '../utils/timezone';
 import Sparkline from './Sparkline';
-import CurrencyAndCrypto from './CurrencyStrip';
+import FxCryptoStrip from './CurrencyStrip';
 
 const REGION_META = {
   INDIA:    { flag: '🇮🇳', label: 'INDIA',               note: 'NSE · BSE · NSE IFSC' },
@@ -18,32 +19,25 @@ const REGION_META = {
   GLOBAL:   { flag: '🌐',  label: 'GLOBAL TOP 4',        note: 'World benchmarks' },
 };
 
-function NSECountdown() {
+// Inline countdown — just the number + status, no full row
+function InlineCountdown() {
   const [s, setS] = useState(() => getIndiaMarketStatus());
   useEffect(() => {
     const id = setInterval(() => setS(getIndiaMarketStatus()), 1000);
     return () => clearInterval(id);
   }, []);
-  const secs = Math.max(0, Math.floor(s.secondsLeft));
+  const secs    = Math.max(0, Math.floor(s.secondsLeft));
   const display = formatDuration(secs);
-  const isOpen = s.status === 'open';
-  const isPre  = s.status === 'pre';
-  const progress = s.secsTotal ? Math.max(0, Math.min(1, 1 - secs / s.secsTotal)) : 0;
+  const isOpen  = s.status === 'open';
+  const isPre   = s.status === 'pre';
   return (
-    <div className={`nse-bar ${isOpen ? 'nse-open' : isPre ? 'nse-pre' : 'nse-closed'}`}>
-      <div className="nse-bar-left">
-        {isOpen && <span className="live-pulse" style={{ marginRight: 8 }} />}
-        <span className="nse-label">{isOpen ? 'NSE LIVE' : isPre ? 'PRE-OPEN' : s.status === 'weekend' ? 'WEEKEND' : 'NEXT OPEN'}</span>
-        <span className="nse-time">{display}</span>
-        <span className="nse-sub">{isOpen ? 'Closes 15:30 IST' : isPre ? 'Opens 09:15 IST' : 'Opens 09:15 IST Mon–Fri'}</span>
-      </div>
-      {isOpen && (
-        <div className="nse-progress">
-          <span className="nse-prog-label">09:15</span>
-          <div className="nse-prog-track"><div className="nse-prog-fill" style={{ width: `${progress * 100}%` }} /></div>
-          <span className="nse-prog-label">15:30</span>
-        </div>
-      )}
+    <div className={`inline-countdown ${isOpen ? 'ic-open' : isPre ? 'ic-pre' : 'ic-closed'}`}>
+      {isOpen && <span className="live-pulse" style={{ marginRight: 6 }} />}
+      <span className="ic-label">
+        {isOpen ? 'LIVE' : isPre ? 'PRE-OPEN' : s.status === 'weekend' ? 'WEEKEND' : 'OPENS IN'}
+      </span>
+      <span className="ic-time">{display}</span>
+      {!isOpen && <span className="ic-sub">{isPre ? '· 09:15 IST' : '· 09:15 IST Mon–Fri'}</span>}
     </div>
   );
 }
@@ -57,12 +51,17 @@ export default function HeroSection({ data, region }) {
 
   return (
     <div className="hero-wrapper">
-      {isIndia && <NSECountdown />}
       <section className="hero-section">
+        {/* Header row: flag + label + inline countdown on right */}
         <div className="hero-header">
-          <div className="hero-badge"><span className="hero-flag">{meta.flag}</span>{meta.label}</div>
-          <div className="hero-note">{meta.note}</div>
+          <div className="hero-badge">
+            <span className="hero-flag">{meta.flag}</span>
+            {meta.label}
+            <span className="hero-exch-note">{meta.note}</span>
+          </div>
+          {isIndia && <InlineCountdown />}
         </div>
+
         <div className="hero-cards">
           {heroMarkets.map(market => {
             const d      = data[market.id];
@@ -73,7 +72,10 @@ export default function HeroSection({ data, region }) {
                 <div className="hero-card-top">
                   <div>
                     <div className="hero-exchange">{market.exchange} · {market.country}</div>
-                    <div className="hero-name">{market.name}{market.note && <span className="hero-note-tag"> · {market.note}</span>}</div>
+                    <div className="hero-name">
+                      {market.name}
+                      {market.note && <span className="hero-note-tag"> · {market.note}</span>}
+                    </div>
                   </div>
                   <StatusPill status={status} />
                 </div>
@@ -83,9 +85,13 @@ export default function HeroSection({ data, region }) {
                 </div>
                 <div className="hero-changes">
                   <span className={`hero-abs ${gain ? 'gain' : 'loss'}`}>{d ? formatChange(d.change) : '—'}</span>
-                  <span className={`hero-pct-badge ${gain ? 'gain-bg' : 'loss-bg'}`}>{d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}</span>
+                  <span className={`hero-pct-badge ${gain ? 'gain-bg' : 'loss-bg'}`}>
+                    {d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}
+                  </span>
                 </div>
-                <div className="hero-spark">{d && <Sparkline points={d.spark} gain={gain} width={market.giftCard ? 320 : 220} height={market.giftCard ? 64 : 48} />}</div>
+                <div className="hero-spark">
+                  {d && <Sparkline points={d.spark} gain={gain} width={market.giftCard ? 300 : 200} height={market.giftCard ? 60 : 44} />}
+                </div>
                 <div className="hero-footer">
                   <span className="hero-localtime">{getLocalTime(market.tz)}</span>
                   <span className="hero-prev">Prev. close: {d ? formatPrice(d.prevClose, market.category === 'commodity') : '—'}</span>
@@ -112,8 +118,8 @@ export default function HeroSection({ data, region }) {
         })}
       </div>
 
-      {/* Currency + Crypto strips */}
-      <CurrencyAndCrypto data={data} />
+      {/* Single FX + Crypto row */}
+      <FxCryptoStrip data={data} />
     </div>
   );
 }
