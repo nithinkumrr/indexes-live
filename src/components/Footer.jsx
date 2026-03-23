@@ -1,18 +1,11 @@
 // src/components/Footer.jsx
-export default function Footer({ usingSimulation }) {
+export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer-left">
         <span className="footer-brand">indexes.live</span>
         <span className="footer-sep">·</span>
-        <span>
-          {usingSimulation
-            ? 'Prices are simulated · Deploy to Vercel for live data via Yahoo Finance'
-            : 'Data via Yahoo Finance · 20s refresh · Market hours are local exchange time'}
-        </span>
-      </div>
-      <div className="footer-right">
-        Built for Indian traders · All times IST primary
+        <span>40+ global indexes tracked live across Asia, Europe, Americas and MEA · Prices refresh every 20s · Market open/close based on local exchange hours · Built for India primary</span>
       </div>
     </footer>
   );

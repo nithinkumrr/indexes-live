@@ -26,7 +26,7 @@ export default function App() {
         ? <MarketGrid data={data} />
         : <WorldMapView data={data} />
       }
-      <Footer usingSimulation={usingSimulation} />
+      <Footer />
     </div>
   );
 }
