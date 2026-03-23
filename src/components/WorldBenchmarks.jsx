@@ -47,33 +47,35 @@ export default function WorldBenchmarks({ data, region }) {
 
           return (
             <div key={market.id} className={`wb-card ${status === 'live' ? 'wb-live' : ''} ${isHome ? 'wb-home' : ''} ${isVIX ? 'wb-vix' : ''}`}>
-              <div className="wb-top">
-                <span className="wb-flag">{market.flag}</span>
-                <div className="wb-info">
-                  <span className="wb-name">{market.name}</span>
-                  <span className="wb-exch">{market.exchange}</span>
+              <div className="wb-inner">
+                {/* LEFT */}
+                <div className="wb-left">
+                  <div className="wb-top">
+                    <span className="wb-flag">{market.flag}</span>
+                    <div className="wb-info">
+                      <span className="wb-name">{market.name}</span>
+                      <span className="wb-exch">{market.exchange}</span>
+                    </div>
+                    {status === 'live' && <span className="wb-dot" />}
+                  </div>
+                  <div className="wb-price">
+                    {d ? fmtBenchmark(d.price, market.id) : '—'}
+                    {market.unit && <span className="wb-unit"> {market.unit}</span>}
+                  </div>
+                  {d && (
+                    <div className={`wb-pct ${dispGain ? 'gain' : 'loss'}`}>
+                      {rawGain ? '▲' : '▼'} {formatPct(d.changePct)}
+                      {isVIX && <span className="wb-vix-label">{rawGain ? ' FEAR↑' : ' CALM↓'}</span>}
+                    </div>
+                  )}
                 </div>
-                {status === 'live' && <span className="wb-dot" />}
+                {/* RIGHT — chart */}
+                {d?.spark && (
+                  <div className="wb-right">
+                    <Sparkline points={d.spark} gain={dispGain} height={48} />
+                  </div>
+                )}
               </div>
-
-              <div className="wb-price">
-                {d ? fmtBenchmark(d.price, market.id) : '—'}
-                {market.unit && <span className="wb-unit"> {market.unit}</span>}
-              </div>
-
-              {d && (
-                <div className={`wb-pct ${dispGain ? 'gain' : 'loss'}`}>
-                  {rawGain ? '▲' : '▼'} {formatPct(d.changePct)}
-                  {isVIX && <span className="wb-vix-label">{rawGain ? ' FEAR↑' : ' CALM↓'}</span>}
-                </div>
-              )}
-
-              {/* Sparkline — same style as hero cards */}
-              {d?.spark && (
-                <div className="wb-spark">
-                  <Sparkline points={d.spark} gain={dispGain} height={32} />
-                </div>
-              )}
             </div>
           );
         })}

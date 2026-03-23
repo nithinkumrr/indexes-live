@@ -79,25 +79,29 @@ export default function MarketGrid({ data }) {
                 const gain = d ? d.changePct >= 0 : true;
                 return (
                   <div key={market.id} className={`market-card ${status === 'live' ? 'market-card-live' : ''}`}>
-                    <div className="mc-top">
+                    <div className="mc-inner">
                       <div className="mc-left">
-                        <span className="mc-flag">{market.flag}</span>
-                        <div>
-                          <div className="mc-name">{market.name}</div>
-                          <div className="mc-exchange">{market.exchange}</div>
+                        <div className="mc-top-row">
+                          <span className="mc-flag">{market.flag}</span>
+                          <div>
+                            <div className="mc-name">{market.name}</div>
+                            <div className="mc-exchange">{market.exchange}</div>
+                          </div>
+                          <StatusChip status={status} />
+                        </div>
+                        <div className="mc-price">
+                          {d ? formatPrice(d.price, market.category === 'commodity') : '—'}
+                          {market.unit && <span className="mc-unit">{market.unit}</span>}
+                        </div>
+                        <div className="mc-changes">
+                          <span className={`mc-abs ${gain ? 'gain' : 'loss'}`}>{d ? formatChange(d.change) : ''}</span>
+                          <span className={`mc-pct ${gain ? 'gain' : 'loss'}`}>{d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}</span>
                         </div>
                       </div>
-                      <StatusChip status={status} />
+                      <div className="mc-right">
+                        {d && <Sparkline points={d.spark} gain={gain} height={56} />}
+                      </div>
                     </div>
-                    <div className="mc-price">
-                      {d ? formatPrice(d.price, market.category === 'commodity') : '—'}
-                      {market.unit && <span className="mc-unit">{market.unit}</span>}
-                    </div>
-                    <div className="mc-changes">
-                      <span className={`mc-abs ${gain ? 'gain' : 'loss'}`}>{d ? formatChange(d.change) : ''}</span>
-                      <span className={`mc-pct ${gain ? 'gain' : 'loss'}`}>{d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}</span>
-                    </div>
-                    {d && <div className="mc-spark"><Sparkline points={d.spark} gain={gain} height={32} /></div>}
                   </div>
                 );
               })}
