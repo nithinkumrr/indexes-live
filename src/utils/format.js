@@ -1,15 +1,19 @@
 // src/utils/format.js
 
-// Smart price formatting based on magnitude
-export function formatPrice(value) {
+export function formatPrice(value, isCommodity = false) {
   if (value === null || value === undefined || isNaN(value)) return '—';
+  if (isCommodity) {
+    // Commodities: show meaningful decimals
+    if (value >= 1000) return value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    if (value >= 10)   return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return value.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  }
   if (value >= 100000) return value.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-  if (value >= 10000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  if (value >= 1000) return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (value >= 10000)  return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (value >= 1000)   return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// Format absolute change with sign
 export function formatChange(change) {
   if (change === null || change === undefined || isNaN(change)) return '—';
   const sign = change >= 0 ? '+' : '';
@@ -17,9 +21,8 @@ export function formatChange(change) {
   return sign + change.toFixed(2);
 }
 
-// Format percent change with sign
 export function formatPct(pct) {
   if (pct === null || pct === undefined || isNaN(pct)) return '—';
-  const sign = pct >= 0 ? '+' : '';
-  return sign + pct.toFixed(2) + '%';
+  const abs = Math.abs(pct).toFixed(2) + '%';
+  return abs;
 }

@@ -1,4 +1,6 @@
 // src/components/Header.jsx
+import AlertsBell from './AlertsBell';
+
 export default function Header({ lastUpdate, usingSimulation }) {
   const timeStr = lastUpdate
     ? lastUpdate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
@@ -12,12 +14,10 @@ export default function Header({ lastUpdate, usingSimulation }) {
           <span className="logo-dot">.</span>
           <span className="logo-live">live</span>
         </div>
-        <div className="logo-tagline">Global Market Intelligence · India&apos;s Pre-Market Dashboard</div>
       </div>
       <div className="header-right">
-        {usingSimulation && (
-          <div className="sim-badge">SIMULATED</div>
-        )}
+        <AlertsBell />
+        {usingSimulation && <div className="sim-badge">SIMULATED</div>}
         {timeStr && (
           <div className="update-time">
             <span className="update-dot" />

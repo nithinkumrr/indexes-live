@@ -4,7 +4,8 @@ import Header from './components/Header';
 import Ticker from './components/Ticker';
 import WorldClocks from './components/WorldClocks';
 import CountdownTimer from './components/CountdownTimer';
-import HeroIndia from './components/HeroIndia';
+import GlobalPulse from './components/GlobalPulse';
+import HeroSection from './components/HeroSection';
 import MarketGrid from './components/MarketGrid';
 import Footer from './components/Footer';
 
@@ -16,8 +17,9 @@ export default function App() {
       <Header lastUpdate={lastUpdate} usingSimulation={usingSimulation} />
       <Ticker data={data} />
       <WorldClocks />
+      <GlobalPulse data={data} />
       <CountdownTimer />
-      <HeroIndia data={data} />
+      <HeroSection data={data} />
       <MarketGrid data={data} />
       <Footer usingSimulation={usingSimulation} />
     </div>
