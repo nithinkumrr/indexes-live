@@ -1,12 +1,15 @@
-// src/components/Footer.jsx
 export default function Footer() {
   return (
     <footer className="footer">
-      <div className="footer-left">
-        <span className="footer-brand">indexes.live</span>
-        <span className="footer-sep">·</span>
-        <span>40+ global indexes tracked live across Asia, Europe, Americas and MEA · Prices refresh every 20s · Market open/close based on local exchange hours · Built for India primary</span>
-      </div>
+      <span className="footer-brand">indexes.live</span>
+      <span className="footer-sep">·</span>
+      <span className="footer-text">40+ global indexes tracked live across Asia, Europe, Americas and MEA</span>
+      <span className="footer-sep">·</span>
+      <span className="footer-text">Prices refresh every 20s</span>
+      <span className="footer-sep">·</span>
+      <span className="footer-text">Market open &amp; close based on local exchange hours</span>
+      <span className="footer-sep">·</span>
+      <span className="footer-text">Built for India</span>
     </footer>
   );
 }
