@@ -7,13 +7,14 @@ import Sparkline from './Sparkline';
 
 // Region → CSS grid class (sets column count)
 const REGION_GRID_CLASS = {
-  Asia:      'grid-cols-6',  // 6×2
-  Europe:    'grid-cols-7',  // 7×2
-  Commodity: 'grid-cols-4',  // 4×2
+  Asia:      'grid-cols-6',
+  Europe:    'grid-cols-7',
+  Commodity: 'grid-cols-4',
   Americas:  'grid-cols-5',
   MEA:       'grid-cols-4',
 };
 
+const STATUS_ORDER = { live: 0, pre: 1, closed: 2 };
 
 export default function MarketGrid({ data }) {
   const [tab, setTab]       = useState('equities'); // 'equities' | 'commodities'
