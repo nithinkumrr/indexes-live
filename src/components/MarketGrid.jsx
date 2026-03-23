@@ -7,10 +7,10 @@ import Sparkline from './Sparkline';
 
 // Region → CSS grid class (sets column count)
 const REGION_GRID_CLASS = {
-  Asia:      'grid-cols-6',
-  Europe:    'grid-cols-7',
-  Commodity: 'grid-cols-4',
-  Americas:  'grid-cols-5',
+  Asia:      'grid-cols-6',  // 6×2
+  Europe:    'grid-cols-4',  // 4×2
+  Commodity: 'grid-cols-4',  // 4×2
+  Americas:  'grid-cols-3',  // 3×2
   MEA:       'grid-cols-4',
 };
 
