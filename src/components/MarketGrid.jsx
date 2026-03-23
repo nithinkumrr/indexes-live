@@ -5,7 +5,15 @@ import { formatPrice, formatChange, formatPct } from '../utils/format';
 import { getStatus } from '../utils/timezone';
 import Sparkline from './Sparkline';
 
-const STATUS_ORDER = { live: 0, pre: 1, closed: 2 };
+// Region → CSS grid class (sets column count)
+const REGION_GRID_CLASS = {
+  Asia:      'grid-cols-6',  // 6×2
+  Europe:    'grid-cols-7',  // 7×2
+  Commodity: 'grid-cols-4',  // 4×2
+  Americas:  'grid-cols-5',
+  MEA:       'grid-cols-4',
+};
+
 
 export default function MarketGrid({ data }) {
   const [tab, setTab]       = useState('equities'); // 'equities' | 'commodities'
@@ -64,7 +72,7 @@ export default function MarketGrid({ data }) {
         return (
           <div key={region} className="grid-region">
             <div className="grid-region-label">{region.toUpperCase()}</div>
-            <div className="market-grid">
+            <div className={`market-grid ${REGION_GRID_CLASS[region] || 'grid-cols-5'}`}>
               {regionMarkets.map(({ market, status }) => {
                 const d    = data[market.id];
                 const gain = d ? d.changePct >= 0 : true;

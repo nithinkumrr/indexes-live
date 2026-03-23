@@ -50,7 +50,8 @@ body {
 
 /* ─── APP SHELL ────────────────────────────────────────────────────── */
 .app {
-  width: 100%;
+  max-width: 1800px;
+  margin: 0 auto;
   min-height: 100vh;
 }
 
@@ -867,21 +868,19 @@ body {
 .hero-cards::-webkit-scrollbar { display: none; }
 
 .hero-card {
-  flex: 1; min-width: 200px;
+  flex: 1; min-width: 0;
   background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--r-lg); padding: 12px;
+  border-radius: var(--r-lg); padding: 14px;
   transition: border-color 0.2s;
 }
 .hero-card:hover { border-color: var(--border2); }
 .hero-card-live { border-top: 2px solid var(--live); }
 
-/* Gift Nifty — wider, visually distinct */
+/* Gift Nifty — same size, just amber top border */
 .hero-card-gift {
-  flex: 1.5 !important;
   border-top: 2px solid var(--pre) !important;
-  background: linear-gradient(135deg, var(--bg2) 0%, rgba(245,158,11,0.04) 100%);
+  background: linear-gradient(135deg, var(--bg2) 0%, rgba(245,158,11,0.03) 100%);
 }
-.hero-card-gift .hero-price { font-size: 32px !important; }
 
 .hero-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
 .hero-exchange { font-family: var(--mono); font-size: 10px; color: var(--text3); }
@@ -971,40 +970,40 @@ body {
 .fxrow-pct   { font-family: var(--mono); font-size: 11px; font-weight: 600; white-space: nowrap; }
 
 /* ─── WORLD BENCHMARKS ───────────────────────────────────────────────── */
-.wb-section { padding: 12px 24px 0; border-bottom: 1px solid var(--border); }
-.wb-header  { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-.wb-title   { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--text3); white-space: nowrap; }
+.wb-section { padding: 10px 24px 0; border-bottom: 1px solid var(--border); }
+.wb-header  { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.wb-title   { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; color: var(--text3); white-space: nowrap; }
 .wb-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-/* 4 cols × 2 rows — fits on screen when hero is compact */
+/* 4 cols × 2 rows — sparklines hidden to save height */
 .wb-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 1px; background: var(--border);
   border: 1px solid var(--border); border-radius: var(--r-md);
-  overflow: hidden; margin-bottom: 12px;
+  overflow: hidden; margin-bottom: 10px;
 }
 .wb-card {
-  background: var(--bg2); padding: 12px 16px;
-  display: flex; flex-direction: column; gap: 3px; transition: background 0.15s;
+  background: var(--bg2); padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 2px; transition: background 0.15s;
 }
 .wb-card:hover { background: var(--bg3); }
 .wb-live { border-top: 2px solid var(--live); }
 .wb-home { opacity: 0.45; }
-.wb-top  { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 2px; }
-.wb-flag { font-size: 15px; flex-shrink: 0; }
+.wb-top  { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.wb-flag { font-size: 14px; flex-shrink: 0; }
 .wb-info { flex: 1; min-width: 0; }
-.wb-name { font-family: var(--mono); font-size: 12px; color: var(--text2); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wb-exch { font-family: var(--mono); font-size: 11px; color: var(--text3); display: block; }
-.wb-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--live); animation: pulse 1.4s ease-in-out infinite; flex-shrink: 0; margin-top: 3px; }
-.wb-price{ font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 3px; }
+.wb-name { font-family: var(--mono); font-size: 11px; color: var(--text2); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wb-exch { font-family: var(--mono); font-size: 10px; color: var(--text3); display: block; }
+.wb-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--live); animation: pulse 1.4s ease-in-out infinite; flex-shrink: 0; }
+.wb-price{ font-family: var(--mono); font-size: 19px; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 3px; }
 .wb-unit { font-size: 10px; color: var(--text3); font-weight: 400; }
 .wb-pct  { font-family: var(--mono); font-size: 12px; font-weight: 600; }
 .wb-vix  { border: 1px solid rgba(245,158,11,0.2); background: rgba(245,158,11,0.02) !important; }
 .wb-vix-label { font-size: 10px; opacity: 0.8; margin-left: 2px; }
-.wb-spark { margin-top: 6px; }
+.wb-spark { display: none; }
 
 /* ─── GRID TOP BAR ────────────────────────────────────────────────────── */
-.grid-section { padding: 0 0 48px; }
+.grid-section { padding: 0 24px 48px; }
 .grid-topbar  {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 0 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px;
@@ -1039,7 +1038,13 @@ body {
   margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
 }
 .grid-region-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-.market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.market-grid { display: grid; gap: 8px; }
+
+/* Per-region column counts */
+.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
+.grid-cols-6 { grid-template-columns: repeat(6, 1fr); }
+.grid-cols-7 { grid-template-columns: repeat(7, 1fr); }
 .grid-empty { padding: 40px; text-align: center; font-family: var(--mono); font-size: 12px; color: var(--text3); }
 
 /* ─── MARKET CARD ─────────────────────────────────────────────────────── */
@@ -1076,15 +1081,20 @@ body {
 .loss { color: var(--loss); }
 
 /* ─── RESPONSIVE ──────────────────────────────────────────────────────── */
-@media (max-width: 1200px) { .wb-grid { grid-template-columns: repeat(4, 1fr); } }
-@media (max-width: 900px)  { .wb-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 1200px) {
+  .wb-grid { grid-template-columns: repeat(4, 1fr); }
+  .grid-cols-6, .grid-cols-7 { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 900px)  {
+  .wb-grid { grid-template-columns: repeat(4, 1fr); }
+  .grid-cols-4, .grid-cols-5, .grid-cols-6, .grid-cols-7 { grid-template-columns: repeat(3, 1fr); }
+}
 @media (max-width: 768px) {
   .hero-section { padding: 12px; }
   .grid-section { padding: 0 12px 32px; }
   .wb-section   { padding: 12px 12px 0; }
   .wb-grid      { grid-template-columns: repeat(2, 1fr); }
-  .hero-card-gift { flex: 1 !important; }
-  .hero-card-gift .hero-price { font-size: 28px !important; }
+  .hero-card-gift { border-top: 2px solid var(--pre) !important; }
   .grid-topbar  { flex-direction: column; align-items: flex-start; }
   .ic-sub { display: none; }
 }
