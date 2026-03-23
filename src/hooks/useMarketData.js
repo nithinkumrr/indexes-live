@@ -88,6 +88,10 @@ export function useMarketData() {
   const dataRef = useRef({});
 
   const fetchMarket = useCallback(async (market) => {
+    // Skip API entirely for markets known to be unavailable on Yahoo Finance
+    if (market.simulation) {
+      return simulateData(market, dataRef.current[market.id]);
+    }
     try {
       const res = await fetch(`/api/quote?symbol=${encodeURIComponent(market.symbol)}`);
       if (!res.ok) throw new Error('API error');
