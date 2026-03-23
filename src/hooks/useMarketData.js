@@ -4,18 +4,31 @@ import { MARKETS } from '../data/markets';
 
 const REFRESH_MS = 20000; // refresh every 20 seconds
 
-// Generate a realistic sparkline from seed + trend
-function makeSpark(basePrice, changePct, n = 30) {
-  const pts = [];
-  let v = 50;
-  const trend = changePct * 0.18;
+// Generate a sparkline as a realistic intraday price journey.
+// Points are raw price-like values — NOT normalized to 0-100.
+// The journey starts near prevClose and ends at current price, with realistic noise.
+function makeSpark(basePrice, changePct, n = 40) {
+  // start = yesterday's close (approx), end = today's price
+  const start = basePrice / (1 + changePct / 100);
+  const end   = basePrice;
+  const pts   = [];
+
+  // Volatility scales with magnitude of move — bigger moves = noisier chart
+  const volPct  = Math.max(Math.abs(changePct) * 0.18, 0.12);
+  const volStep = (basePrice * volPct) / 100;
+
+  let v = start;
   for (let i = 0; i < n; i++) {
-    v += (Math.random() - 0.48 + trend * 0.1) * 3.5;
-    v = Math.clamp ? Math.clamp(v, 4, 96) : Math.max(4, Math.min(96, v));
+    const progress  = i / (n - 1);
+    // Pull toward end price progressively
+    const pull      = (end - v) * (0.06 + progress * 0.04);
+    // Gaussian-ish noise
+    const noise     = (Math.random() + Math.random() - 1) * volStep;
+    v += pull + noise;
     pts.push(v);
   }
-  // Make sure the last point reflects the overall direction
-  pts[pts.length - 1] = changePct >= 0 ? Math.max(pts[pts.length - 1], 52) : Math.min(pts[pts.length - 1], 48);
+  // Guarantee last point is exactly the current price
+  pts[pts.length - 1] = end;
   return pts;
 }
 
@@ -36,10 +49,8 @@ function parseYahoo(data, market) {
 
     let spark;
     if (validCloses.length >= 5) {
-      // Normalize closes to 0–100 range for sparkline
-      const mn = Math.min(...validCloses), mx = Math.max(...validCloses);
-      const range = mx - mn || 1;
-      spark = validCloses.map(v => ((v - mn) / range) * 88 + 6);
+      // Use raw price values — Sparkline handles its own scaling now
+      spark = validCloses;
     } else {
       spark = makeSpark(price, changePct);
     }
@@ -53,19 +64,14 @@ function parseYahoo(data, market) {
 // Simulate data from fallback base prices
 function simulateData(market, existing) {
   if (existing && existing.simulated) {
-    // Continue existing simulation — small tick
     const tick = (Math.random() - 0.5) * 0.0004 * existing.price;
     const price = existing.price + tick;
     const change = price - market.fallback.prevClose;
     const changePct = (change / market.fallback.prevClose) * 100;
-    // Update sparkline
-    const spark = [...existing.spark.slice(1)];
-    let last = spark[spark.length - 1] + (Math.random() - 0.48) * 2.5;
-    last = Math.max(4, Math.min(96, last));
-    spark.push(last);
+    // Append real price to spark array — same units as the line chart
+    const spark = [...existing.spark.slice(1), price];
     return { price, prevClose: market.fallback.prevClose, change, changePct, spark, simulated: true };
   }
-  // Initial simulation
   const pctSeed = (Math.random() - 0.5) * 2.5;
   const price = market.fallback.price * (1 + pctSeed / 100);
   const change = price - market.fallback.prevClose;
