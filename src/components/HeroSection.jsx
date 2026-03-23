@@ -104,6 +104,7 @@ export default function HeroSection({ data, region }) {
 
       {/* Commodity strip */}
       <div className="commodity-strip">
+        <div className="commodity-strip-label">COMMODITY</div>
         {stripMarkets.map(market => {
           const d = data[market.id]; const gain = d ? d.changePct >= 0 : true;
           return (
