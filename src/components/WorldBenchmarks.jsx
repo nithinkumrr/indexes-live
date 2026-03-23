@@ -71,7 +71,7 @@ export default function WorldBenchmarks({ data, region }) {
               {/* Sparkline — same style as hero cards */}
               {d?.spark && (
                 <div className="wb-spark">
-                  <Sparkline points={d.spark} gain={dispGain} height={18} />
+                  <Sparkline points={d.spark} gain={dispGain} height={32} />
                 </div>
               )}
             </div>
