@@ -1,24 +1,29 @@
-// src/components/MarketGrid.jsx — Equities / Commodities toggle + All/Live/Closed filter
+// src/components/MarketGrid.jsx
 import { useState } from 'react';
 import { MARKETS } from '../data/markets';
 import { formatPrice, formatChange, formatPct } from '../utils/format';
 import { getStatus } from '../utils/timezone';
 import Sparkline from './Sparkline';
 
-// Region → CSS grid class (sets column count)
-const REGION_GRID_CLASS = {
-  Asia:      'grid-cols-6',  // 6×2
-  Europe:    'grid-cols-4',  // 4×2
-  Commodity: 'grid-cols-4',  // 4×2
-  Americas:  'grid-cols-3',  // 3×2
-  MEA:       'grid-cols-4',
-};
-
 const STATUS_ORDER = { live: 0, pre: 1, closed: 2 };
 
+// Regions that sit side-by-side in one row
+const PAIRED_REGIONS = [['Europe', 'Americas']];
+const SOLO_REGIONS   = ['Asia', 'MEA'];
+const COMMODITY_REGIONS = ['Commodity'];
+
+// How many columns inside each panel
+const PANEL_COLS = {
+  Asia:      6,
+  Europe:    4,
+  Americas:  3,
+  MEA:       4,
+  Commodity: 4,
+};
+
 export default function MarketGrid({ data }) {
-  const [tab, setTab]       = useState('equities'); // 'equities' | 'commodities'
-  const [filter, setFilter] = useState('all');       // 'all' | 'live' | 'closed'
+  const [tab, setTab]       = useState('equities');
+  const [filter, setFilter] = useState('all');
 
   const allMarkets = MARKETS
     .filter(m => tab === 'equities' ? m.category === 'index' : m.category === 'commodity')
@@ -30,36 +35,51 @@ export default function MarketGrid({ data }) {
     })
     .sort((a, b) => (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2));
 
-  const regionGroups = tab === 'equities'
-    ? ['Asia', 'Europe', 'Americas', 'MEA']
-    : ['Commodity'];
+  const soloRegions = tab === 'equities' ? SOLO_REGIONS : COMMODITY_REGIONS;
+  const pairedRows  = tab === 'equities' ? PAIRED_REGIONS : [];
+
+  const renderCard = ({ market, status }) => {
+    const d    = data[market.id];
+    const gain = d ? d.changePct >= 0 : true;
+    return (
+      <div key={market.id} className={`market-card ${status === 'live' ? 'market-card-live' : ''}`}>
+        <div className="mc-top">
+          <div className="mc-left">
+            <span className="mc-flag">{market.flag}</span>
+            <div>
+              <div className="mc-name">{market.name}</div>
+              <div className="mc-exchange">{market.exchange}</div>
+            </div>
+          </div>
+          <StatusChip status={status} />
+        </div>
+        <div className="mc-price">
+          {d ? formatPrice(d.price, market.category === 'commodity') : '—'}
+          {market.unit && <span className="mc-unit">{market.unit}</span>}
+        </div>
+        <div className="mc-changes">
+          <span className={`mc-abs ${gain ? 'gain' : 'loss'}`}>{d ? formatChange(d.change) : ''}</span>
+          <span className={`mc-pct ${gain ? 'gain' : 'loss'}`}>{d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}</span>
+        </div>
+        {d && <div className="mc-spark"><Sparkline points={d.spark} gain={gain} height={32} /></div>}
+      </div>
+    );
+  };
 
   return (
     <section className="grid-section">
-      {/* Top bar: toggle left, filter right */}
       <div className="grid-topbar">
         <div className="grid-toggle">
-          <button
-            className={`toggle-btn ${tab === 'equities' ? 'toggle-active' : ''}`}
-            onClick={() => setTab('equities')}
-          >
+          <button className={`toggle-btn ${tab === 'equities' ? 'toggle-active' : ''}`} onClick={() => setTab('equities')}>
             📊 Equities
           </button>
-          <button
-            className={`toggle-btn ${tab === 'commodities' ? 'toggle-active' : ''}`}
-            onClick={() => setTab('commodities')}
-          >
+          <button className={`toggle-btn ${tab === 'commodities' ? 'toggle-active' : ''}`} onClick={() => setTab('commodities')}>
             ⛏️ Commodities
           </button>
         </div>
-
         <div className="grid-filters">
           {['all','live','closed'].map(f => (
-            <button
-              key={f}
-              className={`filter-pill ${filter === f ? 'filter-active' : ''} ${f === 'live' ? 'filter-live-btn' : ''}`}
-              onClick={() => setFilter(f)}
-            >
+            <button key={f} className={`filter-pill ${filter === f ? 'filter-active' : ''} ${f === 'live' ? 'filter-live-btn' : ''}`} onClick={() => setFilter(f)}>
               {f === 'live' && <span className="filter-dot" />}
               {f === 'all' ? 'All' : f === 'live' ? 'Live' : 'Closed'}
             </button>
@@ -67,41 +87,40 @@ export default function MarketGrid({ data }) {
         </div>
       </div>
 
-      {regionGroups.map(region => {
+      {/* Solo regions — full width */}
+      {soloRegions.map(region => {
         const regionMarkets = allMarkets.filter(({ market }) => market.region === region);
         if (!regionMarkets.length) return null;
+        const cols = PANEL_COLS[region] || 4;
         return (
           <div key={region} className="grid-region">
             <div className="grid-region-label">{region.toUpperCase()}</div>
-            <div className={`market-grid ${REGION_GRID_CLASS[region] || 'grid-cols-5'}`}>
-              {regionMarkets.map(({ market, status }) => {
-                const d    = data[market.id];
-                const gain = d ? d.changePct >= 0 : true;
-                return (
-                  <div key={market.id} className={`market-card ${status === 'live' ? 'market-card-live' : ''}`}>
-                    <div className="mc-top">
-                      <div className="mc-left">
-                        <span className="mc-flag">{market.flag}</span>
-                        <div>
-                          <div className="mc-name">{market.name}</div>
-                          <div className="mc-exchange">{market.exchange}</div>
-                        </div>
-                      </div>
-                      <StatusChip status={status} />
-                    </div>
-                    <div className="mc-price">
-                      {d ? formatPrice(d.price, market.category === 'commodity') : '—'}
-                      {market.unit && <span className="mc-unit">{market.unit}</span>}
-                    </div>
-                    <div className="mc-changes">
-                      <span className={`mc-abs ${gain ? 'gain' : 'loss'}`}>{d ? formatChange(d.change) : ''}</span>
-                      <span className={`mc-pct ${gain ? 'gain' : 'loss'}`}>{d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}</span>
-                    </div>
-                    {d && <div className="mc-spark"><Sparkline points={d.spark} gain={gain} height={32} /></div>}
-                  </div>
-                );
-              })}
+            <div className={`market-grid grid-cols-${cols}`}>
+              {regionMarkets.map(renderCard)}
             </div>
+          </div>
+        );
+      })}
+
+      {/* Paired regions — side by side */}
+      {pairedRows.map(pair => {
+        const hasPair = pair.some(r => allMarkets.some(({ market }) => market.region === r));
+        if (!hasPair) return null;
+        return (
+          <div key={pair.join('-')} className="grid-paired-row">
+            {pair.map(region => {
+              const regionMarkets = allMarkets.filter(({ market }) => market.region === region);
+              if (!regionMarkets.length) return null;
+              const cols = PANEL_COLS[region] || 4;
+              return (
+                <div key={region} className="grid-paired-panel">
+                  <div className="grid-region-label">{region.toUpperCase()}</div>
+                  <div className={`market-grid grid-cols-${cols}`}>
+                    {regionMarkets.map(renderCard)}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         );
       })}
