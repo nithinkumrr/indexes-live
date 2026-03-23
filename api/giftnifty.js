@@ -1,131 +1,104 @@
-// api/giftnifty.js
-// Fetches Gift Nifty (near-month Nifty futures) from NSE India's public website API.
-// NSE's website uses a two-step cookie approach — first hit the homepage to get
-// the session cookie, then hit the data endpoint. This is the same mechanism all
-// Indian fintech websites use to display live NSE data.
-
-const NSE_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  'Accept': 'application/json, text/plain, */*',
-  'Accept-Language': 'en-US,en;q=0.9',
-  'Accept-Encoding': 'gzip, deflate, br',
-  'Referer': 'https://www.nseindia.com/',
-  'Connection': 'keep-alive',
-  'Sec-Fetch-Dest': 'empty',
-  'Sec-Fetch-Mode': 'cors',
-  'Sec-Fetch-Site': 'same-origin',
-};
-
-async function getNSECookies() {
-  const res = await fetch('https://www.nseindia.com/', {
-    headers: {
-      'User-Agent': NSE_HEADERS['User-Agent'],
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.9',
-    },
-    redirect: 'follow',
-  });
-  const cookies = res.headers.get('set-cookie') || '';
-  // Extract cookie values
-  const cookieParts = cookies.split(',').map(c => c.split(';')[0].trim()).filter(Boolean);
-  return cookieParts.join('; ');
-}
+// api/giftnifty.js — Gift Nifty via NSE India public API
+// NSE requires: 1) session cookie from homepage, 2) then data request
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+  res.setHeader('Cache-Control', 's-maxage=25, stale-while-revalidate=50');
 
+  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+
+  // Step 1: Get session cookies
+  let cookies = '';
   try {
-    // Step 1: Get session cookies from NSE homepage
-    const cookies = await getNSECookies();
-
-    // Step 2: Fetch Nifty futures (near-month) — this is what Gift Nifty tracks
-    // The allIndices endpoint returns all indices including GIFT Nifty futures indicator
-    const dataRes = await fetch(
-      'https://www.nseindia.com/api/allIndices',
-      {
-        headers: { ...NSE_HEADERS, Cookie: cookies },
-      }
-    );
-
-    if (!dataRes.ok) throw new Error(`NSE returned ${dataRes.status}`);
-    const data = await dataRes.json();
-
-    // Find GIFT Nifty or fall back to Nifty 50 futures from the indices list
-    const indices = data.data || [];
-
-    // Try to find GIFT NIFTY specifically
-    let giftNifty = indices.find(i =>
-      i.index?.toUpperCase().includes('GIFT') ||
-      i.indexSymbol?.toUpperCase().includes('GIFT')
-    );
-
-    // Fall back to near-month Nifty futures
-    if (!giftNifty) {
-      giftNifty = indices.find(i =>
-        i.index?.toUpperCase().includes('NIFTY 50 FUTURES') ||
-        i.indexSymbol?.toUpperCase().includes('NIFTY 50 FUTURES')
-      );
-    }
-
-    // Final fallback: Nifty 50 spot (at least it's accurate)
-    if (!giftNifty) {
-      giftNifty = indices.find(i =>
-        i.index === 'NIFTY 50' || i.indexSymbol === 'NIFTY 50'
-      );
-    }
-
-    if (!giftNifty) throw new Error('Could not find Gift Nifty data in response');
-
-    const price      = parseFloat(giftNifty.last);
-    const prevClose  = parseFloat(giftNifty.previousClose || giftNifty.yearLow);
-    const change     = parseFloat(giftNifty.variation || giftNifty.change || 0);
-    const changePct  = parseFloat(giftNifty.percentChange || giftNifty.pChange || 0);
-    const indexName  = giftNifty.index || giftNifty.indexSymbol;
-
-    res.json({
-      price,
-      prevClose: prevClose || (price - change),
-      change,
-      changePct,
-      indexName,
-      source: 'nseindia',
+    const home = await fetch('https://www.nseindia.com', {
+      headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' },
+      redirect: 'follow',
     });
-
-  } catch (err) {
-    // Fallback: try the simpler quote-derivative endpoint for near-month futures
-    try {
-      const cookies2 = await getNSECookies();
-      const futRes = await fetch(
-        'https://www.nseindia.com/api/quote-derivative?symbol=NIFTY',
-        { headers: { ...NSE_HEADERS, Cookie: cookies2 } }
-      );
-      const futData = await futRes.json();
-
-      // Get the near-month futures contract
-      const contracts = futData.stocks || [];
-      const nearMonth = contracts.find(c =>
-        c.metadata?.instrumentType === 'Index Futures'
-      );
-
-      if (nearMonth) {
-        const ltp = nearMonth.marketDeptOrderBook?.tradeInfo?.lastPrice ||
-                    nearMonth.metadata?.lastPrice;
-        const pc  = nearMonth.metadata?.prevClose || nearMonth.metadata?.closePrice;
-        const chg = nearMonth.metadata?.change || (ltp - pc);
-        const pct = nearMonth.metadata?.pChange || ((chg / pc) * 100);
-
-        return res.json({
-          price: parseFloat(ltp),
-          prevClose: parseFloat(pc),
-          change: parseFloat(chg),
-          changePct: parseFloat(pct),
-          indexName: nearMonth.metadata?.identifier || 'NIFTY Futures',
-          source: 'nseindia-futures',
-        });
-      }
-    } catch (_) { /* fall through */ }
-
-    res.status(500).json({ error: err.message });
+    cookies = (home.headers.get('set-cookie') || '')
+      .split(/,(?=[^;]+=[^;])/)
+      .map(c => c.split(';')[0].trim())
+      .filter(Boolean)
+      .join('; ');
+  } catch (e) {
+    return res.status(500).json({ error: 'Cookie fetch failed: ' + e.message });
   }
+
+  const H = {
+    'User-Agent': UA,
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Referer': 'https://www.nseindia.com/',
+    'X-Requested-With': 'XMLHttpRequest',
+    Cookie: cookies,
+  };
+
+  // Strategy 1: allIndices — includes GIFT Nifty
+  try {
+    const r    = await fetch('https://www.nseindia.com/api/allIndices', { headers: H });
+    const body = await r.json();
+    const indices = body?.data || [];
+
+    // Look for GIFT NIFTY or NIFTY 50 futures indicator
+    const gift = indices.find(i =>
+      /GIFT/i.test(i.index || '') || /GIFT/i.test(i.indexSymbol || '')
+    );
+    const niftyFut = indices.find(i =>
+      /NIFTY 50 FUTURES/i.test(i.index || '') || /NIFTY50 FUTURES/i.test(i.index || '')
+    );
+    const target = gift || niftyFut;
+
+    if (target) {
+      return res.json({
+        price:     parseFloat(target.last),
+        prevClose: parseFloat(target.previousClose || target.yearLow),
+        change:    parseFloat(target.variation || target.change || 0),
+        changePct: parseFloat(target.percentChange || target.pChange || 0),
+        source:    'nseindia-allIndices',
+        name:      target.index,
+      });
+    }
+  } catch (_) {}
+
+  // Strategy 2: live F&O snapshot — near-month Nifty futures
+  try {
+    const r    = await fetch('https://www.nseindia.com/api/quote-derivative?symbol=NIFTY', { headers: H });
+    const body = await r.json();
+    const stocks = body?.stocks || [];
+
+    // Near-month index futures
+    const near = stocks.find(s =>
+      s.metadata?.instrumentType === 'Index Futures' &&
+      s.metadata?.expiryDate
+    );
+
+    if (near) {
+      const ltp = parseFloat(near.metadata?.lastPrice || near.marketDeptOrderBook?.tradeInfo?.lastPrice);
+      const pc  = parseFloat(near.metadata?.prevClose || near.metadata?.closePrice || 0);
+      const chg = parseFloat(near.metadata?.change || (ltp - pc));
+      const pct = parseFloat(near.metadata?.pChange || ((chg / pc) * 100));
+
+      if (ltp > 0) {
+        return res.json({ price: ltp, prevClose: pc || ltp, change: chg, changePct: pct, source: 'nseindia-derivatives' });
+      }
+    }
+  } catch (_) {}
+
+  // Strategy 3: NSE live market page scrape for Nifty 50 spot (accurate proxy)
+  try {
+    const r    = await fetch('https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050', { headers: H });
+    const body = await r.json();
+    const d    = body?.data?.[0];
+    if (d) {
+      return res.json({
+        price:     parseFloat(d.lastPrice || d.last),
+        prevClose: parseFloat(d.previousClose || d.prevClose),
+        change:    parseFloat(d.change),
+        changePct: parseFloat(d.pChange),
+        source:    'nseindia-nifty50-proxy',
+        note:      'Using Nifty 50 spot as Gift Nifty proxy',
+      });
+    }
+  } catch (_) {}
+
+  res.status(503).json({ error: 'All NSE endpoints failed' });
 }
