@@ -16,20 +16,15 @@ export default function Header({ lastUpdate, view, setView }) {
         </div>
       </div>
       <div className="header-right">
-        {/* View toggle — Grid vs Map */}
+        {/* View toggle */}
         <div className="view-toggle">
-          <button
-            className={`view-btn ${view === 'grid' ? 'view-active' : ''}`}
-            onClick={() => setView('grid')}
-            title="Grid view"
-          >
+          <button className={`view-btn ${view === 'grid' ? 'view-active' : ''}`} onClick={() => setView('grid')} title="Grid view">
             ⊞ Grid
           </button>
-          <button
-            className={`view-btn ${view === 'map' ? 'view-active' : ''}`}
-            onClick={() => setView('map')}
-            title="World map view"
-          >
+          <button className={`view-btn ${view === 'bubble' ? 'view-active' : ''}`} onClick={() => setView('bubble')} title="Sentiment bubbles">
+            ◉ Sentiment
+          </button>
+          <button className={`view-btn ${view === 'map' ? 'view-active' : ''}`} onClick={() => setView('map')} title="World map view">
             🌍 Map
           </button>
         </div>
