@@ -248,9 +248,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .loss { color: var(--loss); }
 
 /* FOOTER */
-.footer       { display: flex; align-items: center; flex-wrap: wrap; gap: 0; padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg2); }
+.footer       { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg2); width: 100%; }
 .footer-brand { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--live); }
-.footer-sep   { font-family: var(--mono); font-size: 13px; color: var(--text3); margin: 0 12px; }
+.footer-sep   { font-family: var(--mono); font-size: 13px; color: var(--text3); }
 .footer-text  { font-family: var(--mono); font-size: 12px; color: var(--text2); }
 
 /* WORLD MAP */

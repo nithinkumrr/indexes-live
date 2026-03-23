@@ -1,7 +1,7 @@
 // src/components/Header.jsx
 import AlertsBell from './AlertsBell';
 
-export default function Header({ lastUpdate, usingSimulation, view, setView }) {
+export default function Header({ lastUpdate, view, setView }) {
   const timeStr = lastUpdate
     ? lastUpdate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
     : null;
@@ -34,7 +34,6 @@ export default function Header({ lastUpdate, usingSimulation, view, setView }) {
           </button>
         </div>
         <AlertsBell />
-        {usingSimulation && <div className="sim-badge">SIM</div>}
         {timeStr && (
           <div className="update-time">
             <span className="update-dot" />

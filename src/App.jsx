@@ -12,12 +12,12 @@ import Footer from './components/Footer';
 
 export default function App() {
   const region = useMemo(() => detectRegion(), []);
-  const { data, loading, lastUpdate, usingSimulation } = useMarketData();
-  const [view, setView] = useState('grid'); // 'grid' | 'map'
+  const { data, loading, lastUpdate } = useMarketData();
+  const [view, setView] = useState('grid');
 
   return (
     <div className="app">
-      <Header lastUpdate={lastUpdate} usingSimulation={usingSimulation} view={view} setView={setView} />
+      <Header lastUpdate={lastUpdate} view={view} setView={setView} />
       <Ticker data={data} />
       <WorldClocks />
       <HeroSection data={data} region={region} />
