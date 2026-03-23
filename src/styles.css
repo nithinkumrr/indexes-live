@@ -928,27 +928,35 @@ body {
   font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: var(--text3);
   padding: 0 12px; display: flex; align-items: center; justify-content: center;
   border-right: 1px solid var(--border); white-space: nowrap; flex-shrink: 0;
-  min-width: 80px; background: var(--bg3);
+  min-width: 82px; background: var(--bg3);
 }
-.fxrow-crypto-label { background: rgba(74,158,255,0.04); }
+.fxrow-crypto-label { background: rgba(74,158,255,0.04); color: var(--accent); }
+
+/* Groups fill their space — no gap */
+.fxrow-group {
+  display: flex; flex: 1;
+}
+.fxrow-group:last-of-type { flex: 0 0 auto; }
 
 .fxrow-divider {
-  width: 1px; background: var(--border2); flex-shrink: 0; margin: 6px 0;
+  width: 1px; flex-shrink: 0;
+  background: var(--border2); margin: 4px 0;
 }
 
 .fxrow-item {
   display: flex; flex-direction: column; justify-content: center; gap: 1px;
-  padding: 8px 16px; border-right: 1px solid var(--border);
-  flex-shrink: 0; min-width: 100px; transition: background 0.15s;
+  padding: 7px 14px; border-right: 1px solid var(--border);
+  flex-shrink: 0; min-width: 95px; transition: background 0.15s;
 }
 .fxrow-item:hover { background: var(--bg3); }
 
 .fxrow-top   { display: flex; align-items: center; gap: 4px; }
 .fxrow-flag  { font-size: 12px; }
-.fxrow-name  { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.3px; }
-.fxrow-price { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 2px; }
+.fxrow-name  { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.fxrow-price { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 2px; }
 .fxrow-unit  { font-size: 8px; color: var(--text3); font-weight: 400; }
-.fxrow-pct   { font-family: var(--mono); font-size: 10px; font-weight: 600; }
+.fxrow-bottom{ display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+.fxrow-pct   { font-family: var(--mono); font-size: 9px; font-weight: 600; }
 
 /* ─── WORLD BENCHMARKS ───────────────────────────────────────────────── */
 .wb-section { padding: 16px 24px 0; border-bottom: 1px solid var(--border); }
@@ -1066,4 +1074,39 @@ body {
   .hero-card-gift .hero-price { font-size: 28px !important; }
   .grid-topbar  { flex-direction: column; align-items: flex-start; }
   .ic-sub { display: none; }
+}
+
+/* ─── VIEW TOGGLE (Grid / Map) ───────────────────────────────────────── */
+.view-toggle {
+  display: flex; background: var(--bg3);
+  border: 1px solid var(--border2); border-radius: 16px; padding: 2px; gap: 2px;
+}
+.view-btn {
+  font-family: var(--mono); font-size: 11px; padding: 4px 12px;
+  border-radius: 14px; border: none; background: transparent;
+  color: var(--text2); cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.view-btn:hover { color: var(--text); }
+.view-active { background: var(--bg4); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+
+/* ─── WORLD MAP VIEW ─────────────────────────────────────────────────── */
+.wmap-wrap {
+  padding: 24px; background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  min-height: 500px;
+}
+.wmap-svg {
+  width: 100%; height: auto;
+  display: block;
+  background: radial-gradient(ellipse at center, rgba(74,158,255,0.04) 0%, transparent 70%);
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+}
+.wmap-center { cursor: default; }
+.wmap-center:hover text { fill: var(--text) !important; }
+.wmap-pulse-ring {
+  animation: mapPulse 2s ease-in-out infinite;
+}
+@keyframes mapPulse {
+  0%,100% { r: 10; opacity: 0.4; }
+  50%      { r: 16; opacity: 0.1; }
 }

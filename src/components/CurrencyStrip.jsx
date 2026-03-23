@@ -1,7 +1,8 @@
 // src/components/CurrencyStrip.jsx
-// Single row: CURRENCIES | divider | CRYPTO — no separate rows
+// Single row: CURRENCIES | CRYPTO — no gaps, sparklines on each item
 import { MARKETS, CURRENCY_STRIP_IDS, CRYPTO_IDS } from '../data/markets';
 import { formatPct } from '../utils/format';
+import Sparkline from './Sparkline';
 
 function fmtFX(value, id) {
   if (value == null || isNaN(value)) return '—';
@@ -32,13 +33,18 @@ function Item({ market, data, isCrypto }) {
         <span className="fxrow-name">{market.name}</span>
       </div>
       <div className="fxrow-price">
-        {price}<span className="fxrow-unit">{market.unit}</span>
+        {price}<span className="fxrow-unit"> {market.unit}</span>
       </div>
-      {d && (
-        <div className={`fxrow-pct ${displayGain ? 'gain' : 'loss'}`}>
-          {gain ? '▲' : '▼'} {formatPct(d.changePct)}
-        </div>
-      )}
+      <div className="fxrow-bottom">
+        {d && (
+          <span className={`fxrow-pct ${displayGain ? 'gain' : 'loss'}`}>
+            {gain ? '▲' : '▼'} {formatPct(d.changePct)}
+          </span>
+        )}
+        {d?.spark && (
+          <Sparkline points={d.spark} gain={displayGain} width={52} height={18} />
+        )}
+      </div>
     </div>
   );
 }
@@ -49,18 +55,15 @@ export default function FxCryptoStrip({ data }) {
 
   return (
     <div className="fxrow-strip">
-      {/* CURRENCIES label */}
       <div className="fxrow-section-label">CURRENCIES</div>
-
-      {fxMarkets.map(m => <Item key={m.id} market={m} data={data} isCrypto={false} />)}
-
-      {/* Visual divider */}
+      <div className="fxrow-group">
+        {fxMarkets.map(m => <Item key={m.id} market={m} data={data} isCrypto={false} />)}
+      </div>
       <div className="fxrow-divider" />
-
-      {/* CRYPTO label */}
       <div className="fxrow-section-label fxrow-crypto-label">CRYPTO</div>
-
-      {cryptoMarkets.map(m => <Item key={m.id} market={m} data={data} isCrypto={true} />)}
+      <div className="fxrow-group">
+        {cryptoMarkets.map(m => <Item key={m.id} market={m} data={data} isCrypto={true} />)}
+      </div>
     </div>
   );
 }
