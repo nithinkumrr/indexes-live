@@ -728,3 +728,64 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* VWAP highlight */
 .im-vwap { color: var(--accent) !important; font-weight: 700; }
+
+/* ── Gold Page ───────────────────────────────────────────────────────── */
+.gold-wrap       { max-width: 1280px; margin: 0 auto; padding: 24px 20px; }
+.gold-header     { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.gold-title      { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--text); }
+.gold-subtitle   { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-top: 3px; }
+.gold-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
+/* Metal tabs */
+.gold-metal-tabs { display: flex; gap: 6px; }
+.gold-metal-btn  { font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border2); background: var(--bg2); color: var(--text3); cursor: pointer; transition: all 0.15s; }
+.gold-metal-btn:hover { color: var(--text); }
+.gold-metal-active { background: var(--bg3) !important; font-weight: 700; }
+
+/* View tabs */
+.gold-view-tabs  { display: flex; gap: 2px; background: var(--bg3); border-radius: 8px; padding: 2px; }
+.gold-view-btn   { font-family: var(--mono); font-size: 11px; padding: 4px 12px; border-radius: 6px; border: none; background: transparent; color: var(--text3); cursor: pointer; }
+.gold-view-btn.active { background: var(--bg2); color: var(--text); }
+
+/* Summary strip */
+.gold-summary    { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.gold-sum-card   { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.gold-sum-label  { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: var(--text3); }
+.gold-sum-city   { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text2); }
+.gold-sum-price  { font-family: var(--mono); font-size: 22px; font-weight: 800; letter-spacing: -1px; }
+.gold-sum-unit   { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.gold-sum-note   { border-style: dashed; }
+.gold-sum-desc   { font-family: var(--mono); font-size: 10px; color: var(--text3); line-height: 1.5; }
+
+/* Region grid */
+.gold-regions    { display: flex; flex-direction: column; gap: 20px; }
+.gold-region     { }
+.gold-region-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--text3); margin-bottom: 10px; }
+.gold-city-grid  { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.gold-city-card  { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px 16px; position: relative; transition: border-color 0.2s; }
+.gold-city-card:hover { border-color: var(--border2); }
+.gold-city-high  { border-color: rgba(212,160,23,0.4) !important; }
+.gold-city-low   { border-color: rgba(168,169,173,0.3) !important; }
+.gold-city-name  { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+.gold-city-price { font-family: var(--mono); font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+.gold-city-unit  { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 2px; }
+.gold-badge      { position: absolute; top: 10px; right: 10px; font-family: var(--mono); font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 10px; letter-spacing: 0.5px; }
+.gold-badge-high { background: rgba(212,160,23,0.2); color: #D4A017; }
+.gold-badge-low  { background: rgba(168,169,173,0.15); color: #A8A9AD; }
+
+/* Table view */
+.gold-table-wrap { overflow-x: auto; }
+.gold-table      { width: 100%; border-collapse: collapse; border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; font-family: var(--mono); }
+.gold-table th   { background: var(--bg3); font-size: 11px; font-weight: 700; color: var(--text2); padding: 10px 16px; text-align: right; border-bottom: 2px solid var(--border2); white-space: nowrap; }
+.gold-table th:first-child { text-align: left; }
+.gold-td-city    { font-size: 13px; font-weight: 700; color: var(--text); padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.gold-td-val     { font-size: 13px; font-weight: 600; padding: 10px 16px; text-align: right; border-bottom: 1px solid var(--border); }
+.gold-tr-high    { background: rgba(212,160,23,0.05); }
+.gold-source     { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 16px; }
+
+@media (max-width: 640px) {
+  .gold-summary { grid-template-columns: 1fr 1fr; }
+  .gold-city-grid { grid-template-columns: 1fr 1fr; }
+}
+.gold-tab { color: #D4A017 !important; }
+.gold-tab.view-active { background: rgba(212,160,23,0.15) !important; color: #D4A017 !important; border-color: rgba(212,160,23,0.4) !important; }

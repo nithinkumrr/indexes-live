@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import AlertsBell from './AlertsBell';
 
 export default function Header({ lastUpdate, view, setView }) {
   const [theme, setTheme] = useState(() => {
@@ -11,11 +10,16 @@ export default function Header({ lastUpdate, view, setView }) {
     try { localStorage.setItem('indexeslive_theme', theme); } catch {}
   }, [theme]);
 
-  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
-
   const timeStr = lastUpdate
     ? lastUpdate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
     : null;
+
+  const tabs = [
+    { id: 'grid',    label: 'Markets' },
+    { id: 'bubble',  label: 'Sentiment' },
+    { id: 'fno',     label: 'F&O' },
+    { id: 'gold',    label: 'Gold' },
+  ];
 
   return (
     <header className="header">
@@ -28,20 +32,18 @@ export default function Header({ lastUpdate, view, setView }) {
       </div>
       <div className="header-right">
         <div className="view-toggle">
-          <button className={`view-btn ${view === 'grid' ? 'view-active' : ''}`} onClick={() => setView('grid')}>
-            Markets
-          </button>
-          <button className={`view-btn ${view === 'bubble' ? 'view-active' : ''}`} onClick={() => setView('bubble')}>
-            Sentiment
-          </button>
-          <button className={`view-btn fno-btn ${view === 'fno' ? 'view-active' : ''}`} onClick={() => setView('fno')}>
-            F&amp;O
-          </button>
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`view-btn ${tab.id === 'gold' ? 'gold-tab' : ''} ${view === tab.id ? 'view-active' : ''}`}
+              onClick={() => setView(tab.id)}
+              dangerouslySetInnerHTML={{ __html: tab.label }}
+            />
+          ))}
         </div>
-        <button className="theme-toggle" onClick={toggleTheme}>
+        <button className="theme-toggle" onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}>
           {theme === 'dark' ? '☀' : '☾'}
         </button>
-        <AlertsBell />
         {timeStr && (
           <div className="update-time">
             <span className="update-dot" />

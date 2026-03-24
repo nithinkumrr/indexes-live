@@ -10,6 +10,7 @@ import MarketGrid from './components/MarketGrid';
 import BubbleView from './components/BubbleView';
 import FnOPage from './components/FnOPage';
 import IndexModal from './components/IndexModal';
+import GoldPage from './components/GoldPage';
 import Footer from './components/Footer';
 import { MARKETS } from './data/markets';
 
@@ -30,7 +31,9 @@ export default function App() {
       <Header lastUpdate={lastUpdate} view={view} setView={setView} />
       <Ticker data={data} />
       <WorldClocks />
-      {view === 'fno' ? (
+      {view === 'gold' ? (
+        <GoldPage />
+      ) : view === 'fno' ? (
         <FnOPage />
       ) : (
         <>
