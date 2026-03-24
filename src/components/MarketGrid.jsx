@@ -95,6 +95,8 @@ export default function MarketGrid({ data, nseData = {} }) {
       </div>
     );
   };
+
+  const renderRegion = (region) => {
     const regionMarkets = allMarkets.filter(({ market }) => market.region === region);
     if (!regionMarkets.length) return null;
     const cols = PANEL_COLS[region] || 4;
