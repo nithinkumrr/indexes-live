@@ -55,6 +55,25 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', `s-maxage=${cacheSecs}, stale-while-revalidate=${cacheSecs}`);
 
   if (!isOpen) {
+    // Still fetch last known price to show on card
+    const apiKey = process.env.KITE_API_KEY;
+    const token  = await getToken(req);
+    if (token && apiKey) {
+      try {
+        const data = await kiteGet('/quote?i=' + encodeURIComponent('NSEIX:GIFT NIFTY'), apiKey, token);
+        const q    = data?.data?.['NSEIX:GIFT NIFTY'];
+        if (q?.last_price) {
+          const price = q.last_price;
+          const pc    = q.ohlc?.close || price;
+          return res.json({
+            price, prevClose: pc,
+            change:    parseFloat((price - pc).toFixed(2)),
+            changePct: pc > 0 ? parseFloat(((price - pc)/pc*100).toFixed(2)) : 0,
+            isOpen: false, source: 'nseix',
+          });
+        }
+      } catch (_) {}
+    }
     return res.json({ price: null, isOpen: false, message: 'Outside Gift Nifty fetch window' });
   }
 
