@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import FiiDii from './FiiDii';
-import FnoData from './FnoData';
 import { getNiftyExpiries, getIndiaMarketStatus, formatDuration } from '../utils/timezone';
 
 // ── India VIX ────────────────────────────────────────────────────────
@@ -113,6 +112,175 @@ function ComingSoonCard({ title, desc }) {
 }
 
 
+
+// ── VIX History Chart ─────────────────────────────────────────────────
+function VixSparkline({ points, color }) {
+  if (!points?.length) return null;
+  const min = Math.min(...points), max = Math.max(...points);
+  const range = max - min || 1;
+  const w = 200, h = 40;
+  const pts = points.map((v, i) => {
+    const x = (i / (points.length - 1)) * w;
+    const y = h - ((v - min) / range) * h;
+    return `${x},${y}`;
+  }).join(' ');
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="vix-spark-svg" preserveAspectRatio="none">
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function VixTrend({ vix }) {
+  const [history, setHistory] = useState([]);
+  useEffect(() => {
+    fetch('/api/quote?symbol=%5EINDIAVIX&range=5d&interval=1d')
+      .then(r => r.json())
+      .then(json => {
+        const closes = json?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || [];
+        const times  = json?.chart?.result?.[0]?.timestamp || [];
+        const valid  = closes.map((v, i) => v != null ? { v, t: times[i] } : null).filter(Boolean);
+        setHistory(valid);
+      }).catch(() => {});
+  }, []);
+
+  if (!vix || !history.length) return null;
+  const pts    = history.map(h => h.v);
+  const trend  = pts.length > 1 ? pts[pts.length-1] - pts[0] : 0;
+  const color  = vix.price > 20 ? '#FF8C42' : '#00C896';
+  const days   = history.map(h => new Date(h.t * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }));
+
+  return (
+    <div className="vix-trend-wrap">
+      <div className="vix-trend-header">
+        <span className="vix-trend-label">7-DAY VIX TREND</span>
+        <span className={`vix-trend-chg ${trend >= 0 ? 'loss' : 'gain'}`}>
+          {trend >= 0 ? '▲' : '▼'} {Math.abs(trend).toFixed(2)} over 5 days
+        </span>
+      </div>
+      <VixSparkline points={pts} color={color} />
+      <div className="vix-trend-dates">
+        <span>{days[0]}</span>
+        <span>{days[days.length-1]}</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Futures Premium ───────────────────────────────────────────────────
+function FuturesPremium() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        // Get Nifty spot from NSE
+        const [spotRes, futRes] = await Promise.all([
+          fetch('/api/nse-india'),
+          fetch('/api/quote?symbol=NIFTY25MARFUT.NS'),
+        ]);
+        const spotD = await spotRes.json();
+        const futD  = await futRes.json();
+        const spot  = spotD?.nifty50?.price;
+        const fut   = futD?.chart?.result?.[0]?.meta?.regularMarketPrice;
+        if (spot && fut) {
+          const premium = parseFloat((fut - spot).toFixed(2));
+          const pct     = parseFloat(((premium / spot) * 100).toFixed(2));
+          setData({ spot, fut, premium, pct });
+        }
+      } catch(_) {}
+    };
+    load();
+    const id = setInterval(load, 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!data) return null;
+  const pos = data.premium >= 0;
+
+  return (
+    <div className="fp-wrap">
+      <div className="fp-label">NIFTY FUTURES PREMIUM</div>
+      <div className="fp-row">
+        <div className="fp-stat">
+          <span className="fp-stat-label">Spot</span>
+          <span className="fp-stat-val">{data.spot?.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="fp-stat">
+          <span className="fp-stat-label">Futures</span>
+          <span className="fp-stat-val">{data.fut?.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="fp-stat">
+          <span className="fp-stat-label">Premium</span>
+          <span className={`fp-stat-val fp-big ${pos ? 'gain' : 'loss'}`}>
+            {pos ? '+' : ''}{data.premium} ({pos ? '+' : ''}{data.pct}%)
+          </span>
+        </div>
+        <div className="fp-signal">
+          <span className={`fp-badge ${pos ? 'fp-bull' : 'fp-bear'}`}>
+            {pos ? '📈 Bullish Bias' : '📉 Bearish Bias'}
+          </span>
+          <span className="fp-note">{pos ? 'Market expects upside' : 'Market expects downside'}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Advance / Decline ─────────────────────────────────────────────────
+function AdvanceDecline() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const r = await fetch('/api/nse-india');
+        const d = await r.json();
+        const n = d?.nifty50;
+        if (n?.advances != null) {
+          const adv = n.advances, dec = n.declines, unch = n.unchanged || 0;
+          const total = adv + dec + unch || 50;
+          setData({ adv, dec, unch, advPct: Math.round((adv/total)*100), decPct: Math.round((dec/total)*100) });
+        }
+      } catch(_) {}
+    };
+    load();
+    const id = setInterval(load, 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!data) return null;
+
+  return (
+    <div className="ad-wrap">
+      <div className="ad-label">NIFTY 50 — ADVANCE / DECLINE</div>
+      <div className="ad-row">
+        <div className="ad-stat">
+          <span className="ad-num gain">{data.adv}</span>
+          <span className="ad-sub">Advancing</span>
+        </div>
+        <div className="ad-bar-wrap">
+          <div className="ad-bar">
+            <div className="ad-bar-adv" style={{width: `${data.advPct}%`}}/>
+            <div className="ad-bar-dec" style={{width: `${data.decPct}%`}}/>
+          </div>
+          <div className="ad-ratio">{data.adv}:{data.dec}</div>
+        </div>
+        <div className="ad-stat">
+          <span className="ad-num loss">{data.dec}</span>
+          <span className="ad-sub">Declining</span>
+        </div>
+      </div>
+      {data.unch > 0 && <div className="ad-unch">{data.unch} unchanged</div>}
+      <div className="ad-note">
+        {data.adv > data.dec * 1.5 ? 'Broad market strength — majority of Nifty 50 stocks advancing' :
+         data.dec > data.adv * 1.5 ? 'Broad market weakness — majority of Nifty 50 stocks declining' :
+         'Mixed market — roughly equal advancers and decliners'}
+      </div>
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────
 export default function FnOPage() {
   const { vix, loading }   = useIndiaVIX();
@@ -210,6 +378,7 @@ export default function FnOPage() {
             <div className="fno-loading">Fetching India VIX...</div>
           ) : vix ? (
 <VIXGauge vix={vix} />
+              <VixTrend vix={vix} />
           ) : (
             <div className="fno-loading">VIX data unavailable</div>
           )}
@@ -217,16 +386,18 @@ export default function FnOPage() {
 
       </div>
 
+      {/* Futures Premium + Advance Decline */}
+      <div className="fno-section">
+        <div className="fno-two-col">
+          <FuturesPremium />
+          <AdvanceDecline />
+        </div>
+      </div>
+
       {/* FII / DII */}
       <div className="fno-section">
         <div className="fno-section-label">FII / DII FLOW</div>
         <FiiDii />
-      </div>
-
-      {/* Option Chain Data */}
-      <div className="fno-section">
-        <div className="fno-section-label">OPTION CHAIN DATA</div>
-        <FnoData />
       </div>
 
     </div>

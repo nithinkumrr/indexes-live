@@ -1275,3 +1275,44 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .fno-sector-grid  { grid-template-columns: repeat(3, 1fr); }
   .fno-movers-grid  { grid-template-columns: 1fr; }
 }
+
+/* ── VIX Trend Sparkline ─────────────────────────────────────────── */
+.vix-trend-wrap    { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.vix-trend-header  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.vix-trend-label   { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: var(--text3); }
+.vix-trend-chg     { font-family: var(--mono); font-size: 10px; font-weight: 700; }
+.vix-spark-svg     { width: 100%; height: 40px; display: block; }
+.vix-trend-dates   { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 4px; }
+
+/* ── Futures Premium ─────────────────────────────────────────────── */
+.fp-wrap           { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px; }
+.fp-label          { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text3); margin-bottom: 12px; }
+.fp-row            { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.fp-stat           { display: flex; flex-direction: column; gap: 3px; }
+.fp-stat-label     { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.fp-stat-val       { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--text); }
+.fp-big            { font-size: 20px !important; }
+.fp-signal         { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.fp-badge          { font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+.fp-bull           { background: rgba(0,200,150,0.12); color: var(--gain); }
+.fp-bear           { background: rgba(255,68,85,0.12); color: var(--loss); }
+.fp-note           { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+/* ── Advance / Decline ───────────────────────────────────────────── */
+.ad-wrap           { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px; }
+.ad-label          { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text3); margin-bottom: 12px; }
+.ad-row            { display: flex; align-items: center; gap: 16px; }
+.ad-stat           { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 48px; }
+.ad-num            { font-family: var(--mono); font-size: 28px; font-weight: 800; line-height: 1; }
+.ad-sub            { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.ad-bar-wrap       { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.ad-bar            { height: 8px; border-radius: 4px; background: var(--bg3); display: flex; overflow: hidden; }
+.ad-bar-adv        { background: var(--gain); border-radius: 4px 0 0 4px; transition: width 0.5s; }
+.ad-bar-dec        { background: var(--loss); border-radius: 0 4px 4px 0; transition: width 0.5s; }
+.ad-ratio          { font-family: var(--mono); font-size: 11px; color: var(--text3); text-align: center; }
+.ad-unch           { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 6px; }
+.ad-note           { font-family: var(--mono); font-size: 10px; color: var(--text2); margin-top: 10px; line-height: 1.5; }
+
+/* ── Two column layout ───────────────────────────────────────────── */
+.fno-two-col       { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 768px) { .fno-two-col { grid-template-columns: 1fr; } }

@@ -109,10 +109,11 @@ export default function FnoData() {
 
   useEffect(() => {
     const load = () => {
+      const timeout = setTimeout(() => setL(false), 8000); // 8s timeout
       fetch('/api/optionchain')
         .then(r => r.json())
-        .then(d => { setData(d); setL(false); })
-        .catch(() => setL(false));
+        .then(d => { clearTimeout(timeout); setData(d); setL(false); })
+        .catch(() => { clearTimeout(timeout); setL(false); });
     };
     load();
     const id = setInterval(load, 120000);
