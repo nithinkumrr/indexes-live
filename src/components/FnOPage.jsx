@@ -27,7 +27,7 @@ function useIndiaVIX() {
 }
 
 // ── Expiry countdown card ─────────────────────────────────────────────
-function ExpiryCard({ label, date, secsLeft, color }) {
+function ExpiryCard({ label, date, secsLeft, color, shifted, originalDate, holidayName }) {
   const [secs, setSecs] = useState(secsLeft);
   useEffect(() => {
     setSecs(secsLeft);
@@ -45,6 +45,11 @@ function ExpiryCard({ label, date, secsLeft, color }) {
     <div className="fno-expiry-card" style={{ '--expiry-color': color }}>
       <div className="fno-expiry-label">{label}</div>
       <div className="fno-expiry-date">{date}</div>
+      {shifted && (
+        <div className="fno-expiry-nudge">
+          ⚠ {originalDate} is {holidayName} · shifted earlier
+        </div>
+      )}
       <div className="fno-expiry-clock">
         {days > 0 && <><span className="fno-clock-num">{days}</span><span className="fno-clock-unit">d</span></>}
         <span className="fno-clock-num">{pad(hrs)}</span><span className="fno-clock-unit">h</span>
@@ -115,8 +120,17 @@ export default function FnOPage() {
     '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26',
     '2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25',
   ];
-  const [holidays, setHolidays] = useState(FALLBACK_HOLIDAYS);
-  const [expiries, setExpiries] = useState(() => getNiftyExpiries(FALLBACK_HOLIDAYS));
+  const FALLBACK_NAMES = {
+    '2026-01-26':'Republic Day','2026-02-17':'Mahashivratri','2026-03-03':'Holi',
+    '2026-03-26':'Ram Navami','2026-03-31':'Mahavir Jayanti','2026-04-03':'Good Friday',
+    '2026-04-14':'Ambedkar Jayanti','2026-05-01':'Maharashtra Day','2026-05-28':'Bakri Id',
+    '2026-06-26':'Muharram','2026-09-14':'Ganesh Chaturthi','2026-10-02':'Gandhi Jayanti',
+    '2026-10-20':'Dussehra','2026-11-10':'Diwali Balipratipada','2026-11-24':'Guru Nanak Jayanti',
+    '2026-12-25':'Christmas',
+  };
+  const [holidays, setHolidays]         = useState(FALLBACK_HOLIDAYS);
+  const [holidayNames, setHolidayNames] = useState(FALLBACK_NAMES);
+  const [expiries, setExpiries]         = useState(() => getNiftyExpiries(FALLBACK_HOLIDAYS, FALLBACK_NAMES));
   const [holidaySource, setHolidaySource] = useState('');
 
   // Fetch holidays once on mount
@@ -124,18 +138,21 @@ export default function FnOPage() {
     fetch('/api/holidays')
       .then(r => r.json())
       .then(d => {
-        setHolidays(d.holidays || []);
+        const h = d.holidays || [];
+        const n = d.holidayNames || {};
+        setHolidays(h);
+        setHolidayNames(n);
         setHolidaySource(d.source || '');
-        setExpiries(getNiftyExpiries(d.holidays || []));
+        setExpiries(getNiftyExpiries(h, n));
       })
       .catch(() => {});
   }, []);
 
   // Refresh expiry countdown every minute
   useEffect(() => {
-    const id = setInterval(() => setExpiries(getNiftyExpiries(holidays)), 60000);
+    const id = setInterval(() => setExpiries(getNiftyExpiries(holidays, holidayNames)), 60000);
     return () => clearInterval(id);
-  }, [holidays]);
+  }, [holidays, holidayNames]);
 
   return (
     <div className="fno-wrap">
@@ -160,16 +177,16 @@ export default function FnOPage() {
           Nifty 50 &nbsp;<span className="fno-expiry-rule">Weekly — Tuesday &nbsp;·&nbsp; Monthly — last Thursday</span>
         </div>
         <div className="fno-expiry-grid">
-          <ExpiryCard label="Weekly"  date={expiries.niftyWeekly.date}  secsLeft={expiries.niftyWeekly.secsLeft}  color="#4A9EFF" />
-          <ExpiryCard label="Monthly" date={expiries.niftyMonthly.date} secsLeft={expiries.niftyMonthly.secsLeft} color="#4A9EFF" />
+          <ExpiryCard label="Weekly"  {...expiries.niftyWeekly}  color="#4A9EFF" />
+          <ExpiryCard label="Monthly" {...expiries.niftyMonthly} color="#4A9EFF" />
         </div>
 
         <div className="fno-expiry-group-label" style={{ marginTop: 20 }}>
           Sensex &nbsp;<span className="fno-expiry-rule">Weekly — Thursday &nbsp;·&nbsp; Monthly — last Thursday</span>
         </div>
         <div className="fno-expiry-grid">
-          <ExpiryCard label="Weekly"  date={expiries.sensexWeekly.date}  secsLeft={expiries.sensexWeekly.secsLeft}  color="#F59E0B" />
-          <ExpiryCard label="Monthly" date={expiries.sensexMonthly.date} secsLeft={expiries.sensexMonthly.secsLeft} color="#F59E0B" />
+          <ExpiryCard label="Weekly"  {...expiries.sensexWeekly}  color="#F59E0B" />
+          <ExpiryCard label="Monthly" {...expiries.sensexMonthly} color="#F59E0B" />
         </div>
 
         <div className="fno-expiry-note">

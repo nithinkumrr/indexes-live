@@ -475,7 +475,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   border-radius: var(--r-lg); padding: 20px 24px;
 }
 .fno-expiry-label { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 4px; }
-.fno-expiry-date  { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--expiry-color); margin-bottom: 14px; }
+.fno-expiry-date  { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--expiry-color); margin-bottom: 6px; }
+.fno-expiry-nudge { font-family: var(--mono); font-size: 10px; color: #F59E0B; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 4px; padding: 3px 7px; margin-bottom: 10px; line-height: 1.4; }
 .fno-expiry-clock { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; }
 .fno-clock-num    { font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--text); letter-spacing: -1px; line-height: 1; }
 .fno-clock-unit   { font-family: var(--mono); font-size: 14px; color: var(--text3); margin-right: 6px; }

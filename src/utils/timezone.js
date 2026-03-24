@@ -116,10 +116,21 @@ function adjustExpiry(date, holidaySet) {
   return d;
 }
 
+// Returns { date, shifted, originalDate, holidayName } if shifted due to holiday
+function adjustExpiryWithInfo(date, holidaySet, holidayNames = {}) {
+  const original = new Date(date);
+  const originalIso = toISTDateStr(original);
+  const d = adjustExpiry(date, holidaySet);
+  const adjustedIso = toISTDateStr(d);
+  const shifted = adjustedIso !== originalIso;
+  const holidayName = shifted ? (holidayNames[originalIso] || 'Market Holiday') : null;
+  return { date: d, shifted, originalDate: shifted ? original : null, holidayName };
+}
+
 // Nifty 50:  weekly = Tuesday,  monthly = last Thursday of month
 // Sensex:    weekly = Thursday, monthly = last Thursday of month
 // If expiry falls on holiday → shift to previous trading day
-export function getNiftyExpiries(holidays = []) {
+export function getNiftyExpiries(holidays = [], holidayNames = {}) {
   const holidaySet = new Set(holidays);
   const now = new Date();
   const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
@@ -144,30 +155,39 @@ export function getNiftyExpiries(holidays = []) {
   }
 
   function getMonthly() {
-    let d = lastThursdayOfMonth(ist.getFullYear(), ist.getMonth());
-    d = adjustExpiry(d, holidaySet);
-    if (d <= now) {
+    let raw = lastThursdayOfMonth(ist.getFullYear(), ist.getMonth());
+    let info = adjustExpiryWithInfo(raw, holidaySet, holidayNames);
+    if (info.date <= now) {
       const nm = ist.getMonth() === 11 ? 0 : ist.getMonth() + 1;
       const ny = ist.getMonth() === 11 ? ist.getFullYear() + 1 : ist.getFullYear();
-      d = lastThursdayOfMonth(ny, nm);
-      d = adjustExpiry(d, holidaySet);
+      raw = lastThursdayOfMonth(ny, nm);
+      info = adjustExpiryWithInfo(raw, holidaySet, holidayNames);
     }
-    return d;
+    return info;
   }
 
-  const niftyWeekly   = adjustExpiry(nextWeekday(2), holidaySet); // Tuesday
-  const niftyMonthly  = getMonthly();
-  const sensexWeekly  = adjustExpiry(nextWeekday(4), holidaySet); // Thursday
-  const sensexMonthly = getMonthly(); // same as Nifty monthly
+  const niftyWeeklyInfo   = adjustExpiryWithInfo(nextWeekday(2), holidaySet, holidayNames);
+  const niftyMonthlyInfo  = getMonthly();
+  const sensexWeeklyInfo  = adjustExpiryWithInfo(nextWeekday(4), holidaySet, holidayNames);
+  const sensexMonthlyInfo = getMonthly();
 
   const secsLeft = d => Math.max(0, Math.floor((d - now) / 1000));
   const fmtDate  = d => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', weekday: 'short', timeZone: 'Asia/Kolkata' });
+  const fmtOrig  = d => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
+
+  const toResult = (info) => ({
+    date:         fmtDate(info.date),
+    secsLeft:     secsLeft(info.date),
+    shifted:      info.shifted,
+    originalDate: info.originalDate ? fmtOrig(info.originalDate) : null,
+    holidayName:  info.holidayName,
+  });
 
   return {
-    niftyWeekly:   { date: fmtDate(niftyWeekly),   secsLeft: secsLeft(niftyWeekly)   },
-    niftyMonthly:  { date: fmtDate(niftyMonthly),  secsLeft: secsLeft(niftyMonthly)  },
-    sensexWeekly:  { date: fmtDate(sensexWeekly),  secsLeft: secsLeft(sensexWeekly)  },
-    sensexMonthly: { date: fmtDate(sensexMonthly), secsLeft: secsLeft(sensexMonthly) },
+    niftyWeekly:   toResult(niftyWeeklyInfo),
+    niftyMonthly:  toResult(niftyMonthlyInfo),
+    sensexWeekly:  toResult(sensexWeeklyInfo),
+    sensexMonthly: toResult(sensexMonthlyInfo),
   };
 }
 
