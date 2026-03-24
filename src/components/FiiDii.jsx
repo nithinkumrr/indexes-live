@@ -201,7 +201,7 @@ function FiiDiiChart({ history }) {
   }, [history]);
 
   return (
-    <div style={{ position: 'relative', height: '100%', minHeight: 400, width: '100%' }}>
+    <div style={{ position: 'relative', height: 380, width: '100%' }}>
       <canvas ref={canvasRef} />
     </div>
   );
@@ -284,7 +284,10 @@ export default function FiiDii() {
               </div>
             </>
           ) : (
-            <div className="fiidii-no-history">Historical data loads after market close</div>
+            <div className="fiidii-no-history">
+              <div style={{fontSize:13,color:'var(--text2)',marginBottom:6}}>7-day chart loads after multiple trading days of data</div>
+              <div style={{fontSize:11,color:'var(--text3)'}}>Today — FII: {fmtCr(latest.fiiNet)} · DII: {fmtCr(latest.diiNet)}</div>
+            </div>
           )}
         </div>
 
