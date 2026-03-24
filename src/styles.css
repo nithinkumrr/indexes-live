@@ -27,6 +27,45 @@
   --r-lg:     10px;
 }
 
+/* ── LIGHT THEME ──────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:       #F5F5F7;
+  --bg2:      #FFFFFF;
+  --bg3:      #EBEBED;
+  --bg4:      #E0E0E3;
+  --border:   rgba(0,0,0,0.08);
+  --border2:  rgba(0,0,0,0.15);
+  --text:     #1A1A1C;
+  --text2:    #4A4A50;
+  --text3:    #8A8A92;
+  --gain:     #00936E;
+  --gain-bg:  rgba(0,147,110,0.10);
+  --loss:     #D93025;
+  --loss-bg:  rgba(217,48,37,0.10);
+  --live:     #00936E;
+  --live-bg:  rgba(0,147,110,0.08);
+  --pre:      #B45309;
+  --pre-bg:   rgba(180,83,9,0.10);
+  --india:    #C2570A;
+  --accent:   #1D6FD8;
+}
+
+[data-theme="light"] body { background: var(--bg); }
+[data-theme="light"] .live-pulse { background: var(--live); }
+[data-theme="light"] .ticker-wrap { background: var(--bg2); }
+[data-theme="light"] .chip-live { background: rgba(0,147,110,0.12); color: var(--live); border-color: rgba(0,147,110,0.3); }
+[data-theme="light"] .chip-closed { background: var(--bg3); color: var(--text3); }
+[data-theme="light"] .logo-live { color: #1D6FD8; }
+[data-theme="light"] .fno-vix-bar-track { background: #DDDDE0; }
+[data-theme="light"] .fiidii-bar-track { background: #DDDDE0; }
+[data-theme="light"] .hours-tooltip { box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+[data-theme="light"] .wb-home { opacity: 0.35; }
+
+/* Theme toggle button */
+.theme-toggle { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 10px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
+.theme-toggle:hover { color: var(--text); border-color: var(--text3); }
+
+
 html { font-size: 14px; }
 body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100vh; }
 

@@ -110,8 +110,14 @@ function ComingSoonCard({ title, desc }) {
 // ── Main ──────────────────────────────────────────────────────────────
 export default function FnOPage() {
   const { vix, loading }   = useIndiaVIX();
-  const [holidays, setHolidays] = useState([]);
-  const [expiries, setExpiries] = useState(() => getNiftyExpiries([]));
+  // Hardcoded fallback so expiries are correct even before API responds
+  const FALLBACK_HOLIDAYS = [
+    '2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31',
+    '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26',
+    '2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25',
+  ];
+  const [holidays, setHolidays] = useState(FALLBACK_HOLIDAYS);
+  const [expiries, setExpiries] = useState(() => getNiftyExpiries(FALLBACK_HOLIDAYS));
   const [holidaySource, setHolidaySource] = useState('');
 
   // Fetch holidays once on mount
