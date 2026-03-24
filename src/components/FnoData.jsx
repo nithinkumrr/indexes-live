@@ -1,167 +1,141 @@
 import { useState, useEffect } from 'react';
 
-function fmt(n) { return n != null ? n.toLocaleString('en-IN') : '—'; }
-function fmtOI(n) {
-  if (!n) return '—';
-  if (n >= 1e7) return `${(n/1e7).toFixed(2)}Cr`;
-  if (n >= 1e5) return `${(n/1e5).toFixed(1)}L`;
-  return n.toLocaleString('en-IN');
-}
+const fmtCr = n => {
+  if (!n && n !== 0) return '—';
+  const abs = Math.abs(n), sign = n >= 0 ? '+' : '-';
+  if (abs >= 10000) return `${sign}₹${(abs/100).toFixed(1)}K Cr`;
+  return `${sign}₹${abs.toFixed(0)} Cr`;
+};
 
-function PCRCard({ pcr, sentiment }) {
-  const color = pcr > 1.2 ? '#00C896' : pcr < 0.7 ? '#FF4455' : pcr > 1 ? '#7BC67E' : '#FF8C42';
-  const barW  = Math.min((pcr / 2) * 100, 100);
+function FiiSegmentTable({ data }) {
+  if (!data) return null;
+  const rows = [
+    { label: 'Index Futures', key: 'indexFut' },
+    { label: 'Index Options', key: 'indexOpt' },
+    { label: 'Stock Futures', key: 'stockFut' },
+  ];
   return (
-    <div className="fno-data-card">
-      <div className="fno-data-label">PUT CALL RATIO</div>
-      <div className="fno-data-value" style={{color}}>{pcr?.toFixed(2) || '—'}</div>
-      <div className="fno-data-tag" style={{color}}>{sentiment}</div>
-      <div className="fno-pcr-bar">
-        <div className="fno-pcr-track">
-          <div className="fno-pcr-fill" style={{width: `${barW}%`, background: color}}/>
-          <div className="fno-pcr-marker" style={{left: '50%'}}/>
-        </div>
-        <div className="fno-pcr-labels"><span>0</span><span>0.7</span><span>1.0</span><span>1.3</span><span>2+</span></div>
-      </div>
-      <div className="fno-data-note">PCR &gt; 1 = more puts = bullish · &lt; 0.7 = bearish · Near-expiry</div>
+    <div className="fno-seg-wrap">
+      <div className="fno-seg-title">FII ACTIVITY IN F&amp;O SEGMENTS</div>
+      <table className="fno-seg-table">
+        <thead>
+          <tr>
+            <th>Segment</th>
+            <th>FII Net</th>
+            <th>FII Buy</th>
+            <th>FII Sell</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ label, key }) => {
+            const d = data[key];
+            if (!d?.fii) return null;
+            const pos = d.fii.net >= 0;
+            return (
+              <tr key={key}>
+                <td className="fno-seg-label">{label}</td>
+                <td className={`fno-seg-net ${pos ? 'gain' : 'loss'}`}>{fmtCr(d.fii.net)}</td>
+                <td className="fno-seg-val">₹{Math.abs(d.fii.buy).toFixed(0)} Cr</td>
+                <td className="fno-seg-val">₹{Math.abs(d.fii.sell).toFixed(0)} Cr</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <div className="fno-seg-note">FII activity in derivatives · Updates after market close</div>
     </div>
   );
 }
 
-function MaxPainCard({ maxPain, underlying, diff }) {
-  const above = diff > 0;
+function SectorHeatmap({ sectors }) {
+  if (!sectors?.length) return null;
   return (
-    <div className="fno-data-card">
-      <div className="fno-data-label">MAX PAIN</div>
-      <div className="fno-data-value">{fmt(maxPain)}</div>
-      <div className="fno-data-tag" style={{color: above ? '#FF4455' : '#00C896'}}>
-        {above ? `▲ ${Math.abs(diff)}% above current` : `▼ ${Math.abs(diff)}% below current`}
-      </div>
-      <div className="fno-data-note">
-        Spot: {fmt(underlying)} · Options writers gain most at {fmt(maxPain)} · 
-        Nifty often gravitates toward max pain near expiry
-      </div>
-    </div>
-  );
-}
-
-function OICard({ symbol, topCE, topPE, atmStrike, atmIV }) {
-  return (
-    <div className="fno-data-card fno-oi-card">
-      <div className="fno-data-label">OI — SUPPORT &amp; RESISTANCE</div>
-      {atmIV && <div className="fno-atm-iv">ATM IV: <strong>{atmIV}%</strong> · ATM Strike: <strong>{fmt(atmStrike)}</strong></div>}
-      <div className="fno-oi-grid">
-        <div className="fno-oi-col">
-          <div className="fno-oi-col-label loss">CE (Resistance)</div>
-          {topCE?.slice(0,5).map((r, i) => (
-            <div key={i} className="fno-oi-row">
-              <span className="fno-oi-strike">{fmt(r.strike)}</span>
-              <div className="fno-oi-bar-wrap">
-                <div className="fno-oi-bar fno-oi-ce" style={{width: `${Math.min((r.oi / (topCE[0]?.oi||1)) * 100, 100)}%`}}/>
+    <div className="fno-sector-wrap">
+      <div className="fno-seg-title">SECTOR PERFORMANCE</div>
+      <div className="fno-sector-grid">
+        {sectors.map(s => {
+          const pos = s.pct >= 0;
+          const intensity = Math.min(Math.abs(s.pct) / 3, 1);
+          const bg = pos
+            ? `rgba(0,200,150,${0.08 + intensity * 0.25})`
+            : `rgba(255,68,85,${0.08 + intensity * 0.25})`;
+          return (
+            <div key={s.name} className="fno-sector-card" style={{ background: bg }}>
+              <div className="fno-sector-name">{s.name}</div>
+              <div className={`fno-sector-pct ${pos ? 'gain' : 'loss'}`}>
+                {pos ? '▲' : '▼'} {Math.abs(s.pct).toFixed(2)}%
               </div>
-              <span className="fno-oi-val">{fmtOI(r.oi)}</span>
             </div>
-          ))}
-        </div>
-        <div className="fno-oi-col">
-          <div className="fno-oi-col-label gain">PE (Support)</div>
-          {topPE?.slice(0,5).map((r, i) => (
-            <div key={i} className="fno-oi-row">
-              <span className="fno-oi-strike">{fmt(r.strike)}</span>
-              <div className="fno-oi-bar-wrap">
-                <div className="fno-oi-bar fno-oi-pe" style={{width: `${Math.min((r.oi / (topPE[0]?.oi||1)) * 100, 100)}%`}}/>
-              </div>
-              <span className="fno-oi-val">{fmtOI(r.oi)}</span>
-            </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
-      <div className="fno-data-note">Highest CE OI = likely resistance · Highest PE OI = likely support</div>
     </div>
   );
 }
 
-function FreshOICard({ freshCE, freshPE }) {
-  const hasFresh = freshCE?.length || freshPE?.length;
-  if (!hasFresh) return null;
+function TopMovers({ gainers, losers }) {
+  if (!gainers?.length && !losers?.length) return null;
   return (
-    <div className="fno-data-card">
-      <div className="fno-data-label">OI BUILDUP — FRESH POSITIONS</div>
-      <div className="fno-oi-grid">
-        <div className="fno-oi-col">
-          <div className="fno-oi-col-label loss">Call Writing</div>
-          {freshCE?.slice(0,3).map((r,i) => (
-            <div key={i} className="fno-oi-row">
-              <span className="fno-oi-strike">{fmt(r.strike)}</span>
-              <span className="fno-oi-val loss">{r.chgOI > 0 ? '+' : ''}{fmtOI(r.chgOI)}</span>
+    <div className="fno-movers-wrap">
+      <div className="fno-movers-grid">
+        <div>
+          <div className="fno-seg-title">TOP GAINERS (F&amp;O)</div>
+          {gainers.map((s,i) => (
+            <div key={i} className="fno-mover-row">
+              <span className="fno-mover-sym">{s.symbol}</span>
+              <span className="fno-mover-ltp">₹{s.ltp?.toFixed(1)}</span>
+              <span className="fno-mover-pct gain">▲ {Math.abs(s.pct).toFixed(2)}%</span>
             </div>
           ))}
         </div>
-        <div className="fno-oi-col">
-          <div className="fno-oi-col-label gain">Put Writing</div>
-          {freshPE?.slice(0,3).map((r,i) => (
-            <div key={i} className="fno-oi-row">
-              <span className="fno-oi-strike">{fmt(r.strike)}</span>
-              <span className="fno-oi-val gain">{r.chgOI > 0 ? '+' : ''}{fmtOI(r.chgOI)}</span>
+        <div>
+          <div className="fno-seg-title">TOP LOSERS (F&amp;O)</div>
+          {losers.map((s,i) => (
+            <div key={i} className="fno-mover-row">
+              <span className="fno-mover-sym">{s.symbol}</span>
+              <span className="fno-mover-ltp">₹{s.ltp?.toFixed(1)}</span>
+              <span className="fno-mover-pct loss">▼ {Math.abs(s.pct).toFixed(2)}%</span>
             </div>
           ))}
         </div>
       </div>
-      <div className="fno-data-note">Fresh call writing = resistance forming · Put writing = support forming</div>
     </div>
   );
 }
 
 export default function FnoData() {
-  const [nifty,  setNifty]  = useState(null);
-  const [bnifty, setBnifty] = useState(null);
-  const [tab,    setTab]    = useState('NIFTY');
-  const [loading, setL]     = useState(true);
+  const [data, setData]   = useState(null);
+  const [loading, setL]   = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/optionchain?symbol=NIFTY').then(r=>r.json()),
-      fetch('/api/optionchain?symbol=BANKNIFTY').then(r=>r.json()),
-    ]).then(([n, b]) => {
-      if (!n.error) setNifty(n);
-      if (!b.error) setBnifty(b);
-      setL(false);
-    }).catch(() => setL(false));
+    const load = () => {
+      fetch('/api/optionchain')
+        .then(r => r.json())
+        .then(d => { setData(d); setL(false); })
+        .catch(() => setL(false));
+    };
+    load();
+    const id = setInterval(load, 120000);
+    return () => clearInterval(id);
   }, []);
 
-  if (loading) return <div className="fno-loading">Fetching option chain from NSE...</div>;
+  if (loading) return <div className="fno-loading">Fetching F&amp;O data from NSE...</div>;
 
-  const d = tab === 'NIFTY' ? nifty : bnifty;
-
-  if (!d) return (
-    <div className="fiidii-unavail">
-      <div className="fiidii-unavail-msg">Option chain data unavailable</div>
-      <div className="fiidii-unavail-sub">NSE may be temporarily unavailable. Retrying automatically every 60s.</div>
-    </div>
-  );
+  if (!data || (!data.fiifo && !data.sectors?.length && !data.topGainers?.length)) {
+    return (
+      <div className="fiidii-unavail">
+        <div className="fiidii-unavail-msg">F&amp;O data unavailable</div>
+        <div className="fiidii-unavail-sub">NSE data loads during and after market hours. Retrying every 2 minutes.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="fno-data-wrap">
-      {/* Symbol tabs */}
-      <div className="fno-sym-tabs">
-        {['NIFTY', 'BANKNIFTY'].map(s => (
-          <button key={s} className={`fno-sym-btn ${tab === s ? 'fno-sym-active' : ''}`} onClick={() => setTab(s)}>
-            {s}
-          </button>
-        ))}
-        <span className="fno-expiry-tag">Expiry: {d.nearExpiry}</span>
-        <span className="fno-spot-tag">Spot: {fmt(d.underlying)}</span>
-      </div>
-
-      {/* Data grid */}
-      <div className="fno-data-grid">
-        <PCRCard pcr={d.pcr} sentiment={d.pcrSentiment} />
-        <MaxPainCard maxPain={d.maxPain} underlying={d.underlying} diff={d.maxPainDiff} />
-        <OICard symbol={tab} topCE={d.topCE} topPE={d.topPE} atmStrike={d.atmStrike} atmIV={d.atmIV} />
-        <FreshOICard freshCE={d.freshCE} freshPE={d.freshPE} />
-      </div>
-
-      <div className="fno-data-source">Data: NSE India · Refreshes every 60s · Near-month expiry only</div>
+      <SectorHeatmap sectors={data.sectors} />
+      <div className="fno-data-divider" />
+      <TopMovers gainers={data.topGainers} losers={data.topLosers} />
+      {data.fiifo && <><div className="fno-data-divider" /><FiiSegmentTable data={data.fiifo} /></>}
     </div>
   );
 }
