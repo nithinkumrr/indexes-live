@@ -60,9 +60,9 @@
 [data-theme="light"] .fiidii-bar-track { background: #DDDDE0; }
 [data-theme="light"] .hours-tooltip { box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
 [data-theme="light"] .wb-home { border-style: dashed; }
-[data-theme="light"] .wb-vix { border-color: rgba(180,83,9,0.6) !important; background: linear-gradient(135deg,rgba(180,83,9,0.08),rgba(180,83,9,0.03)) !important; box-shadow: 0 0 0 1px rgba(180,83,9,0.15); }
-[data-theme="light"] .hero-card-gift { border-top: 3px solid #B45309 !important; background: linear-gradient(180deg, rgba(180,83,9,0.08) 0%, transparent 60%) !important; }
-[data-theme="light"] .hero-note-tag { color: #B45309; }
+[data-theme="light"] .wb-vix { border-color: rgba(217,48,37,0.4) !important; background: linear-gradient(135deg, rgba(217,48,37,0.06), rgba(217,48,37,0.02)) !important; box-shadow: 0 0 14px rgba(217,48,37,0.08); }
+[data-theme="light"] .hero-card-gift { border: 1px solid rgba(29,111,216,0.35) !important; border-top: 3px solid #1D6FD8 !important; background: linear-gradient(180deg, rgba(29,111,216,0.06) 0%, transparent 55%) !important; box-shadow: 0 0 16px rgba(29,111,216,0.08); }
+[data-theme="light"] .hero-note-tag { color: #1D6FD8; }
 
 /* Theme toggle button */
 .theme-toggle { font-size: 14px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.2s; line-height: 1; }
@@ -150,12 +150,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .hero-card  { background: var(--bg2); border: 1px solid var(--border); border-top: 2px solid var(--border2); border-radius: var(--r-lg); padding: 14px; transition: border-color 0.2s; display: flex; flex-direction: column; }
 .hero-card:hover { border-color: var(--border2); }
 .hero-card-live { border-top-color: var(--gain) !important; }
-.hero-card-gift { border-top: 3px solid var(--pre) !important; background: linear-gradient(180deg, rgba(245,158,11,0.06) 0%, transparent 60%) !important; box-shadow: 0 -2px 12px rgba(245,158,11,0.1); }
+.hero-card-gift { border: 1px solid rgba(74,158,255,0.45) !important; border-top: 3px solid var(--accent) !important; background: linear-gradient(180deg, rgba(74,158,255,0.07) 0%, transparent 55%) !important; box-shadow: 0 0 20px rgba(74,158,255,0.1), 0 -2px 0 var(--accent); }
 
 .hero-card-top  { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
 .hero-exchange  { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.3px; margin-bottom: 2px; }
 .hero-name      { font-size: 15px; font-weight: 600; color: var(--text); }
-.hero-note-tag  { font-family: var(--mono); font-size: 10px; color: var(--pre); font-weight: 400; }
+.hero-note-tag  { font-family: var(--mono); font-size: 10px; color: var(--accent); font-weight: 400; }
 .hero-price     { font-family: var(--mono); font-size: 32px; font-weight: 600; color: var(--text); letter-spacing: -1px; line-height: 1; margin-bottom: 6px; }
 .hero-changes   { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .hero-abs       { font-family: var(--mono); font-size: 13px; font-weight: 500; }
@@ -217,8 +217,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .wb-price { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 3px; }
 .wb-unit  { font-size: 9px; color: var(--text3); font-weight: 400; }
 .wb-pct   { font-family: var(--mono); font-size: 11px; font-weight: 600; }
-.wb-vix   { border: 1px solid rgba(245,158,11,0.5) !important; background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.03)) !important; box-shadow: 0 0 0 1px rgba(245,158,11,0.15), inset 0 0 20px rgba(245,158,11,0.04); }
-.wb-vix-label { font-size: 9px; font-weight: 700; margin-left: 2px; color: var(--pre); }
+.wb-vix   { border: 1px solid rgba(255,68,85,0.35) !important; background: linear-gradient(135deg, rgba(255,68,85,0.07), rgba(255,68,85,0.02)) !important; box-shadow: 0 0 16px rgba(255,68,85,0.08); }
+.wb-vix-label { font-size: 9px; font-weight: 700; margin-left: 2px; color: var(--loss); }
 .wb-vix-label { font-size: 9px; opacity: 0.7; margin-left: 2px; }
 .wb-spark { margin-top: 5px; }
 
