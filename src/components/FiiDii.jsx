@@ -87,6 +87,7 @@ function FiiDiiChart({ history }) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 4, bottom: 0, left: 0, right: 0 } },
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: {
@@ -196,7 +197,7 @@ function FiiDiiChart({ history }) {
   }, [history]);
 
   return (
-    <div style={{ position: 'relative', height: 320, width: '100%' }}>
+    <div style={{ position: 'relative', height: 260, width: '100%' }}>
       <canvas ref={canvasRef} />
     </div>
   );
