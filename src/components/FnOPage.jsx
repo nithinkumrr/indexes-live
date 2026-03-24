@@ -330,7 +330,6 @@ export default function FnOPage() {
         <div className="fno-page-title">
           <div>
             <div className="fno-page-name">India F&amp;O Dashboard</div>
-            <div className="fno-page-sub">Nifty · Bank Nifty · NSE derivatives</div>
           </div>
         </div>
         <div className="fno-live-badge">

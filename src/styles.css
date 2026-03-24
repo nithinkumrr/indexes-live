@@ -74,13 +74,14 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .app { width: 100%; min-height: 100vh; }
 
 /* HEADER */
-.header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 10px; }
-.header-left { display: flex; align-items: center; }
+.header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; z-index: 100; gap: 10px; flex-wrap: nowrap; }
+.header-left { display: flex; align-items: center; flex-shrink: 0; }
 .logo { display: flex; align-items: baseline; }
 .logo-text { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; }
 .logo-dot  { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text3); }
 .logo-live { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--live); letter-spacing: -0.5px; }
-.header-right { display: flex; align-items: center; gap: 10px; }
+.header-right { display: flex; align-items: center; gap: 8px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+.header-right::-webkit-scrollbar { display: none; }
 .sim-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 3px 8px; border-radius: var(--r); background: rgba(245,158,11,0.12); color: var(--pre); border: 1px solid rgba(245,158,11,0.25); }
 .update-time { display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; color: var(--text3); }
 .update-dot  { width: 4px; height: 4px; border-radius: 50%; background: var(--text3); }
@@ -88,8 +89,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .live-pulse  { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--live); animation: pulse 1.4s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.25;transform:scale(0.75)} }
 
-.view-toggle { display: flex; background: var(--bg3); border: 1px solid var(--border2); border-radius: 14px; padding: 2px; gap: 2px; }
-.view-btn    { font-family: var(--mono); font-size: 11px; padding: 4px 12px; border-radius: 12px; border: none; background: transparent; color: var(--text2); cursor: pointer; transition: all 0.2s; }
+.view-toggle { display: flex; background: var(--bg3); border: 1px solid var(--border2); border-radius: 14px; padding: 2px; gap: 2px; flex-shrink: 0; }
+.view-btn    { font-family: var(--mono); font-size: 11px; padding: 4px 12px; border-radius: 12px; border: none; background: transparent; color: var(--text2); cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
 .view-btn:hover { color: var(--text); }
 .fno-btn { color: #FF9933 !important; }
 .fno-btn.view-active { background: rgba(255,153,51,0.15) !important; color: #FF9933 !important; }
@@ -1358,3 +1359,79 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .mtf-more         { font-family: var(--mono); font-size: 11px; color: var(--text3); padding: 12px; text-align: center; border-top: 1px solid var(--border); }
 .mtf-footer-note  { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 12px; display: flex; align-items: center; gap: 16px; }
 .mtf-clear-btn    { font-family: var(--mono); font-size: 10px; color: var(--loss); background: none; border: none; cursor: pointer; margin-left: auto; }
+
+/* ── Mobile Responsive ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Header */
+  .header { padding: 8px 12px; }
+  .logo-text, .logo-dot, .logo-live { font-size: 16px; }
+  .update-time { display: none; }
+  .view-toggle { background: none; border: none; padding: 0; }
+  .view-btn { font-size: 11px; padding: 5px 10px; border-radius: 8px; }
+
+  /* Hero cards — 2 col */
+  .hero-cards { grid-template-columns: 1fr 1fr !important; }
+  .hero-card  { min-height: 120px; }
+  .hero-price { font-size: 22px; }
+
+  /* Commodity strip — wrap */
+  .commodity-strip { flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
+  .commodity-strip-item { font-size: 10px; }
+
+  /* FX strip */
+  .fx-strip { overflow-x: auto; flex-wrap: nowrap; }
+
+  /* World Benchmarks — 2 col */
+  .wb-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Market grid — 2 col */
+  .market-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* FnO page */
+  .fno-expiry-vix-row { flex-direction: column !important; }
+  .fno-vix-panel { width: 100% !important; }
+  .fno-expiry-grid { grid-template-columns: 1fr 1fr !important; }
+  .fno-two-col { grid-template-columns: 1fr !important; }
+
+  /* FII DII */
+  .fiidii-main-layout { grid-template-columns: 1fr !important; }
+  .fiidii-cards-col   { flex-direction: row; flex-wrap: wrap; }
+  .fiidii-card        { min-width: 140px; flex: 1; }
+
+  /* Gold page */
+  .gold-city-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .gold-mcx-items { flex-wrap: wrap; gap: 12px; }
+
+  /* IPO */
+  .ipo-card-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Sentiment */
+  .st-panels-v2 { grid-template-columns: 1fr !important; }
+
+  /* World clocks */
+  .clocks-row { overflow-x: auto; flex-wrap: nowrap; }
+
+  /* Brokerage table */
+  .bc-table-wrap { overflow-x: auto; }
+
+  /* Sector grid */
+  .fno-sector-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .fno-movers-grid { grid-template-columns: 1fr !important; }
+
+  /* VIX + Fear meter */
+  .fg-meter-row { flex-direction: column; }
+  .fg-svg       { max-width: 200px; margin: 0 auto; }
+
+  /* General padding */
+  .fno-wrap, .ipo-wrap, .mtf-wrap { padding: 16px 12px; }
+  .fno-section { padding: 16px 12px; }
+}
+
+@media (max-width: 480px) {
+  .hero-cards { grid-template-columns: 1fr !important; }
+  .wb-grid    { grid-template-columns: 1fr 1fr !important; }
+  .fno-expiry-grid { grid-template-columns: 1fr !important; }
+  .gold-city-grid  { grid-template-columns: 1fr !important; }
+  .ipo-card-grid   { grid-template-columns: 1fr !important; }
+  .view-btn { font-size: 10px; padding: 4px 8px; }
+}

@@ -12,7 +12,6 @@ import SentimentLayout from './components/SentimentLayout';
 import FnOPage from './components/FnOPage';
 import GoldPage from './components/GoldPage';
 import IpoPage from './components/IpoPage';
-import BrokerageCalc from './components/BrokerageCalc';
 import IndexModal from './components/IndexModal';
 import Footer from './components/Footer';
 import SentimentTop from './components/SentimentTop';
@@ -25,7 +24,6 @@ const HASH_MAP = {
   'fno':        'fno',
   'gold':       'gold',
   'ipo':        'ipo',
-  'brokerage':  'brokerage',
 };
 
 const VIEW_HASH = {
@@ -34,10 +32,9 @@ const VIEW_HASH = {
   'fno':        'fno',
   'gold':       'gold',
   'ipo':        'ipo',
-  'brokerage':  'brokerage',
 };
 
-const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'brokerage']);
+const FULL_PAGES = new Set(['fno', 'gold', 'ipo']);
 
 function getViewFromHash() {
   const hash = window.location.hash.replace('#/', '').replace('#', '').toLowerCase();
@@ -77,7 +74,6 @@ export default function App() {
         view === 'fno'       ? <FnOPage /> :
         view === 'gold'      ? <GoldPage /> :
         view === 'ipo'       ? <IpoPage /> :
-        view === 'brokerage' ? <div style={{maxWidth:1100,margin:'0 auto',padding:'24px 20px'}}><BrokerageCalc /></div> :
         null
       ) : (
         <>

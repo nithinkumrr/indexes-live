@@ -20,8 +20,6 @@ export default function Header({ lastUpdate, view, setView }) {
     { id: 'fno',       label: 'F&O' },
     { id: 'gold',      label: 'Gold', cls: 'tab-gold' },
     { id: 'ipo',       label: 'IPO',  cls: 'tab-teal' },
-    { id: 'calc',      label: 'Calc', cls: 'tab-blue' },
-    { id: 'brokerage', label: 'Brokers' },
     { id: 'blog',      label: 'Insights', cls: 'tab-purple' },
   ];
 
