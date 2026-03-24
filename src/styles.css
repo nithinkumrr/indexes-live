@@ -663,3 +663,19 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fiidii-trend-row:last-child { border-bottom: none; }
 .fiidii-trend-head   { background: var(--bg3); font-size: 10px; color: var(--text3); letter-spacing: 0.5px; }
 .fiidii-trend-legend { display: flex; gap: 16px; margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+/* ── FII/DII heatmap table ─────────────────────────────────────────── */
+.fiidii-table-wrap  { margin-top: 6px; }
+.fiidii-table-title { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--text3); margin-bottom: 10px; }
+.fiidii-table       { width: 100%; border-collapse: collapse; border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--border); }
+.fiidii-table thead tr { background: var(--bg3); }
+.fiidii-table th    { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text2); padding: 10px 16px; text-align: left; letter-spacing: 0.5px; border-bottom: 2px solid var(--border2); }
+.fiidii-table th:not(:first-child) { text-align: right; }
+.fiidii-td-date     { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text); padding: 10px 16px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--bg2); }
+.fiidii-td-val      { font-family: var(--mono); font-size: 13px; font-weight: 700; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,0.08); text-align: right; transition: background 0.3s; }
+.fiidii-total-row .fiidii-td-date { font-weight: 800; font-size: 13px; background: var(--bg3); border-top: 2px solid var(--border2); border-bottom: none; }
+.fiidii-total-row .fiidii-td-val  { font-size: 14px; font-weight: 800; border-top: 2px solid var(--border2); border-bottom: none; }
+
+[data-theme="light"] .fiidii-td-date { background: #fff; }
+[data-theme="light"] .fiidii-table thead tr { background: #F5F5F7; }
+[data-theme="light"] .fiidii-total-row .fiidii-td-date { background: #EBEBED; }
