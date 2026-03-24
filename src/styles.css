@@ -1135,9 +1135,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── FII/DII new layout: chart left, cards right ─────────────────── */
 .fiidii-main-layout  { display: grid; grid-template-columns: 1fr 240px; gap: 16px; align-items: start; }
-.fiidii-chart-col    { min-width: 0; }
+.fiidii-chart-col    { min-width: 0; display: flex; flex-direction: column; }
 .fiidii-cards-col    { display: flex; flex-direction: column; gap: 10px; }
-.fiidii-card-side    { flex: 1; }
+.fiidii-card-side    { }
 .fiidii-card-mood    { }
 .fiidii-totals-row   { display: flex; align-items: center; gap: 0; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
 .fiidii-total-item   { display: flex; flex-direction: column; gap: 3px; padding: 0 16px; flex: 1; }

@@ -197,7 +197,7 @@ function FiiDiiChart({ history }) {
   }, [history]);
 
   return (
-    <div style={{ position: 'relative', height: 260, width: '100%' }}>
+    <div style={{ position: 'relative', height: '100%', minHeight: 400, width: '100%' }}>
       <canvas ref={canvasRef} />
     </div>
   );
