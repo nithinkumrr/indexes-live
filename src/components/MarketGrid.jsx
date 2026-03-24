@@ -1,4 +1,3 @@
-// src/components/MarketGrid.jsx
 import { useState } from 'react';
 import { MARKETS } from '../data/markets';
 import { formatPrice, formatChange, formatPct } from '../utils/format';
@@ -7,20 +6,11 @@ import Sparkline from './Sparkline';
 import HoursTooltip from './HoursTooltip';
 
 const STATUS_ORDER = { live: 0, pre: 1, closed: 2 };
-
-// Regions that sit side-by-side in one row
 const PAIRED_REGIONS = [['Europe', 'Americas']];
 const SOLO_REGIONS   = ['Asia'];
 const SOLO_BOTTOM    = ['MEA'];
 const COMMODITY_REGIONS = ['Commodity'];
-
-const PANEL_COLS = {
-  Asia:      6,
-  Europe:    4,
-  Americas:  3,
-  MEA:       4,
-  Commodity: 4,
-};
+const PANEL_COLS = { Asia: 6, Europe: 4, Americas: 3, MEA: 4, Commodity: 4 };
 
 export default function MarketGrid({ data }) {
   const [tab, setTab]       = useState('equities');
@@ -36,15 +26,15 @@ export default function MarketGrid({ data }) {
     })
     .sort((a, b) => (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2));
 
-  const soloRegions  = tab === 'equities' ? SOLO_REGIONS : COMMODITY_REGIONS;
+  const soloRegions   = tab === 'equities' ? SOLO_REGIONS : COMMODITY_REGIONS;
   const bottomRegions = tab === 'equities' ? SOLO_BOTTOM : [];
-  const pairedRows   = tab === 'equities' ? PAIRED_REGIONS : [];
+  const pairedRows    = tab === 'equities' ? PAIRED_REGIONS : [];
 
   const renderCard = ({ market, status }) => {
     const d    = data[market.id];
     const gain = d ? d.changePct >= 0 : true;
+    const hrs  = getMarketHoursLabel(market);
     return (
-      (() => { const hrs = getMarketHoursLabel(market); return (
       <HoursTooltip key={market.id} local={hrs.local} ist={hrs.ist}
         className={`market-card ${status === 'live' ? 'market-card-live' : ''}`}>
         <div className="mc-top">
@@ -66,6 +56,20 @@ export default function MarketGrid({ data }) {
           <span className={`mc-pct ${gain ? 'gain' : 'loss'}`}>{d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}</span>
         </div>
         {d && <div className="mc-spark"><Sparkline points={d.spark} gain={gain} height={32} /></div>}
+      </HoursTooltip>
+    );
+  };
+
+  const renderRegion = (region) => {
+    const regionMarkets = allMarkets.filter(({ market }) => market.region === region);
+    if (!regionMarkets.length) return null;
+    const cols = PANEL_COLS[region] || 4;
+    return (
+      <div key={region} className="grid-region">
+        <div className="grid-region-label">{region.toUpperCase()}</div>
+        <div className={`market-grid grid-cols-${cols}`}>
+          {regionMarkets.map(renderCard)}
+        </div>
       </div>
     );
   };
@@ -91,22 +95,8 @@ export default function MarketGrid({ data }) {
         </div>
       </div>
 
-      {/* Solo regions — full width */}
-      {soloRegions.map(region => {
-        const regionMarkets = allMarkets.filter(({ market }) => market.region === region);
-        if (!regionMarkets.length) return null;
-        const cols = PANEL_COLS[region] || 4;
-        return (
-          <div key={region} className="grid-region">
-            <div className="grid-region-label">{region.toUpperCase()}</div>
-            <div className={`market-grid grid-cols-${cols}`}>
-              {regionMarkets.map(renderCard)}
-            </div>
-          </div>
-        );
-      })}
+      {soloRegions.map(renderRegion)}
 
-      {/* Paired regions — side by side */}
       {pairedRows.map(pair => {
         const hasPair = pair.some(r => allMarkets.some(({ market }) => market.region === r));
         if (!hasPair) return null;
@@ -133,20 +123,7 @@ export default function MarketGrid({ data }) {
         <div className="grid-empty">No {filter === 'live' ? 'live' : 'closed'} markets right now.</div>
       )}
 
-      {/* Bottom solo regions (MEA) */}
-      {bottomRegions.map(region => {
-        const regionMarkets = allMarkets.filter(({ market }) => market.region === region);
-        if (!regionMarkets.length) return null;
-        const cols = PANEL_COLS[region] || 4;
-        return (
-          <div key={region} className="grid-region">
-            <div className="grid-region-label">{region.toUpperCase()}</div>
-            <div className={`market-grid grid-cols-${cols}`}>
-              {regionMarkets.map(renderCard)}
-            </div>
-          </div>
-        );
-      })}
+      {bottomRegions.map(renderRegion)}
     </section>
   );
 }

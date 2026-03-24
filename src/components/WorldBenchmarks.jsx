@@ -1,4 +1,3 @@
-// src/components/WorldBenchmarks.jsx — 4×2 grid with sparklines
 import { MARKETS, WORLD_BENCHMARK_IDS } from '../data/markets';
 import { formatPct } from '../utils/format';
 import { getStatus, getMarketHoursLabel } from '../utils/timezone';
@@ -27,9 +26,7 @@ function fmtBenchmark(value, id) {
 
 export default function WorldBenchmarks({ data, region }) {
   const homeIds    = REGION_HOME_IDS[region] || [];
-  const benchmarks = WORLD_BENCHMARK_IDS
-    .map(id => MARKETS.find(m => m.id === id))
-    .filter(Boolean);
+  const benchmarks = WORLD_BENCHMARK_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
 
   return (
     <div className="wb-section">
@@ -41,13 +38,12 @@ export default function WorldBenchmarks({ data, region }) {
           const d        = data[market.id];
           const status   = getStatus(market);
           const rawGain  = d ? d.changePct >= 0 : true;
-          // VIX inverted — rising = fear = bad
           const dispGain = market.id === 'vix' ? !rawGain : rawGain;
           const isHome   = homeIds.includes(market.id);
           const isVIX    = market.id === 'vix';
+          const hrs      = getMarketHoursLabel(market);
 
           return (
-            {(() => { const hrs = getMarketHoursLabel(market); return (
             <HoursTooltip key={market.id} local={hrs.local} ist={hrs.ist}
               className={`wb-card ${status === 'live' ? 'wb-live' : ''} ${isHome ? 'wb-home' : ''} ${isVIX ? 'wb-vix' : ''}`}>
               <div className="wb-top">
@@ -58,27 +54,22 @@ export default function WorldBenchmarks({ data, region }) {
                 </div>
                 {status === 'live' && <span className="wb-dot" />}
               </div>
-
               <div className="wb-price">
                 {d ? fmtBenchmark(d.price, market.id) : '—'}
                 {market.unit && <span className="wb-unit"> {market.unit}</span>}
               </div>
-
               {d && (
                 <div className={`wb-pct ${dispGain ? 'gain' : 'loss'}`}>
                   {rawGain ? '▲' : '▼'} {formatPct(d.changePct)}
                   {isVIX && <span className="wb-vix-label">{rawGain ? ' FEAR↑' : ' CALM↓'}</span>}
                 </div>
               )}
-
-              {/* Sparkline — same style as hero cards */}
               {d?.spark && (
                 <div className="wb-spark">
                   <Sparkline points={d.spark} gain={dispGain} height={32} />
                 </div>
               )}
             </HoursTooltip>
-            );})()}
           );
         })}
       </div>
