@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatPrice, formatChange, formatPct } from '../utils/format';
+import { getStatus } from '../utils/timezone';
 import Sparkline from './Sparkline';
 
 const INDIAN_IDS = new Set(['nifty50','banknifty','sensex','giftnifty','niftynext50',
@@ -186,7 +187,15 @@ export default function IndexModal({ market, data, nseData = {}, onClose }) {
             </div>
           )}
           {d && <div className="im-prev">Prev. close: {fmt(d.prevClose)}</div>}
-          <div className="im-source">{isIndia ? '● Live · NSE/BSE' : '● Yahoo Finance'}</div>
+          <div className="im-source">
+            {(() => {
+              const s = getStatus(market);
+              const dot = s === 'live' ? '🟢' : s === 'pre' ? '🟡' : '🔴';
+              const label = s === 'live' ? 'Live' : s === 'pre' ? 'Pre-open' : 'Closed';
+              const src = isIndia ? 'NSE/BSE' : 'Yahoo Finance';
+              return `${dot} ${label} · ${src}`;
+            })()}
+          </div>
         </div>
 
         {/* Period selector */}

@@ -3,6 +3,7 @@
 // All others: Yahoo Finance
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { MARKETS } from '../data/markets';
+import { isMarketOpen } from '../utils/timezone';
 
 const REFRESH_MS = 20000;
 
@@ -111,10 +112,13 @@ export function useMarketData() {
     if (NSE_IDS.has(market.id) && nseSnapshot?.[market.id]) {
       const d = nseSnapshot[market.id];
       const existing = dataRef.current[market.id];
-      // Keep existing spark and extend it, or make new one
-      const spark = existing?.spark?.length > 5
-        ? [...existing.spark.slice(1), d.price]
-        : makeSpark(d.price, d.changePct);
+      // Only extend spark when market is open, otherwise keep existing spark frozen
+      const isOpen = isMarketOpen(market);
+      const spark = (!isOpen && existing?.spark?.length > 5)
+        ? existing.spark
+        : existing?.spark?.length > 5
+          ? [...existing.spark.slice(1), d.price]
+          : makeSpark(d.price, d.changePct);
       return { ...d, spark };
     }
 
