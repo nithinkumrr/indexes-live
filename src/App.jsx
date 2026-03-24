@@ -86,7 +86,8 @@ export default function App() {
           {view !== 'bubble' && <HeroSection data={data} region={region} nseData={nseData} />}
           {view !== 'bubble' && <WorldBenchmarks data={data} region={region} nseData={nseData} />}
           {view === 'grid'   && <MarketGrid data={data} nseData={nseData} />}
-          {view === 'bubble' && <SentimentTop data={data} nseData={nseData} />}
+          {view === 'bubble' && <HeroSection data={data} region={region} nseData={nseData} />}
+          {view === 'bubble' && <WorldBenchmarks data={data} region={region} nseData={nseData} />}
           {view === 'bubble' && <BubbleView data={data} />}
         </>
       )}
