@@ -8,12 +8,14 @@ import HeroSection from './components/HeroSection';
 import WorldBenchmarks from './components/WorldBenchmarks';
 import MarketGrid from './components/MarketGrid';
 import BubbleView from './components/BubbleView';
+import SentimentLayout from './components/SentimentLayout';
 import FnOPage from './components/FnOPage';
 import GoldPage from './components/GoldPage';
 import IpoPage from './components/IpoPage';
 import BrokerageCalc from './components/BrokerageCalc';
 import IndexModal from './components/IndexModal';
 import Footer from './components/Footer';
+import SentimentTop from './components/SentimentTop';
 import { MARKETS } from './data/markets';
 
 const HASH_MAP = {
@@ -84,6 +86,8 @@ export default function App() {
           {view !== 'bubble' && <HeroSection data={data} region={region} nseData={nseData} />}
           {view !== 'bubble' && <WorldBenchmarks data={data} region={region} nseData={nseData} />}
           {view === 'grid'   && <MarketGrid data={data} nseData={nseData} />}
+          {view === 'bubble' && <SentimentLayout data={data} nseData={nseData} />}
+          {view === 'bubble' && <SentimentTop data={data} nseData={nseData} />}
           {view === 'bubble' && <BubbleView data={data} />}
         </>
       )}

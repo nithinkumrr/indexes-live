@@ -372,7 +372,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .footer-sep { display: none; }
   .footer-brand { margin-bottom: 2px; }
   .footer-text { font-size: 11px; line-height: 1.6; }
-  .mea-strip { grid-template-columns: repeat(4, 1fr); }
+  .mea-strip { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* Market hours tooltip */
@@ -1025,3 +1025,100 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .gold-mcx-fx     { margin-left: auto; }
 .gold-mcx-note   { font-family: var(--mono); font-size: 9px; color: var(--text3); width: 100%; margin-top: 8px; }
 .wb-pe { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-left: 6px; }
+
+/* ── SentimentTop ───────────────────────────────────────────────────────── */
+.st-wrap            { padding: 12px 20px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--border); }
+.st-section         { display: flex; flex-direction: column; gap: 6px; }
+.st-label           { font-family: var(--mono); font-size: 9px; font-weight: 600; color: var(--text3); letter-spacing: 0.08em; }
+
+/* Mini strip cards (commodities + currencies) */
+.st-strip           { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.st-strip::-webkit-scrollbar { display: none; }
+.st-mini            { flex-shrink: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 6px 10px; min-width: 110px; cursor: pointer; transition: border-color 0.15s; }
+.st-mini:hover      { border-color: var(--border2); }
+.st-mini-top        { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
+.st-mini-flag       { font-size: 12px; flex-shrink: 0; }
+.st-mini-name       { font-family: var(--mono); font-size: 9px; color: var(--text2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-mini-pct        { font-family: var(--mono); font-size: 9px; font-weight: 600; white-space: nowrap; }
+.st-mini-price      { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text); }
+.st-mini-unit       { font-size: 8px; color: var(--text3); font-weight: 400; }
+
+/* India + World split */
+.st-split           { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
+.st-india-panel, .st-world-panel { display: flex; flex-direction: column; gap: 6px; }
+.st-india-grid      { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.st-world-grid      { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+/* Grid cards */
+.st-grid-card       { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 10px; cursor: pointer; transition: border-color 0.15s; }
+.st-grid-card:hover { border-color: var(--border2); }
+.st-gc-top          { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+.st-gc-flag         { font-size: 14px; flex-shrink: 0; }
+.st-gc-name         { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--text); }
+.st-gc-exch         { font-family: var(--mono); font-size: 8px; color: var(--text3); }
+.st-gc-price        { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; margin-bottom: 2px; }
+.st-gc-pct          { font-family: var(--mono); font-size: 10px; font-weight: 600; margin-bottom: 4px; }
+.st-gc-pe           { font-weight: 400; color: var(--text3); }
+
+@media (max-width: 768px) {
+  .st-split         { grid-template-columns: 1fr; }
+  .st-world-grid    { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── SentimentLayout ───────────────────────────────────────────────────── */
+.sl-wrap            { padding: 12px 20px 0; display: flex; flex-direction: column; gap: 10px; }
+
+/* Strips */
+.sl-strip-section   { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; }
+.sl-strip-label     { font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 8px; }
+.sl-strip           { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+.sl-strip-item      { cursor: pointer; padding: 4px 0; }
+.sl-strip-top       { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+.sl-strip-flag      { font-size: 13px; flex-shrink: 0; }
+.sl-strip-name      { font-family: var(--mono); font-size: 9px; color: var(--text3); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sl-strip-pct       { font-family: var(--mono); font-size: 9px; font-weight: 700; white-space: nowrap; }
+.sl-strip-price     { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sl-strip-unit      { font-size: 8px; color: var(--text3); font-weight: 400; }
+.sl-strip-spark     { margin-top: 2px; }
+
+/* India + Benchmarks row */
+.sl-panels          { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+.sl-panel-label     { font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 8px; }
+
+/* India 2×2 */
+.sl-panel-india     { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; }
+.sl-india-grid      { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sl-india-card      { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; cursor: pointer; transition: border-color 0.15s; }
+.sl-india-card:hover{ border-color: var(--border2); }
+.sl-india-live      { border-top: 2px solid rgba(0,255,148,0.5); }
+.sl-india-top       { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.sl-india-name      { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text); }
+.sl-india-exch      { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 1px; }
+.sl-india-badge     { font-family: var(--mono); font-size: 8px; font-weight: 700; padding: 2px 5px; border-radius: 3px; }
+.sl-badge-live      { color: var(--live); background: rgba(0,255,148,0.1); }
+.sl-badge-closed    { color: var(--text3); background: var(--bg2); }
+.sl-india-price     { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; margin-bottom: 3px; }
+.sl-india-change    { font-family: var(--mono); font-size: 11px; font-weight: 600; margin-bottom: 6px; }
+.sl-india-pe        { font-weight: 400; color: var(--text3); }
+
+/* World benchmarks 4×2 */
+.sl-panel-world     { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; }
+.sl-bench-grid      { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.sl-bench-card      { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 10px; cursor: pointer; transition: border-color 0.15s; }
+.sl-bench-card:hover{ border-color: var(--border2); }
+.sl-bench-live      { border-top: 2px solid rgba(0,255,148,0.45); }
+.sl-bench-top       { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.sl-bench-flag      { font-size: 14px; flex-shrink: 0; }
+.sl-bench-name      { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sl-bench-exch      { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.sl-bench-dot       { width: 6px; height: 6px; border-radius: 50%; background: var(--live); margin-left: auto; flex-shrink: 0; }
+.sl-bench-price     { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.sl-bench-pct       { font-family: var(--mono); font-size: 10px; font-weight: 600; margin-bottom: 4px; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .sl-wrap          { padding: 10px 12px 0; }
+  .sl-strip         { grid-template-columns: repeat(4, 1fr); }
+  .sl-panels        { grid-template-columns: 1fr; }
+  .sl-bench-grid    { grid-template-columns: repeat(2, 1fr); }
+}
