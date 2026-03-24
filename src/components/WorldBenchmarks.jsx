@@ -3,6 +3,7 @@ import { MARKETS, WORLD_BENCHMARK_IDS } from '../data/markets';
 import { formatPct } from '../utils/format';
 import { getStatus, getMarketHoursLabel } from '../utils/timezone';
 import Sparkline from './Sparkline';
+import HoursTooltip from './HoursTooltip';
 
 const REGION_HOME_IDS = {
   INDIA:    ['nifty50', 'sensex', 'banknifty', 'giftnifty'],
@@ -46,7 +47,9 @@ export default function WorldBenchmarks({ data, region }) {
           const isVIX    = market.id === 'vix';
 
           return (
-            <div key={market.id} className={`wb-card ${status === 'live' ? 'wb-live' : ''} ${isHome ? 'wb-home' : ''} ${isVIX ? 'wb-vix' : ''}`} data-hours={getMarketHoursLabel(market).local} data-hours-ist={getMarketHoursLabel(market).ist || ''}>
+            {(() => { const hrs = getMarketHoursLabel(market); return (
+            <HoursTooltip key={market.id} local={hrs.local} ist={hrs.ist}
+              className={`wb-card ${status === 'live' ? 'wb-live' : ''} ${isHome ? 'wb-home' : ''} ${isVIX ? 'wb-vix' : ''}`}>
               <div className="wb-top">
                 <span className="wb-flag">{market.flag}</span>
                 <div className="wb-info">
@@ -74,7 +77,8 @@ export default function WorldBenchmarks({ data, region }) {
                   <Sparkline points={d.spark} gain={dispGain} height={32} />
                 </div>
               )}
-            </div>
+            </HoursTooltip>
+            );})()}
           );
         })}
       </div>

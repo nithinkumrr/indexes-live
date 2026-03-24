@@ -4,6 +4,7 @@ import { MARKETS } from '../data/markets';
 import { formatPrice, formatChange, formatPct } from '../utils/format';
 import { getStatus, getMarketHoursLabel } from '../utils/timezone';
 import Sparkline from './Sparkline';
+import HoursTooltip from './HoursTooltip';
 
 const STATUS_ORDER = { live: 0, pre: 1, closed: 2 };
 
@@ -43,7 +44,9 @@ export default function MarketGrid({ data }) {
     const d    = data[market.id];
     const gain = d ? d.changePct >= 0 : true;
     return (
-      <div key={market.id} className={`market-card ${status === 'live' ? 'market-card-live' : ''}`} data-hours={getMarketHoursLabel(market).local} data-hours-ist={getMarketHoursLabel(market).ist || ''}>
+      (() => { const hrs = getMarketHoursLabel(market); return (
+      <HoursTooltip key={market.id} local={hrs.local} ist={hrs.ist}
+        className={`market-card ${status === 'live' ? 'market-card-live' : ''}`}>
         <div className="mc-top">
           <div className="mc-left">
             <span className="mc-flag">{market.flag}</span>
