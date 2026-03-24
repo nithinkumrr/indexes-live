@@ -6,6 +6,15 @@ import { MARKETS } from '../data/markets';
 
 const REFRESH_MS = 20000;
 
+// Gift Nifty uses server-side smart caching (10min market hours, 15min off-hours)
+// Frontend refreshes it every 10 minutes to match
+function getGiftNiftyRefreshMs() {
+  const ist  = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const mins = ist.getHours() * 60 + ist.getMinutes();
+  const isOpen = (mins >= 390 && mins < 940) || mins >= 995 || mins < 165;
+  return isOpen ? 10 * 60 * 1000 : 15 * 60 * 1000; // 10min or 15min
+}
+
 function makeSpark(basePrice, changePct, n = 40) {
   const start = basePrice / (1 + changePct / 100);
   const end   = basePrice;
@@ -93,9 +102,7 @@ export function useMarketData() {
           };
         }
       } catch {}
-      // Fall back to Nifty 50 as proxy
-      const nifty = dataRef.current['nifty50'];
-      if (nifty?.price) return { ...nifty, spark: makeSpark(nifty.price, nifty.changePct) };
+      // Don't fall back to Nifty 50 spot — it's a different product
       return null;
     }
 

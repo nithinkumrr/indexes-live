@@ -32,7 +32,7 @@ export default function KiteConnect() {
     return (
       <div className="kite-status kite-connected">
         <span className="kite-dot" />
-        <span>Kite connected{user ? ` · ${user}` : ''}</span>
+        <span>Kite connected</span>
         <span className="kite-note">· Access token valid until midnight IST</span>
       </div>
     );

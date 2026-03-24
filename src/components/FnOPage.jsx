@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import FiiDii from './FiiDii';
-import KiteConnect from './KiteConnect';
 import { getNiftyExpiries, getIndiaMarketStatus, formatDuration } from '../utils/timezone';
 
 // ── India VIX ────────────────────────────────────────────────────────
@@ -151,11 +150,6 @@ export default function FnOPage() {
           <span className="live-pulse" />
           LIVE
         </div>
-      </div>
-
-      {/* Kite Connect */}
-      <div className="fno-section" style={{paddingBottom: 0}}>
-        <KiteConnect />
       </div>
 
       {/* Expiry Countdowns */}

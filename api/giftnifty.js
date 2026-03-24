@@ -1,104 +1,159 @@
-// api/giftnifty.js — Gift Nifty via NSE India public API
-// NSE requires: 1) session cookie from homepage, 2) then data request
+// api/giftnifty.js — Gift Nifty via Kite Connect
+// Fetches NSE IFSC near-month Nifty futures (actual Gift Nifty)
+// Sessions: 6:30–9:00 AM and 4:35 PM–2:45 AM IST, every 15 mins
+
+const KITE_BASE = 'https://api.kite.trade';
+
+function getISTInfo() {
+  const now  = new Date();
+  const ist  = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const mins = ist.getHours() * 60 + ist.getMinutes();
+  const session1 = mins >= 390 && mins < 540;   // 6:30–9:00 AM
+  const session2 = mins >= 995 || mins < 165;   // 4:35 PM–2:45 AM
+  const isOpen   = session1 || session2;
+  const cacheSecs = isOpen ? 900 : 3600;
+  return { isOpen, session1, session2, cacheSecs };
+}
+
+async function getToken(req) {
+  // Try Upstash
+  const uUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const uTok = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (uUrl && uTok) {
+    try {
+      const r = await fetch(`${uUrl}/get/kite_token`, { headers: { Authorization: `Bearer ${uTok}` } });
+      const d = await r.json();
+      if (d?.result) return d.result;
+    } catch (_) {}
+  }
+  // Try KV
+  const kUrl = process.env.KV_REST_API_URL;
+  const kTok = process.env.KV_REST_API_TOKEN;
+  if (kUrl && kTok) {
+    try {
+      const r = await fetch(`${kUrl}/get/kite_token`, { headers: { Authorization: `Bearer ${kTok}` } });
+      const d = await r.json();
+      if (d?.result) return d.result;
+    } catch (_) {}
+  }
+  const m = (req.headers?.cookie || '').match(/kite_token=([^;]+)/);
+  return m ? m[1] : null;
+}
+
+async function kiteGet(path, apiKey, token) {
+  const r = await fetch(`${KITE_BASE}${path}`, {
+    headers: { 'X-Kite-Version': '3', 'Authorization': `token ${apiKey}:${token}` }
+  });
+  if (r.status === 401 || r.status === 403) throw new Error('token_expired');
+  if (!r.ok) throw new Error(`Kite ${r.status}`);
+  return r.json();
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=25, stale-while-revalidate=50');
+  const { isOpen, session1, session2, cacheSecs } = getISTInfo();
+  res.setHeader('Cache-Control', `s-maxage=${cacheSecs}, stale-while-revalidate=${cacheSecs}`);
 
-  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
-
-  // Step 1: Get session cookies
-  let cookies = '';
-  try {
-    const home = await fetch('https://www.nseindia.com', {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' },
-      redirect: 'follow',
-    });
-    cookies = (home.headers.get('set-cookie') || '')
-      .split(/,(?=[^;]+=[^;])/)
-      .map(c => c.split(';')[0].trim())
-      .filter(Boolean)
-      .join('; ');
-  } catch (e) {
-    return res.status(500).json({ error: 'Cookie fetch failed: ' + e.message });
+  if (!isOpen) {
+    return res.json({ price: null, isOpen: false, message: 'Outside Gift Nifty fetch window' });
   }
 
-  const H = {
-    'User-Agent': UA,
-    'Accept': 'application/json, text/plain, */*',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Referer': 'https://www.nseindia.com/',
-    'X-Requested-With': 'XMLHttpRequest',
-    Cookie: cookies,
-  };
+  const apiKey = process.env.KITE_API_KEY;
+  const token  = await getToken(req);
 
-  // Strategy 1: allIndices — includes GIFT Nifty
+  if (!token || !apiKey) {
+    return res.json({ price: null, isOpen, error: 'not_authenticated', loginUrl: '/api/kite-auth' });
+  }
+
   try {
-    const r    = await fetch('https://www.nseindia.com/api/allIndices', { headers: H });
-    const body = await r.json();
-    const indices = body?.data || [];
+    // Step 1: Get NSE IFSC instruments to find current Gift Nifty futures symbol
+    // Gift Nifty futures on Kite: exchange=NSE_IFSC, tradingsymbol like NIFTY25MARFUT
+    const ist    = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const yr     = String(ist.getFullYear()).slice(2);
+    const mon    = months[ist.getMonth()];
+    const nxtMon = months[(ist.getMonth() + 1) % 12];
+    const nxtYr  = ist.getMonth() === 11 ? String(ist.getFullYear() + 1).slice(2) : yr;
 
-    // Look for GIFT NIFTY or NIFTY 50 futures indicator
-    const gift = indices.find(i =>
-      /GIFT/i.test(i.index || '') || /GIFT/i.test(i.indexSymbol || '')
-    );
-    const niftyFut = indices.find(i =>
-      /NIFTY 50 FUTURES/i.test(i.index || '') || /NIFTY50 FUTURES/i.test(i.index || '')
-    );
-    const target = gift || niftyFut;
+    // Try multiple symbol formats Kite uses for NSE IFSC
+    // Gift Nifty on Kite is an INDEX (not futures) — instrument 291849
+    // Symbol: INDICES:GIFT NIFTY
+    const candidates = [
+      'INDICES:GIFT NIFTY',
+      `NSE_IFSC:NIFTY${yr}${mon}FUT`,
+      `NSE_IFSC:NIFTY${nxtYr}${nxtMon}FUT`,
+    ];
 
-    if (target) {
-      return res.json({
-        price:     parseFloat(target.last),
-        prevClose: parseFloat(target.previousClose || target.yearLow),
-        change:    parseFloat(target.variation || target.change || 0),
-        changePct: parseFloat(target.percentChange || target.pChange || 0),
-        source:    'nseindia-allIndices',
-        name:      target.index,
-      });
-    }
-  } catch (_) {}
+    // Try quoting each symbol
+    for (const sym of candidates) {
+      try {
+        const data = await kiteGet(`/quote?i=${encodeURIComponent(sym)}`, apiKey, token);
+        const q    = data?.data?.[sym];
+        if (!q?.last_price) continue;
 
-  // Strategy 2: live F&O snapshot — near-month Nifty futures
-  try {
-    const r    = await fetch('https://www.nseindia.com/api/quote-derivative?symbol=NIFTY', { headers: H });
-    const body = await r.json();
-    const stocks = body?.stocks || [];
+        const price  = q.last_price;
+        const pc     = q.ohlc?.close || q.ohlc?.open || price;
+        const change = price - pc;
 
-    // Near-month index futures
-    const near = stocks.find(s =>
-      s.metadata?.instrumentType === 'Index Futures' &&
-      s.metadata?.expiryDate
-    );
-
-    if (near) {
-      const ltp = parseFloat(near.metadata?.lastPrice || near.marketDeptOrderBook?.tradeInfo?.lastPrice);
-      const pc  = parseFloat(near.metadata?.prevClose || near.metadata?.closePrice || 0);
-      const chg = parseFloat(near.metadata?.change || (ltp - pc));
-      const pct = parseFloat(near.metadata?.pChange || ((chg / pc) * 100));
-
-      if (ltp > 0) {
-        return res.json({ price: ltp, prevClose: pc || ltp, change: chg, changePct: pct, source: 'nseindia-derivatives' });
+        return res.json({
+          price,
+          prevClose: pc,
+          change:    parseFloat(change.toFixed(2)),
+          changePct: pc > 0 ? parseFloat(((change / pc) * 100).toFixed(2)) : 0,
+          open:      q.ohlc?.open,
+          high:      q.ohlc?.high,
+          low:       q.ohlc?.low,
+          isOpen,
+          session:   session1 ? 1 : 2,
+          symbol:    sym,
+          source:    'kite-nseix',
+          timestamp: q.timestamp,
+        });
+      } catch (e) {
+        if (e.message === 'token_expired') {
+          return res.status(401).json({ error: 'token_expired', loginUrl: '/api/kite-auth' });
+        }
+        continue;
       }
     }
-  } catch (_) {}
 
-  // Strategy 3: NSE live market page scrape for Nifty 50 spot (accurate proxy)
-  try {
-    const r    = await fetch('https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050', { headers: H });
-    const body = await r.json();
-    const d    = body?.data?.[0];
-    if (d) {
-      return res.json({
-        price:     parseFloat(d.lastPrice || d.last),
-        prevClose: parseFloat(d.previousClose || d.prevClose),
-        change:    parseFloat(d.change),
-        changePct: parseFloat(d.pChange),
-        source:    'nseindia-nifty50-proxy',
-        note:      'Using Nifty 50 spot as Gift Nifty proxy',
-      });
+    // If all symbols fail, try fetching instruments list to find correct symbol
+    try {
+      const instruments = await kiteGet('/instruments/NSE_IFSC', apiKey, token);
+      // Find NIFTY futures
+      const niftyFut = instruments
+        ?.filter(i => i.name === 'NIFTY' && i.instrument_type === 'FUT')
+        ?.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+
+      if (niftyFut?.length > 0) {
+        const sym  = `NSE_IFSC:${niftyFut[0].tradingsymbol}`;
+        const data = await kiteGet(`/quote?i=${encodeURIComponent(sym)}`, apiKey, token);
+        const q    = data?.data?.[sym];
+        if (q?.last_price) {
+          const price = q.last_price;
+          const pc    = q.ohlc?.close || price;
+          return res.json({
+            price,
+            prevClose: pc,
+            change:    parseFloat((price - pc).toFixed(2)),
+            changePct: pc > 0 ? parseFloat(((price - pc) / pc * 100).toFixed(2)) : 0,
+            open:      q.ohlc?.open,
+            high:      q.ohlc?.high,
+            low:       q.ohlc?.low,
+            isOpen,
+            symbol:    sym,
+            source:    'kite-nseix-discovered',
+          });
+        }
+      }
+    } catch (_) {}
+
+    return res.status(503).json({ error: 'Could not find Gift Nifty symbol', tried: candidates });
+
+  } catch (e) {
+    if (e.message === 'token_expired') {
+      return res.status(401).json({ error: 'token_expired', loginUrl: '/api/kite-auth' });
     }
-  } catch (_) {}
-
-  res.status(503).json({ error: 'All NSE endpoints failed' });
+    return res.status(500).json({ error: e.message });
+  }
 }
