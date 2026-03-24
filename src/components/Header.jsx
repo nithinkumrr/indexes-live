@@ -15,10 +15,14 @@ export default function Header({ lastUpdate, view, setView }) {
     : null;
 
   const tabs = [
-    { id: 'grid',    label: 'Markets' },
-    { id: 'bubble',  label: 'Sentiment' },
-    { id: 'fno',     label: 'F&O' },
-    { id: 'gold',    label: 'Gold' },
+    { id: 'grid',      label: 'Markets' },
+    { id: 'bubble',    label: 'Sentiment' },
+    { id: 'fno',       label: 'F&O' },
+    { id: 'gold',      label: 'Gold', cls: 'tab-gold' },
+    { id: 'ipo',       label: 'IPO',  cls: 'tab-teal' },
+    { id: 'calc',      label: 'Calc', cls: 'tab-blue' },
+    { id: 'brokerage', label: 'Brokers' },
+    { id: 'blog',      label: 'Insights', cls: 'tab-purple' },
   ];
 
   return (
@@ -33,9 +37,8 @@ export default function Header({ lastUpdate, view, setView }) {
       <div className="header-right">
         <div className="view-toggle">
           {tabs.map(tab => (
-            <button
-              key={tab.id}
-              className={`view-btn ${tab.id === 'gold' ? 'gold-tab' : ''} ${view === tab.id ? 'view-active' : ''}`}
+            <button key={tab.id}
+              className={`view-btn ${tab.cls || ''} ${view === tab.id ? 'view-active' : ''}`}
               onClick={() => setView(tab.id)}
               dangerouslySetInnerHTML={{ __html: tab.label }}
             />
