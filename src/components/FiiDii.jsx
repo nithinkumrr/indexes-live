@@ -9,42 +9,78 @@ function fmt(n) {
   return `${sign}₹${abs.toFixed(2)}Cr`;
 }
 
-function BarChart({ history }) {
+function TrendChart({ history }) {
   if (!history?.length) return null;
-  const max = Math.max(...history.map(d => Math.max(Math.abs(d.fiiNet), Math.abs(d.diiNet))));
-  if (max === 0) return null;
+  // Need at least 2 days
+  const days = history.slice(-7);
+  if (days.length < 2) return null;
+
+  const allVals = days.flatMap(d => [d.fiiNet, d.diiNet]);
+  const maxAbs  = Math.max(...allVals.map(Math.abs), 1);
+
+  const H = 100; // chart height in px
+  const W = 100; // percent width per slot
+  const midY = H / 2;
+  const scale = (v) => midY - (v / maxAbs) * (midY * 0.85);
+
+  const fiiPoints = days.map((d, i) => `${(i / (days.length - 1)) * 100},${scale(d.fiiNet)}`).join(' ');
+  const diiPoints = days.map((d, i) => `${(i / (days.length - 1)) * 100},${scale(d.diiNet)}`).join(' ');
+
+  const fmtDate = d => {
+    try { return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); }
+    catch { return d; }
+  };
+  const fmtCr = n => {
+    const abs = Math.abs(n), sign = n >= 0 ? '+' : '-';
+    if (abs >= 10000) return `${sign}₹${(abs/100).toFixed(0)}Cr`;
+    return `${sign}₹${abs.toFixed(0)}Cr`;
+  };
 
   return (
-    <div className="fiidii-chart">
-      {history.map((d, i) => {
-        const fPct = (Math.abs(d.fiiNet) / max) * 100;
-        const dPct = (Math.abs(d.diiNet) / max) * 100;
-        const label = d.date ? new Date(d.date).toLocaleDateString('en-IN', { day:'numeric', month:'short' }) : '';
-        return (
-          <div key={i} className="fiidii-bar-col">
-            <div className="fiidii-bar-pair">
-              <div className="fiidii-bar-wrap">
-                <div className="fiidii-bar fii-bar" style={{
-                  height: `${fPct}%`,
-                  background: d.fiiNet >= 0 ? '#00C896' : '#FF4455',
-                }} title={`FII: ${fmt(d.fiiNet)}`} />
-              </div>
-              <div className="fiidii-bar-wrap">
-                <div className="fiidii-bar dii-bar" style={{
-                  height: `${dPct}%`,
-                  background: d.diiNet >= 0 ? '#4A9EFF' : '#F59E0B',
-                }} title={`DII: ${fmt(d.diiNet)}`} />
-              </div>
-            </div>
-            <div className="fiidii-bar-date">{label}</div>
+    <div className="fiidii-trend">
+      <div className="fiidii-trend-title">Last {days.length} Days — FII &amp; DII Net Flow</div>
+      <div className="fiidii-trend-chart">
+        <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" className="fiidii-svg">
+          {/* Zero line */}
+          <line x1="0" y1={midY} x2="100" y2={midY} stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+          {/* FII line */}
+          <polyline points={fiiPoints} fill="none" stroke="#00C896" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+          {/* DII line */}
+          <polyline points={diiPoints} fill="none" stroke="#4A9EFF" strokeWidth="1.5" strokeDasharray="3 2" vectorEffect="non-scaling-stroke" />
+          {/* Dots */}
+          {days.map((d, i) => {
+            const x = (i / (days.length - 1)) * 100;
+            return (
+              <g key={i}>
+                <circle cx={x} cy={scale(d.fiiNet)} r="1.5" fill="#00C896" vectorEffect="non-scaling-stroke" />
+                <circle cx={x} cy={scale(d.diiNet)} r="1.5" fill="#4A9EFF" vectorEffect="non-scaling-stroke" />
+              </g>
+            );
+          })}
+        </svg>
+        {/* X-axis labels */}
+        <div className="fiidii-trend-dates">
+          {days.map((d, i) => (
+            <div key={i} className="fiidii-trend-date">{fmtDate(d.date)}</div>
+          ))}
+        </div>
+      </div>
+      {/* Values table */}
+      <div className="fiidii-trend-table">
+        <div className="fiidii-trend-row fiidii-trend-head">
+          <span>Date</span><span>FII Net</span><span>DII Net</span>
+        </div>
+        {days.map((d, i) => (
+          <div key={i} className="fiidii-trend-row">
+            <span>{fmtDate(d.date)}</span>
+            <span className={d.fiiNet >= 0 ? 'gain' : 'loss'}>{fmtCr(d.fiiNet)}</span>
+            <span className={d.diiNet >= 0 ? 'gain' : 'loss'}>{fmtCr(d.diiNet)}</span>
           </div>
-        );
-      })}
-      <div className="fiidii-legend">
-        <span><span className="fiidii-dot" style={{background:'#00C896'}} /> FII Net Buy</span>
-        <span><span className="fiidii-dot" style={{background:'#FF4455'}} /> FII Net Sell</span>
-        <span><span className="fiidii-dot" style={{background:'#4A9EFF'}} /> DII Net Buy</span>
-        <span><span className="fiidii-dot" style={{background:'#F59E0B'}} /> DII Net Sell</span>
+        ))}
+      </div>
+      <div className="fiidii-trend-legend">
+        <span><span style={{display:'inline-block',width:16,height:2,background:'#00C896',marginRight:5,verticalAlign:'middle'}}/>FII / FPI</span>
+        <span><span style={{display:'inline-block',width:16,height:2,background:'#4A9EFF',marginRight:5,verticalAlign:'middle',borderTop:'2px dashed #4A9EFF'}}/>DII</span>
       </div>
     </div>
   );
@@ -107,7 +143,7 @@ export default function FiiDii() {
       </div>
 
       {/* Bar chart — last 10 days */}
-      {d.history?.length > 1 && <BarChart history={d.history} />}
+      {d.history?.length > 1 && <TrendChart history={d.history} />}
 
       <div className="fiidii-note">
         Provisional data from NSE. Final figures published by NSDL/CDSL end of day.

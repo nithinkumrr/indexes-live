@@ -2,79 +2,108 @@ import { useState, useEffect } from 'react';
 import { formatPrice, formatChange, formatPct } from '../utils/format';
 import Sparkline from './Sparkline';
 
-function StatRow({ label, value }) {
-  if (!value && value !== 0) return null;
-  return (
-    <div className="im-stat">
-      <span className="im-stat-label">{label}</span>
-      <span className="im-stat-value">{value}</span>
-    </div>
-  );
+const INDIAN_IDS = new Set(['nifty50','banknifty','sensex','giftnifty','niftynext50',
+  'niftymidcap50','niftyit','niftypharma','niftyauto','niftyfmcg','niftymetal',
+  'niftyrealty','niftypsubank','niftyfinservice']);
+
+function fmtNum(n) {
+  if (n == null || isNaN(n)) return '—';
+  if (n >= 1e12) return `${(n/1e12).toFixed(2)}T`;
+  if (n >= 1e9)  return `${(n/1e9).toFixed(2)}B`;
+  if (n >= 1e6)  return `${(n/1e6).toFixed(2)}M`;
+  if (n >= 1e3)  return `${(n/1e3).toFixed(1)}K`;
+  return n.toLocaleString();
 }
 
 export default function IndexModal({ market, data, nseData = {}, onClose }) {
-  const [detail, setDetail] = useState(null);
+  const [ratios, setRatios]   = useState(null);
+  const [ohlc, setOhlc]       = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!market) return;
     document.body.style.overflow = 'hidden';
 
-    // Fetch full Yahoo chart data for this market
-    fetch(`/api/quote?symbol=${encodeURIComponent(market.symbol)}&range=1d&interval=5m`)
-      .then(r => r.json())
-      .then(json => {
-        const result = json?.chart?.result?.[0];
-        if (!result) return;
-        const meta = result.meta;
-        const closes = result.indicators?.quote?.[0]?.close?.filter(v => v != null) || [];
-        const timestamps = result.timestamp || [];
+    const isIndia = INDIAN_IDS.has(market.id);
+    const nd = nseData[market.id];
 
-        setDetail({
-          price:       meta.regularMarketPrice,
-          prevClose:   meta.chartPreviousClose ?? meta.previousClose,
-          open:        meta.regularMarketOpen,
-          high:        meta.regularMarketDayHigh,
-          low:         meta.regularMarketDayLow,
-          volume:      meta.regularMarketVolume,
-          yearHigh:    meta.fiftyTwoWeekHigh,
-          yearLow:     meta.fiftyTwoWeekLow,
-          currency:    meta.currency,
-          exchange:    meta.exchangeName || market.exchange,
-          closes,
-          timestamps,
-        });
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    // For Indian markets: use NSE data for OHLC
+    if (isIndia && nd) {
+      setOhlc({
+        open: nd.open, high: nd.high, low: nd.low,
+        yearHigh: nd.yearHigh, yearLow: nd.yearLow,
+      });
+    }
+
+    // Fetch ratios from Yahoo for ALL markets
+    if (market.symbol && !market.simulation) {
+      fetch(`/api/ratios?symbol=${encodeURIComponent(market.symbol)}`)
+        .then(r => r.json())
+        .then(d => {
+          if (!d.error) setRatios(d);
+          // For non-Indian: also use Yahoo for OHLC
+          if (!isIndia || !nd) {
+            fetch(`/api/quote?symbol=${encodeURIComponent(market.symbol)}`)
+              .then(r => r.json())
+              .then(json => {
+                const meta = json?.chart?.result?.[0]?.meta;
+                if (meta) setOhlc({
+                  open: meta.regularMarketOpen,
+                  high: meta.regularMarketDayHigh,
+                  low:  meta.regularMarketDayLow,
+                  yearHigh: meta.fiftyTwoWeekHigh,
+                  yearLow:  meta.fiftyTwoWeekLow,
+                  volume: meta.regularMarketVolume,
+                });
+              }).catch(() => {});
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
 
     return () => { document.body.style.overflow = ''; };
   }, [market]);
 
   if (!market) return null;
 
-  const d    = data[market.id];
-  const gain = d ? d.changePct >= 0 : true;
+  const d       = data[market.id];
+  const nd      = nseData[market.id];
+  const isIndia = INDIAN_IDS.has(market.id);
+  const gain    = d ? d.changePct >= 0 : true;
+  const fmt     = v => (v != null && v > 0) ? formatPrice(v, market.category === 'commodity') : '—';
 
-  const fmt = v => v != null ? formatPrice(v, market.category === 'commodity') : '—';
-  const fmtVol = v => {
-    if (!v) return '—';
-    if (v >= 1e9) return `${(v / 1e9).toFixed(2)}B`;
-    if (v >= 1e6) return `${(v / 1e6).toFixed(2)}M`;
-    if (v >= 1e3) return `${(v / 1e3).toFixed(1)}K`;
-    return String(v);
-  };
+  const adv   = nd?.advances  || 0;
+  const dec   = nd?.declines  || 0;
+  const unch  = nd?.unchanged || 0;
+  const total = adv + dec + unch;
+  const advPct = total > 0 ? Math.round((adv / total) * 100) : 0;
+  const decPct = total > 0 ? Math.round((dec / total) * 100) : 0;
+
+  // Merge PE/PB from NSE (Indian) or Yahoo ratios
+  const pe = (isIndia && nd?.pe) ? nd.pe : ratios?.pe;
+  const pb = (isIndia && nd?.pb) ? nd.pb : ratios?.pb;
+  const dy = (isIndia && nd?.dy) ? nd.dy : ratios?.dy;
+  const yH = ohlc?.yearHigh || ratios?.yearHigh;
+  const yL = ohlc?.yearLow  || ratios?.yearLow;
+  const vol = ohlc?.volume  || ratios?.volume;
+  const avg50  = ratios?.avg50;
+  const avg200 = ratios?.avg200;
+  const beta   = ratios?.beta;
 
   return (
     <div className="im-overlay" onClick={onClose}>
       <div className="im-modal" onClick={e => e.stopPropagation()}>
+
         {/* Header */}
         <div className="im-header">
           <div className="im-title-row">
             <span className="im-flag">{market.flag}</span>
             <div>
               <div className="im-name">{market.name}</div>
-              <div className="im-meta">{market.exchange} · {market.country}{market.unit ? ` · ${market.unit}` : ''}</div>
+              <div className="im-meta">{market.exchange} · {market.country}</div>
             </div>
           </div>
           <button className="im-close" onClick={onClose}>✕</button>
@@ -88,52 +117,73 @@ export default function IndexModal({ market, data, nseData = {}, onClose }) {
           </div>
           {d && (
             <div className={`im-change ${gain ? 'gain' : 'loss'}`}>
-              {gain ? '▲' : '▼'} {formatChange(d.change)} ({formatPct(d.changePct)})
-              <span className="im-change-label"> today</span>
+              {gain ? '▲' : '▼'} {formatChange(d.change)} &nbsp;({formatPct(d.changePct)}) today
             </div>
           )}
           {d && <div className="im-prev">Prev. close: {fmt(d.prevClose)}</div>}
+          <div className="im-source">{isIndia ? '● Live · NSE/BSE' : '● Yahoo Finance'}</div>
         </div>
 
         {/* Chart */}
         <div className="im-chart">
-          {d?.spark?.length > 1 ? (
-            <Sparkline points={d.spark} gain={gain} height={120} />
-          ) : (
-            <div className="im-chart-empty">Chart loading...</div>
-          )}
+          {d?.spark?.length > 1
+            ? <Sparkline points={d.spark} gain={gain} height={110} />
+            : <div className="im-chart-empty">No chart data</div>}
         </div>
 
-        {/* Stats grid */}
-        {loading ? (
-          <div className="im-loading">Loading details...</div>
-        ) : detail ? (
+        {/* OHLC */}
+        {ohlc && (
           <div className="im-stats">
-            <StatRow label="Open"      value={fmt(detail.open)} />
-            <StatRow label="Day High"  value={fmt(detail.high)} />
-            <StatRow label="Day Low"   value={fmt(detail.low)} />
-            <StatRow label="Prev Close" value={fmt(detail.prevClose)} />
-            <StatRow label="Volume"    value={fmtVol(detail.volume)} />
-            <StatRow label="52W High"  value={fmt(detail.yearHigh)} />
-            <StatRow label="52W Low"   value={fmt(detail.yearLow)} />
-            <StatRow label="Exchange"  value={detail.exchange} />
+            {ohlc.open  && <div className="im-stat"><span className="im-stat-label">Open</span>      <span className="im-stat-value">{fmt(ohlc.open)}</span></div>}
+            {ohlc.high  && <div className="im-stat"><span className="im-stat-label">Day High</span>  <span className="im-stat-value gain">{fmt(ohlc.high)}</span></div>}
+            {ohlc.low   && <div className="im-stat"><span className="im-stat-label">Day Low</span>   <span className="im-stat-value loss">{fmt(ohlc.low)}</span></div>}
+            {d?.prevClose && <div className="im-stat"><span className="im-stat-label">Prev Close</span> <span className="im-stat-value">{fmt(d.prevClose)}</span></div>}
+            {yH         && <div className="im-stat"><span className="im-stat-label">52W High</span>  <span className="im-stat-value">{fmt(yH)}</span></div>}
+            {yL         && <div className="im-stat"><span className="im-stat-label">52W Low</span>   <span className="im-stat-value">{fmt(yL)}</span></div>}
+            {vol        && <div className="im-stat"><span className="im-stat-label">Volume</span>    <span className="im-stat-value">{fmtNum(vol)}</span></div>}
+            {avg50      && <div className="im-stat"><span className="im-stat-label">50D Avg</span>   <span className="im-stat-value">{fmt(avg50)}</span></div>}
+            {avg200     && <div className="im-stat"><span className="im-stat-label">200D Avg</span>  <span className="im-stat-value">{fmt(avg200)}</span></div>}
+            {beta       && <div className="im-stat"><span className="im-stat-label">Beta</span>      <span className="im-stat-value">{beta.toFixed(2)}</span></div>}
           </div>
-        ) : null}
+        )}
 
-        {/* Ratios — Indian markets from NSE */}
-        {nseData[market?.id] && (() => {
-          const nd = nseData[market.id];
-          return (
-            <div className="im-ratios">
-              {nd.pe   > 0 && <div className="im-ratio"><span>P/E</span><strong>{nd.pe.toFixed(2)}</strong></div>}
-              {nd.pb   > 0 && <div className="im-ratio"><span>P/B</span><strong>{nd.pb.toFixed(2)}</strong></div>}
-              {nd.dy   > 0 && <div className="im-ratio"><span>Div Yield</span><strong>{nd.dy.toFixed(2)}%</strong></div>}
-              {nd.advances > 0 && <div className="im-ratio"><span>Advances</span><strong className="gain">{nd.advances}</strong></div>}
-              {nd.declines > 0 && <div className="im-ratio"><span>Declines</span><strong className="loss">{nd.declines}</strong></div>}
+        {/* Ratios — all markets */}
+        {loading && <div className="im-loading">Loading ratios...</div>}
+        {!loading && (pe || pb || dy) && (
+          <div className="im-ratios">
+            {pe   && <div className="im-ratio"><span>P/E Ratio</span>   <strong>{Number(pe).toFixed(2)}x</strong></div>}
+            {pb   && <div className="im-ratio"><span>P/B Ratio</span>   <strong>{Number(pb).toFixed(2)}x</strong></div>}
+            {dy   && <div className="im-ratio"><span>Div Yield</span>   <strong>{Number(dy)}%</strong></div>}
+            {ratios?.marketCap && <div className="im-ratio"><span>Market Cap</span>  <strong>{fmtNum(ratios.marketCap)}</strong></div>}
+          </div>
+        )}
+
+        {/* Advances/Declines — Indian only */}
+        {isIndia && adv + dec > 0 && (
+          <div className="im-adv-wrap">
+            <div className="im-adv-header">
+              <span className="im-adv-title">Market Breadth</span>
+              <span className="im-adv-summary">
+                <span className="gain">▲ {adv} up</span>
+                <span> · </span>
+                <span className="loss">▼ {dec} down</span>
+                {unch > 0 && <span className="im-adv-unch"> · {unch} flat</span>}
+              </span>
             </div>
-          );
-        })()}
-        <div className="im-footer">Indian markets: Live from NSE · Others: Yahoo Finance (15min delay)</div>
+            <div className="im-adv-bar">
+              <div className="im-adv-gain" style={{ width: `${advPct}%` }} />
+              <div className="im-adv-loss" style={{ width: `${decPct}%` }} />
+            </div>
+            <div className="im-adv-labels">
+              <span className="gain">{advPct}% advancing</span>
+              <span className="loss">{decPct}% declining</span>
+            </div>
+          </div>
+        )}
+
+        <div className="im-footer">
+          {isIndia ? 'OHLC & Ratios: NSE · Real-time' : 'Data: Yahoo Finance · Ratios may be delayed'}
+        </div>
       </div>
     </div>
   );

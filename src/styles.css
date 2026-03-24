@@ -638,3 +638,28 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .im-ratio:last-child { border-right: none; }
 .im-ratio span { font-family: var(--mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text3); text-transform: uppercase; }
 .im-ratio strong { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); }
+
+/* Modal advances bar */
+.im-adv-wrap   { padding: 14px 20px 10px; border-top: 1px solid var(--border); }
+.im-adv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
+.im-adv-title  { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--text3); }
+.im-adv-summary { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.im-adv-unch   { color: var(--text3); }
+.im-adv-bar    { height: 8px; border-radius: 4px; background: var(--bg4); display: flex; overflow: hidden; margin-bottom: 6px; }
+.im-adv-gain   { background: var(--gain); transition: width 0.5s ease; }
+.im-adv-loss   { background: var(--loss); transition: width 0.5s ease; }
+.im-adv-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; }
+.im-source     { font-family: var(--mono); font-size: 10px; color: var(--live); margin-top: 4px; }
+
+/* FII/DII trend chart */
+.fiidii-trend        { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px; margin-bottom: 10px; }
+.fiidii-trend-title  { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 12px; }
+.fiidii-trend-chart  { position: relative; margin-bottom: 4px; }
+.fiidii-svg          { width: 100%; height: 100px; display: block; }
+.fiidii-trend-dates  { display: flex; justify-content: space-between; margin-top: 4px; margin-bottom: 12px; }
+.fiidii-trend-date   { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.fiidii-trend-table  { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.fiidii-trend-row    { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 7px 12px; font-family: var(--mono); font-size: 11px; border-bottom: 1px solid var(--border); }
+.fiidii-trend-row:last-child { border-bottom: none; }
+.fiidii-trend-head   { background: var(--bg3); font-size: 10px; color: var(--text3); letter-spacing: 0.5px; }
+.fiidii-trend-legend { display: flex; gap: 16px; margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--text3); }
