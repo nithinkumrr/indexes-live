@@ -15,9 +15,30 @@ export default async function handler(req, res) {
     if (r.ok) {
       const data = await r.json();
       const fo = data?.FO || data?.CM || [];
-      const dates = fo.map(h => h.tradingDate?.split(' ')[0]).filter(Boolean);
+
+      // NSE returns dates in various formats: '26-Mar-2026', '2026-03-26', '26 Mar 2026'
+      // Normalize all to YYYY-MM-DD
+      const normalizeDate = (raw) => {
+        if (!raw) return null;
+        const s = raw.trim();
+        // Already YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        // DD-MMM-YYYY or DD MMM YYYY
+        const m = s.match(/^(\d{1,2})[-\s](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[-\s](\d{4})$/i);
+        if (m) {
+          const months = { jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12' };
+          return `${m[3]}-${months[m[2].toLowerCase()]}-${m[1].padStart(2,'0')}`;
+        }
+        // Fallback: try Date parse
+        try { return new Date(s).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); } catch { return null; }
+      };
+
+      const dates = fo.map(h => normalizeDate(h.tradingDate?.split(' ')[0] || h.tradingDate)).filter(Boolean);
       const names = {};
-      fo.forEach(h => { if (h.tradingDate) names[h.tradingDate.split(' ')[0]] = h.description || h.holiday || ''; });
+      fo.forEach(h => {
+        const norm = normalizeDate(h.tradingDate?.split(' ')[0] || h.tradingDate);
+        if (norm) names[norm] = h.description || h.holiday || h.holidayName || '';
+      });
       if (dates.length > 0) return res.json({ source: 'nse-live', holidays: dates, holidayNames: names });
     }
   } catch (_) {}
