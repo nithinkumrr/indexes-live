@@ -117,7 +117,7 @@ function ComingSoonCard({ title, desc, icon }) {
       <div className="fno-coming-icon">{icon}</div>
       <div className="fno-coming-title">{title}</div>
       <div className="fno-coming-desc">{desc}</div>
-      <div className="fno-coming-badge">Coming with Kite Connect</div>
+      <div className="fno-coming-badge">Coming Soon</div>
     </div>
   );
 }
@@ -137,9 +137,8 @@ export default function FnOPage() {
       {/* Page header */}
       <div className="fno-page-header">
         <div className="fno-page-title">
-          <span className="fno-page-icon">📈</span>
           <div>
-            <div className="fno-page-name">India F&amp;O Dashboard</div>
+            <div className="fno-page-name">India F&O Dashboard</div>
             <div className="fno-page-sub">Nifty · Bank Nifty · NSE derivatives</div>
           </div>
         </div>
@@ -152,21 +151,20 @@ export default function FnOPage() {
       {/* Section: Expiry Countdowns */}
       <div className="fno-section">
         <div className="fno-section-label">⏱ EXPIRY COUNTDOWN</div>
+
+        <div className="fno-expiry-group-label">Nifty 50</div>
         <div className="fno-expiry-grid">
-          <ExpiryCard
-            label="Weekly Expiry"
-            date={expiries.weekly.date}
-            secsLeft={expiries.weekly.secsLeft}
-            color="#4A9EFF"
-          />
-          <ExpiryCard
-            label="Monthly Expiry"
-            date={expiries.monthly.date}
-            secsLeft={expiries.monthly.secsLeft}
-            color="#F59E0B"
-          />
+          <ExpiryCard label="Weekly — Tuesday"  date={expiries.weekly.date}        secsLeft={expiries.weekly.secsLeft}        color="#4A9EFF" />
+          <ExpiryCard label="Monthly — Thursday" date={expiries.monthly.date}       secsLeft={expiries.monthly.secsLeft}       color="#4A9EFF" />
         </div>
-        <div className="fno-expiry-note">Nifty 50 F&amp;O · Every Thursday 15:30 IST · NSE</div>
+
+        <div className="fno-expiry-group-label" style={{ marginTop: 20 }}>Sensex</div>
+        <div className="fno-expiry-grid">
+          <ExpiryCard label="Weekly — Friday"   date={expiries.sensexWeekly.date}  secsLeft={expiries.sensexWeekly.secsLeft}  color="#F59E0B" />
+          <ExpiryCard label="Monthly — Friday"  date={expiries.sensexMonthly.date} secsLeft={expiries.sensexMonthly.secsLeft} color="#F59E0B" />
+        </div>
+
+        <div className="fno-expiry-note">Nifty: weekly Tue · monthly last Thu &nbsp;|&nbsp; Sensex: weekly Fri · monthly last Fri · 15:30 IST · NSE / BSE</div>
       </div>
 
       {/* Section: India VIX */}
@@ -183,25 +181,25 @@ export default function FnOPage() {
 
       {/* Section: Coming soon */}
       <div className="fno-section">
-        <div className="fno-section-label">🔜 COMING SOON — KITE CONNECT</div>
+        <div className="fno-section-label">COMING SOON</div>
         <div className="fno-coming-grid">
           <ComingSoonCard
-            icon="📊"
+            icon=""
             title="PCR — Put Call Ratio"
             desc="Live put-call ratio for Nifty & Bank Nifty. Above 1 = bullish sentiment, below 0.7 = bearish."
           />
           <ComingSoonCard
-            icon="🔥"
+            icon=""
             title="OI Buildup"
             desc="Which strikes are seeing heavy call/put writing. Identifies key support and resistance levels."
           />
           <ComingSoonCard
-            icon="🎯"
+            icon=""
             title="Max Pain"
             desc="The price at which option writers lose least. Nifty often gravitates here near expiry."
           />
           <ComingSoonCard
-            icon="🏦"
+            icon=""
             title="FII / DII Flow"
             desc="Net buying and selling by foreign and domestic institutions. Key sentiment indicator."
           />

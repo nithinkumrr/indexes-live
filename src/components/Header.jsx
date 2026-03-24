@@ -24,7 +24,7 @@ export default function Header({ lastUpdate, view, setView }) {
             ◉ Sentiment
           </button>
           <button className={`view-btn fno-btn ${view === 'fno' ? 'view-active' : ''}`} onClick={() => setView('fno')}>
-            📈 F&amp;O
+            F&amp;O
           </button>
         </div>
         <AlertsBell />

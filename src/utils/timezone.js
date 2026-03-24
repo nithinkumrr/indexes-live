@@ -178,11 +178,27 @@ export function getNiftyExpiries() {
   const now = new Date();
   const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
 
-  function nextThursday(from) {
+  function nextTuesday(from) {
     const d = new Date(from);
     const day = d.getDay();
-    const daysUntil = (4 - day + 7) % 7 || 7; // 4 = Thursday
+    const daysUntil = (2 - day + 7) % 7 || 7;
     d.setDate(d.getDate() + daysUntil);
+    d.setHours(15, 30, 0, 0);
+    return d;
+  }
+
+  function nextFriday(from) {
+    const d = new Date(from);
+    const day = d.getDay();
+    const daysUntil = (5 - day + 7) % 7 || 7; // 5 = Friday
+    d.setDate(d.getDate() + daysUntil);
+    d.setHours(15, 30, 0, 0);
+    return d;
+  }
+
+  function lastFridayOfMonth(year, month) {
+    const d = new Date(year, month + 1, 0);
+    while (d.getDay() !== 5) d.setDate(d.getDate() - 1);
     d.setHours(15, 30, 0, 0);
     return d;
   }
@@ -194,15 +210,30 @@ export function getNiftyExpiries() {
     return d;
   }
 
-  // Weekly — next Thursday (or this Thursday if not expired)
-  let weekly = nextThursday(ist);
-  // If today is Thursday and market hasn't closed yet, use today
-  if (ist.getDay() === 4 && (ist.getHours() * 60 + ist.getMinutes()) < 15 * 60 + 30) {
+  // Weekly — next Tuesday (Nifty weekly expiry)
+  let weekly = nextTuesday(ist);
+  if (ist.getDay() === 2 && (ist.getHours() * 60 + ist.getMinutes()) < 15 * 60 + 30) {
     weekly = new Date(ist);
     weekly.setHours(15, 30, 0, 0);
   }
 
-  // Monthly — last Thursday of current month; if passed, next month
+  // Sensex weekly — next Friday
+  let sensexWeekly = nextFriday(ist);
+  if (ist.getDay() === 5 && (ist.getHours() * 60 + ist.getMinutes()) < 15 * 60 + 30) {
+    sensexWeekly = new Date(ist);
+    sensexWeekly.setHours(15, 30, 0, 0);
+  }
+
+  // Sensex monthly — last Friday of month
+  let sensexMonthly = lastFridayOfMonth(ist.getFullYear(), ist.getMonth());
+  if (sensexMonthly <= ist) {
+    sensexMonthly = ist.getMonth() === 11
+      ? lastFridayOfMonth(ist.getFullYear() + 1, 0)
+      : lastFridayOfMonth(ist.getFullYear(), ist.getMonth() + 1);
+  }
+
+  const secsToSensexWeekly  = Math.max(0, Math.floor((sensexWeekly  - now) / 1000));
+  const secsToSensexMonthly = Math.max(0, Math.floor((sensexMonthly - now) / 1000));
   let monthly = lastThursdayOfMonth(ist.getFullYear(), ist.getMonth());
   if (monthly <= ist) {
     monthly = ist.getMonth() === 11
@@ -223,7 +254,9 @@ export function getNiftyExpiries() {
   };
 
   return {
-    weekly:  { date: fmtDate(weekly),  secsLeft: secsToWeekly,  label: fmtDays(secsToWeekly)  },
-    monthly: { date: fmtDate(monthly), secsLeft: secsToMonthly, label: fmtDays(secsToMonthly) },
+    weekly:        { date: fmtDate(weekly),        secsLeft: secsToWeekly,        label: fmtDays(secsToWeekly)        },
+    monthly:       { date: fmtDate(monthly),       secsLeft: secsToMonthly,       label: fmtDays(secsToMonthly)       },
+    sensexWeekly:  { date: fmtDate(sensexWeekly),  secsLeft: secsToSensexWeekly,  label: fmtDays(secsToSensexWeekly)  },
+    sensexMonthly: { date: fmtDate(sensexMonthly), secsLeft: secsToSensexMonthly, label: fmtDays(secsToSensexMonthly) },
   };
 }

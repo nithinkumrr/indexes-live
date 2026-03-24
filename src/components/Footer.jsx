@@ -7,8 +7,6 @@ export default function Footer() {
       <span className="footer-sep">·</span>
       <span className="footer-text">Prices refresh every 20s</span>
       <span className="footer-sep">·</span>
-      <span className="footer-text">Market open &amp; close based on local exchange hours</span>
-      <span className="footer-sep">·</span>
       <span className="footer-text">Built for India</span>
     </footer>
   );
