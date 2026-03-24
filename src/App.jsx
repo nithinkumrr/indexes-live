@@ -12,21 +12,17 @@ import FnOPage from './components/FnOPage';
 import GoldPage from './components/GoldPage';
 import IpoPage from './components/IpoPage';
 import BrokerageCalc from './components/BrokerageCalc';
-import IpoPage from './components/IpoPage';
-import CalcPage from './components/CalcPage';
-import BrokeragePage from './components/BrokeragePage';
-import BlogPage from './components/BlogPage';
 import IndexModal from './components/IndexModal';
 import Footer from './components/Footer';
 import { MARKETS } from './data/markets';
 
-const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc', 'brokerage', 'blog']);
+const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'brokerage']);
 
 export default function App() {
   const region = useMemo(() => detectRegion(), []);
   const { data, lastUpdate, nseData } = useMarketData();
-  const [view, setView]               = useState('grid');
-  const [selectedId, setSelectedId]   = useState(null);
+  const [view, setView]             = useState('grid');
+  const [selectedId, setSelectedId] = useState(null);
 
   const selectedMarket = selectedId ? MARKETS.find(m => m.id === selectedId) : null;
   const isFullPage = FULL_PAGES.has(view);
@@ -42,9 +38,8 @@ export default function App() {
         view === 'fno'       ? <FnOPage /> :
         view === 'gold'      ? <GoldPage /> :
         view === 'ipo'       ? <IpoPage /> :
-        view === 'calc'      ? <CalcPage /> :
-        view === 'brokerage' ? <BrokeragePage /> :
-        view === 'blog'      ? <BlogPage /> : null
+        view === 'brokerage' ? <div style={{maxWidth:1100,margin:'0 auto',padding:'24px 20px'}}><BrokerageCalc /></div> :
+        null
       ) : (
         <>
           <Ticker data={data} />
