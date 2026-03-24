@@ -1,16 +1,13 @@
-// api/fiidii.js — FII/DII daily trading data from NSE
-// NSE fiidiiTradeReact returns: [{ category, buyValue, sellValue, netValue, date }, ...]
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
 
-  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
 
-  // Step 1: get session cookie
   let cookies = '';
   try {
     const home = await fetch('https://www.nseindia.com', {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' },
+      headers: { 'User-Agent': UA, 'Accept': 'text/html' },
     });
     cookies = (home.headers.get('set-cookie') || '')
       .split(/,(?=[^;]+=)/).map(c => c.split(';')[0].trim()).filter(Boolean).join('; ');
@@ -20,62 +17,89 @@ export default async function handler(req, res) {
 
   const H = {
     'User-Agent': UA, 'Accept': 'application/json',
-    'Referer': 'https://www.nseindia.com/', 'Accept-Language': 'en-US,en;q=0.9',
-    Cookie: cookies,
+    'Referer': 'https://www.nseindia.com/', Cookie: cookies,
+  };
+
+  const parseNum = v => {
+    if (v == null) return 0;
+    const n = parseFloat(String(v).replace(/,/g, ''));
+    return isNaN(n) ? 0 : n;
   };
 
   try {
-    const r    = await fetch('https://www.nseindia.com/api/fiidiiTradeReact', { headers: H });
-    if (!r.ok) throw new Error(`NSE returned ${r.status}`);
+    const r = await fetch('https://www.nseindia.com/api/fiidiiTradeReact', { headers: H });
+    if (!r.ok) throw new Error(`NSE ${r.status}`);
     const data = await r.json();
 
-    // NSE returns array: [{category: "FII/FPI", buyValue: "...", sellValue: "...", netValue: "...", date: "..."}, ...]
-    // or nested by date: { date: [...entries] }
-    // Handle both formats
+    // NSE returns array of daily records grouped by date
+    // Each record has: date, fiiNet or buyValue/sellValue/netValue, category
+    let entries = Array.isArray(data) ? data : (data.data || []);
 
-    let entries = [];
-    if (Array.isArray(data)) {
-      entries = data;
-    } else if (data && typeof data === 'object') {
-      // Could be { data: [...] } or date-keyed object
-      entries = data.data || Object.values(data).flat();
+    if (!entries.length) throw new Error('Empty');
+
+    // Log raw to understand structure
+    const sample = entries[0];
+    console.log('Sample entry:', JSON.stringify(sample));
+
+    // Try to find category-based structure first
+    const hasCat = entries.some(e => e.category || e.clientType || e.client);
+
+    let history = [];
+
+    if (hasCat) {
+      // Group by date, each date has FII and DII rows
+      const byDate = {};
+      for (const e of entries) {
+        const date = e.date || e.tradingDate || e.DATE || '';
+        if (!byDate[date]) byDate[date] = { date, fiiRow: null, diiRow: null };
+        const cat = String(e.category || e.clientType || e.client || '').toUpperCase();
+        if (cat.includes('FII') || cat.includes('FPI') || cat.includes('FOREIGN')) {
+          byDate[date].fiiRow = e;
+        } else if (cat.includes('DII') || cat.includes('DOMESTIC')) {
+          byDate[date].diiRow = e;
+        }
+      }
+
+      history = Object.values(byDate)
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .slice(-10)
+        .map(({ date, fiiRow, diiRow }) => ({
+          date,
+          fiiNet:  parseNum(fiiRow?.netValue ?? fiiRow?.net ?? fiiRow?.netPurchaseSales ?? 0),
+          fiiBuy:  parseNum(fiiRow?.buyValue ?? fiiRow?.grossPurchase ?? 0),
+          fiiSell: parseNum(fiiRow?.sellValue ?? fiiRow?.grossSales ?? 0),
+          diiNet:  parseNum(diiRow?.netValue ?? diiRow?.net ?? diiRow?.netPurchaseSales ?? 0),
+          diiBuy:  parseNum(diiRow?.buyValue ?? diiRow?.grossPurchase ?? 0),
+          diiSell: parseNum(diiRow?.sellValue ?? diiRow?.grossSales ?? 0),
+        }));
+    } else {
+      // Date-level records with fiiNetVal/diiNetVal
+      history = entries
+        .sort((a, b) => new Date(a.date || a.DATE) - new Date(b.date || b.DATE))
+        .slice(-10)
+        .map(e => ({
+          date:    e.date || e.DATE || '',
+          fiiNet:  parseNum(e.fiiNetVal ?? e.fiiNet ?? e.FII_NET ?? 0),
+          fiiBuy:  parseNum(e.fiiBuyVal ?? e.fiiBuy ?? 0),
+          fiiSell: parseNum(e.fiiSellVal ?? e.fiiSell ?? 0),
+          diiNet:  parseNum(e.diiNetVal ?? e.diiNet ?? e.DII_NET ?? 0),
+          diiBuy:  parseNum(e.diiBuyVal ?? e.diiBuy ?? 0),
+          diiSell: parseNum(e.diiSellVal ?? e.diiSell ?? 0),
+        }));
     }
 
-    if (!entries.length) throw new Error('Empty response');
-
-    // Parse a number from NSE's formatted strings like "12,345.67" or "-1,234.56"
-    const parseNum = v => {
-      if (v == null) return 0;
-      const n = parseFloat(String(v).replace(/,/g, ''));
-      return isNaN(n) ? 0 : n;
-    };
-
-    // Find FII and DII rows
-    const fiiRow = entries.find(e =>
-      /FII|FPI|FOREIGN/i.test(e.category || e.client || e.clientType || '')
-    );
-    const diiRow = entries.find(e =>
-      /DII|DOMESTIC/i.test(e.category || e.client || e.clientType || '')
-    );
-
-    if (!fiiRow && !diiRow) {
-      // Return raw for debugging
-      return res.status(422).json({ error: 'Could not identify FII/DII rows', sample: entries.slice(0, 3) });
-    }
-
-    const fiiNet = parseNum(fiiRow?.netValue ?? fiiRow?.net ?? fiiRow?.netPurchaseSales);
-    const diinet = parseNum(diiRow?.netValue ?? diiRow?.net ?? diiRow?.netPurchaseSales);
-    const fiiBuy  = parseNum(fiiRow?.buyValue ?? fiiRow?.grossPurchase);
-    const fiiSell = parseNum(fiiRow?.sellValue ?? fiiRow?.grossSales);
-    const diiBuy  = parseNum(diiRow?.buyValue ?? diiRow?.grossPurchase);
-    const diiSell = parseNum(diiRow?.sellValue ?? diiRow?.grossSales);
-    const date    = fiiRow?.date || diiRow?.date || entries[0]?.date || 'Today';
+    const latest = history[history.length - 1] || {};
 
     return res.json({
-      fiiNet, fiiBuy, fiiSell,
-      diiNet: diinet, diiBuy, diiSell,
-      date, source: 'nse-live',
-      history: [],
+      fiiNet: latest.fiiNet || 0,
+      fiiBuy: latest.fiiBuy || 0,
+      fiiSell: latest.fiiSell || 0,
+      diiNet: latest.diiNet || 0,
+      diiBuy: latest.diiBuy || 0,
+      diiSell: latest.diiSell || 0,
+      date: latest.date || '',
+      history,
+      source: 'nse-live',
     });
   } catch (e) {
     return res.status(503).json({ error: e.message, source: 'failed' });

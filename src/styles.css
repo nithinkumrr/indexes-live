@@ -575,3 +575,61 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .kite-connected   { color: var(--live); }
 .kite-dot         { width: 8px; height: 8px; border-radius: 50%; background: var(--live); animation: pulse 1.4s ease-in-out infinite; flex-shrink: 0; }
 .kite-note        { font-size: 10px; color: var(--text3); margin-left: 4px; }
+
+[data-theme="light"] .bubble-name { color: #1A1A1C !important; }
+[data-theme="light"] .bubble-circle { border-width: 2px !important; }
+[data-theme="light"] .bubble-pct { font-weight: 800 !important; }
+[data-theme="light"] .bubble-title { color: #4A4A50; }
+[data-theme="light"] .bubble-avg { color: #1A1A1C; }
+[data-theme="light"] .bubble-region-btn { border-color: rgba(0,0,0,0.15); color: #4A4A50; }
+[data-theme="light"] .bubble-region-active { background: #E0E0E3; color: #1A1A1C; border-color: #1D6FD8; }
+[data-theme="light"] .bubble-sort-btn { color: #4A4A50; }
+[data-theme="light"] .bubble-sort-active { background: #FFFFFF; color: #1A1A1C; }
+[data-theme="light"] .bubble-sort { background: #EBEBED; border-color: rgba(0,0,0,0.12); }
+[data-theme="light"] .bubble-legend { border-color: rgba(0,0,0,0.1); }
+[data-theme="light"] .bl-item { color: #4A4A50; }
+[data-theme="light"] .bt-name { color: #1A1A1C; }
+[data-theme="light"] .bt-exchange { color: #4A4A50; }
+[data-theme="light"] .bt-price { color: #1A1A1C; }
+[data-theme="light"] .bt-nodata { color: #8A8A92; }
+[data-theme="light"] .bt-status { font-weight: 600; }
+[data-theme="light"] .bubble-tooltip { background: #FFFFFF; border-color: rgba(0,0,0,0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+
+
+/* ─── INDEX MODAL ───────────────────────────────────────────────────── */
+.im-overlay  { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+.im-modal    { background: var(--bg2); border: 1px solid var(--border2); border-radius: 14px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+.im-header   { display: flex; align-items: flex-start; justify-content: space-between; padding: 18px 20px 12px; border-bottom: 1px solid var(--border); }
+.im-title-row { display: flex; align-items: center; gap: 12px; }
+.im-flag     { font-size: 24px; }
+.im-name     { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--text); }
+.im-meta     { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-top: 2px; }
+.im-close    { font-size: 16px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: color 0.15s; }
+.im-close:hover { color: var(--text); }
+
+.im-price-section { padding: 16px 20px 12px; }
+.im-price    { font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--text); letter-spacing: -1.5px; line-height: 1; margin-bottom: 6px; }
+.im-unit     { font-size: 16px; color: var(--text3); font-weight: 400; }
+.im-change   { font-family: var(--mono); font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.im-change-label { font-size: 12px; font-weight: 400; color: var(--text3); }
+.im-prev     { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+
+.im-chart    { padding: 0 20px 12px; }
+.im-chart-empty { height: 120px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.im-loading  { padding: 16px 20px; font-family: var(--mono); font-size: 12px; color: var(--text3); }
+
+.im-stats    { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 1px solid var(--border); }
+.im-stat     { display: flex; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid var(--border); }
+.im-stat:nth-child(odd) { border-right: 1px solid var(--border); }
+.im-stat-label { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.im-stat-value { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text); }
+
+.im-footer   { padding: 10px 20px; font-family: var(--mono); font-size: 10px; color: var(--text3); border-top: 1px solid var(--border); text-align: center; }
+
+[data-theme="light"] .im-overlay { background: rgba(0,0,0,0.4); }
+[data-theme="light"] .im-modal   { box-shadow: 0 24px 60px rgba(0,0,0,0.2); }
+
+/* Make cards clickable */
+.market-card  { cursor: pointer; }
+.hero-card    { cursor: pointer; }
+.wb-card      { cursor: pointer; }

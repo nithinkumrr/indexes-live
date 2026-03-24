@@ -45,7 +45,7 @@ export default function WorldBenchmarks({ data, region }) {
 
           return (
             <HoursTooltip key={market.id} local={hrs.local} ist={hrs.ist}
-              className={`wb-card ${status === 'live' ? 'wb-live' : ''} ${isHome ? 'wb-home' : ''} ${isVIX ? 'wb-vix' : ''}`}>
+              className={`wb-card ${status === 'live' ? 'wb-live' : ''} ${isHome ? 'wb-home' : ''} ${isVIX ? 'wb-vix' : ''}`} data-market-id={market.id}>
               <div className="wb-top">
                 <span className="wb-flag">{market.flag}</span>
                 <div className="wb-info">

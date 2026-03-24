@@ -9,15 +9,24 @@ import WorldBenchmarks from './components/WorldBenchmarks';
 import MarketGrid from './components/MarketGrid';
 import BubbleView from './components/BubbleView';
 import FnOPage from './components/FnOPage';
+import IndexModal from './components/IndexModal';
 import Footer from './components/Footer';
+import { MARKETS } from './data/markets';
 
 export default function App() {
   const region = useMemo(() => detectRegion(), []);
   const { data, lastUpdate } = useMarketData();
-  const [view, setView] = useState('grid');
+  const [view, setView]           = useState('grid');
+  const [selectedId, setSelectedId] = useState(null);
+
+  const selectedMarket = selectedId ? MARKETS.find(m => m.id === selectedId) : null;
 
   return (
-    <div className="app">
+    <div className="app" onClick={e => {
+      // Bubble up clicks from cards
+      const card = e.target.closest('[data-market-id]');
+      if (card) setSelectedId(card.dataset.marketId);
+    }}>
       <Header lastUpdate={lastUpdate} view={view} setView={setView} />
       <Ticker data={data} />
       <WorldClocks />
@@ -32,6 +41,14 @@ export default function App() {
         </>
       )}
       <Footer />
+
+      {selectedMarket && (
+        <IndexModal
+          market={selectedMarket}
+          data={data}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
     </div>
   );
 }

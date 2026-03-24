@@ -36,7 +36,7 @@ export default function MarketGrid({ data }) {
     const hrs  = getMarketHoursLabel(market);
     return (
       <HoursTooltip key={market.id} local={hrs.local} ist={hrs.ist}
-        className={`market-card ${status === 'live' ? 'market-card-live' : ''}`}>
+        className={`market-card ${status === 'live' ? 'market-card-live' : ''}`} data-market-id={market.id}>
         <div className="mc-top">
           <div className="mc-left">
             <span className="mc-flag">{market.flag}</span>

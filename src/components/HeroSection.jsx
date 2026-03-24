@@ -74,7 +74,7 @@ export default function HeroSection({ data, region }) {
             const showPreMarket = market.id === 'giftnifty' && (istMin < 9*60+15 || istMin > 15*60+30);
             return (
               <HoursTooltip key={market.id} local={hrs.local} ist={hrs.ist}
-                className={`hero-card ${status === 'live' ? 'hero-card-live' : ''} ${market.giftCard ? 'hero-card-gift' : ''}`}>
+                className={`hero-card ${status === 'live' ? 'hero-card-live' : ''} ${market.giftCard ? 'hero-card-gift' : ''}`} data-market-id={market.id}>
                 <div className="hero-card-top">
                   <div>
                     <div className="hero-exchange">{market.exchange} · {market.country}</div>
