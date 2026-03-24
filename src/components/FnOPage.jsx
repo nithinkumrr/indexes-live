@@ -227,9 +227,8 @@ export default function FnOPage() {
       <div className="fno-section">
         <div className="fno-section-label">OPTION CHAIN DATA</div>
         <FnoData />
-          
-        </div>
       </div>
+
     </div>
   );
 }
