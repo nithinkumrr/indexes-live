@@ -87,28 +87,20 @@ export default function IndexModal({ market, data, nseData = {}, onClose }) {
         const highs  = (quotes.high  ?? []).filter(v => v != null);
         const lows   = (quotes.low   ?? []).filter(v => v != null);
         setChartData({ closes, meta });
-        // Always set OHLC from Yahoo meta for non-Indian or as fallback
-        const yahooOhlc = {
-          open:     meta.regularMarketOpen,
-          high:     meta.regularMarketDayHigh,
-          low:      meta.regularMarketDayLow,
-          close:    meta.regularMarketPrice,
-          yearHigh: meta.fiftyTwoWeekHigh,
-          yearLow:  meta.fiftyTwoWeekLow,
-        };
-        // For Indian markets: keep NSE data as priority, Yahoo as fallback
-        if (!isIndia) {
-          setOhlc(yahooOhlc);
-        } else {
-          setOhlc(prev => ({
-            open:     prev?.open     || yahooOhlc.open,
-            high:     prev?.high     || yahooOhlc.high,
-            low:      prev?.low      || yahooOhlc.low,
-            close:    prev?.close    || yahooOhlc.close,
-            yearHigh: prev?.yearHigh || yahooOhlc.yearHigh,
-            yearLow:  prev?.yearLow  || yahooOhlc.yearLow,
-          }));
-        }
+        // Yahoo meta is reliable for Open/High/Low for all markets including ^BSESN
+        const yahooOpen  = meta.regularMarketOpen;
+        const yahooHigh  = meta.regularMarketDayHigh;
+        const yahooLow   = meta.regularMarketDayLow;
+        const yahooYH    = meta.fiftyTwoWeekHigh;
+        const yahooYL    = meta.fiftyTwoWeekLow;
+
+        setOhlc(prev => ({
+          open:     yahooOpen  || prev?.open     || nd?.open,
+          high:     yahooHigh  || prev?.high     || nd?.high,
+          low:      yahooLow   || prev?.low      || nd?.low,
+          yearHigh: yahooYH    || prev?.yearHigh || nd?.yearHigh,
+          yearLow:  yahooYL    || prev?.yearLow  || nd?.yearLow,
+        }));
       })
       .catch(() => {})
       .finally(() => setLC(false));
@@ -223,17 +215,19 @@ export default function IndexModal({ market, data, nseData = {}, onClose }) {
 
         {/* OHLC */}
         <div className="im-stats">
-          <div className="im-stat"><span className="im-stat-label">Open</span>      <span className="im-stat-value">{fmt(ohlc?.open || nd?.open)}</span></div>
-          <div className="im-stat"><span className="im-stat-label">High</span>      <span className="im-stat-value gain">{fmt(ohlc?.high || nd?.high)}</span></div>
-          <div className="im-stat"><span className="im-stat-label">Low</span>       <span className="im-stat-value loss">{fmt(ohlc?.low  || nd?.low)}</span></div>
-          <div className="im-stat"><span className="im-stat-label">Close</span>     <span className="im-stat-value">{d ? formatPrice(d.price, market.category==='commodity') : '—'}</span></div>
-          <div className="im-stat"><span className="im-stat-label">Prev Close</span><span className="im-stat-value">{fmt(d?.prevClose)}</span></div>
-          <div className="im-stat"><span className="im-stat-label">52W High</span>  <span className="im-stat-value">{fmt(yH)}</span></div>
-          <div className="im-stat"><span className="im-stat-label">52W Low</span>   <span className="im-stat-value">{fmt(yL)}</span></div>
-          {nd?.vwap  && <div className="im-stat"><span className="im-stat-label">VWAP</span>     <span className="im-stat-value im-vwap">{fmt(nd.vwap)}</span></div>}
-          {avg50  && <div className="im-stat"><span className="im-stat-label">50D Avg</span>  <span className="im-stat-value">{fmt(avg50)}</span></div>}
-          {avg200 && <div className="im-stat"><span className="im-stat-label">200D Avg</span> <span className="im-stat-value">{fmt(avg200)}</span></div>}
-          {beta   && <div className="im-stat"><span className="im-stat-label">Beta</span>     <span className="im-stat-value">{Number(beta).toFixed(2)}</span></div>}
+          {/* If we have Open, show full OHLC. Otherwise just 52W. */}
+          {(ohlc?.open || nd?.open) ? <>
+            <div className="im-stat"><span className="im-stat-label">Open</span>      <span className="im-stat-value">{fmt(ohlc?.open || nd?.open)}</span></div>
+            <div className="im-stat"><span className="im-stat-label">High</span>      <span className="im-stat-value gain">{fmt(ohlc?.high || nd?.high)}</span></div>
+            <div className="im-stat"><span className="im-stat-label">Low</span>       <span className="im-stat-value loss">{fmt(ohlc?.low  || nd?.low)}</span></div>
+            <div className="im-stat"><span className="im-stat-label">Close</span>     <span className="im-stat-value">{formatPrice(d?.price, market.category==='commodity')}</span></div>
+          </> : null}
+          {yH && <div className="im-stat"><span className="im-stat-label">52W High</span> <span className="im-stat-value">{fmt(yH)}</span></div>}
+          {yL && <div className="im-stat"><span className="im-stat-label">52W Low</span>  <span className="im-stat-value">{fmt(yL)}</span></div>}
+          {nd?.vwap  && <div className="im-stat"><span className="im-stat-label">VWAP</span>    <span className="im-stat-value im-vwap">{fmt(nd.vwap)}</span></div>}
+          {avg50     && <div className="im-stat"><span className="im-stat-label">50D Avg</span> <span className="im-stat-value">{fmt(avg50)}</span></div>}
+          {avg200    && <div className="im-stat"><span className="im-stat-label">200D Avg</span><span className="im-stat-value">{fmt(avg200)}</span></div>}
+          {beta      && <div className="im-stat"><span className="im-stat-label">Beta</span>    <span className="im-stat-value">{Number(beta).toFixed(2)}</span></div>}
         </div>
 
         {/* Ratios */}
