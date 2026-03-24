@@ -292,10 +292,25 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .loss { color: var(--loss); }
 
 /* FOOTER */
-.footer       { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg2); width: 100%; }
+.footer       { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-top: 1px solid var(--border); background: var(--bg2); width: 100%; gap: 12px; }
+.footer-left  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.footer-right { flex-shrink: 0; }
 .footer-brand { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--live); }
 .footer-sep   { font-family: var(--mono); font-size: 13px; color: var(--text3); }
 .footer-text  { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+.footer-india { font-family: var(--mono); font-size: 12px; font-weight: 600; color: #4ade80; background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); border-radius: 6px; padding: 3px 10px; white-space: nowrap; }
+
+/* MEA horizontal strip */
+.mea-strip        { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.mea-strip::-webkit-scrollbar { display: none; }
+.mea-strip-card   { flex-shrink: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 12px; min-width: 140px; transition: border-color 0.15s; }
+.mea-strip-card:hover { border-color: var(--border2); }
+.mea-strip-live   { border-top: 2px solid rgba(0,255,148,0.45); }
+.mea-top          { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+.mea-flag         { font-size: 14px; line-height: 1; }
+.mea-name         { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--text2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mea-price        { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+.mea-pct          { font-family: var(--mono); font-size: 10px; font-weight: 600; margin-top: 1px; }
 
 /* WORLD MAP */
 .wmap-wrap  { padding: 16px 20px 20px; background: var(--bg); border-bottom: 1px solid var(--border); }
@@ -350,12 +365,14 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .fxrow-group, .fxrow-group-crypto { flex: 0 0 100%; flex-wrap: wrap; }
   .fxrow-item { flex: 0 0 50%; min-width: 0; }
 
-  /* Fix 5: footer on mobile — stack vertically, centered */
-  .footer { flex-direction: column; align-items: flex-start; padding: 14px 16px; gap: 6px; }
+  /* Fix 5: footer on mobile — stack vertically, left aligned */
+  .footer { flex-direction: column; align-items: flex-start; padding: 14px 16px; gap: 8px; }
+  .footer-left { gap: 6px; }
+  .footer-right { align-self: flex-start; }
   .footer-sep { display: none; }
-  .footer-brand { margin-bottom: 4px; }
+  .footer-brand { margin-bottom: 2px; }
   .footer-text { font-size: 11px; line-height: 1.6; }
-  .footer-text::before { content: '· '; color: var(--text3); }
+  .mea-strip-card { min-width: 120px; }
 }
 
 /* Market hours tooltip */

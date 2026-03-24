@@ -61,7 +61,40 @@ export default function MarketGrid({ data, nseData = {} }) {
     );
   };
 
-  const renderRegion = (region) => {
+  const renderStripCard = ({ market, status }) => {
+    const d    = data[market.id];
+    const gain = d ? d.changePct >= 0 : true;
+    return (
+      <div key={market.id}
+        className={`mea-strip-card ${status === 'live' ? 'mea-strip-live' : ''}`}
+        data-market-id={market.id}>
+        <div className="mea-top">
+          <span className="mea-flag">{market.flag}</span>
+          <span className="mea-name">{market.name}</span>
+          <StatusChip status={status} />
+        </div>
+        <div className="mea-price">
+          {d ? formatPrice(d.price, market.category === 'commodity') : '—'}
+        </div>
+        <div className={`mea-pct ${gain ? 'gain' : 'loss'}`}>
+          {d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}
+        </div>
+      </div>
+    );
+  };
+
+  const renderStripRegion = (region) => {
+    const regionMarkets = allMarkets.filter(({ market }) => market.region === region);
+    if (!regionMarkets.length) return null;
+    return (
+      <div key={region} className="grid-region">
+        <div className="grid-region-label">{region.toUpperCase()}</div>
+        <div className="mea-strip">
+          {regionMarkets.map(renderStripCard)}
+        </div>
+      </div>
+    );
+  };
     const regionMarkets = allMarkets.filter(({ market }) => market.region === region);
     if (!regionMarkets.length) return null;
     const cols = PANEL_COLS[region] || 4;
@@ -124,7 +157,7 @@ export default function MarketGrid({ data, nseData = {} }) {
         <div className="grid-empty">No {filter === 'live' ? 'live' : 'closed'} markets right now.</div>
       )}
 
-      {bottomRegions.map(renderRegion)}
+      {bottomRegions.map(renderStripRegion)}
     </section>
   );
 }
