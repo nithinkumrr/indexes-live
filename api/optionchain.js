@@ -3,61 +3,79 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
 
   const { symbol = 'NIFTY' } = req.query;
-  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
-
-  const parseCookies = (raw) =>
-    (raw || '').split(/,(?=[^;]+=)/).map(c => c.split(';')[0].trim()).filter(Boolean).join('; ');
-
-  // Step 1: Homepage
-  let cookies = '';
-  try {
-    const r1 = await fetch('https://www.nseindia.com', {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' }
-    });
-    cookies = parseCookies(r1.headers.get('set-cookie'));
-  } catch (e) {
-    return res.status(500).json({ error: 'Step1 failed: ' + e.message });
-  }
-
-  // Step 2: Visit option-chain page to get additional cookies NSE requires
-  try {
-    const r2 = await fetch('https://www.nseindia.com/option-chain', {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Referer': 'https://www.nseindia.com/', Cookie: cookies }
-    });
-    const c2 = parseCookies(r2.headers.get('set-cookie'));
-    if (c2) cookies = cookies + '; ' + c2;
-  } catch (_) {}
-
-  await new Promise(r => setTimeout(r, 300));
-
-  const H = {
-    'User-Agent': UA,
-    'Accept': 'application/json, text/plain, */*',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Referer': 'https://www.nseindia.com/option-chain',
-    'X-Requested-With': 'XMLHttpRequest',
-    'Cookie': cookies,
-  };
-
-  let json;
-  try {
-    const r = await fetch(`https://www.nseindia.com/api/option-chain-indices?symbol=${symbol}`, { headers: H });
-    if (!r.ok) return res.status(r.status).json({ error: `NSE ${r.status}` });
-    json = await r.json();
-  } catch (e) {
-    return res.status(503).json({ error: 'Fetch failed: ' + e.message });
-  }
-
-  const records    = json?.records?.data || [];
-  const underlying = json?.records?.underlyingValue;
-  const expDates   = json?.records?.expiryDates || [];
-  const nearExpiry = expDates[0];
-
-  if (!records.length || !underlying) {
-    return res.status(503).json({ error: 'Empty response from NSE', keys: Object.keys(json || {}) });
-  }
+  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
   const pf = v => { const n = parseFloat(String(v||'').replace(/,/g,'')); return isNaN(n) ? 0 : n; };
+
+  let json = null;
+
+  // Strategy 1: NSE with fresh cookies from multiple pages
+  try {
+    // Hit 3 pages to build a proper session
+    const headers1 = { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'en-US,en;q=0.9' };
+    
+    const r1 = await fetch('https://www.nseindia.com', { headers: headers1 });
+    let cookies = (r1.headers.get('set-cookie')||'').split(/,(?=[^ ][^=]+=)/).map(c=>c.split(';')[0].trim()).filter(Boolean).join('; ');
+
+    await new Promise(r => setTimeout(r, 200));
+
+    const r2 = await fetch('https://www.nseindia.com/market-data/live-equity-market', {
+      headers: { ...headers1, 'Referer': 'https://www.nseindia.com/', Cookie: cookies }
+    });
+    const c2 = (r2.headers.get('set-cookie')||'').split(/,(?=[^ ][^=]+=)/).map(c=>c.split(';')[0].trim()).filter(Boolean).join('; ');
+    if (c2) cookies += '; ' + c2;
+
+    await new Promise(r => setTimeout(r, 200));
+
+    const apiHeaders = {
+      'User-Agent': UA,
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Referer': 'https://www.nseindia.com/option-chain',
+      'X-Requested-With': 'XMLHttpRequest',
+      'sec-fetch-dest': 'empty',
+      'sec-fetch-mode': 'cors',
+      'sec-fetch-site': 'same-origin',
+      'Cookie': cookies,
+    };
+
+    const r3 = await fetch(`https://www.nseindia.com/api/option-chain-indices?symbol=${symbol}`, { headers: apiHeaders });
+    if (r3.ok) {
+      const text = await r3.text();
+      if (text && text.startsWith('{')) {
+        json = JSON.parse(text);
+      }
+    }
+  } catch (_) {}
+
+  // Strategy 2: Try the alternate NSE endpoint
+  if (!json?.records?.data?.length) {
+    try {
+      const r1 = await fetch('https://www.nseindia.com', {
+        headers: { 'User-Agent': UA, 'Accept': 'text/html' }
+      });
+      const cookies = (r1.headers.get('set-cookie')||'').split(/,(?=[^ ][^=]+=)/).map(c=>c.split(';')[0].trim()).filter(Boolean).join('; ');
+      
+      await new Promise(r => setTimeout(r, 500));
+
+      const r2 = await fetch(`https://www.nseindia.com/api/option-chain-indices?symbol=${symbol}`, {
+        headers: {
+          'User-Agent': UA, 'Accept': 'application/json',
+          'Referer': 'https://www.nseindia.com/', Cookie: cookies,
+        }
+      });
+      if (r2.ok) json = await r2.json();
+    } catch (_) {}
+  }
+
+  if (!json?.records?.data?.length) {
+    return res.status(503).json({ error: 'NSE option chain unavailable. Try during market hours 9:15 AM – 3:30 PM IST.' });
+  }
+
+  const records    = json.records.data;
+  const underlying = json.records.underlyingValue;
+  const nearExpiry = json.records.expiryDates?.[0];
 
   const nearRec = records.filter(r => r.expiryDate === nearExpiry);
   const strikes = {};
