@@ -91,6 +91,7 @@ export default async function handler(req, res) {
           low:       q.ohlc?.low,
           isOpen,
           source:    'nseix',
+          fetchedAt: new Date().toISOString(),
         });
       } catch (e) {
         if (e.message === 'token_expired') {

@@ -99,6 +99,7 @@ export function useMarketData() {
             price: json.price, prevClose: json.prevClose || json.price,
             change: json.change || 0, changePct: json.changePct || 0,
             spark: makeSpark(json.price, json.changePct || 0),
+            fetchedAt: json.fetchedAt || new Date().toISOString(),
           };
         }
       } catch {}

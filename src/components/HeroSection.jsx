@@ -100,7 +100,11 @@ export default function HeroSection({ data, region, nseData = {} }) {
                   {d && <Sparkline points={d.spark} gain={gain} height={60} />}
                 </div>
                 <div className="hero-footer">
-                  <span className="hero-localtime">{getLocalTime(market.tz)}</span>
+                  <span className="hero-localtime">
+                    {market.id === 'giftnifty' && d?.fetchedAt
+                      ? `Updated ${new Date(d.fetchedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })} IST · every 15 min`
+                      : getLocalTime(market.tz)}
+                  </span>
                   <span className="hero-prev">Prev. close: {d ? formatPrice(d.prevClose, market.category === 'commodity') : '—'}</span>
                   {nseData[market.id]?.pe > 0 && <span className="hero-pe">P/E <strong>{nseData[market.id].pe.toFixed(1)}x</strong></span>}
                 </div>
