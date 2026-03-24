@@ -1,3 +1,5 @@
+// SentimentTop — shown on Sentiment page between clocks and bubble chart
+// Commodity strip (same as Markets) → FX+Crypto strip (same as Markets) → India 2×2 | World 4×2
 import { MARKETS, COMMODITY_STRIP_IDS } from '../data/markets';
 import { formatPrice, formatPct } from '../utils/format';
 import { getStatus } from '../utils/timezone';
@@ -7,7 +9,7 @@ import FxCryptoStrip from './CurrencyStrip';
 const INDIA_IDS = ['nifty50', 'sensex', 'banknifty', 'giftnifty'];
 const WORLD_IDS = ['sp500', 'nasdaq', 'dowjones', 'ftse', 'dax', 'nikkei', 'hangseng', 'shanghai'];
 
-function fmtPrice(value, id) {
+function fmtWB(value, id) {
   if (value == null || isNaN(value)) return '—';
   if (id === 'vix' || id === 'us10y') return value.toFixed(2);
   if (value >= 10000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -31,7 +33,7 @@ function WBCard({ market, data, nseData = {} }) {
         {status === 'live' && <span className="wb-dot" />}
       </div>
       <div className="wb-price">
-        {d ? fmtPrice(d.price, market.id) : '—'}
+        {d ? fmtWB(d.price, market.id) : '—'}
         {market.unit && <span className="wb-unit"> {market.unit}</span>}
       </div>
       {d && (
@@ -53,11 +55,11 @@ export default function SentimentTop({ data, nseData = {} }) {
   return (
     <div className="st-wrap">
 
-      {/* Exact same commodity strip as Markets page */}
+      {/* 1. Commodity strip — identical to Markets page */}
       <div className="commodity-strip">
         <div className="commodity-strip-label">COMMODITY</div>
         {stripMarkets.map(market => {
-          const d = data[market.id];
+          const d    = data[market.id];
           const gain = d ? d.changePct >= 0 : true;
           return (
             <div key={market.id} className="commodity-strip-item">
@@ -71,10 +73,10 @@ export default function SentimentTop({ data, nseData = {} }) {
         })}
       </div>
 
-      {/* Exact same FX + Crypto strip as Markets page */}
+      {/* 2. FX + Crypto strip — identical to Markets page */}
       <FxCryptoStrip data={data} />
 
-      {/* India 2×2 + World 4×2 */}
+      {/* 3. India 2×2 left | World 4×2 right */}
       <div className="st-panels">
         <div className="st-panel">
           <div className="st-panel-label">INDIA</div>
