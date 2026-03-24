@@ -12,7 +12,7 @@ function StatRow({ label, value }) {
   );
 }
 
-export default function IndexModal({ market, data, onClose }) {
+export default function IndexModal({ market, data, nseData = {}, onClose }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -120,7 +120,20 @@ export default function IndexModal({ market, data, onClose }) {
           </div>
         ) : null}
 
-        <div className="im-footer">Data via Yahoo Finance · Delayed 15 min outside market hours</div>
+        {/* Ratios — Indian markets from NSE */}
+        {nseData[market?.id] && (() => {
+          const nd = nseData[market.id];
+          return (
+            <div className="im-ratios">
+              {nd.pe   > 0 && <div className="im-ratio"><span>P/E</span><strong>{nd.pe.toFixed(2)}</strong></div>}
+              {nd.pb   > 0 && <div className="im-ratio"><span>P/B</span><strong>{nd.pb.toFixed(2)}</strong></div>}
+              {nd.dy   > 0 && <div className="im-ratio"><span>Div Yield</span><strong>{nd.dy.toFixed(2)}%</strong></div>}
+              {nd.advances > 0 && <div className="im-ratio"><span>Advances</span><strong className="gain">{nd.advances}</strong></div>}
+              {nd.declines > 0 && <div className="im-ratio"><span>Declines</span><strong className="loss">{nd.declines}</strong></div>}
+            </div>
+          );
+        })()}
+        <div className="im-footer">Indian markets: Live from NSE · Others: Yahoo Finance (15min delay)</div>
       </div>
     </div>
   );

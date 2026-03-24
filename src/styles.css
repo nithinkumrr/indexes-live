@@ -633,3 +633,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .market-card  { cursor: pointer; }
 .hero-card    { cursor: pointer; }
 .wb-card      { cursor: pointer; }
+.im-ratios   { display: flex; flex-wrap: wrap; gap: 0; border-top: 1px solid var(--border); padding: 12px 20px; background: var(--bg3); }
+.im-ratio    { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 16px; border-right: 1px solid var(--border); }
+.im-ratio:last-child { border-right: none; }
+.im-ratio span { font-family: var(--mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text3); text-transform: uppercase; }
+.im-ratio strong { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); }

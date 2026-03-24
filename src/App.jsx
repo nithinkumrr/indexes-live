@@ -15,7 +15,7 @@ import { MARKETS } from './data/markets';
 
 export default function App() {
   const region = useMemo(() => detectRegion(), []);
-  const { data, lastUpdate } = useMarketData();
+  const { data, lastUpdate, nseData } = useMarketData();
   const [view, setView]           = useState('grid');
   const [selectedId, setSelectedId] = useState(null);
 
@@ -46,6 +46,7 @@ export default function App() {
         <IndexModal
           market={selectedMarket}
           data={data}
+          nseData={nseData}
           onClose={() => setSelectedId(null)}
         />
       )}
