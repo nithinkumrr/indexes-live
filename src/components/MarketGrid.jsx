@@ -6,7 +6,7 @@ import Sparkline from './Sparkline';
 import HoursTooltip from './HoursTooltip';
 
 const STATUS_ORDER = { live: 0, pre: 1, closed: 2 };
-const PAIRED_REGIONS = [['Europe', 'Americas']];
+const PAIRED_REGIONS = [['Americas', 'Europe']];
 const SOLO_REGIONS   = ['Asia'];
 const SOLO_BOTTOM    = ['MEA'];
 const COMMODITY_REGIONS = ['Commodity'];
@@ -79,6 +79,7 @@ export default function MarketGrid({ data, nseData = {} }) {
         <div className={`mea-pct ${gain ? 'gain' : 'loss'}`}>
           {d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}
         </div>
+        {d && <div className="mea-spark"><Sparkline points={d.spark} gain={gain} height={32} /></div>}
       </div>
     );
   };

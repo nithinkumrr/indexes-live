@@ -303,14 +303,15 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 /* MEA horizontal strip */
 .mea-strip        { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .mea-strip::-webkit-scrollbar { display: none; }
-.mea-strip-card   { flex-shrink: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 12px; min-width: 140px; transition: border-color 0.15s; }
+.mea-strip-card   { flex-shrink: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 12px; min-width: 160px; transition: border-color 0.15s; }
 .mea-strip-card:hover { border-color: var(--border2); }
 .mea-strip-live   { border-top: 2px solid rgba(0,255,148,0.45); }
 .mea-top          { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
 .mea-flag         { font-size: 14px; line-height: 1; }
 .mea-name         { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--text2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mea-price        { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
-.mea-pct          { font-family: var(--mono); font-size: 10px; font-weight: 600; margin-top: 1px; }
+.mea-pct          { font-family: var(--mono); font-size: 10px; font-weight: 600; margin-top: 1px; margin-bottom: 4px; }
+.mea-spark        { /* sparkline fills itself */ }
 
 /* WORLD MAP */
 .wmap-wrap  { padding: 16px 20px 20px; background: var(--bg); border-bottom: 1px solid var(--border); }
