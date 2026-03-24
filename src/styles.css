@@ -62,8 +62,7 @@
 [data-theme="light"] .wb-home { opacity: 0.35; }
 
 /* Theme toggle button */
-.theme-toggle { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 10px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
-.theme-toggle:hover { color: var(--text); border-color: var(--text3); }
+.theme-toggle { font-size: 14px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.2s; line-height: 1; }
 
 
 html { font-size: 14px; }

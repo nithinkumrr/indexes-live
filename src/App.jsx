@@ -14,18 +14,14 @@ import Footer from './components/Footer';
 export default function App() {
   const region = useMemo(() => detectRegion(), []);
   const { data, lastUpdate } = useMarketData();
-  const [view, setView] = useState('grid'); // 'grid' | 'bubble' | 'fno'
-
-  const isFnO = view === 'fno';
+  const [view, setView] = useState('grid');
 
   return (
     <div className="app">
       <Header lastUpdate={lastUpdate} view={view} setView={setView} />
-      {/* Ticker + clocks always visible */}
       <Ticker data={data} />
       <WorldClocks />
-
-      {isFnO ? (
+      {view === 'fno' ? (
         <FnOPage />
       ) : (
         <>
@@ -35,7 +31,6 @@ export default function App() {
           {view === 'bubble' && <BubbleView data={data} />}
         </>
       )}
-
       <Footer />
     </div>
   );

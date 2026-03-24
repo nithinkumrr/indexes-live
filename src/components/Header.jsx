@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import AlertsBell from './AlertsBell';
 
-export default function Header({ lastUpdate }) {
+export default function Header({ lastUpdate, view, setView }) {
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem('indexeslive_theme') || 'dark'; } catch { return 'dark'; }
   });
@@ -27,8 +27,19 @@ export default function Header({ lastUpdate }) {
         </div>
       </div>
       <div className="header-right">
-        <button className="theme-toggle" onClick={toggleTheme} title="Toggle light/dark">
-          {theme === 'dark' ? '☀ Light' : '☾ Dark'}
+        <div className="view-toggle">
+          <button className={`view-btn ${view === 'grid' ? 'view-active' : ''}`} onClick={() => setView('grid')}>
+            Markets
+          </button>
+          <button className={`view-btn ${view === 'bubble' ? 'view-active' : ''}`} onClick={() => setView('bubble')}>
+            Sentiment
+          </button>
+          <button className={`view-btn fno-btn ${view === 'fno' ? 'view-active' : ''}`} onClick={() => setView('fno')}>
+            F&amp;O
+          </button>
+        </div>
+        <button className="theme-toggle" onClick={toggleTheme}>
+          {theme === 'dark' ? '☀' : '☾'}
         </button>
         <AlertsBell />
         {timeStr && (
