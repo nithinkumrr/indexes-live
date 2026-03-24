@@ -4,8 +4,9 @@ function fmt(n) {
   if (n == null || isNaN(n)) return '—';
   const abs = Math.abs(n);
   const sign = n >= 0 ? '+' : '-';
-  if (abs >= 1000) return `${sign}₹${(abs / 100).toFixed(0)}Cr`;
-  return `${sign}₹${abs.toFixed(0)}Cr`;
+  if (abs >= 10000) return `${sign}₹${(abs / 100).toFixed(0)}Cr`;
+  if (abs >= 100)   return `${sign}₹${abs.toFixed(0)}Cr`;
+  return `${sign}₹${abs.toFixed(2)}Cr`;
 }
 
 function BarChart({ history }) {
@@ -81,18 +82,16 @@ export default function FiiDii() {
       <div className="fiidii-summary">
         <div className="fiidii-card">
           <div className="fiidii-card-label">FII / FPI</div>
-          <div className={`fiidii-card-value ${fiiPos ? 'fii-buy' : 'fii-sell'}`}>
-            {fmt(d.fiiNet)}
-          </div>
+          <div className={`fiidii-card-value ${fiiPos ? 'fii-buy' : 'fii-sell'}`}>{fmt(d.fiiNet)}</div>
           <div className="fiidii-card-tag">{fiiPos ? '↑ Net Buyers' : '↓ Net Sellers'}</div>
+          {d.fiiBuy != null && <div className="fiidii-bs">Buy ₹{Math.abs(d.fiiBuy).toFixed(0)}Cr &nbsp;·&nbsp; Sell ₹{Math.abs(d.fiiSell).toFixed(0)}Cr</div>}
           <div className="fiidii-card-sub">Foreign Institutional Investors</div>
         </div>
         <div className="fiidii-card">
           <div className="fiidii-card-label">DII</div>
-          <div className={`fiidii-card-value ${diiPos ? 'dii-buy' : 'dii-sell'}`}>
-            {fmt(d.diiNet)}
-          </div>
+          <div className={`fiidii-card-value ${diiPos ? 'dii-buy' : 'dii-sell'}`}>{fmt(d.diiNet)}</div>
           <div className="fiidii-card-tag">{diiPos ? '↑ Net Buyers' : '↓ Net Sellers'}</div>
+          {d.diiBuy != null && <div className="fiidii-bs">Buy ₹{Math.abs(d.diiBuy).toFixed(0)}Cr &nbsp;·&nbsp; Sell ₹{Math.abs(d.diiSell).toFixed(0)}Cr</div>}
           <div className="fiidii-card-sub">Domestic Institutional Investors</div>
         </div>
         <div className="fiidii-card fiidii-sentiment-card">
