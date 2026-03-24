@@ -19,7 +19,7 @@ function FearGreedMeter() {
 
   if (!vix) return <div className="fg-loading">Loading VIX...</div>;
 
-  const score   = Math.max(0, Math.min(100, Math.round(110 - (vix * 3))));
+  const score   = Math.max(0, Math.min(100, Math.round(100 - (vix - 10) * 5.3)));
   const zones   = [
     { label: 'Extreme Fear',  min: 0,  max: 20,  color: '#FF4455' },
     { label: 'Fear',          min: 20, max: 40,  color: '#FF8C42' },
@@ -64,7 +64,6 @@ function FearGreedMeter() {
         {score >= 60 && score < 80 && 'Greed is building. Investors are optimistic.'}
         {score >= 80 && 'Greed is driving the market. Risk of sharp reversal is higher.'}
       </div>
-      <div className="fg-st-source">Derived from India VIX. Lower VIX = more greed, higher VIX = more fear. Not a standalone buy/sell signal.</div>
       <div className="fg-st-scale">
         {zones.map(z => (
           <div key={z.label} className="fg-st-row">
