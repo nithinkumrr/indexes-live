@@ -1,6 +1,6 @@
 import AlertsBell from './AlertsBell';
 
-export default function Header({ lastUpdate }) {
+export default function Header({ lastUpdate, view, setView }) {
   const timeStr = lastUpdate
     ? lastUpdate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
     : null;
@@ -15,6 +15,18 @@ export default function Header({ lastUpdate }) {
         </div>
       </div>
       <div className="header-right">
+        {/* Nav tabs */}
+        <div className="view-toggle">
+          <button className={`view-btn ${view === 'grid' ? 'view-active' : ''}`} onClick={() => setView('grid')}>
+            ⊞ Markets
+          </button>
+          <button className={`view-btn ${view === 'bubble' ? 'view-active' : ''}`} onClick={() => setView('bubble')}>
+            ◉ Sentiment
+          </button>
+          <button className={`view-btn fno-btn ${view === 'fno' ? 'view-active' : ''}`} onClick={() => setView('fno')}>
+            📈 F&amp;O
+          </button>
+        </div>
         <AlertsBell />
         {timeStr && (
           <div className="update-time">

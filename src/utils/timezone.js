@@ -171,3 +171,59 @@ export function getMarketHoursLabel(market) {
 
   return { local: localStr, ist: istStr };
 }
+
+// Returns next weekly and monthly Nifty F&O expiry dates
+// Weekly = every Thursday, Monthly = last Thursday of month
+export function getNiftyExpiries() {
+  const now = new Date();
+  const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+
+  function nextThursday(from) {
+    const d = new Date(from);
+    const day = d.getDay();
+    const daysUntil = (4 - day + 7) % 7 || 7; // 4 = Thursday
+    d.setDate(d.getDate() + daysUntil);
+    d.setHours(15, 30, 0, 0);
+    return d;
+  }
+
+  function lastThursdayOfMonth(year, month) {
+    const d = new Date(year, month + 1, 0); // last day of month
+    while (d.getDay() !== 4) d.setDate(d.getDate() - 1);
+    d.setHours(15, 30, 0, 0);
+    return d;
+  }
+
+  // Weekly — next Thursday (or this Thursday if not expired)
+  let weekly = nextThursday(ist);
+  // If today is Thursday and market hasn't closed yet, use today
+  if (ist.getDay() === 4 && (ist.getHours() * 60 + ist.getMinutes()) < 15 * 60 + 30) {
+    weekly = new Date(ist);
+    weekly.setHours(15, 30, 0, 0);
+  }
+
+  // Monthly — last Thursday of current month; if passed, next month
+  let monthly = lastThursdayOfMonth(ist.getFullYear(), ist.getMonth());
+  if (monthly <= ist) {
+    monthly = ist.getMonth() === 11
+      ? lastThursdayOfMonth(ist.getFullYear() + 1, 0)
+      : lastThursdayOfMonth(ist.getFullYear(), ist.getMonth() + 1);
+  }
+
+  const secsToWeekly  = Math.max(0, Math.floor((weekly  - now) / 1000));
+  const secsToMonthly = Math.max(0, Math.floor((monthly - now) / 1000));
+
+  const fmtDate = d => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
+  const fmtDays = s => {
+    const days = Math.floor(s / 86400);
+    const hrs  = Math.floor((s % 86400) / 3600);
+    const mins = Math.floor((s % 3600) / 60);
+    if (days > 0) return `${days}d ${String(hrs).padStart(2,'0')}h ${String(mins).padStart(2,'0')}m`;
+    return `${String(hrs).padStart(2,'0')}h ${String(mins).padStart(2,'0')}m`;
+  };
+
+  return {
+    weekly:  { date: fmtDate(weekly),  secsLeft: secsToWeekly,  label: fmtDays(secsToWeekly)  },
+    monthly: { date: fmtDate(monthly), secsLeft: secsToMonthly, label: fmtDays(secsToMonthly) },
+  };
+}
