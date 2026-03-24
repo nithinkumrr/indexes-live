@@ -80,11 +80,17 @@ export function formatDuration(secs) {
 
 // ── Expiry calculations ──────────────────────────────────────────────
 
+function toISTDateStr(d) {
+  // toISOString() gives UTC which can be wrong date for IST (+5:30)
+  // Use toLocaleDateString with IST timezone to get correct YYYY-MM-DD
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // en-CA gives YYYY-MM-DD
+}
+
 function adjustExpiry(date, holidaySet) {
   const d = new Date(date);
   while (true) {
     const day = d.getDay();
-    const iso = d.toISOString().split('T')[0];
+    const iso = toISTDateStr(d);
     if (day !== 0 && day !== 6 && !holidaySet.has(iso)) break;
     d.setDate(d.getDate() - 1);
   }

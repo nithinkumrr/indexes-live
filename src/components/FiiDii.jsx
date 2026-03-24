@@ -142,8 +142,16 @@ export default function FiiDii() {
         </div>
       </div>
 
-      {/* Bar chart — last 10 days */}
-      {d.history?.length > 1 && <TrendChart history={d.history} />}
+      {/* FII/DII trend chart */}
+      {d.history?.length > 1
+        ? <TrendChart history={d.history} />
+        : d.history?.length === 1
+          ? <div className="fiidii-unavail" style={{marginBottom:10}}>
+              <div className="fiidii-unavail-msg">Only today's data available</div>
+              <div className="fiidii-unavail-sub">Historical trend will appear as more days are fetched from NSE</div>
+            </div>
+          : null
+      }
 
       <div className="fiidii-note">
         Provisional data from NSE. Final figures published by NSDL/CDSL end of day.
