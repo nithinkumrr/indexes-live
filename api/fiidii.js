@@ -1,10 +1,14 @@
-// api/fiidii.js — FII/DII data from NSE with full history
+// api/fiidii.js — FII/DII with 7-day history
+// Strategy: fetch each of last 7 trading days individually from NSE
+// NSE endpoint: /api/fiidiiTradeReact?date=DD-MM-YYYY
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
 
   const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
 
+  // Get session cookie once
   let cookies = '';
   try {
     const home = await fetch('https://www.nseindia.com', {
@@ -19,97 +23,87 @@ export default async function handler(req, res) {
   const H = { 'User-Agent': UA, 'Accept': 'application/json', 'Referer': 'https://www.nseindia.com/', Cookie: cookies };
   const parseNum = v => { const n = parseFloat(String(v || '').replace(/,/g, '')); return isNaN(n) ? 0 : n; };
 
-  // Helper: extract FII and DII net from an array of category rows
-  function extractFromRows(rows) {
-    const fiiRow = rows.find(e => /FII|FPI|FOREIGN/i.test(String(e.category || e.client || e.clientType || '')));
-    const diiRow = rows.find(e => /DII|DOMESTIC/i.test(String(e.category || e.client || e.clientType || '')));
-    if (!fiiRow && !diiRow) return null;
-    return {
-      fiiNet:  parseNum(fiiRow?.netValue ?? fiiRow?.net ?? fiiRow?.netPurchaseSales ?? 0),
-      fiiBuy:  parseNum(fiiRow?.buyValue ?? fiiRow?.grossPurchase ?? 0),
-      fiiSell: parseNum(fiiRow?.sellValue ?? fiiRow?.grossSales ?? 0),
-      diiNet:  parseNum(diiRow?.netValue ?? diiRow?.net ?? diiRow?.netPurchaseSales ?? 0),
-      diiBuy:  parseNum(diiRow?.buyValue ?? diiRow?.grossPurchase ?? 0),
-      diiSell: parseNum(diiRow?.sellValue ?? diiRow?.grossSales ?? 0),
-    };
+  // Holidays to skip when generating trading days
+  const HOLIDAYS_2026 = new Set([
+    '2026-01-26','2026-02-17','2026-03-03','2026-03-26',
+    '2026-03-31','2026-04-03','2026-04-14','2026-05-01',
+    '2026-05-28','2026-06-26','2026-09-14','2026-10-02',
+    '2026-10-20','2026-11-10','2026-11-24','2026-12-25',
+  ]);
+
+  // Get last 7 trading days in IST
+  const istNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const istToday = istNow.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const tradingDays = [];
+  let cur = new Date(istNow);
+
+  // If before 6pm IST, yesterday might still be the latest data
+  while (tradingDays.length < 7) {
+    const iso = cur.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    const dow = new Date(iso + 'T00:00:00+05:30').getDay();
+    if (dow !== 0 && dow !== 6 && !HOLIDAYS_2026.has(iso)) {
+      tradingDays.push(iso);
+    }
+    cur.setDate(cur.getDate() - 1);
   }
 
-  try {
-    const r    = await fetch('https://www.nseindia.com/api/fiidiiTradeReact', { headers: H });
-    if (!r.ok) throw new Error(`NSE ${r.status}`);
-    const raw  = await r.json();
+  // Fetch each trading day
+  const history = [];
+  for (const iso of tradingDays) {
+    try {
+      const [y, m, day] = iso.split('-');
+      const nseDate = `${day}-${m}-${y}`; // NSE wants DD-MM-YYYY
 
-    // NSE can return either:
-    // A) Array of category rows (all for today): [{category:"FII/FPI", buyValue, sellValue, netValue, date}, ...]
-    // B) Object keyed by date: {"24-Mar-2026": [{category, ...}, ...], "23-Mar-2026": [...], ...}
-    // C) {data: [...]} wrapper
-
-    let history = [];
-
-    if (Array.isArray(raw)) {
-      // Format A: all rows for today only
-      const today = extractFromRows(raw);
-      const date  = raw[0]?.date || raw[0]?.tradingDate || new Date().toISOString().split('T')[0];
-      if (today) history = [{ date, ...today }];
-
-    } else if (raw && typeof raw === 'object' && !raw.data) {
-      // Format B: date-keyed object — multiple days!
-      for (const [dateKey, rows] of Object.entries(raw)) {
-        if (!Array.isArray(rows)) continue;
-        const extracted = extractFromRows(rows);
-        if (extracted) history.push({ date: dateKey, ...extracted });
+      // Try with date param first
+      let rows = [];
+      const r1 = await fetch(`https://www.nseindia.com/api/fiidiiTradeReact?date=${nseDate}`, { headers: H });
+      if (r1.ok) {
+        const data = await r1.json();
+        rows = Array.isArray(data) ? data : (data.data || []);
       }
-      history.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    } else {
-      // Format C: {data: [...]}
-      const entries = raw.data || [];
-      if (Array.isArray(entries)) {
-        const today = extractFromRows(entries);
-        const date  = entries[0]?.date || new Date().toISOString().split('T')[0];
-        if (today) history = [{ date, ...today }];
-      }
-    }
-
-    // Also try the historical endpoint for last 10 days
-    if (history.length <= 1) {
-      try {
-        const r2 = await fetch('https://www.nseindia.com/api/fiidiiTradeHistory', { headers: H });
+      // If no date param, try without (today's data)
+      if (!rows.length && iso === istToday) {
+        const r2 = await fetch('https://www.nseindia.com/api/fiidiiTradeReact', { headers: H });
         if (r2.ok) {
-          const h2 = await r2.json();
-          const rows2 = Array.isArray(h2) ? h2 : h2.data || [];
-          // This usually returns [{date, fii_net, dii_net}] or similar
-          const mapped = rows2.map(row => ({
-            date:    row.date || row.tradingDate || '',
-            fiiNet:  parseNum(row.fii_net ?? row.fiiNet ?? row.FII_NET ?? row.netFII ?? 0),
-            fiiBuy:  parseNum(row.fii_buy ?? row.fiiBuy ?? 0),
-            fiiSell: parseNum(row.fii_sell ?? row.fiiSell ?? 0),
-            diiNet:  parseNum(row.dii_net ?? row.diiNet ?? row.DII_NET ?? row.netDII ?? 0),
-            diiBuy:  parseNum(row.dii_buy ?? row.diiBuy ?? 0),
-            diiSell: parseNum(row.dii_sell ?? row.diiSell ?? 0),
-          })).filter(r => r.date && (r.fiiNet || r.diiNet));
-          if (mapped.length > 1) {
-            history = mapped.sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-10);
-          }
+          const data = await r2.json();
+          rows = Array.isArray(data) ? data : (data.data || []);
         }
-      } catch (_) {}
-    }
+      }
 
-    const latest  = history[history.length - 1] || {};
+      if (!rows.length) continue;
 
-    return res.json({
-      fiiNet:  latest.fiiNet  || 0,
-      fiiBuy:  latest.fiiBuy  || 0,
-      fiiSell: latest.fiiSell || 0,
-      diiNet:  latest.diiNet  || 0,
-      diiBuy:  latest.diiBuy  || 0,
-      diiSell: latest.diiSell || 0,
-      date:    latest.date    || '',
-      history: history.slice(-7), // last 7 days for chart
-      source:  'nse-live',
-    });
+      const fiiRow = rows.find(e => /FII|FPI|FOREIGN/i.test(String(e.category || e.client || e.clientType || '')));
+      const diiRow = rows.find(e => /DII|DOMESTIC/i.test(String(e.category || e.client || e.clientType || '')));
+      if (!fiiRow && !diiRow) continue;
 
-  } catch (e) {
-    return res.status(503).json({ error: e.message, source: 'failed' });
+      history.push({
+        date:    iso,
+        fiiNet:  parseNum(fiiRow?.netValue  ?? fiiRow?.net  ?? fiiRow?.netPurchaseSales  ?? 0),
+        fiiBuy:  parseNum(fiiRow?.buyValue  ?? fiiRow?.grossPurchase  ?? 0),
+        fiiSell: parseNum(fiiRow?.sellValue ?? fiiRow?.grossSales  ?? 0),
+        diiNet:  parseNum(diiRow?.netValue  ?? diiRow?.net  ?? diiRow?.netPurchaseSales  ?? 0),
+        diiBuy:  parseNum(diiRow?.buyValue  ?? diiRow?.grossPurchase  ?? 0),
+        diiSell: parseNum(diiRow?.sellValue ?? diiRow?.grossSales  ?? 0),
+      });
+    } catch (_) {}
   }
+
+  // Sort oldest→newest
+  history.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const latest = history[history.length - 1] || {};
+
+  return res.json({
+    fiiNet:  latest.fiiNet  || 0,
+    fiiBuy:  latest.fiiBuy  || 0,
+    fiiSell: latest.fiiSell || 0,
+    diiNet:  latest.diiNet  || 0,
+    diiBuy:  latest.diiBuy  || 0,
+    diiSell: latest.diiSell || 0,
+    date:    latest.date    || '',
+    history,
+    source:  history.length > 1 ? 'nse-history' : 'nse-today',
+    daysFound: history.length,
+  });
 }

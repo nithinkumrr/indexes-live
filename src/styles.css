@@ -679,3 +679,58 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 [data-theme="light"] .fiidii-td-date { background: #fff; }
 [data-theme="light"] .fiidii-table thead tr { background: #F5F5F7; }
 [data-theme="light"] .fiidii-total-row .fiidii-td-date { background: #EBEBED; }
+
+/* FII/DII table header + days badge */
+.fiidii-table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.fiidii-table-title  { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--text3); }
+.fiidii-days-badge   { font-family: var(--mono); font-size: 10px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; padding: 2px 8px; color: var(--text3); }
+
+/* Trend sparkline above table */
+.fiidii-trend-mini        { background: var(--bg3); border-radius: var(--r); padding: 10px 14px 4px; margin-bottom: 10px; }
+.fiidii-trend-mini-labels { font-family: var(--mono); font-size: 10px; margin-bottom: 6px; display: flex; align-items: center; }
+.fiidii-trend-zero        { margin-left: auto; color: var(--text3); font-size: 10px; }
+.fiidii-trend-dates       { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 4px; padding-bottom: 4px; }
+
+/* ── FII/DII Bar Graph ───────────────────────────────────────────────── */
+.fiig-wrap    { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px; margin-top: 6px; }
+.fiig-title   { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 1px; margin-bottom: 12px; }
+.fiig-legend  { display: flex; gap: 16px; margin-bottom: 16px; align-items: center; }
+.fiig-leg-item { font-family: var(--mono); font-size: 11px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+.fiig-leg-dot  { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.fiig-leg-zero { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-left: auto; }
+
+/* Chart container */
+.fiig-chart   { display: flex; gap: 0; align-items: stretch; }
+.fiig-yaxis   { display: flex; flex-direction: column; justify-content: space-between; padding: 0 8px 24px 0; font-family: var(--mono); font-size: 9px; color: var(--text3); min-width: 36px; text-align: right; }
+
+/* Bars area */
+.fiig-bars    { display: flex; flex: 1; gap: 6px; align-items: stretch; }
+.fiig-col     { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; border-radius: 4px; transition: background 0.15s; }
+.fiig-col-hov { background: rgba(255,255,255,0.04); }
+.fiig-upper   { height: 180px; display: flex; align-items: flex-end; width: 100%; }
+.fiig-lower   { height: 180px; display: flex; align-items: flex-start; width: 100%; }
+.fiig-pair    { display: flex; gap: 3px; justify-content: center; width: 100%; align-items: flex-end; }
+.fiig-pair-dn { align-items: flex-start; }
+.fiig-bar     { width: 40%; border-radius: 3px 3px 0 0; min-height: 2px; transition: opacity 0.2s; }
+.fiig-bar-neg { border-radius: 0 0 3px 3px; }
+.fiig-bar-spacer { width: 40%; }
+.fiig-zero-line { height: 2px; background: var(--border2); width: 100%; flex-shrink: 0; z-index: 1; }
+.fiig-xlabel  { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 6px; text-align: center; white-space: nowrap; }
+
+/* Tooltip */
+.fiig-tooltip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--bg4); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 14px; min-width: 160px; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.4); pointer-events: none; }
+.fiig-tt-date { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.fiig-tt-row  { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+.fiig-tt-row:last-child { margin-bottom: 0; }
+.fiig-tt-dot  { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.fiig-tt-row span:last-child { margin-left: auto; font-weight: 700; }
+.fiig-pos  { color: var(--gain) !important; }
+.fiig-neg  { color: var(--loss) !important; }
+
+/* Net totals */
+.fiig-totals      { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 12px; font-weight: 600; flex-wrap: wrap; }
+.fiig-total-label { color: var(--text3); font-weight: 400; font-size: 11px; }
+.fiig-total-sep   { color: var(--text3); }
+
+[data-theme="light"] .fiig-col-hov { background: rgba(0,0,0,0.04); }
+[data-theme="light"] .fiig-tooltip { box-shadow: 0 8px 24px rgba(0,0,0,0.15); }

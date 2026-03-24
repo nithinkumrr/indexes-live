@@ -1,37 +1,133 @@
-import { useState, useEffect } from 'react';
-
-function fmtCr(n) {
-  if (n == null || isNaN(n)) return '—';
-  const abs = Math.abs(n);
-  const sign = n >= 0 ? '+' : '';
-  if (abs >= 10000) return `${sign}${n.toFixed(0)}`;
-  return `${sign}${n.toFixed(1)}`;
-}
+import { useState, useEffect, useRef } from 'react';
 
 function fmtDate(str) {
-  try {
-    const d = new Date(str);
-    if (isNaN(d)) return str;
-    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-  } catch { return str; }
+  try { return new Date(str).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); }
+  catch { return str; }
 }
 
-function cellBg(val, type, maxAbs) {
-  if (!val) return 'transparent';
-  const intensity = Math.min(Math.abs(val) / maxAbs, 1);
-  if (type === 'fii') {
-    return val >= 0
-      ? `rgba(0, 200, 150, ${0.15 + intensity * 0.55})`
-      : `rgba(255, 68, 85,  ${0.15 + intensity * 0.55})`;
-  }
-  return val >= 0
-    ? `rgba(0, 200, 150, ${0.15 + intensity * 0.55})`
-    : `rgba(255, 68, 85,  ${0.15 + intensity * 0.55})`;
+function fmtCr(n) {
+  if (!n) return '0';
+  const abs = Math.abs(n);
+  if (abs >= 10000) return `${n < 0 ? '-' : '+'}₹${(abs/100).toFixed(1)}K Cr`;
+  return `${n < 0 ? '-' : '+'}₹${abs.toFixed(0)} Cr`;
 }
 
-function cellColor(val) {
-  if (!val) return 'var(--text3)';
-  return val >= 0 ? 'var(--gain)' : 'var(--loss)';
+function BarGraph({ history }) {
+  const [hovered, setHovered] = useState(null);
+  if (!history?.length) return null;
+
+  const maxAbs = Math.max(...history.flatMap(d => [Math.abs(d.fiiNet), Math.abs(d.diiNet)]), 1);
+  const BAR_H  = 180; // max bar height in px
+
+  return (
+    <div className="fiig-wrap">
+      <div className="fiig-title">FII vs DII — Net Flow (₹ Crores)</div>
+
+      {/* Legend */}
+      <div className="fiig-legend">
+        <span className="fiig-leg-item"><span className="fiig-leg-dot" style={{background:'#00C896'}}/> FII / FPI</span>
+        <span className="fiig-leg-item"><span className="fiig-leg-dot" style={{background:'#4A9EFF'}}/> DII</span>
+        <span className="fiig-leg-zero">0 line</span>
+      </div>
+
+      {/* Chart area */}
+      <div className="fiig-chart">
+        {/* Y-axis labels */}
+        <div className="fiig-yaxis">
+          <span>{(maxAbs/100).toFixed(0)}K</span>
+          <span>0</span>
+          <span>-{(maxAbs/100).toFixed(0)}K</span>
+        </div>
+
+        {/* Bars */}
+        <div className="fiig-bars">
+          {history.map((day, i) => {
+            const fiiH = (Math.abs(day.fiiNet) / maxAbs) * BAR_H;
+            const diiH = (Math.abs(day.diiNet) / maxAbs) * BAR_H;
+            const isHov = hovered === i;
+
+            return (
+              <div
+                key={i}
+                className={`fiig-col ${isHov ? 'fiig-col-hov' : ''}`}
+                onMouseEnter={() => setHovered(i)}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {/* Tooltip */}
+                {isHov && (
+                  <div className="fiig-tooltip">
+                    <div className="fiig-tt-date">{fmtDate(day.date)}</div>
+                    <div className="fiig-tt-row">
+                      <span className="fiig-tt-dot" style={{background:'#00C896'}}/>
+                      <span>FII</span>
+                      <span className={day.fiiNet >= 0 ? 'fiig-pos' : 'fiig-neg'}>{fmtCr(day.fiiNet)}</span>
+                    </div>
+                    <div className="fiig-tt-row">
+                      <span className="fiig-tt-dot" style={{background:'#4A9EFF'}}/>
+                      <span>DII</span>
+                      <span className={day.diiNet >= 0 ? 'fiig-pos' : 'fiig-neg'}>{fmtCr(day.diiNet)}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Upper half — positive bars grow upward */}
+                <div className="fiig-upper">
+                  <div className="fiig-pair fiig-pair-up">
+                    {day.fiiNet >= 0 && (
+                      <div className="fiig-bar fiig-bar-fii fiig-bar-pos"
+                        style={{height: fiiH, background: 'linear-gradient(180deg, #00C896 0%, rgba(0,200,150,0.6) 100%)'}} />
+                    )}
+                    {day.fiiNet < 0 && <div className="fiig-bar-spacer" />}
+                    {day.diiNet >= 0 && (
+                      <div className="fiig-bar fiig-bar-dii fiig-bar-pos"
+                        style={{height: diiH, background: 'linear-gradient(180deg, #4A9EFF 0%, rgba(74,158,255,0.6) 100%)'}} />
+                    )}
+                    {day.diiNet < 0 && <div className="fiig-bar-spacer" />}
+                  </div>
+                </div>
+
+                {/* Zero line */}
+                <div className="fiig-zero-line" />
+
+                {/* Lower half — negative bars grow downward */}
+                <div className="fiig-lower">
+                  <div className="fiig-pair fiig-pair-dn">
+                    {day.fiiNet < 0 && (
+                      <div className="fiig-bar fiig-bar-fii fiig-bar-neg"
+                        style={{height: fiiH, background: 'linear-gradient(0deg, #FF4455 0%, rgba(255,68,85,0.6) 100%)'}} />
+                    )}
+                    {day.fiiNet >= 0 && <div className="fiig-bar-spacer" />}
+                    {day.diiNet < 0 && (
+                      <div className="fiig-bar fiig-bar-dii fiig-bar-neg"
+                        style={{height: diiH, background: 'linear-gradient(0deg, #FF6B7A 0%, rgba(255,107,122,0.6) 100%)'}} />
+                    )}
+                    {day.diiNet >= 0 && <div className="fiig-bar-spacer" />}
+                  </div>
+                </div>
+
+                {/* X label */}
+                <div className="fiig-xlabel">{fmtDate(day.date)}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Net totals row */}
+      {history.length > 1 && (() => {
+        const tf = history.reduce((s,d) => s + d.fiiNet, 0);
+        const td = history.reduce((s,d) => s + d.diiNet, 0);
+        return (
+          <div className="fiig-totals">
+            <span className="fiig-total-label">{history.length}-day net:</span>
+            <span className={tf >= 0 ? 'fiig-pos' : 'fiig-neg'}>FII {fmtCr(tf)}</span>
+            <span className="fiig-total-sep">·</span>
+            <span className={td >= 0 ? 'fiig-pos' : 'fiig-neg'}>DII {fmtCr(td)}</span>
+          </div>
+        );
+      })()}
+    </div>
+  );
 }
 
 export default function FiiDii() {
@@ -42,11 +138,7 @@ export default function FiiDii() {
   useEffect(() => {
     fetch('/api/fiidii')
       .then(r => r.json())
-      .then(data => {
-        if (data.error) setError(true);
-        else setD(data);
-        setLoading(false);
-      })
+      .then(data => { if (data.error) setError(true); else setD(data); setLoading(false); })
       .catch(() => { setError(true); setLoading(false); });
   }, []);
 
@@ -54,31 +146,21 @@ export default function FiiDii() {
   if (error || !d) return (
     <div className="fiidii-unavail">
       <div className="fiidii-unavail-msg">FII / DII data unavailable</div>
-      <div className="fiidii-unavail-sub">NSE blocks server requests intermittently. Try again shortly.</div>
+      <div className="fiidii-unavail-sub">NSE intermittently blocks server requests.</div>
     </div>
   );
 
-  const fiiPos = d.fiiNet >= 0;
-  const diiPos = d.diiNet >= 0;
-  const history = d.history || [];
-
-  // For color intensity scaling
-  const allVals = history.flatMap(h => [Math.abs(h.fiiNet), Math.abs(h.diiNet)]).filter(Boolean);
-  const maxAbs  = allVals.length ? Math.max(...allVals) : 1;
-
-  // Total row
-  const totalFii = history.reduce((s, h) => s + (h.fiiNet || 0), 0);
-  const totalDii = history.reduce((s, h) => s + (h.diiNet || 0), 0);
+  const fiiPos  = d.fiiNet >= 0;
+  const diiPos  = d.diiNet >= 0;
 
   return (
     <div className="fiidii-wrap">
-
-      {/* Today's summary cards */}
+      {/* Today cards */}
       <div className="fiidii-summary">
         <div className="fiidii-card">
           <div className="fiidii-card-label">FII / FPI</div>
           <div className={`fiidii-card-value ${fiiPos ? 'fii-buy' : 'fii-sell'}`}>
-            {fiiPos ? '+' : ''}₹{Math.abs(d.fiiNet).toFixed(0)}Cr
+            {fiiPos?'+':''}{d.fiiNet.toFixed(0)} Cr
           </div>
           <div className="fiidii-card-tag">{fiiPos ? '↑ Net Buyers' : '↓ Net Sellers'}</div>
           {d.fiiBuy > 0 && <div className="fiidii-bs">Buy ₹{Math.abs(d.fiiBuy).toFixed(0)}Cr · Sell ₹{Math.abs(d.fiiSell).toFixed(0)}Cr</div>}
@@ -87,61 +169,24 @@ export default function FiiDii() {
         <div className="fiidii-card">
           <div className="fiidii-card-label">DII</div>
           <div className={`fiidii-card-value ${diiPos ? 'dii-buy' : 'dii-sell'}`}>
-            {diiPos ? '+' : ''}₹{Math.abs(d.diiNet).toFixed(0)}Cr
+            {diiPos?'+':''}{d.diiNet.toFixed(0)} Cr
           </div>
           <div className="fiidii-card-tag">{diiPos ? '↑ Net Buyers' : '↓ Net Sellers'}</div>
           {d.diiBuy > 0 && <div className="fiidii-bs">Buy ₹{Math.abs(d.diiBuy).toFixed(0)}Cr · Sell ₹{Math.abs(d.diiSell).toFixed(0)}Cr</div>}
           <div className="fiidii-card-sub">Domestic Institutional Investors</div>
         </div>
-        <div className="fiidii-card fiidii-sentiment-card">
+        <div className="fiidii-card">
           <div className="fiidii-card-label">Market Mood</div>
-          {fiiPos && diiPos   && <><div className="fiidii-mood fiidii-bullish">BULLISH</div><div className="fiidii-mood-sub">Both FII &amp; DII buying</div></>}
-          {!fiiPos && !diiPos && <><div className="fiidii-mood fiidii-bearish">BEARISH</div><div className="fiidii-mood-sub">Both FII &amp; DII selling</div></>}
-          {fiiPos && !diiPos  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">FII buying · DII selling</div></>}
-          {!fiiPos && diiPos  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">DII buying · FII selling</div></>}
-          <div className="fiidii-card-sub">{d.date ? `As of ${fmtDate(d.date)}` : 'Latest available'}</div>
+          {fiiPos&&diiPos   && <><div className="fiidii-mood fiidii-bullish">BULLISH</div><div className="fiidii-mood-sub">Both FII &amp; DII buying</div></>}
+          {!fiiPos&&!diiPos && <><div className="fiidii-mood fiidii-bearish">BEARISH</div><div className="fiidii-mood-sub">Both FII &amp; DII selling</div></>}
+          {fiiPos&&!diiPos  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">FII buying · DII selling</div></>}
+          {!fiiPos&&diiPos  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">DII buying · FII selling</div></>}
+          <div className="fiidii-card-sub">{d.date ? `As of ${fmtDate(d.date)}` : 'Latest'}</div>
         </div>
       </div>
 
-      {/* History table — Zerodha-style color heatmap */}
-      {history.length > 0 && (
-        <div className="fiidii-table-wrap">
-          <div className="fiidii-table-title">FII-DII Activity (₹ Crores) · Source: NSE</div>
-          <table className="fiidii-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>FII Net Value</th>
-                <th>DII Net Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...history].reverse().map((row, i) => (
-                <tr key={i}>
-                  <td className="fiidii-td-date">{fmtDate(row.date)}</td>
-                  <td className="fiidii-td-val" style={{ background: cellBg(row.fiiNet, 'fii', maxAbs), color: cellColor(row.fiiNet) }}>
-                    {fmtCr(row.fiiNet)}
-                  </td>
-                  <td className="fiidii-td-val" style={{ background: cellBg(row.diiNet, 'dii', maxAbs), color: cellColor(row.diiNet) }}>
-                    {fmtCr(row.diiNet)}
-                  </td>
-                </tr>
-              ))}
-              {history.length > 1 && (
-                <tr className="fiidii-total-row">
-                  <td className="fiidii-td-date">Total</td>
-                  <td className="fiidii-td-val" style={{ background: cellBg(totalFii, 'fii', maxAbs * history.length), color: cellColor(totalFii) }}>
-                    {fmtCr(totalFii)}
-                  </td>
-                  <td className="fiidii-td-val" style={{ background: cellBg(totalDii, 'dii', maxAbs * history.length), color: cellColor(totalDii) }}>
-                    {fmtCr(totalDii)}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* Bar graph */}
+      <BarGraph history={d.history || []} />
     </div>
   );
 }
