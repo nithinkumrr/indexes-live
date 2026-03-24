@@ -1132,3 +1132,24 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .sl-panels        { grid-template-columns: 1fr; }
   .sl-bench-grid    { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── FII/DII new layout: chart left, cards right ─────────────────── */
+.fiidii-main-layout  { display: grid; grid-template-columns: 1fr 240px; gap: 16px; align-items: start; }
+.fiidii-chart-col    { min-width: 0; }
+.fiidii-cards-col    { display: flex; flex-direction: column; gap: 10px; }
+.fiidii-card-side    { flex: 1; }
+.fiidii-card-mood    { }
+.fiidii-totals-row   { display: flex; align-items: center; gap: 0; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.fiidii-total-item   { display: flex; flex-direction: column; gap: 3px; padding: 0 16px; flex: 1; }
+.fiidii-total-item:first-child { padding-left: 0; }
+.fiidii-total-sep    { width: 1px; height: 36px; background: var(--border); }
+.fiidii-total-lbl    { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text3); }
+.fiidii-total-val    { font-family: var(--mono); font-size: 15px; font-weight: 700; }
+.fiidii-total-days   { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.fiidii-no-history   { font-family: var(--mono); font-size: 12px; color: var(--text3); padding: 40px 0; text-align: center; }
+
+@media (max-width: 768px) {
+  .fiidii-main-layout { grid-template-columns: 1fr; }
+  .fiidii-cards-col   { flex-direction: row; flex-wrap: wrap; }
+  .fiidii-card-side   { min-width: 140px; flex: 1; }
+}

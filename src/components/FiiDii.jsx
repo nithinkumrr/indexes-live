@@ -239,80 +239,81 @@ export default function FiiDii() {
   const latest  = history[history.length - 1] || d;
   const fP = latest.fiiNet >= 0, dP = latest.diiNet >= 0;
 
+  const tf = history.length > 1 ? history.reduce((s, day) => s + day.fiiNet, 0) : null;
+  const td = history.length > 1 ? history.reduce((s, day) => s + day.diiNet, 0) : null;
+
   return (
     <div className="fiidii-wrap">
-
-      {/* Label */}
       <div className="fiidii-segment-label">CASH MARKET (EQUITY)</div>
 
-      {/* Summary cards */}
-      <div className="fiidii-summary">
-        <div className="fiidii-card">
-          <div className="fiidii-card-label">FII / FPI</div>
-          <div className={`fiidii-card-value ${fP ? 'fii-buy' : 'fii-sell'}`}>{fmtCr(latest.fiiNet)}</div>
-          <div className="fiidii-card-tag">{fP ? '↑ Net Buyers' : '↓ Net Sellers'}</div>
-          {latest.fiiBuy > 0 && <div className="fiidii-bs">Buy ₹{Math.abs(latest.fiiBuy).toFixed(0)}Cr · Sell ₹{Math.abs(latest.fiiSell).toFixed(0)}Cr</div>}
-          <div className="fiidii-card-sub">Foreign Institutional</div>
+      {/* Main layout: chart left, cards right */}
+      <div className="fiidii-main-layout">
+
+        {/* LEFT: Chart */}
+        <div className="fiidii-chart-col">
+          {history.length > 1 ? (
+            <>
+              <div className="fiidii-chart-header">
+                <span className="fiidii-chart-title">FII &amp; DII Net Flow — Last {history.length} Trading Days</span>
+              </div>
+              <FiiDiiChart history={history} />
+              {/* Totals below chart */}
+              <div className="fiidii-totals-row">
+                <div className="fiidii-total-item">
+                  <span className="fiidii-total-lbl">FII {history.length}D Total</span>
+                  <span className={`fiidii-total-val ${tf >= 0 ? 'fii-buy' : 'fii-sell'}`}>{fmtCr(tf)}</span>
+                  <span className="fiidii-total-days">{history.filter(h=>h.fiiNet>=0).length}↑ {history.filter(h=>h.fiiNet<0).length}↓</span>
+                </div>
+                <div className="fiidii-total-sep"/>
+                <div className="fiidii-total-item">
+                  <span className="fiidii-total-lbl">DII {history.length}D Total</span>
+                  <span className={`fiidii-total-val ${td >= 0 ? 'dii-buy' : 'dii-sell'}`}>{fmtCr(td)}</span>
+                  <span className="fiidii-total-days">{history.filter(h=>h.diiNet>=0).length}↑ {history.filter(h=>h.diiNet<0).length}↓</span>
+                </div>
+                <div className="fiidii-total-sep"/>
+                <div className="fiidii-total-item">
+                  <span className="fiidii-total-lbl">Combined</span>
+                  <span className={`fiidii-total-val ${(tf+td) >= 0 ? 'fii-buy' : 'fii-sell'}`}>{fmtCr(tf+td)}</span>
+                  <span className="fiidii-total-days">{(tf+td) >= 0 ? 'Net inflow' : 'Net outflow'}</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="fiidii-no-history">Historical data loads after market close</div>
+          )}
         </div>
-        <div className="fiidii-card">
-          <div className="fiidii-card-label">DII</div>
-          <div className={`fiidii-card-value ${dP ? 'dii-buy' : 'dii-sell'}`}>{fmtCr(latest.diiNet)}</div>
-          <div className="fiidii-card-tag">{dP ? '↑ Net Buyers' : '↓ Net Sellers'}</div>
-          {latest.diiBuy > 0 && <div className="fiidii-bs">Buy ₹{Math.abs(latest.diiBuy).toFixed(0)}Cr · Sell ₹{Math.abs(latest.diiSell).toFixed(0)}Cr</div>}
-          <div className="fiidii-card-sub">Domestic Institutional</div>
-        </div>
-        <div className="fiidii-card">
-          <div className="fiidii-card-label">Market Mood</div>
-          {fP && dP   && <><div className="fiidii-mood fiidii-bullish">BULLISH</div><div className="fiidii-mood-sub">Both buying</div></>}
-          {!fP && !dP && <><div className="fiidii-mood fiidii-bearish">BEARISH</div><div className="fiidii-mood-sub">Both selling</div></>}
-          {fP && !dP  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">FII buying · DII selling</div></>}
-          {!fP && dP  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">DII buying · FII selling</div></>}
-          <div className="fiidii-card-sub">{latest.date ? `As of ${fmtDateFull(latest.date)}` : 'Latest'} · Updates 5pm / 6:30pm / 7pm IST</div>
+
+        {/* RIGHT: FII + DII + Market Mood stacked */}
+        <div className="fiidii-cards-col">
+          {/* FII */}
+          <div className="fiidii-card fiidii-card-side">
+            <div className="fiidii-card-label">FII / FPI</div>
+            <div className={`fiidii-card-value ${fP ? 'fii-buy' : 'fii-sell'}`}>{fmtCr(latest.fiiNet)}</div>
+            <div className="fiidii-card-tag">{fP ? '↑ Net Buyers' : '↓ Net Sellers'}</div>
+            {latest.fiiBuy > 0 && <div className="fiidii-bs">Buy ₹{Math.abs(latest.fiiBuy).toFixed(0)}Cr · Sell ₹{Math.abs(latest.fiiSell).toFixed(0)}Cr</div>}
+            <div className="fiidii-card-sub">Foreign Institutional</div>
+          </div>
+
+          {/* DII */}
+          <div className="fiidii-card fiidii-card-side">
+            <div className="fiidii-card-label">DII</div>
+            <div className={`fiidii-card-value ${dP ? 'dii-buy' : 'dii-sell'}`}>{fmtCr(latest.diiNet)}</div>
+            <div className="fiidii-card-tag">{dP ? '↑ Net Buyers' : '↓ Net Sellers'}</div>
+            {latest.diiBuy > 0 && <div className="fiidii-bs">Buy ₹{Math.abs(latest.diiBuy).toFixed(0)}Cr · Sell ₹{Math.abs(latest.diiSell).toFixed(0)}Cr</div>}
+            <div className="fiidii-card-sub">Domestic Institutional</div>
+          </div>
+
+          {/* Market Mood */}
+          <div className="fiidii-card fiidii-card-side fiidii-card-mood">
+            <div className="fiidii-card-label">Market Mood</div>
+            {fP && dP   && <><div className="fiidii-mood fiidii-bullish">BULLISH</div><div className="fiidii-mood-sub">Both buying</div></>}
+            {!fP && !dP && <><div className="fiidii-mood fiidii-bearish">BEARISH</div><div className="fiidii-mood-sub">Both selling</div></>}
+            {fP && !dP  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">FII buying · DII selling</div></>}
+            {!fP && dP  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">DII buying · FII selling</div></>}
+            <div className="fiidii-card-sub">{latest.date ? `As of ${fmtDateFull(latest.date)}` : 'Latest'} · Updates 5pm / 6:30pm / 7pm IST</div>
+          </div>
         </div>
       </div>
-
-      {/* Chart */}
-      {history.length > 1 && (
-        <div className="fiidii-chart-wrap">
-          <div className="fiidii-chart-header">
-            <span className="fiidii-chart-title">FII &amp; DII Net Flow — Last {history.length} Trading Days</span>
-            <div className="fiidii-chart-legend">
-              <span><span style={{display:'inline-block',width:10,height:10,background:'rgba(0,200,150,0.85)',borderRadius:2,marginRight:4}}/>FII buy</span>
-              <span><span style={{display:'inline-block',width:10,height:10,background:'rgba(255,68,85,0.85)',borderRadius:2,marginRight:4}}/>FII sell</span>
-              <span><span style={{display:'inline-block',width:10,height:10,background:'rgba(0,150,220,0.85)',borderRadius:2,marginRight:4}}/>DII buy</span>
-              <span><span style={{display:'inline-block',width:10,height:10,background:'rgba(255,140,0,0.85)',borderRadius:2,marginRight:4}}/>DII sell</span>
-            </div>
-          </div>
-          <FiiDiiChart history={history} />
-        </div>
-      )}
-
-      {/* Summary strip */}
-      {history.length > 1 && (() => {
-        const tf = history.reduce((s, day) => s + day.fiiNet, 0);
-        const td = history.reduce((s, day) => s + day.diiNet, 0);
-        return (
-          <div className="fc-summary">
-            <div className="fc-sum-block">
-              <span className="fc-sum-lbl">FII {history.length}-day total</span>
-              <span className={`fc-sum-val ${tf >= 0 ? 'fc-tip-buy' : 'fc-tip-sell'}`}>{fmtCr(tf)}</span>
-              <span className="fc-sum-days">{history.filter(d=>d.fiiNet>=0).length} buy · {history.filter(d=>d.fiiNet<0).length} sell days</span>
-            </div>
-            <div className="fc-sum-div"/>
-            <div className="fc-sum-block">
-              <span className="fc-sum-lbl">DII {history.length}-day total</span>
-              <span className={`fc-sum-val ${td >= 0 ? 'fc-tip-buy' : 'fc-tip-sell'}`}>{fmtCr(td)}</span>
-              <span className="fc-sum-days">{history.filter(d=>d.diiNet>=0).length} buy · {history.filter(d=>d.diiNet<0).length} sell days</span>
-            </div>
-            <div className="fc-sum-div"/>
-            <div className="fc-sum-block">
-              <span className="fc-sum-lbl">Combined net</span>
-              <span className={`fc-sum-val ${(tf+td) >= 0 ? 'fc-tip-buy' : 'fc-tip-sell'}`}>{fmtCr(tf+td)}</span>
-              <span className="fc-sum-days">{(tf+td) >= 0 ? 'Net inflow' : 'Net outflow'}</span>
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }
