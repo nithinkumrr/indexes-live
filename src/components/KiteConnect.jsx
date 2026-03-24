@@ -19,7 +19,7 @@ export default function KiteConnect() {
     }
 
     // Check if already authenticated
-    fetch('/api/kite-data?type=status')
+    fetch('/api/kite-auth?type=status')
       .then(r => r.json())
       .then(d => {
         if (d.authenticated) { setStatus('connected');  }
