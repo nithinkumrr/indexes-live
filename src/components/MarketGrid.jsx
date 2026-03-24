@@ -10,7 +10,7 @@ const PAIRED_REGIONS = [['Americas', 'Europe']];
 const SOLO_REGIONS   = ['Asia'];
 const SOLO_BOTTOM    = ['MEA'];
 const COMMODITY_REGIONS = ['Commodity'];
-const PANEL_COLS = { Asia: 6, Europe: 4, Americas: 3, MEA: 4, Commodity: 4 };
+const PANEL_COLS = { Asia: 6, Europe: 4, Americas: 3, MEA: 4, Commodity: 6 };
 
 export default function MarketGrid({ data, nseData = {} }) {
   const [tab, setTab]       = useState('equities');
