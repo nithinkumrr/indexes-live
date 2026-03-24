@@ -314,16 +314,27 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .footer-text::before { content: '· '; color: var(--text3); }
 }
 
-/* Fix 6: Market hours tooltip via CSS data attribute — subtle, no JS */
+/* Fix 6: Market hours tooltip — local time + IST conversion */
 [data-hours] { position: relative; }
-[data-hours]:hover::after {
+[data-hours]:hover::before {
   content: attr(data-hours);
-  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
   background: var(--bg4); border: 1px solid var(--border2);
-  font-family: var(--mono); font-size: 10px; color: var(--text2);
-  padding: 4px 8px; border-radius: 4px; white-space: nowrap;
-  pointer-events: none; z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text);
+  padding: 6px 10px 4px; border-radius: 5px 5px 0 0;
+  white-space: nowrap; pointer-events: none; z-index: 100;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.3);
+}
+/* IST line — only shown when data-hours-ist is non-empty */
+[data-hours][data-hours-ist]:not([data-hours-ist=""]):hover::after {
+  content: "🇮🇳 " attr(data-hours-ist);
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  margin-bottom: 26px;
+  background: rgba(255,153,51,0.12); border: 1px solid rgba(255,153,51,0.3); border-top: none;
+  font-family: var(--mono); font-size: 10px; font-weight: 500; color: #FF9933;
+  padding: 3px 10px 5px; border-radius: 0 0 5px 5px;
+  white-space: nowrap; pointer-events: none; z-index: 100;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
 }
 
 ::selection { background: rgba(74,158,255,0.2); }

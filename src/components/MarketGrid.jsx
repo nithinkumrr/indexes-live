@@ -43,7 +43,7 @@ export default function MarketGrid({ data }) {
     const d    = data[market.id];
     const gain = d ? d.changePct >= 0 : true;
     return (
-      <div key={market.id} className={`market-card ${status === 'live' ? 'market-card-live' : ''}`} data-hours={getMarketHoursLabel(market)}>
+      <div key={market.id} className={`market-card ${status === 'live' ? 'market-card-live' : ''}`} data-hours={getMarketHoursLabel(market).local} data-hours-ist={getMarketHoursLabel(market).ist || ''}>
         <div className="mc-top">
           <div className="mc-left">
             <span className="mc-flag">{market.flag}</span>

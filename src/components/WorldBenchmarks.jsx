@@ -46,7 +46,7 @@ export default function WorldBenchmarks({ data, region }) {
           const isVIX    = market.id === 'vix';
 
           return (
-            <div key={market.id} className={`wb-card ${status === 'live' ? 'wb-live' : ''} ${isHome ? 'wb-home' : ''} ${isVIX ? 'wb-vix' : ''}`} data-hours={getMarketHoursLabel(market)}>
+            <div key={market.id} className={`wb-card ${status === 'live' ? 'wb-live' : ''} ${isHome ? 'wb-home' : ''} ${isVIX ? 'wb-vix' : ''}`} data-hours={getMarketHoursLabel(market).local} data-hours-ist={getMarketHoursLabel(market).ist || ''}>
               <div className="wb-top">
                 <span className="wb-flag">{market.flag}</span>
                 <div className="wb-info">

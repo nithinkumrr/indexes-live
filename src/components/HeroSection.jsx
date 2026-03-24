@@ -68,7 +68,7 @@ export default function HeroSection({ data, region }) {
             const status = getStatus(market);
             const gain   = d ? d.changePct >= 0 : true;
             return (
-              <div key={market.id} className={`hero-card ${status === 'live' ? 'hero-card-live' : ''} ${market.giftCard ? 'hero-card-gift' : ''}`} data-hours={getMarketHoursLabel(market)}>
+              <div key={market.id} className={`hero-card ${status === 'live' ? 'hero-card-live' : ''} ${market.giftCard ? 'hero-card-gift' : ''}`} data-hours={getMarketHoursLabel(market).local} data-hours-ist={getMarketHoursLabel(market).ist || ''}>
                 <div className="hero-card-top">
                   <div>
                     <div className="hero-exchange">{market.exchange} · {market.country}</div>

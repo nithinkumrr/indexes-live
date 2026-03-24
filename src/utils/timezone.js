@@ -120,20 +120,54 @@ export function formatDuration(secs) {
 // Returns human-readable market hours string e.g. "9:15 – 15:30 IST"
 export function getMarketHoursLabel(market) {
   const pad = n => String(n).padStart(2, '0');
-  const o = market.open,  c = market.close;
+  const o = market.open, c = market.close;
   const tz = market.tz || '';
-  // Map timezone to short label
+
   const TZ_SHORT = {
     'Asia/Kolkata': 'IST', 'America/New_York': 'ET', 'Europe/London': 'GMT',
     'Europe/Berlin': 'CET', 'Europe/Paris': 'CET', 'Europe/Amsterdam': 'CET',
     'Asia/Tokyo': 'JST', 'Asia/Hong_Kong': 'HKT', 'Asia/Shanghai': 'CST',
     'Asia/Seoul': 'KST', 'Australia/Sydney': 'AEDT', 'Asia/Singapore': 'SGT',
     'Asia/Taipei': 'CST', 'Asia/Jakarta': 'WIB', 'America/Toronto': 'ET',
-    'America/Sao_Paulo': 'BRT', 'Asia/Riyadh': 'AST', 'Asia/Dubai': 'GST',
+    'America/Sao_Paulo': 'BRT', 'Asia/Riyadh': '+03', 'Asia/Dubai': 'GST',
     'Africa/Johannesburg': 'SAST', 'Africa/Lagos': 'WAT', 'Africa/Cairo': 'EET',
-    'Asia/Jerusalem': 'IST', 'Africa/Casablanca': 'WET', 'Asia/Kuwait': 'AST',
-    'Asia/Qatar': 'AST', 'America/New_York': 'ET',
+    'Asia/Jerusalem': '+02', 'Africa/Casablanca': 'WET', 'Asia/Kuwait': '+03',
+    'Asia/Qatar': '+03',
   };
+
+  // UTC offsets in minutes for each timezone (standard time, approximate)
+  const TZ_OFFSET = {
+    'Asia/Kolkata': 330, 'America/New_York': -300, 'Europe/London': 0,
+    'Europe/Berlin': 60, 'Europe/Paris': 60, 'Europe/Amsterdam': 60,
+    'Asia/Tokyo': 540, 'Asia/Hong_Kong': 480, 'Asia/Shanghai': 480,
+    'Asia/Seoul': 540, 'Australia/Sydney': 600, 'Asia/Singapore': 480,
+    'Asia/Taipei': 480, 'Asia/Jakarta': 420, 'America/Toronto': -300,
+    'America/Sao_Paulo': -180, 'Asia/Riyadh': 180, 'Asia/Dubai': 240,
+    'Africa/Johannesburg': 120, 'Africa/Lagos': 60, 'Africa/Cairo': 120,
+    'Asia/Jerusalem': 120, 'Africa/Casablanca': 0, 'Asia/Kuwait': 180,
+    'Asia/Qatar': 180,
+  };
+
   const label = TZ_SHORT[tz] || tz.split('/').pop();
-  return `${pad(o[0])}:${pad(o[1])} – ${pad(c[0])}:${pad(c[1])} ${label}`;
+  const localStr = `${pad(o[0])}:${pad(o[1])} – ${pad(c[0])}:${pad(c[1])} ${label}`;
+
+  // Skip IST conversion for Indian markets
+  if (tz === 'Asia/Kolkata') return { local: localStr, ist: null };
+
+  // Convert open/close to IST
+  const IST_OFFSET = 330;
+  const srcOffset = TZ_OFFSET[tz] ?? 0;
+  const diff = IST_OFFSET - srcOffset; // minutes to add to get IST
+
+  const toIST = (h, m) => {
+    const total = h * 60 + m + diff;
+    const wrapped = ((total % 1440) + 1440) % 1440;
+    return [Math.floor(wrapped / 60), wrapped % 60];
+  };
+
+  const [oh, om] = toIST(o[0], o[1]);
+  const [ch, cm] = toIST(c[0], c[1]);
+  const istStr = `${pad(oh)}:${pad(om)} – ${pad(ch)}:${pad(cm)} IST`;
+
+  return { local: localStr, ist: istStr };
 }
