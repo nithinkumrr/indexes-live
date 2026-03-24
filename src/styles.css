@@ -280,14 +280,52 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6 { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
-  .hero-cards { grid-template-columns: 1fr; }
+  /* Fix 2: hero cards 2x2 grid on mobile */
+  .hero-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .hero-price  { font-size: 20px; }
+  .hero-card-inner { padding: 10px; gap: 6px; }
+
+  /* WB 2-col on mobile */
   .wb-grid { grid-template-columns: repeat(2, 1fr); }
   .grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6 { grid-template-columns: 1fr 1fr; }
-  .grid-section { padding: 0 12px 32px; }
-  .hero-section { padding: 12px; }
+  .grid-section { padding: 0 10px 24px; }
+  .hero-section { padding: 10px; }
   .ic-sub { display: none; }
   .logo-text, .logo-dot, .logo-live { font-size: 17px; }
+
+  /* Fix 4: commodity strip on mobile — hide labels, wrap items in 2-col grid */
+  .commodity-strip { flex-wrap: wrap; }
+  .commodity-strip-label { display: none; }
+  .commodity-strip-item { flex: 0 0 50%; border-bottom: 1px solid var(--border); }
+  .commodity-strip-item:nth-child(even) { border-right: none; }
+
+  /* Fix 4: FX/Crypto strip on mobile — hide section labels, 2-col wrap */
+  .fxrow-strip { flex-wrap: wrap; }
+  .fxrow-section-label { display: none; }
+  .fxrow-divider { display: none; }
+  .fxrow-group, .fxrow-group-crypto { flex: 0 0 100%; flex-wrap: wrap; }
+  .fxrow-item { flex: 0 0 50%; min-width: 0; }
+
+  /* Fix 5: footer on mobile — stack vertically, centered */
+  .footer { flex-direction: column; align-items: flex-start; padding: 14px 16px; gap: 6px; }
+  .footer-sep { display: none; }
+  .footer-brand { margin-bottom: 4px; }
+  .footer-text { font-size: 11px; line-height: 1.6; }
+  .footer-text::before { content: '· '; color: var(--text3); }
 }
+
+/* Fix 6: Market hours tooltip via CSS data attribute — subtle, no JS */
+[data-hours] { position: relative; }
+[data-hours]:hover::after {
+  content: attr(data-hours);
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--bg4); border: 1px solid var(--border2);
+  font-family: var(--mono); font-size: 10px; color: var(--text2);
+  padding: 4px 8px; border-radius: 4px; white-space: nowrap;
+  pointer-events: none; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
 ::selection { background: rgba(74,158,255,0.2); }
 
 /* ─── BUBBLE VIEW ──────────────────────────────────────────────────── */

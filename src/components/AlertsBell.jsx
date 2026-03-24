@@ -1,4 +1,3 @@
-// src/components/AlertsBell.jsx — market open bell, minimal UI
 import { useState, useEffect, useRef } from 'react';
 import { ALERT_EVENTS } from '../data/markets';
 
@@ -18,16 +17,23 @@ function playBell(ctx) {
 }
 
 export default function AlertsBell() {
-  const [enabled, setEnabled] = useState(false);
-  const [toast, setToast]     = useState(null);
-  const audioRef  = useRef(null);
-  const firedRef  = useRef(new Set());
+  // Persist bell state in localStorage
+  const [enabled, setEnabled] = useState(() => {
+    try { return localStorage.getItem('indexeslive_bell') === 'true'; } catch { return false; }
+  });
+  const [toast, setToast] = useState(null);
+  const audioRef = useRef(null);
+  const firedRef = useRef(new Set());
 
   const toggle = () => {
     if (!audioRef.current) {
       audioRef.current = new (window.AudioContext || window.webkitAudioContext)();
     }
-    setEnabled(e => !e);
+    setEnabled(e => {
+      const next = !e;
+      try { localStorage.setItem('indexeslive_bell', String(next)); } catch {}
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -40,6 +46,9 @@ export default function AlertsBell() {
         const key = `${ev.id}-${now.toDateString()}`;
         if (ev.hIST === h && ev.mIST === m && !firedRef.current.has(key)) {
           firedRef.current.add(key);
+          if (!audioRef.current) {
+            audioRef.current = new (window.AudioContext || window.webkitAudioContext)();
+          }
           playBell(audioRef.current);
           setToast(ev.label);
           setTimeout(() => setToast(null), 4000);
@@ -56,11 +65,7 @@ export default function AlertsBell() {
         <span className="bell-icon">{enabled ? '🔔' : '🔕'}</span>
         <span className="bell-label">{enabled ? 'Bell on' : 'Bell'}</span>
       </button>
-      {toast && (
-        <div className="bell-toast">
-          <span>🔔</span> {toast}
-        </div>
-      )}
+      {toast && <div className="bell-toast"><span>🔔</span> {toast}</div>}
     </>
   );
 }

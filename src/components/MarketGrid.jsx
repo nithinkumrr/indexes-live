@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { MARKETS } from '../data/markets';
 import { formatPrice, formatChange, formatPct } from '../utils/format';
-import { getStatus } from '../utils/timezone';
+import { getStatus, getMarketHoursLabel } from '../utils/timezone';
 import Sparkline from './Sparkline';
 
 const STATUS_ORDER = { live: 0, pre: 1, closed: 2 };
@@ -43,7 +43,7 @@ export default function MarketGrid({ data }) {
     const d    = data[market.id];
     const gain = d ? d.changePct >= 0 : true;
     return (
-      <div key={market.id} className={`market-card ${status === 'live' ? 'market-card-live' : ''}`}>
+      <div key={market.id} className={`market-card ${status === 'live' ? 'market-card-live' : ''}`} data-hours={getMarketHoursLabel(market)}>
         <div className="mc-top">
           <div className="mc-left">
             <span className="mc-flag">{market.flag}</span>

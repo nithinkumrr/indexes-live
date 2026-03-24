@@ -1,7 +1,7 @@
 // src/components/WorldBenchmarks.jsx — 4×2 grid with sparklines
 import { MARKETS, WORLD_BENCHMARK_IDS } from '../data/markets';
 import { formatPct } from '../utils/format';
-import { getStatus } from '../utils/timezone';
+import { getStatus, getMarketHoursLabel } from '../utils/timezone';
 import Sparkline from './Sparkline';
 
 const REGION_HOME_IDS = {
@@ -46,7 +46,7 @@ export default function WorldBenchmarks({ data, region }) {
           const isVIX    = market.id === 'vix';
 
           return (
-            <div key={market.id} className={`wb-card ${status === 'live' ? 'wb-live' : ''} ${isHome ? 'wb-home' : ''} ${isVIX ? 'wb-vix' : ''}`}>
+            <div key={market.id} className={`wb-card ${status === 'live' ? 'wb-live' : ''} ${isHome ? 'wb-home' : ''} ${isVIX ? 'wb-vix' : ''}`} data-hours={getMarketHoursLabel(market)}>
               <div className="wb-top">
                 <span className="wb-flag">{market.flag}</span>
                 <div className="wb-info">

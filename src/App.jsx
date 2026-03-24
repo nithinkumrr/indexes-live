@@ -7,46 +7,23 @@ import WorldClocks from './components/WorldClocks';
 import HeroSection from './components/HeroSection';
 import WorldBenchmarks from './components/WorldBenchmarks';
 import MarketGrid from './components/MarketGrid';
-import WorldMapView from './components/WorldMapView';
 import BubbleView from './components/BubbleView';
 import Footer from './components/Footer';
 
 export default function App() {
   const region = useMemo(() => detectRegion(), []);
-  const { data, loading, lastUpdate } = useMarketData();
-  const [view, setView] = useState('grid'); // 'grid' | 'map' | 'bubble'
+  const { data, lastUpdate } = useMarketData();
+  const [view, setView] = useState('grid');
 
   return (
     <div className="app">
-      <Header lastUpdate={lastUpdate} view={view} setView={setView} />
+      <Header lastUpdate={lastUpdate} />
       <Ticker data={data} />
       <WorldClocks />
       <HeroSection data={data} region={region} />
       <WorldBenchmarks data={data} region={region} />
       {view === 'grid'   && <MarketGrid data={data} />}
-      {view === 'map'    && <WorldMapView data={data} />}
       {view === 'bubble' && <BubbleView data={data} />}
-      <Footer />
-    </div>
-  );
-}
-
-export default function App() {
-  const region = useMemo(() => detectRegion(), []);
-  const { data, loading, lastUpdate } = useMarketData();
-  const [view, setView] = useState('grid');
-
-  return (
-    <div className="app">
-      <Header lastUpdate={lastUpdate} view={view} setView={setView} />
-      <Ticker data={data} />
-      <WorldClocks />
-      <HeroSection data={data} region={region} />
-      <WorldBenchmarks data={data} region={region} />
-      {view === 'grid'
-        ? <MarketGrid data={data} />
-        : <WorldMapView data={data} />
-      }
       <Footer />
     </div>
   );

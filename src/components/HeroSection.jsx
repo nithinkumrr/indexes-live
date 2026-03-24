@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { MARKETS, HERO_BY_REGION, COMMODITY_STRIP_IDS } from '../data/markets';
 import { formatPrice, formatChange, formatPct } from '../utils/format';
-import { getStatus, getLocalTime, getIndiaMarketStatus, formatDuration } from '../utils/timezone';
+import { getStatus, getLocalTime, getIndiaMarketStatus, formatDuration, getMarketHoursLabel } from '../utils/timezone';
 import Sparkline from './Sparkline';
 import FxCryptoStrip from './CurrencyStrip';
 
@@ -68,13 +68,22 @@ export default function HeroSection({ data, region }) {
             const status = getStatus(market);
             const gain   = d ? d.changePct >= 0 : true;
             return (
-              <div key={market.id} className={`hero-card ${status === 'live' ? 'hero-card-live' : ''} ${market.giftCard ? 'hero-card-gift' : ''}`}>
+              <div key={market.id} className={`hero-card ${status === 'live' ? 'hero-card-live' : ''} ${market.giftCard ? 'hero-card-gift' : ''}`} data-hours={getMarketHoursLabel(market)}>
                 <div className="hero-card-top">
                   <div>
                     <div className="hero-exchange">{market.exchange} · {market.country}</div>
                     <div className="hero-name">
                       {market.name}
-                      {market.note && <span className="hero-note-tag"> · {market.note}</span>}
+                      {market.note && market.id === 'giftnifty' && (() => {
+                        // Only show "Pre-market signal" outside NSE hours (9:15–15:30 IST)
+                        const now = new Date();
+                        const istMin = (now.getUTCHours() * 60 + now.getUTCMinutes() + 330) % 1440;
+                        const nseOpen = 9 * 60 + 15, nseClose = 15 * 60 + 30;
+                        return (istMin < nseOpen || istMin > nseClose)
+                          ? <span className="hero-note-tag"> · {market.note}</span>
+                          : null;
+                      })()}
+                      {market.note && market.id !== 'giftnifty' && <span className="hero-note-tag"> · {market.note}</span>}
                     </div>
                   </div>
                   <StatusPill status={status} />

@@ -116,3 +116,24 @@ export function formatDuration(secs) {
   if (h > 0) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
+
+// Returns human-readable market hours string e.g. "9:15 – 15:30 IST"
+export function getMarketHoursLabel(market) {
+  const pad = n => String(n).padStart(2, '0');
+  const o = market.open,  c = market.close;
+  const tz = market.tz || '';
+  // Map timezone to short label
+  const TZ_SHORT = {
+    'Asia/Kolkata': 'IST', 'America/New_York': 'ET', 'Europe/London': 'GMT',
+    'Europe/Berlin': 'CET', 'Europe/Paris': 'CET', 'Europe/Amsterdam': 'CET',
+    'Asia/Tokyo': 'JST', 'Asia/Hong_Kong': 'HKT', 'Asia/Shanghai': 'CST',
+    'Asia/Seoul': 'KST', 'Australia/Sydney': 'AEDT', 'Asia/Singapore': 'SGT',
+    'Asia/Taipei': 'CST', 'Asia/Jakarta': 'WIB', 'America/Toronto': 'ET',
+    'America/Sao_Paulo': 'BRT', 'Asia/Riyadh': 'AST', 'Asia/Dubai': 'GST',
+    'Africa/Johannesburg': 'SAST', 'Africa/Lagos': 'WAT', 'Africa/Cairo': 'EET',
+    'Asia/Jerusalem': 'IST', 'Africa/Casablanca': 'WET', 'Asia/Kuwait': 'AST',
+    'Asia/Qatar': 'AST', 'America/New_York': 'ET',
+  };
+  const label = TZ_SHORT[tz] || tz.split('/').pop();
+  return `${pad(o[0])}:${pad(o[1])} – ${pad(c[0])}:${pad(c[1])} ${label}`;
+}
