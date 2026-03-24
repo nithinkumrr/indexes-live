@@ -89,6 +89,8 @@ function FiiDiiChart({ history }) {
         maintainAspectRatio: false,
         layout: { padding: { top: 4, bottom: 0, left: 0, right: 0 } },
         interaction: { mode: 'index', intersect: false },
+        barPercentage: 0.6,
+        categoryPercentage: 0.8,
         plugins: {
           legend: {
             position: 'bottom',
@@ -96,7 +98,9 @@ function FiiDiiChart({ history }) {
               color: '#9CA3AF',
               font: { family: 'monospace', size: 11 },
               boxWidth: 12,
+              boxHeight: 12,
               padding: 16,
+              usePointStyle: false,
               // Custom legend colours since backgroundColor is array
               generateLabels: (chart) => {
                 return [
@@ -105,7 +109,7 @@ function FiiDiiChart({ history }) {
                   { text: 'DII (buy)', fillStyle: 'rgba(0,150,220,0.85)',  strokeStyle: 'transparent', lineWidth: 0 },
                   { text: 'DII (sell)', fillStyle: 'rgba(255,140,0,0.85)', strokeStyle: 'transparent', lineWidth: 0 },
                   ...(hasNifty ? [{ text: 'Nifty 50', fillStyle: '#4A9EFF', strokeStyle: '#4A9EFF', lineWidth: 2 }] : []),
-                ].map((l, i) => ({ ...l, datasetIndex: i, hidden: false, index: i }));
+                ].map((l, i) => ({ ...l, datasetIndex: i, hidden: false, index: i, fontColor: '#9CA3AF', textAlign: 'left' }));
               },
             },
           },
