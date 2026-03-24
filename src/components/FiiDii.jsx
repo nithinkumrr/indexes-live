@@ -244,8 +244,8 @@ export default function FiiDii() {
   const latest  = history[history.length - 1] || d;
   const fP = latest.fiiNet >= 0, dP = latest.diiNet >= 0;
 
-  const tf = history.length > 1 ? history.reduce((s, day) => s + day.fiiNet, 0) : null;
-  const td = history.length > 1 ? history.reduce((s, day) => s + day.diiNet, 0) : null;
+  const tf = history.length > 0 ? history.reduce((s, day) => s + day.fiiNet, 0) : null;
+  const td = history.length > 0 ? history.reduce((s, day) => s + day.diiNet, 0) : null;
 
   return (
     <div className="fiidii-wrap">
@@ -256,10 +256,10 @@ export default function FiiDii() {
 
         {/* LEFT: Chart */}
         <div className="fiidii-chart-col">
-          {history.length > 1 ? (
+          {history.length > 0 ? (
             <>
               <div className="fiidii-chart-header">
-                <span className="fiidii-chart-title">FII &amp; DII Net Flow — Last {history.length} Trading Days</span>
+                <span className="fiidii-chart-title">FII &amp; DII Net Flow — Last {history.length} Trading Day{history.length > 1 ? 's' : ''}</span>
               </div>
               <FiiDiiChart history={history} />
               {/* Totals below chart */}
@@ -284,10 +284,7 @@ export default function FiiDii() {
               </div>
             </>
           ) : (
-            <div className="fiidii-no-history">
-              <div style={{fontSize:13,color:'var(--text2)',marginBottom:6}}>7-day chart loads after multiple trading days of data</div>
-              <div style={{fontSize:11,color:'var(--text3)'}}>Today — FII: {fmtCr(latest.fiiNet)} · DII: {fmtCr(latest.diiNet)}</div>
-            </div>
+            <div className="fiidii-no-history">FII / DII data loading...</div>
           )}
         </div>
 
