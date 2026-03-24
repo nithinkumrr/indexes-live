@@ -136,7 +136,7 @@ export default function FnoData() {
   if (!d) return (
     <div className="fiidii-unavail">
       <div className="fiidii-unavail-msg">Option chain data unavailable</div>
-      <div className="fiidii-unavail-sub">NSE may be blocking server requests. Try again shortly.</div>
+      <div className="fiidii-unavail-sub">NSE may be temporarily unavailable. Retrying automatically every 60s.</div>
     </div>
   );
 
