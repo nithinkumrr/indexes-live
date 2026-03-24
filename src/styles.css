@@ -995,3 +995,16 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .bc-row-best     { background: rgba(0,200,150,0.04); }
 .bc-best-badge   { font-size: 9px; font-weight: 700; color: var(--gain); background: rgba(0,200,150,0.12); padding: 2px 7px; border-radius: 10px; }
 .bc-note         { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 10px; line-height: 1.6; }
+
+/* ── MCX Futures Strip ──────────────────────────────────────────────── */
+.gold-mcx-strip  { background: linear-gradient(135deg, rgba(212,160,23,0.08), rgba(212,160,23,0.03)); border: 1px solid rgba(212,160,23,0.3); border-radius: var(--r-lg); padding: 14px 20px; margin-bottom: 20px; }
+.gold-mcx-label  { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: #D4A017; margin-bottom: 12px; font-weight: 700; }
+.gold-mcx-items  { display: flex; gap: 0; align-items: center; flex-wrap: wrap; }
+.gold-mcx-item   { display: flex; align-items: center; gap: 10px; padding: 0 20px 0 0; border-right: 1px solid var(--border); margin-right: 20px; flex-wrap: wrap; }
+.gold-mcx-item:last-of-type { border-right: none; }
+.gold-mcx-name   { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.gold-mcx-price  { font-family: var(--mono); font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.gold-mcx-chg    { font-family: var(--mono); font-size: 11px; font-weight: 700; }
+.gold-mcx-fx     { margin-left: auto; }
+.gold-mcx-note   { font-family: var(--mono); font-size: 9px; color: var(--text3); width: 100%; margin-top: 8px; }
+.wb-pe { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-left: 6px; }

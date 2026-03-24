@@ -24,7 +24,7 @@ function fmtBenchmark(value, id) {
   return value.toFixed(2);
 }
 
-export default function WorldBenchmarks({ data, region }) {
+export default function WorldBenchmarks({ data, region, nseData = {} }) {
   const homeIds    = REGION_HOME_IDS[region] || [];
   const benchmarks = WORLD_BENCHMARK_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
 
@@ -62,6 +62,7 @@ export default function WorldBenchmarks({ data, region }) {
                 <div className={`wb-pct ${dispGain ? 'gain' : 'loss'}`}>
                   {rawGain ? '▲' : '▼'} {formatPct(d.changePct)}
                   {isVIX && <span className="wb-vix-label">{rawGain ? ' FEAR↑' : ' CALM↓'}</span>}
+                  {nseData[market.id]?.pe > 0 && <span className="wb-pe">P/E {nseData[market.id].pe.toFixed(1)}x</span>}
                 </div>
               )}
               {d?.spark && (

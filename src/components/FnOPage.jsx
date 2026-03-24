@@ -210,7 +210,7 @@ export default function FnOPage() {
           <ComingSoonCard title="PCR — Put Call Ratio"   desc="Live put-call ratio for Nifty & Bank Nifty. Above 1 = bullish sentiment, below 0.7 = bearish." />
           <ComingSoonCard title="OI Buildup"             desc="Which strikes are seeing heavy call/put writing. Identifies key support and resistance levels." />
           <ComingSoonCard title="Max Pain"               desc="The price at which option writers lose least. Nifty often gravitates here near expiry." />
-          <ComingSoonCard title="FII / DII Flow"         desc="Net buying and selling by foreign and domestic institutions. Key sentiment indicator." />
+          
         </div>
       </div>
     </div>

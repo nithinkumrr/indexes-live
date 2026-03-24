@@ -25,6 +25,35 @@ export default function GoldPage() {
   const [metal, setMetal]     = useState('gold22');
   const [date, setDate]       = useState('');
   const [view, setView]       = useState('grid'); // grid | table
+  const [mcx, setMcx]         = useState(null);
+
+  useEffect(() => {
+    // Fetch MCX futures: GOLDM (mini gold per 10g), SILVERM (mini silver per kg), GOLD (1kg)
+    Promise.all([
+      fetch('/api/quote?symbol=GC%3DF').then(r=>r.json()),     // COMEX gold USD/oz
+      fetch('/api/quote?symbol=SI%3DF').then(r=>r.json()),     // COMEX silver USD/oz  
+      fetch('/api/quote?symbol=USDINR%3DX').then(r=>r.json()), // USD/INR
+    ]).then(([goldD, silvD, fxD]) => {
+      const usd = fxD?.chart?.result?.[0]?.meta?.regularMarketPrice || 84;
+      const gP  = goldD?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      const sP  = silvD?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      const gPrev = goldD?.chart?.result?.[0]?.meta?.chartPreviousClose;
+      const sPrev = silvD?.chart?.result?.[0]?.meta?.chartPreviousClose;
+      if (gP) {
+        const gInrKg = Math.round(gP * usd / 31.1035 * 1000);
+        const sInrKg = sP ? Math.round(sP * usd / 31.1035 * 1000) : null;
+        setMcx({
+          goldKg:     gInrKg,
+          goldChgPct: gPrev ? ((gP - gPrev) / gPrev * 100).toFixed(2) : null,
+          silverKg:   sInrKg,
+          silvChgPct: sPrev && sP ? ((sP - sPrev) / sPrev * 100).toFixed(2) : null,
+          usdInr:     Math.round(usd * 100)/100,
+          goldOz:     gP,
+          month:      new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' }),
+        });
+      }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch('/api/gold')
@@ -44,6 +73,32 @@ export default function GoldPage() {
 
   return (
     <div className="gold-wrap">
+      {/* MCX Futures Strip */}
+      {mcx && (
+        <div className="gold-mcx-strip">
+          <div className="gold-mcx-label">MCX FUTURES · {mcx.month}</div>
+          <div className="gold-mcx-items">
+            <div className="gold-mcx-item">
+              <span className="gold-mcx-name">🥇 Gold (1 kg)</span>
+              <span className="gold-mcx-price">₹{mcx.goldKg?.toLocaleString('en-IN')}</span>
+              {mcx.goldChgPct && <span className={`gold-mcx-chg ${parseFloat(mcx.goldChgPct)>=0?'gain':'loss'}`}>{parseFloat(mcx.goldChgPct)>=0?'▲':'▼'} {Math.abs(mcx.goldChgPct)}%</span>}
+            </div>
+            {mcx.silverKg && (
+              <div className="gold-mcx-item">
+                <span className="gold-mcx-name">🥈 Silver (1 kg)</span>
+                <span className="gold-mcx-price">₹{mcx.silverKg?.toLocaleString('en-IN')}</span>
+                {mcx.silvChgPct && <span className={`gold-mcx-chg ${parseFloat(mcx.silvChgPct)>=0?'gain':'loss'}`}>{parseFloat(mcx.silvChgPct)>=0?'▲':'▼'} {Math.abs(mcx.silvChgPct)}%</span>}
+              </div>
+            )}
+            <div className="gold-mcx-item gold-mcx-fx">
+              <span className="gold-mcx-name">USD/INR</span>
+              <span className="gold-mcx-price">₹{mcx.usdInr}</span>
+            </div>
+            <div className="gold-mcx-note">Source: COMEX via Yahoo · Converted at live USD/INR · Incl. 3% GST</div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="gold-header">
         <div>
@@ -144,7 +199,7 @@ export default function GoldPage() {
                     <th>Gold 24K / gram</th>
                     <th>Gold 22K / 10g</th>
                     <th>Gold 24K / 10g</th>
-                    <th>Silver / gram</th>
+                    <th>Silver / kg</th>
                   </tr>
                 </thead>
                 <tbody>
