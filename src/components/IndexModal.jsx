@@ -230,6 +230,7 @@ export default function IndexModal({ market, data, nseData = {}, onClose }) {
           <div className="im-stat"><span className="im-stat-label">Prev Close</span><span className="im-stat-value">{fmt(d?.prevClose)}</span></div>
           <div className="im-stat"><span className="im-stat-label">52W High</span>  <span className="im-stat-value">{fmt(yH)}</span></div>
           <div className="im-stat"><span className="im-stat-label">52W Low</span>   <span className="im-stat-value">{fmt(yL)}</span></div>
+          {nd?.vwap  && <div className="im-stat"><span className="im-stat-label">VWAP</span>     <span className="im-stat-value im-vwap">{fmt(nd.vwap)}</span></div>}
           {avg50  && <div className="im-stat"><span className="im-stat-label">50D Avg</span>  <span className="im-stat-value">{fmt(avg50)}</span></div>}
           {avg200 && <div className="im-stat"><span className="im-stat-label">200D Avg</span> <span className="im-stat-value">{fmt(avg200)}</span></div>}
           {beta   && <div className="im-stat"><span className="im-stat-label">Beta</span>     <span className="im-stat-value">{Number(beta).toFixed(2)}</span></div>}
