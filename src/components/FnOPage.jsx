@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import FiiDii from './FiiDii';
+import FnoData from './FnoData';
 import { getNiftyExpiries, getIndiaMarketStatus, formatDuration } from '../utils/timezone';
 
 // ── India VIX ────────────────────────────────────────────────────────
@@ -112,119 +113,6 @@ function ComingSoonCard({ title, desc }) {
 }
 
 
-// ── Fear & Greed Speedometer ──────────────────────────────────────────
-function FearGreedMeter({ vix }) {
-  if (!vix) return null;
-  const val = vix.price;
-
-  // Map VIX to Fear/Greed score (0–100)
-  // VIX < 12 = Extreme Greed (100), VIX > 35 = Extreme Fear (0)
-  // Calibrated: VIX 12=74(Greed), VIX 18=56(Neutral), VIX 24=38(Fear), VIX 30+=Extreme Fear
-  const score = Math.max(0, Math.min(100, Math.round(110 - (val * 3))));
-
-  const zones = [
-    { label: 'Extreme Fear',  min: 0,  max: 20,  color: '#FF4455' },
-    { label: 'Fear',          min: 20, max: 40,  color: '#FF8C42' },
-    { label: 'Neutral',       min: 40, max: 60,  color: '#F5C518' },
-    { label: 'Greed',         min: 60, max: 80,  color: '#7BC67E' },
-    { label: 'Extreme Greed', min: 80, max: 100, color: '#00C896' },
-  ];
-
-  const current = zones.find(z => score >= z.min && score <= z.max) || zones[0];
-
-  // Needle angle: score 0 = -90deg (full left), score 100 = +90deg (full right)
-  const angle = -90 + (score / 100) * 180;
-  const rad   = (angle * Math.PI) / 180;
-  const cx = 120, cy = 110, r = 80;
-  const nx = cx + r * 0.72 * Math.cos(rad);
-  const ny = cy + r * 0.72 * Math.sin(rad);
-
-  return (
-    <div className="fg-wrap">
-      <div className="fg-header">
-        <span className="fg-title">Market Fear &amp; Greed</span>
-        <span className="fg-based">Based on India VIX · {val.toFixed(2)}</span>
-      </div>
-
-      <div className="fg-meter-row">
-        <svg viewBox="0 0 240 130" className="fg-svg">
-          {/* Coloured arc segments */}
-          {zones.map((z, i) => {
-            const startAngle = -180 + (z.min / 100) * 180;
-            const endAngle   = -180 + (z.max / 100) * 180;
-            const sRad = (startAngle * Math.PI) / 180;
-            const eRad = (endAngle   * Math.PI) / 180;
-            const r2   = 80, r1 = 58;
-            const x1 = cx + r2 * Math.cos(sRad), y1 = cy + r2 * Math.sin(sRad);
-            const x2 = cx + r2 * Math.cos(eRad), y2 = cy + r2 * Math.sin(eRad);
-            const x3 = cx + r1 * Math.cos(eRad), y3 = cy + r1 * Math.sin(eRad);
-            const x4 = cx + r1 * Math.cos(sRad), y4 = cy + r1 * Math.sin(sRad);
-            const large = (z.max - z.min) > 50 ? 1 : 0;
-            return (
-              <path key={i}
-                d={`M${x1},${y1} A${r2},${r2} 0 ${large},1 ${x2},${y2} L${x3},${y3} A${r1},${r1} 0 ${large},0 ${x4},${y4} Z`}
-                fill={z.color}
-                opacity={score >= z.min && score <= z.max ? 1 : 0.3}
-              />
-            );
-          })}
-
-          {/* Zone labels */}
-          {[
-            { label: 'Fear',    angle: -150 },
-            { label: 'Neutral', angle: -90  },
-            { label: 'Greed',   angle: -30  },
-          ].map(({ label, angle: a }) => {
-            const ar = (a * Math.PI) / 180;
-            return (
-              <text key={label}
-                x={cx + 95 * Math.cos(ar)}
-                y={cy + 95 * Math.sin(ar)}
-                textAnchor="middle" dominantBaseline="central"
-                fontSize="8" fill="var(--text3)" fontFamily="monospace">
-                {label}
-              </text>
-            );
-          })}
-
-          {/* Needle */}
-          <line x1={cx} y1={cy} x2={nx} y2={ny}
-            stroke="var(--text)" strokeWidth="2.5" strokeLinecap="round"/>
-          <circle cx={cx} cy={cy} r="5" fill="var(--text)" />
-          <circle cx={cx} cy={cy} r="2.5" fill="var(--bg2)" />
-
-          {/* Score in centre */}
-          <text x={cx} y={cy + 22} textAnchor="middle" fontSize="22"
-            fontFamily="monospace" fontWeight="700" fill={current.color}>
-            {score}
-          </text>
-        </svg>
-
-        {/* Right side: label + explanation */}
-        <div className="fg-info">
-          <div className="fg-score-label" style={{ color: current.color }}>{current.label.toUpperCase()}</div>
-          <div className="fg-explain">
-            {score < 20 && "Investors are extremely fearful. Markets may be oversold. Historically a contrarian buy signal."}
-            {score >= 20 && score < 40 && "Fear is driving the market. Caution is high, selling pressure persists."}
-            {score >= 40 && score < 60 && "Market sentiment is balanced. No strong directional bias."}
-            {score >= 60 && score < 80 && "Greed is building. Investors are optimistic but watch for overheating."}
-            {score >= 80 && "Extreme greed. Markets may be overextended. Risk of sharp reversal is higher."}
-          </div>
-          <div className="fg-scale">
-            <div className="fg-scale-row"><span className="fg-dot" style={{background:'#FF4455'}}/><span>0–20 Extreme Fear</span></div>
-            <div className="fg-scale-row"><span className="fg-dot" style={{background:'#FF8C42'}}/><span>20–40 Fear</span></div>
-            <div className="fg-scale-row"><span className="fg-dot" style={{background:'#F5C518'}}/><span>40–60 Neutral</span></div>
-            <div className="fg-scale-row"><span className="fg-dot" style={{background:'#7BC67E'}}/><span>60–80 Greed</span></div>
-            <div className="fg-scale-row"><span className="fg-dot" style={{background:'#00C896'}}/><span>80–100 Extreme Greed</span></div>
-          </div>
-        </div>
-      </div>
-
-      <div className="fg-note">Derived from India VIX. Lower VIX = more greed, higher VIX = more fear. Not a standalone buy/sell signal.</div>
-    </div>
-  );
-}
-
 // ── Main ──────────────────────────────────────────────────────────────
 export default function FnOPage() {
   const { vix, loading }   = useIndiaVIX();
@@ -321,10 +209,7 @@ export default function FnOPage() {
           {loading ? (
             <div className="fno-loading">Fetching India VIX...</div>
           ) : vix ? (
-            <>
-              <VIXGauge vix={vix} />
-              <FearGreedMeter vix={vix} />
-            </>
+<VIXGauge vix={vix} />
           ) : (
             <div className="fno-loading">VIX data unavailable</div>
           )}
@@ -338,13 +223,10 @@ export default function FnOPage() {
         <FiiDii />
       </div>
 
-      {/* Coming soon */}
+      {/* Option Chain Data */}
       <div className="fno-section">
-        <div className="fno-section-label">COMING SOON</div>
-        <div className="fno-coming-grid">
-          <ComingSoonCard title="PCR — Put Call Ratio"   desc="Live put-call ratio for Nifty & Bank Nifty. Above 1 = bullish sentiment, below 0.7 = bearish." />
-          <ComingSoonCard title="OI Buildup"             desc="Which strikes are seeing heavy call/put writing. Identifies key support and resistance levels." />
-          <ComingSoonCard title="Max Pain"               desc="The price at which option writers lose least. Nifty often gravitates here near expiry." />
+        <div className="fno-section-label">OPTION CHAIN DATA</div>
+        <FnoData />
           
         </div>
       </div>

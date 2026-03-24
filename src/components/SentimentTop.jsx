@@ -28,7 +28,7 @@ function FearGreedMeter() {
     { label: 'Extreme Greed', min: 80, max: 100, color: '#00C896' },
   ];
   const current = zones.find(z => score >= z.min && score <= z.max) || zones[0];
-  const angle   = -90 + (score / 100) * 180;
+  const angle   = -180 + (score / 100) * 180;  // -180=extreme fear(left), 0=extreme greed(right)
   const rad     = (angle * Math.PI) / 180;
   const cx = 90, cy = 82, r = 62;
   const nx = cx + r * 0.75 * Math.cos(rad);
@@ -58,12 +58,13 @@ function FearGreedMeter() {
       </svg>
       <div className="fg-st-zone" style={{color: current.color}}>{current.label.toUpperCase()}</div>
       <div className="fg-st-desc">
-        {score < 20 && 'Extreme fear. Possible contrarian buy signal.'}
-        {score >= 20 && score < 40 && 'Fear dominates. Caution advised.'}
-        {score >= 40 && score < 60 && 'Balanced sentiment. No clear bias.'}
-        {score >= 60 && score < 80 && 'Greed building. Watch for overheating.'}
-        {score >= 80 && 'Extreme greed. Risk of reversal higher.'}
+        {score < 20 && 'Fear is driving the market. Selling pressure is extreme.'}
+        {score >= 20 && score < 40 && 'Fear is driving the market. Caution is high, selling pressure persists.'}
+        {score >= 40 && score < 60 && 'Sentiment is balanced. No strong directional bias.'}
+        {score >= 60 && score < 80 && 'Greed is building. Investors are optimistic.'}
+        {score >= 80 && 'Greed is driving the market. Risk of sharp reversal is higher.'}
       </div>
+      <div className="fg-st-source">Derived from India VIX. Lower VIX = more greed, higher VIX = more fear. Not a standalone buy/sell signal.</div>
       <div className="fg-st-scale">
         {zones.map(z => (
           <div key={z.label} className="fg-st-row">

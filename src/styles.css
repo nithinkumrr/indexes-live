@@ -1175,10 +1175,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 }
 
 /* ── Sentiment page new layout ────────────────────────────────────── */
-.st-panels-v2   { display: grid; grid-template-columns: 20% 1fr; gap: 16px; padding: 16px 20px; }
+.st-panels-v2   { display: grid; grid-template-columns: 20% 1fr; gap: 16px; padding: 16px 20px; align-items: start; }
 .st-fg-col      { }
 .st-bm-col      { }
-.st-bm-grid     { grid-template-columns: repeat(6, 1fr) !important; }
+.st-bm-grid     { grid-template-columns: repeat(6, 1fr) !important; width: 100%; }
 .st-panel-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--text3); margin-bottom: 10px; }
 
 /* Fear & Greed on sentiment page */
@@ -1188,6 +1188,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fg-st-svg      { width: 100%; }
 .fg-st-zone     { font-family: var(--mono); font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
 .fg-st-desc     { font-family: var(--mono); font-size: 10px; color: var(--text2); line-height: 1.5; }
+.fg-st-source   { font-family: var(--mono); font-size: 9px; color: var(--text3); line-height: 1.5; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--border); }
 .fg-st-scale    { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
 .fg-st-row      { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 9px; color: var(--text3); }
 .fg-loading     { font-family: var(--mono); font-size: 11px; color: var(--text3); padding: 20px 0; }
@@ -1195,4 +1196,47 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 @media (max-width: 900px) {
   .st-panels-v2 { grid-template-columns: 1fr; }
   .st-bm-grid   { grid-template-columns: repeat(4, 1fr) !important; }
+}
+
+/* ── FnO Data (PCR, Max Pain, OI) ───────────────────────────────── */
+.fno-data-wrap      { }
+.fno-sym-tabs       { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.fno-sym-btn        { font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 6px 16px; border-radius: 8px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text3); cursor: pointer; }
+.fno-sym-btn:hover  { color: var(--text); }
+.fno-sym-active     { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
+.fno-expiry-tag     { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-left: 8px; }
+.fno-spot-tag       { font-family: var(--mono); font-size: 11px; color: var(--accent); font-weight: 700; }
+.fno-data-grid      { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.fno-data-card      { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px; }
+.fno-oi-card        { grid-column: 1 / -1; }
+.fno-data-label     { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text3); margin-bottom: 8px; }
+.fno-data-value     { font-family: var(--mono); font-size: 32px; font-weight: 800; letter-spacing: -1px; color: var(--text); line-height: 1; }
+.fno-data-tag       { font-family: var(--mono); font-size: 11px; font-weight: 700; margin: 4px 0 10px; }
+.fno-data-note      { font-family: var(--mono); font-size: 9px; color: var(--text3); line-height: 1.6; margin-top: 10px; }
+.fno-atm-iv         { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-bottom: 12px; }
+.fno-atm-iv strong  { color: var(--text2); }
+
+/* PCR bar */
+.fno-pcr-bar        { margin-top: 10px; }
+.fno-pcr-track      { position: relative; height: 6px; background: var(--bg3); border-radius: 3px; margin-bottom: 4px; }
+.fno-pcr-fill       { height: 100%; border-radius: 3px; transition: width 0.5s; }
+.fno-pcr-marker     { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--text3); transform: translateX(-50%); }
+.fno-pcr-labels     { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 8px; color: var(--text3); }
+
+/* OI grid */
+.fno-oi-grid        { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+.fno-oi-col         { display: flex; flex-direction: column; gap: 6px; }
+.fno-oi-col-label   { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; font-weight: 700; margin-bottom: 4px; }
+.fno-oi-row         { display: flex; align-items: center; gap: 8px; }
+.fno-oi-strike      { font-family: var(--mono); font-size: 11px; color: var(--text2); width: 52px; flex-shrink: 0; }
+.fno-oi-bar-wrap    { flex: 1; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+.fno-oi-bar         { height: 100%; border-radius: 2px; }
+.fno-oi-ce          { background: rgba(255,68,85,0.7); }
+.fno-oi-pe          { background: rgba(0,200,150,0.7); }
+.fno-oi-val         { font-family: var(--mono); font-size: 10px; color: var(--text3); width: 44px; text-align: right; flex-shrink: 0; }
+.fno-data-source    { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 12px; }
+
+@media (max-width: 640px) {
+  .fno-data-grid { grid-template-columns: 1fr; }
+  .fno-oi-card   { grid-column: 1; }
 }
