@@ -7,10 +7,29 @@ function getLocalDate(tz) {
 export function isMarketOpen(market) {
   const d   = getLocalDate(market.tz);
   const day = d.getDay();
-  if (day === 0 || day === 6) return false;
   const mins  = d.getHours() * 60 + d.getMinutes();
   const open  = market.open[0]  * 60 + market.open[1];
   const close = market.close[0] * 60 + market.close[1];
+
+  // Overnight session (e.g. COMEX opens 18:00, closes 17:00 next day)
+  if (open > close) {
+    // On Sunday, only open if past open time (session started Sun evening)
+    if (day === 0) return mins >= open;
+    // On Saturday, only open if before close time (session ends Sat afternoon)
+    if (day === 6) return mins < close;
+    // Weekday: open if past open OR before close
+    const inSession = mins >= open || mins < close;
+    if (!inSession) return false; // 1-hour break window
+    if (market.lunch) {
+      const lb = market.lunch[0][0] * 60 + market.lunch[0][1];
+      const le = market.lunch[1][0] * 60 + market.lunch[1][1];
+      if (mins >= lb && mins < le) return false;
+    }
+    return true;
+  }
+
+  // Normal intraday session
+  if (day === 0 || day === 6) return false;
   if (market.lunch) {
     const lb = market.lunch[0][0] * 60 + market.lunch[0][1];
     const le = market.lunch[1][0] * 60 + market.lunch[1][1];
@@ -168,7 +187,7 @@ export function getMarketHoursLabel(market) {
     'America/Sao_Paulo': 'BRT', 'Asia/Riyadh': '+03', 'Asia/Dubai': 'GST',
     'Africa/Johannesburg': 'SAST', 'Africa/Lagos': 'WAT', 'Africa/Cairo': 'EET',
     'Asia/Jerusalem': '+02', 'Africa/Casablanca': 'WET', 'Asia/Kuwait': '+03',
-    'Asia/Qatar': '+03',
+    'Asia/Qatar': '+03', 'America/Chicago': 'CT', 'Asia/Kuala_Lumpur': 'MYT',
   };
 
   const TZ_OFFSET = {
@@ -180,7 +199,17 @@ export function getMarketHoursLabel(market) {
     'America/Sao_Paulo': -180, 'Asia/Riyadh': 180, 'Asia/Dubai': 240,
     'Africa/Johannesburg': 120, 'Africa/Lagos': 60, 'Africa/Cairo': 120,
     'Asia/Jerusalem': 120, 'Africa/Casablanca': 0, 'Asia/Kuwait': 180,
-    'Asia/Qatar': 180,
+    'Asia/Qatar': 180, 'America/Chicago': -360, 'Asia/Kuala_Lumpur': 480,
+  };
+
+  // Dynamically compute UTC offset for any tz using Intl (handles DST correctly)
+  const getDynamicOffset = (timezone) => {
+    try {
+      const now = new Date();
+      const local = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+      const utc   = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+      return Math.round((local - utc) / 60000);
+    } catch { return 0; }
   };
 
   const label    = TZ_SHORT[tz] || tz.split('/').pop();
@@ -189,7 +218,7 @@ export function getMarketHoursLabel(market) {
   if (tz === 'Asia/Kolkata') return { local: localStr, ist: null };
 
   const IST_OFFSET = 330;
-  const srcOffset  = TZ_OFFSET[tz] ?? 0;
+  const srcOffset  = getDynamicOffset(tz);
   const diff       = IST_OFFSET - srcOffset;
 
   const toIST = (h, m) => {
