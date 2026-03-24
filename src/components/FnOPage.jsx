@@ -377,8 +377,10 @@ export default function FnOPage() {
           {loading ? (
             <div className="fno-loading">Fetching India VIX...</div>
           ) : vix ? (
-<VIXGauge vix={vix} />
+            <>
+              <VIXGauge vix={vix} />
               <VixTrend vix={vix} />
+            </>
           ) : (
             <div className="fno-loading">VIX data unavailable</div>
           )}
