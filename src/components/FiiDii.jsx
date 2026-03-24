@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 
 function fmtDate(str) {
   try {
@@ -20,12 +22,9 @@ function FiiDiiChart({ history }) {
   useEffect(() => {
     if (!history?.length || !canvasRef.current) return;
 
-    import('chart.js').then(({ Chart, registerables }) => {
-      Chart.register(...registerables);
+    if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
 
-      if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
-
-      const labels   = history.map(d => fmtDate(d.date));
+    const labels   = history.map(d => fmtDate(d.date));
       const fiiData  = history.map(d => d.fiiNet);
       const diiData  = history.map(d => d.diiNet);
       // Fake Nifty line using cumulative net as proxy if no price data
@@ -135,7 +134,6 @@ function FiiDiiChart({ history }) {
           },
         },
       });
-    });
 
     return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; } };
   }, [history]);
