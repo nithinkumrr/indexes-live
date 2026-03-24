@@ -479,3 +479,46 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .fno-page-header { padding: 14px 16px; }
   .fno-section     { padding: 16px 16px 0; }
 }
+.fno-expiry-rule   { font-size: 10px; font-weight: 400; color: var(--text3); letter-spacing: 0; }
+.fno-holiday-live  { color: var(--live); }
+.fno-holiday-fb    { color: var(--text3); }
+
+/* ─── FII / DII ─────────────────────────────────────────────────────── */
+.fiidii-wrap     { }
+.fiidii-summary  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.fiidii-card     { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px; }
+.fiidii-card-label { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 8px; }
+.fiidii-card-value { font-family: var(--mono); font-size: 28px; font-weight: 700; letter-spacing: -1px; margin-bottom: 4px; }
+.fiidii-card-tag  { font-family: var(--mono); font-size: 11px; font-weight: 600; margin-bottom: 8px; }
+.fiidii-card-sub  { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.fii-buy  { color: #00C896; } .fii-sell { color: #FF4455; }
+.dii-buy  { color: #4A9EFF; } .dii-sell { color: #F59E0B; }
+
+.fiidii-mood     { font-family: var(--mono); font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.fiidii-mood-sub { font-family: var(--mono); font-size: 11px; margin-bottom: 8px; }
+.fiidii-bullish  { color: #00C896; }
+.fiidii-bearish  { color: #FF4455; }
+.fiidii-mixed    { color: #F59E0B; }
+
+/* Bar chart */
+.fiidii-chart    { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px 12px; margin-bottom: 10px; }
+.fiidii-bar-col  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.fiidii-chart    { display: flex; flex-direction: column; }
+.fiidii-chart > .fiidii-bar-col { /* handled below */ }
+.fiidii-chart    { display: flex; flex-direction: row; align-items: flex-end; gap: 6px; padding-bottom: 28px; position: relative; min-height: 120px; }
+.fiidii-bar-col  { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.fiidii-bar-pair { display: flex; gap: 2px; align-items: flex-end; height: 80px; width: 100%; justify-content: center; }
+.fiidii-bar-wrap { flex: 1; display: flex; align-items: flex-end; height: 100%; }
+.fiidii-bar      { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.4s ease; min-height: 2px; }
+.fiidii-bar-date { font-family: var(--mono); font-size: 8px; color: var(--text3); text-align: center; margin-top: 4px; white-space: nowrap; }
+.fiidii-legend   { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: var(--text3); position: absolute; bottom: 8px; left: 20px; }
+.fiidii-dot      { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; }
+
+.fiidii-note     { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 6px; }
+.fiidii-unavail  { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px; }
+.fiidii-unavail-msg { font-family: var(--mono); font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+.fiidii-unavail-sub { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+
+@media (max-width: 640px) {
+  .fiidii-summary { grid-template-columns: 1fr; }
+}
