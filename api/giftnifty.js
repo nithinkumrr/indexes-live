@@ -62,7 +62,7 @@ export default async function handler(req, res) {
   const token  = await getToken(req);
 
   if (!token || !apiKey) {
-    return res.json({ price: null, isOpen, error: 'not_authenticated', loginUrl: '/api/kite-auth' });
+    return res.json({ price: null, isOpen, error: 'data_unavailable' });
   }
 
   try {
@@ -104,14 +104,11 @@ export default async function handler(req, res) {
           high:      q.ohlc?.high,
           low:       q.ohlc?.low,
           isOpen,
-          session:   session1 ? 1 : 2,
-          symbol:    sym,
-          source:    'kite-nseix',
-          timestamp: q.timestamp,
+          source:    'nseix',
         });
       } catch (e) {
         if (e.message === 'token_expired') {
-          return res.status(401).json({ error: 'token_expired', loginUrl: '/api/kite-auth' });
+          return res.status(401).json({ error: 'data_unavailable' });
         }
         continue;
       }
@@ -141,18 +138,17 @@ export default async function handler(req, res) {
             high:      q.ohlc?.high,
             low:       q.ohlc?.low,
             isOpen,
-            symbol:    sym,
-            source:    'kite-nseix-discovered',
+            source:    'nseix',
           });
         }
       }
     } catch (_) {}
 
-    return res.status(503).json({ error: 'Could not find Gift Nifty symbol', tried: candidates });
+    return res.status(503).json({ error: 'Data unavailable' });
 
   } catch (e) {
     if (e.message === 'token_expired') {
-      return res.status(401).json({ error: 'token_expired', loginUrl: '/api/kite-auth' });
+      return res.status(401).json({ error: 'data_unavailable' });
     }
     return res.status(500).json({ error: e.message });
   }

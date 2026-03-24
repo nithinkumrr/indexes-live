@@ -11,13 +11,7 @@ async function saveToken(token, userName) {
       await fetch(`${upstashUrl}/set/kite_token/${token}?ex=${EX}`, {
         headers: { Authorization: `Bearer ${upstashToken}` }
       });
-      await fetch(`${upstashUrl}/set/kite_user/${encodeURIComponent(userName)}?ex=${EX}`, {
-        headers: { Authorization: `Bearer ${upstashToken}` }
-      });
-      await fetch(`${upstashUrl}/set/kite_login_time/${encodeURIComponent(new Date().toISOString())}?ex=${EX}`, {
-        headers: { Authorization: `Bearer ${upstashToken}` }
-      });
-      console.log('Token saved to Upstash');
+          console.log('Token saved to Upstash');
       return true;
     } catch (e) { console.error('Upstash save failed:', e.message); }
   }
@@ -75,10 +69,10 @@ export default async function handler(req, res) {
     }
 
     const accessToken = data.data.access_token;
-    const userName    = data.data.user_name || 'owner';
+  
 
     // Save to storage
-    await saveToken(accessToken, userName);
+    await saveToken(accessToken, '');
 
     // Cookie as extra fallback
     res.setHeader('Set-Cookie',

@@ -41,7 +41,7 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'token_expired', loginUrl: '/api/kite-auth' });
       }
       const d = await r.json();
-      return res.json({ authenticated: true, user: d.data?.user_name });
+      return res.json({ authenticated: true });
     }
 
     return res.status(400).json({ error: 'unknown type' });

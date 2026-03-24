@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 export default function KiteConnect() {
   const [status, setStatus] = useState('disconnected');
-  const [user, setUser]     = useState(null);
+  const [, ]     = useState(null); // not used
 
   useEffect(() => {
     // Check URL for kite=success/error after redirect
@@ -22,7 +22,7 @@ export default function KiteConnect() {
     fetch('/api/kite-data?type=status')
       .then(r => r.json())
       .then(d => {
-        if (d.authenticated) { setStatus('connected'); setUser(d.user); }
+        if (d.authenticated) { setStatus('connected');  }
         else { setStatus('disconnected'); }
       })
       .catch(() => setStatus('disconnected'));
