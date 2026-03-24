@@ -55,28 +55,6 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', `s-maxage=${cacheSecs}, stale-while-revalidate=${cacheSecs}`);
 
   if (!isOpen) {
-    // Outside fetch window — still try to return last known price from Kite
-    const apiKey = process.env.KITE_API_KEY;
-    const token  = await getToken(req);
-    if (token && apiKey) {
-      try {
-        const candidates = ['INDICES:GIFT NIFTY'];
-        for (const sym of candidates) {
-          const data = await kiteGet(`/quote?i=${encodeURIComponent(sym)}`, apiKey, token);
-          const q    = data?.data?.[sym];
-          if (q?.last_price) {
-            const price = q.last_price;
-            const pc    = q.ohlc?.close || price;
-            return res.json({
-              price, prevClose: pc,
-              change: parseFloat((price - pc).toFixed(2)),
-              changePct: pc > 0 ? parseFloat(((price - pc) / pc * 100).toFixed(2)) : 0,
-              isOpen: false, source: 'nseix',
-            });
-          }
-        }
-      } catch (_) {}
-    }
     return res.json({ price: null, isOpen: false, message: 'Outside Gift Nifty fetch window' });
   }
 
