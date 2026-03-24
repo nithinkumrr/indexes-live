@@ -66,22 +66,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Step 1: Get NSE IFSC instruments to find current Gift Nifty futures symbol
-    // Gift Nifty futures on Kite: exchange=NSE_IFSC, tradingsymbol like NIFTY25MARFUT
-    const ist    = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-    const yr     = String(ist.getFullYear()).slice(2);
-    const mon    = months[ist.getMonth()];
-    const nxtMon = months[(ist.getMonth() + 1) % 12];
-    const nxtYr  = ist.getMonth() === 11 ? String(ist.getFullYear() + 1).slice(2) : yr;
-
-    // Try multiple symbol formats Kite uses for NSE IFSC
-    // Gift Nifty on Kite is an INDEX (not futures) — instrument 291849
-    // Symbol: INDICES:GIFT NIFTY
     const candidates = [
-      'INDICES:GIFT NIFTY',
-      `NSE_IFSC:NIFTY${yr}${mon}FUT`,
-      `NSE_IFSC:NIFTY${nxtYr}${nxtMon}FUT`,
+      'NSEIX:GIFT NIFTY',
     ];
 
     // Try quoting each symbol
@@ -113,36 +99,6 @@ export default async function handler(req, res) {
         continue;
       }
     }
-
-    // If all symbols fail, try fetching instruments list to find correct symbol
-    try {
-      const instruments = await kiteGet('/instruments/NSE_IFSC', apiKey, token);
-      // Find NIFTY futures
-      const niftyFut = instruments
-        ?.filter(i => i.name === 'NIFTY' && i.instrument_type === 'FUT')
-        ?.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
-
-      if (niftyFut?.length > 0) {
-        const sym  = `NSE_IFSC:${niftyFut[0].tradingsymbol}`;
-        const data = await kiteGet(`/quote?i=${encodeURIComponent(sym)}`, apiKey, token);
-        const q    = data?.data?.[sym];
-        if (q?.last_price) {
-          const price = q.last_price;
-          const pc    = q.ohlc?.close || price;
-          return res.json({
-            price,
-            prevClose: pc,
-            change:    parseFloat((price - pc).toFixed(2)),
-            changePct: pc > 0 ? parseFloat(((price - pc) / pc * 100).toFixed(2)) : 0,
-            open:      q.ohlc?.open,
-            high:      q.ohlc?.high,
-            low:       q.ohlc?.low,
-            isOpen,
-            source:    'nseix',
-          });
-        }
-      }
-    } catch (_) {}
 
     return res.status(503).json({ error: 'Data unavailable' });
 

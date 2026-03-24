@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   }
 
   // Try the symbols
-  const symbols = ['INDICES:GIFT NIFTY', 'INDICES:GIFTNIFTY'];
+  const symbols = ['NSEIX:GIFT NIFTY'];
   const results = {};
 
   for (const sym of symbols) {
