@@ -1027,42 +1027,35 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .wb-pe { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-left: 6px; }
 
 /* ── SentimentTop ───────────────────────────────────────────────────────── */
-.st-wrap            { padding: 12px 20px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--border); }
-.st-section         { display: flex; flex-direction: column; gap: 6px; }
-.st-label           { font-family: var(--mono); font-size: 9px; font-weight: 600; color: var(--text3); letter-spacing: 0.08em; }
+.st-wrap          { padding: 12px 20px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--border); }
 
-/* Mini strip cards (commodities + currencies) */
-.st-strip           { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+/* Labeled strip rows */
+.st-row           { display: flex; align-items: center; gap: 10px; }
+.st-row-label     { font-family: var(--mono); font-size: 9px; font-weight: 600; color: var(--text3); letter-spacing: 0.08em; white-space: nowrap; width: 72px; flex-shrink: 0; }
+.st-strip         { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; }
 .st-strip::-webkit-scrollbar { display: none; }
-.st-mini            { flex-shrink: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 6px 10px; min-width: 110px; cursor: pointer; transition: border-color 0.15s; }
-.st-mini:hover      { border-color: var(--border2); }
-.st-mini-top        { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
-.st-mini-flag       { font-size: 12px; flex-shrink: 0; }
-.st-mini-name       { font-family: var(--mono); font-size: 9px; color: var(--text2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.st-mini-pct        { font-family: var(--mono); font-size: 9px; font-weight: 600; white-space: nowrap; }
-.st-mini-price      { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text); }
-.st-mini-unit       { font-size: 8px; color: var(--text3); font-weight: 400; }
 
-/* India + World split */
-.st-split           { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
-.st-india-panel, .st-world-panel { display: flex; flex-direction: column; gap: 6px; }
-.st-india-grid      { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.st-world-grid      { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+/* Mini strip cards */
+.st-mini          { flex-shrink: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 5px 9px; min-width: 100px; cursor: pointer; transition: border-color 0.15s; }
+.st-mini:hover    { border-color: var(--border2); }
+.st-mini-top      { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+.st-mini-flag     { font-size: 11px; flex-shrink: 0; }
+.st-mini-name     { font-family: var(--mono); font-size: 9px; color: var(--text2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-mini-pct      { font-family: var(--mono); font-size: 9px; font-weight: 600; white-space: nowrap; }
+.st-mini-price    { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text); }
+.st-mini-unit     { font-size: 8px; color: var(--text3); font-weight: 400; }
 
-/* Grid cards */
-.st-grid-card       { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 10px; cursor: pointer; transition: border-color 0.15s; }
-.st-grid-card:hover { border-color: var(--border2); }
-.st-gc-top          { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
-.st-gc-flag         { font-size: 14px; flex-shrink: 0; }
-.st-gc-name         { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--text); }
-.st-gc-exch         { font-family: var(--mono); font-size: 8px; color: var(--text3); }
-.st-gc-price        { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; margin-bottom: 2px; }
-.st-gc-pct          { font-family: var(--mono); font-size: 10px; font-weight: 600; margin-bottom: 4px; }
-.st-gc-pe           { font-weight: 400; color: var(--text3); }
+/* India + World panels */
+.st-panels        { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; align-items: start; }
+.st-panel         { display: flex; flex-direction: column; gap: 6px; }
+.st-panel-label   { font-family: var(--mono); font-size: 9px; font-weight: 600; color: var(--text3); letter-spacing: 0.08em; }
+.st-india-grid    { grid-template-columns: repeat(2, 1fr) !important; }
+.st-world-grid    { grid-template-columns: repeat(4, 1fr) !important; }
 
-@media (max-width: 768px) {
-  .st-split         { grid-template-columns: 1fr; }
-  .st-world-grid    { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 900px) {
+  .st-panels      { grid-template-columns: 1fr; }
+  .st-world-grid  { grid-template-columns: repeat(2, 1fr) !important; }
+  .st-row-label   { width: 60px; font-size: 8px; }
 }
 
 /* ── SentimentLayout ───────────────────────────────────────────────────── */

@@ -1,14 +1,22 @@
 import { MARKETS } from '../data/markets';
 import { formatPrice, formatPct } from '../utils/format';
+import { getStatus } from '../utils/timezone';
 import Sparkline from './Sparkline';
 
-// Key commodities to show in the strip
 const COMMODITY_IDS = ['crude', 'brent', 'gold', 'silver', 'copper', 'natgas', 'wheat', 'cotton'];
 const CURRENCY_IDS  = ['usdinr', 'dxy', 'eurusd', 'gbpusd', 'usdjpy', 'usdcny'];
 const INDIA_IDS     = ['nifty50', 'sensex', 'banknifty', 'giftnifty'];
 const WORLD_IDS     = ['sp500', 'nasdaq', 'dowjones', 'ftse', 'dax', 'nikkei', 'hangseng', 'shanghai'];
 
-function MiniCard({ market, data, isCommodity = false }) {
+function fmtPrice(value, id) {
+  if (value == null || isNaN(value)) return '—';
+  if (id === 'vix' || id === 'us10y') return value.toFixed(2);
+  if (value >= 10000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (value >= 1000)  return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  return value.toFixed(2);
+}
+
+function MiniCard({ market, data, isCommodity }) {
   const d    = data[market.id];
   const gain = d ? d.changePct >= 0 : true;
   return (
@@ -28,27 +36,32 @@ function MiniCard({ market, data, isCommodity = false }) {
   );
 }
 
-function GridCard({ market, data, nseData = {} }) {
-  const d    = data[market.id];
-  const gain = d ? d.changePct >= 0 : true;
-  const pe   = nseData[market.id]?.pe;
+function WBCard({ market, data, nseData = {} }) {
+  const d      = data[market.id];
+  const status = getStatus(market);
+  const gain   = d ? d.changePct >= 0 : true;
+  const pe     = nseData[market.id]?.pe;
   return (
-    <div className="st-grid-card" data-market-id={market.id}>
-      <div className="st-gc-top">
-        <span className="st-gc-flag">{market.flag}</span>
-        <div>
-          <div className="st-gc-name">{market.name}</div>
-          <div className="st-gc-exch">{market.exchange}</div>
+    <div className={`wb-card ${status === 'live' ? 'wb-live' : ''}`} data-market-id={market.id}>
+      <div className="wb-top">
+        <span className="wb-flag">{market.flag}</span>
+        <div className="wb-info">
+          <span className="wb-name">{market.name}</span>
+          <span className="wb-exch">{market.exchange}</span>
         </div>
+        {status === 'live' && <span className="wb-dot" />}
       </div>
-      <div className="st-gc-price">
-        {d ? formatPrice(d.price, false) : '—'}
+      <div className="wb-price">
+        {d ? fmtPrice(d.price, market.id) : '—'}
+        {market.unit && <span className="wb-unit"> {market.unit}</span>}
       </div>
-      <div className={`st-gc-pct ${gain ? 'gain' : 'loss'}`}>
-        {d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}
-        {pe > 0 && <span className="st-gc-pe"> · P/E {pe.toFixed(1)}x</span>}
-      </div>
-      {d?.spark && <Sparkline points={d.spark} gain={gain} height={36} />}
+      {d && (
+        <div className={`wb-pct ${gain ? 'gain' : 'loss'}`}>
+          {gain ? '▲' : '▼'} {formatPct(d.changePct)}
+          {pe > 0 && <span className="wb-pe">P/E {pe.toFixed(1)}x</span>}
+        </div>
+      )}
+      {d?.spark && <div className="wb-spark"><Sparkline points={d.spark} gain={gain} height={32} /></div>}
     </div>
   );
 }
@@ -63,41 +76,37 @@ export default function SentimentTop({ data, nseData = {} }) {
     <div className="st-wrap">
 
       {/* Commodity strip */}
-      <div className="st-section">
-        <div className="st-label">COMMODITIES</div>
+      <div className="st-row">
+        <div className="st-row-label">COMMODITY</div>
         <div className="st-strip">
           {commodities.map(m => <MiniCard key={m.id} market={m} data={data} isCommodity />)}
         </div>
       </div>
 
       {/* Currency strip */}
-      <div className="st-section">
-        <div className="st-label">CURRENCIES</div>
+      <div className="st-row">
+        <div className="st-row-label">CURRENCIES</div>
         <div className="st-strip">
           {currencies.map(m => <MiniCard key={m.id} market={m} data={data} />)}
         </div>
       </div>
 
-      {/* India + World split */}
-      <div className="st-split">
-
-        {/* India 2×2 */}
-        <div className="st-india-panel">
-          <div className="st-label">INDIA</div>
-          <div className="st-india-grid">
-            {india.map(m => <GridCard key={m.id} market={m} data={data} nseData={nseData} />)}
+      {/* India 2x2 + World 4x2 side by side */}
+      <div className="st-panels">
+        <div className="st-panel">
+          <div className="st-panel-label">INDIA</div>
+          <div className="wb-grid st-india-grid">
+            {india.map(m => <WBCard key={m.id} market={m} data={data} nseData={nseData} />)}
           </div>
         </div>
-
-        {/* World 4×2 */}
-        <div className="st-world-panel">
-          <div className="st-label">WORLD</div>
-          <div className="st-world-grid">
-            {world.map(m => <GridCard key={m.id} market={m} data={data} nseData={nseData} />)}
+        <div className="st-panel">
+          <div className="st-panel-label">WORLD BENCHMARKS</div>
+          <div className="wb-grid st-world-grid">
+            {world.map(m => <WBCard key={m.id} market={m} data={data} nseData={nseData} />)}
           </div>
         </div>
-
       </div>
+
     </div>
   );
 }
