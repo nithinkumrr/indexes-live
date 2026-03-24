@@ -169,43 +169,50 @@ export default function FnOPage() {
         </div>
       </div>
 
-      {/* Expiry Countdowns */}
-      <div className="fno-section">
-        <div className="fno-section-label">EXPIRY COUNTDOWN</div>
+      {/* Expiry + VIX side by side */}
+      <div className="fno-expiry-vix-row">
 
-        <div className="fno-expiry-group-label">
-          Nifty 50 &nbsp;<span className="fno-expiry-rule">Weekly — Tuesday &nbsp;·&nbsp; Monthly — last Thursday</span>
-        </div>
-        <div className="fno-expiry-grid">
-          <ExpiryCard label="Weekly"  {...expiries.niftyWeekly}  color="#4A9EFF" />
-          <ExpiryCard label="Monthly" {...expiries.niftyMonthly} color="#4A9EFF" />
+        {/* Left: expiry countdowns */}
+        <div className="fno-expiry-panel">
+          <div className="fno-section-label">EXPIRY COUNTDOWN</div>
+          <div className="fno-expiry-columns">
+
+            <div className="fno-expiry-col">
+              <div className="fno-expiry-group-label">
+                Nifty 50 <span className="fno-expiry-rule">Tue · last Thu</span>
+              </div>
+              <ExpiryCard label="Weekly"  {...expiries.niftyWeekly}  color="#4A9EFF" />
+              <ExpiryCard label="Monthly" {...expiries.niftyMonthly} color="#4A9EFF" />
+            </div>
+
+            <div className="fno-expiry-col">
+              <div className="fno-expiry-group-label">
+                Sensex <span className="fno-expiry-rule">Thu · last Thu</span>
+              </div>
+              <ExpiryCard label="Weekly"  {...expiries.sensexWeekly}  color="#F59E0B" />
+              <ExpiryCard label="Monthly" {...expiries.sensexMonthly} color="#F59E0B" />
+            </div>
+
+          </div>
+          <div className="fno-expiry-note">
+            Holiday-adjusted · 15:30 IST · Shifts to previous trading day if holiday
+            {holidaySource === 'nse-live' && <span className="fno-holiday-live"> · NSE calendar live</span>}
+            {holidaySource === 'fallback' && <span className="fno-holiday-fb"> · Using cached calendar</span>}
+          </div>
         </div>
 
-        <div className="fno-expiry-group-label" style={{ marginTop: 20 }}>
-          Sensex &nbsp;<span className="fno-expiry-rule">Weekly — Thursday &nbsp;·&nbsp; Monthly — last Thursday</span>
-        </div>
-        <div className="fno-expiry-grid">
-          <ExpiryCard label="Weekly"  {...expiries.sensexWeekly}  color="#F59E0B" />
-          <ExpiryCard label="Monthly" {...expiries.sensexMonthly} color="#F59E0B" />
+        {/* Right: India VIX */}
+        <div className="fno-vix-panel">
+          <div className="fno-section-label">INDIA VIX — FEAR GAUGE</div>
+          {loading ? (
+            <div className="fno-loading">Fetching India VIX...</div>
+          ) : vix ? (
+            <VIXGauge vix={vix} />
+          ) : (
+            <div className="fno-loading">VIX data unavailable</div>
+          )}
         </div>
 
-        <div className="fno-expiry-note">
-          Holiday-adjusted · 15:30 IST · Expiry shifts to previous trading day if holiday
-          {holidaySource === 'nse-live' && <span className="fno-holiday-live"> · NSE calendar live</span>}
-          {holidaySource === 'fallback' && <span className="fno-holiday-fb"> · Using cached holiday list</span>}
-        </div>
-      </div>
-
-      {/* India VIX */}
-      <div className="fno-section">
-        <div className="fno-section-label">INDIA VIX — FEAR GAUGE</div>
-        {loading ? (
-          <div className="fno-loading">Fetching India VIX...</div>
-        ) : vix ? (
-          <VIXGauge vix={vix} />
-        ) : (
-          <div className="fno-loading">VIX data unavailable</div>
-        )}
       </div>
 
       {/* FII / DII */}
