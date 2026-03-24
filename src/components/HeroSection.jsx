@@ -43,7 +43,7 @@ function InlineCountdown() {
   );
 }
 
-export default function HeroSection({ data, region }) {
+export default function HeroSection({ data, region, nseData = {} }) {
   const heroIds     = HERO_BY_REGION[region] || HERO_BY_REGION.GLOBAL;
   const heroMarkets = heroIds.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
   const stripMarkets = COMMODITY_STRIP_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
@@ -102,6 +102,7 @@ export default function HeroSection({ data, region }) {
                 <div className="hero-footer">
                   <span className="hero-localtime">{getLocalTime(market.tz)}</span>
                   <span className="hero-prev">Prev. close: {d ? formatPrice(d.prevClose, market.category === 'commodity') : '—'}</span>
+                  {nseData[market.id]?.pe > 0 && <span className="hero-pe">P/E <strong>{nseData[market.id].pe.toFixed(1)}x</strong></span>}
                 </div>
               </HoursTooltip>
             );

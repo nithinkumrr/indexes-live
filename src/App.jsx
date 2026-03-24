@@ -34,9 +34,9 @@ export default function App() {
         <FnOPage />
       ) : (
         <>
-          <HeroSection data={data} region={region} />
+          <HeroSection data={data} region={region} nseData={nseData} />
           <WorldBenchmarks data={data} region={region} />
-          {view === 'grid'   && <MarketGrid data={data} />}
+          {view === 'grid'   && <MarketGrid data={data} nseData={nseData} />}
           {view === 'bubble' && <BubbleView data={data} />}
         </>
       )}

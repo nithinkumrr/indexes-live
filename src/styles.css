@@ -60,6 +60,9 @@
 [data-theme="light"] .fiidii-bar-track { background: #DDDDE0; }
 [data-theme="light"] .hours-tooltip { box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
 [data-theme="light"] .wb-home { opacity: 0.35; }
+[data-theme="light"] .wb-vix { border-color: rgba(180,83,9,0.3) !important; background: rgba(180,83,9,0.06) !important; }
+[data-theme="light"] .hero-card-gift { border-top-color: #B45309 !important; background: rgba(180,83,9,0.04) !important; }
+[data-theme="light"] .hero-note-tag { color: #B45309; }
 
 /* Theme toggle button */
 .theme-toggle { font-size: 14px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.2s; line-height: 1; }
@@ -708,3 +711,16 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fc-sum-lbl     { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text3); }
 .fc-sum-val     { font-family: var(--mono); font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
 .fc-sum-days    { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+/* PE badge on cards */
+.hero-pe    { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-left: auto; }
+.hero-pe strong { color: var(--text2); font-weight: 600; }
+.grid-pe    { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.grid-pe strong { color: var(--text2); }
+
+/* Period selector */
+.im-periods       { display: flex; gap: 2px; padding: 0 20px 12px; border-bottom: 1px solid var(--border); }
+.im-period-btn    { font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 6px; border: none; background: transparent; color: var(--text3); cursor: pointer; transition: all 0.15s; }
+.im-period-btn:hover { color: var(--text); background: var(--bg3); }
+.im-period-active { background: var(--accent) !important; color: #fff !important; }
+.im-period-return { font-family: var(--mono); font-size: 11px; font-weight: 700; text-align: right; padding: 4px 0 0; }

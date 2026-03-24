@@ -12,7 +12,7 @@ const SOLO_BOTTOM    = ['MEA'];
 const COMMODITY_REGIONS = ['Commodity'];
 const PANEL_COLS = { Asia: 6, Europe: 4, Americas: 3, MEA: 4, Commodity: 4 };
 
-export default function MarketGrid({ data }) {
+export default function MarketGrid({ data, nseData = {} }) {
   const [tab, setTab]       = useState('equities');
   const [filter, setFilter] = useState('all');
 
@@ -54,6 +54,7 @@ export default function MarketGrid({ data }) {
         <div className="mc-changes">
           <span className={`mc-abs ${gain ? 'gain' : 'loss'}`}>{d ? formatChange(d.change) : ''}</span>
           <span className={`mc-pct ${gain ? 'gain' : 'loss'}`}>{d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}</span>
+          {nseData[market.id]?.pe > 0 && <span className="grid-pe"> · P/E <strong>{nseData[market.id].pe.toFixed(1)}x</strong></span>}
         </div>
         {d && <div className="mc-spark"><Sparkline points={d.spark} gain={gain} height={32} /></div>}
       </HoursTooltip>

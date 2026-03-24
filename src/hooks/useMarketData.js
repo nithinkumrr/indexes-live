@@ -41,7 +41,6 @@ function parseYahoo(data) {
       open:     meta.regularMarketOpen,
       high:     meta.regularMarketDayHigh,
       low:      meta.regularMarketDayLow,
-      volume:   meta.regularMarketVolume,
       yearHigh: meta.fiftyTwoWeekHigh,
       yearLow:  meta.fiftyTwoWeekLow,
     };
