@@ -651,86 +651,60 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .im-adv-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; }
 .im-source     { font-family: var(--mono); font-size: 10px; color: var(--live); margin-top: 4px; }
 
-/* FII/DII trend chart */
-.fiidii-trend        { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px; margin-bottom: 10px; }
-.fiidii-trend-title  { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 12px; }
-.fiidii-trend-chart  { position: relative; margin-bottom: 4px; }
-.fiidii-svg          { width: 100%; height: 100px; display: block; }
-.fiidii-trend-dates  { display: flex; justify-content: space-between; margin-top: 4px; margin-bottom: 12px; }
-.fiidii-trend-date   { font-family: var(--mono); font-size: 9px; color: var(--text3); }
-.fiidii-trend-table  { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
-.fiidii-trend-row    { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 7px 12px; font-family: var(--mono); font-size: 11px; border-bottom: 1px solid var(--border); }
-.fiidii-trend-row:last-child { border-bottom: none; }
-.fiidii-trend-head   { background: var(--bg3); font-size: 10px; color: var(--text3); letter-spacing: 0.5px; }
-.fiidii-trend-legend { display: flex; gap: 16px; margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--text3); }
+/* ── FII/DII Flow Chart ─────────────────────────────────────────────── */
+.fc-root        { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px 20px 16px; margin-top: 6px; }
+.fc-header      { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+.fc-title       { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text); }
+.fc-legend      { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fc-leg         { font-family: var(--mono); font-size: 10px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+.fc-leg-dim     { opacity: 0.6; }
+.fc-leg-sq      { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.fc-green       { background: #00C896; }
+.fc-red         { background: #FF4455; }
 
-/* ── FII/DII heatmap table ─────────────────────────────────────────── */
-.fiidii-table-wrap  { margin-top: 6px; }
-.fiidii-table-title { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--text3); margin-bottom: 10px; }
-.fiidii-table       { width: 100%; border-collapse: collapse; border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--border); }
-.fiidii-table thead tr { background: var(--bg3); }
-.fiidii-table th    { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text2); padding: 10px 16px; text-align: left; letter-spacing: 0.5px; border-bottom: 2px solid var(--border2); }
-.fiidii-table th:not(:first-child) { text-align: right; }
-.fiidii-td-date     { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text); padding: 10px 16px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--bg2); }
-.fiidii-td-val      { font-family: var(--mono); font-size: 13px; font-weight: 700; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,0.08); text-align: right; transition: background 0.3s; }
-.fiidii-total-row .fiidii-td-date { font-weight: 800; font-size: 13px; background: var(--bg3); border-top: 2px solid var(--border2); border-bottom: none; }
-.fiidii-total-row .fiidii-td-val  { font-size: 14px; font-weight: 800; border-top: 2px solid var(--border2); border-bottom: none; }
+/* Chart area */
+.fc-chart-area  { display: flex; gap: 0; }
+.fc-yaxis       { display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 26px; font-family: var(--mono); font-size: 9px; color: var(--text3); min-width: 38px; text-align: right; padding-right: 8px; }
+.fc-yaxis-mid   { position: relative; }
+.fc-yaxis-mid::after { content: ''; position: absolute; right: -8px; top: 50%; width: 6px; height: 1px; background: var(--border2); }
 
-[data-theme="light"] .fiidii-td-date { background: #fff; }
-[data-theme="light"] .fiidii-table thead tr { background: #F5F5F7; }
-[data-theme="light"] .fiidii-total-row .fiidii-td-date { background: #EBEBED; }
+/* Columns */
+.fc-cols        { display: flex; flex: 1; gap: 8px; }
+.fc-col         { flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer; border-radius: 6px; padding: 4px 2px 0; transition: background 0.12s; position: relative; }
+.fc-col-hov     { background: rgba(255,255,255,0.05); }
+[data-theme="light"] .fc-col-hov { background: rgba(0,0,0,0.04); }
 
-/* FII/DII table header + days badge */
-.fiidii-table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.fiidii-table-title  { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--text3); }
-.fiidii-days-badge   { font-family: var(--mono); font-size: 10px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; padding: 2px 8px; color: var(--text3); }
-
-/* Trend sparkline above table */
-.fiidii-trend-mini        { background: var(--bg3); border-radius: var(--r); padding: 10px 14px 4px; margin-bottom: 10px; }
-.fiidii-trend-mini-labels { font-family: var(--mono); font-size: 10px; margin-bottom: 6px; display: flex; align-items: center; }
-.fiidii-trend-zero        { margin-left: auto; color: var(--text3); font-size: 10px; }
-.fiidii-trend-dates       { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 4px; padding-bottom: 4px; }
-
-/* ── FII/DII Bar Graph ───────────────────────────────────────────────── */
-.fiig-wrap    { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px; margin-top: 6px; }
-.fiig-title   { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 1px; margin-bottom: 12px; }
-.fiig-legend  { display: flex; gap: 16px; margin-bottom: 16px; align-items: center; }
-.fiig-leg-item { font-family: var(--mono); font-size: 11px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
-.fiig-leg-dot  { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-.fiig-leg-zero { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-left: auto; }
-
-/* Chart container */
-.fiig-chart   { display: flex; gap: 0; align-items: stretch; }
-.fiig-yaxis   { display: flex; flex-direction: column; justify-content: space-between; padding: 0 8px 24px 0; font-family: var(--mono); font-size: 9px; color: var(--text3); min-width: 36px; text-align: right; }
-
-/* Bars area */
-.fiig-bars    { display: flex; flex: 1; gap: 6px; align-items: stretch; }
-.fiig-col     { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; border-radius: 4px; transition: background 0.15s; }
-.fiig-col-hov { background: rgba(255,255,255,0.04); }
-.fiig-upper   { height: 180px; display: flex; align-items: flex-end; width: 100%; }
-.fiig-lower   { height: 180px; display: flex; align-items: flex-start; width: 100%; }
-.fiig-pair    { display: flex; gap: 3px; justify-content: center; width: 100%; align-items: flex-end; }
-.fiig-pair-dn { align-items: flex-start; }
-.fiig-bar     { width: 40%; border-radius: 3px 3px 0 0; min-height: 2px; transition: opacity 0.2s; }
-.fiig-bar-neg { border-radius: 0 0 3px 3px; }
-.fiig-bar-spacer { width: 40%; }
-.fiig-zero-line { height: 2px; background: var(--border2); width: 100%; flex-shrink: 0; z-index: 1; }
-.fiig-xlabel  { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 6px; text-align: center; white-space: nowrap; }
+/* Bars */
+.fc-upper       { display: flex; align-items: flex-end; width: 100%; }
+.fc-lower       { display: flex; align-items: flex-start; width: 100%; }
+.fc-bar-group   { display: flex; gap: 2px; justify-content: center; align-items: flex-end; width: 100%; }
+.fc-bar-group-dn { align-items: flex-start; }
+.fc-bar-slot    { flex: 1; display: flex; flex-direction: column; }
+.fc-bar-group .fc-bar-slot:first-child { align-items: flex-end; }
+.fc-bar-group .fc-bar-slot:last-child  { align-items: flex-start; }
+.fc-bar         { width: 85%; border-radius: 3px 3px 0 0; min-height: 3px; transition: filter 0.15s; }
+.fc-col-hov .fc-bar { filter: brightness(1.15); }
+.fc-bar-group-dn .fc-bar { border-radius: 0 0 3px 3px; }
+.fc-zero        { height: 2px; background: var(--border2); width: 100%; flex-shrink: 0; }
+.fc-xlabel      { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 6px; text-align: center; white-space: nowrap; }
 
 /* Tooltip */
-.fiig-tooltip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--bg4); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 14px; min-width: 160px; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.4); pointer-events: none; }
-.fiig-tt-date { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-.fiig-tt-row  { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--text2); margin-bottom: 4px; }
-.fiig-tt-row:last-child { margin-bottom: 0; }
-.fiig-tt-dot  { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-.fiig-tt-row span:last-child { margin-left: auto; font-weight: 700; }
-.fiig-pos  { color: var(--gain) !important; }
-.fiig-neg  { color: var(--loss) !important; }
+.fc-tip         { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); background: var(--bg4); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 16px; min-width: 180px; z-index: 99; box-shadow: 0 12px 32px rgba(0,0,0,0.5); pointer-events: none; }
+.fc-tip-left    { left: auto; right: 0; transform: none; }
+.fc-tip-date    { font-family: var(--mono); font-size: 11px; font-weight: 800; color: var(--text); margin-bottom: 10px; letter-spacing: 0.5px; }
+.fc-tip-row     { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 11px; margin-bottom: 5px; }
+.fc-tip-label   { color: var(--text3); }
+.fc-tip-buy     { color: var(--gain); font-weight: 700; }
+.fc-tip-sell    { color: var(--loss); font-weight: 700; }
+.fc-tip-combined { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; }
+.fc-tip-combined span { font-weight: 700; }
+[data-theme="light"] .fc-tip { box-shadow: 0 12px 32px rgba(0,0,0,0.15); }
 
-/* Net totals */
-.fiig-totals      { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 12px; font-weight: 600; flex-wrap: wrap; }
-.fiig-total-label { color: var(--text3); font-weight: 400; font-size: 11px; }
-.fiig-total-sep   { color: var(--text3); }
-
-[data-theme="light"] .fiig-col-hov { background: rgba(0,0,0,0.04); }
-[data-theme="light"] .fiig-tooltip { box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+/* Summary strip */
+.fc-summary     { display: flex; gap: 0; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.fc-sum-block   { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 0 16px; min-width: 120px; }
+.fc-sum-block:first-child { padding-left: 0; }
+.fc-sum-div     { width: 1px; background: var(--border); margin: 0 4px; }
+.fc-sum-lbl     { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text3); }
+.fc-sum-val     { font-family: var(--mono); font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.fc-sum-days    { font-family: var(--mono); font-size: 10px; color: var(--text3); }
