@@ -73,18 +73,76 @@ export default async function handler(req, res) {
 
       if (!rows.length) continue;
 
-      const fiiRow = rows.find(e => /FII|FPI|FOREIGN/i.test(String(e.category || e.client || e.clientType || '')));
-      const diiRow = rows.find(e => /DII|DOMESTIC/i.test(String(e.category || e.client || e.clientType || '')));
+      // NSE returns rows for each segment × participant combination
+      // Segment identifiers vary: 'Equity','Index Futures','Index Options','Stock Futures','Stock Options'
+      const SEGMENTS = {
+        equity:       /equity|cash/i,
+        indexFutures: /index.*fut|fut.*index/i,
+        indexOptions: /index.*opt|opt.*index/i,
+        stockFutures: /stock.*fut|fut.*stock/i,
+        stockOptions: /stock.*opt|opt.*stock/i,
+      };
+
+      const getSegmentRows = (segRegex) => ({
+        fii: rows.find(e => segRegex.test(String(e.category||e.clientType||e.segment||'')) &&
+                            /FII|FPI|FOREIGN/i.test(String(e.category||e.client||e.clientType||''))),
+        dii: rows.find(e => segRegex.test(String(e.category||e.clientType||e.segment||'')) &&
+                            /DII|DOMESTIC/i.test(String(e.category||e.client||e.clientType||''))),
+      });
+
+      // Fallback: if segment parsing fails, use all rows (equity assumed)
+      const fiiRow = rows.find(e => /FII|FPI|FOREIGN/i.test(String(e.category||e.client||e.clientType||'')));
+      const diiRow = rows.find(e => /DII|DOMESTIC/i.test(String(e.category||e.client||e.clientType||'')));
       if (!fiiRow && !diiRow) continue;
 
+      const parseSegment = (fiiR, diiR) => ({
+        fiiNet:  parseNum(fiiR?.netValue ?? fiiR?.net ?? fiiR?.netPurchaseSales ?? 0),
+        fiiBuy:  parseNum(fiiR?.buyValue ?? fiiR?.grossPurchase ?? 0),
+        fiiSell: parseNum(fiiR?.sellValue ?? fiiR?.grossSales ?? 0),
+        diiNet:  parseNum(diiR?.netValue ?? diiR?.net ?? diiR?.netPurchaseSales ?? 0),
+        diiBuy:  parseNum(diiR?.buyValue ?? diiR?.grossPurchase ?? 0),
+        diiSell: parseNum(diiR?.sellValue ?? diiR?.grossSales ?? 0),
+      });
+
+      // Try to get Nifty 50 closing price for this date
+      let niftyClose = null;
+      try {
+        const nr = await fetch(`https://www.nseindia.com/api/historical/indicesHistory?indexType=NIFTY%2050&from=${nseDate}&to=${nseDate}`, { headers: H });
+        if (nr.ok) {
+          const nd = await nr.json();
+          const row = nd?.data?.indexCloseOnlineRecords?.[0] || nd?.data?.[0];
+          if (row) niftyClose = parseNum(row.EOD_CLOSE_INDEX_VAL || row.CLOSE || row.close);
+        }
+      } catch (_) {}
+
       history.push({
-        date:    iso,
-        fiiNet:  parseNum(fiiRow?.netValue  ?? fiiRow?.net  ?? fiiRow?.netPurchaseSales  ?? 0),
-        fiiBuy:  parseNum(fiiRow?.buyValue  ?? fiiRow?.grossPurchase  ?? 0),
-        fiiSell: parseNum(fiiRow?.sellValue ?? fiiRow?.grossSales  ?? 0),
-        diiNet:  parseNum(diiRow?.netValue  ?? diiRow?.net  ?? diiRow?.netPurchaseSales  ?? 0),
-        diiBuy:  parseNum(diiRow?.buyValue  ?? diiRow?.grossPurchase  ?? 0),
-        diiSell: parseNum(diiRow?.sellValue ?? diiRow?.grossSales  ?? 0),
+        date: iso,
+        niftyClose,
+        // Equity (default / fallback)
+        ...parseSegment(fiiRow, diiRow),
+        // All segments
+        segments: {
+          equity:       parseSegment(
+            rows.find(e => /equity|cash/i.test(String(e.category||e.clientType||e.segment||'')) && /FII|FPI|FOREIGN/i.test(String(e.category||e.client||e.clientType||''))),
+            rows.find(e => /equity|cash/i.test(String(e.category||e.clientType||e.segment||'')) && /DII|DOMESTIC/i.test(String(e.category||e.client||e.clientType||'')))
+          ) || parseSegment(fiiRow, diiRow),
+          indexFutures: parseSegment(
+            rows.find(e => /index.*fut|fut.*index/i.test(String(e.category||e.clientType||e.segment||'')) && /FII|FPI|FOREIGN/i.test(String(e.category||e.client||e.clientType||''))),
+            rows.find(e => /index.*fut|fut.*index/i.test(String(e.category||e.clientType||e.segment||'')) && /DII|DOMESTIC/i.test(String(e.category||e.client||e.clientType||'')))
+          ),
+          indexOptions: parseSegment(
+            rows.find(e => /index.*opt|opt.*index/i.test(String(e.category||e.clientType||e.segment||'')) && /FII|FPI|FOREIGN/i.test(String(e.category||e.client||e.clientType||''))),
+            rows.find(e => /index.*opt|opt.*index/i.test(String(e.category||e.clientType||e.segment||'')) && /DII|DOMESTIC/i.test(String(e.category||e.client||e.clientType||'')))
+          ),
+          stockFutures: parseSegment(
+            rows.find(e => /stock.*fut|fut.*stock/i.test(String(e.category||e.clientType||e.segment||'')) && /FII|FPI|FOREIGN/i.test(String(e.category||e.client||e.clientType||''))),
+            rows.find(e => /stock.*fut|fut.*stock/i.test(String(e.category||e.clientType||e.segment||'')) && /DII|DOMESTIC/i.test(String(e.category||e.client||e.clientType||'')))
+          ),
+          stockOptions: parseSegment(
+            rows.find(e => /stock.*opt|opt.*stock/i.test(String(e.category||e.clientType||e.segment||'')) && /FII|FPI|FOREIGN/i.test(String(e.category||e.client||e.clientType||''))),
+            rows.find(e => /stock.*opt|opt.*stock/i.test(String(e.category||e.clientType||e.segment||'')) && /DII|DOMESTIC/i.test(String(e.category||e.client||e.clientType||'')))
+          ),
+        },
       });
     } catch (_) {}
   }
