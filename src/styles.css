@@ -462,7 +462,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-page-sub    { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-top: 2px; }
 .fno-live-badge  { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--live); border: 1px solid var(--live); padding: 4px 12px; border-radius: 20px; }
 
-.fno-section { padding: 24px 24px 0; }
+.fno-section { padding: 24px 24px 0; min-width: 0; overflow: hidden; }
 .fno-section-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--text3); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
 .fno-section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .fno-loading { font-family: var(--mono); font-size: 13px; color: var(--text3); padding: 20px 0; }
@@ -551,9 +551,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-holiday-fb    { color: var(--text3); }
 
 /* ─── FII / DII ─────────────────────────────────────────────────────── */
-.fiidii-wrap     { }
+.fiidii-wrap     { min-width: 0; overflow: hidden; }
 .fiidii-summary  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-.fiidii-card     { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px; }
+.fiidii-card     { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px; min-width: 0; }
 .fiidii-card-label { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 8px; }
 .fiidii-card-value { font-family: var(--mono); font-size: 28px; font-weight: 700; letter-spacing: -1px; margin-bottom: 4px; }
 .fiidii-card-tag  { font-family: var(--mono); font-size: 11px; font-weight: 600; margin-bottom: 8px; }
@@ -682,11 +682,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── FII/DII Flow Chart ─────────────────────────────────────────────── */
 .fc-root        { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px 20px 16px; margin-top: 6px; }
+.fiidii-segment-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--text3); margin-bottom: 12px; }
 .fiidii-tabs       { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
 .fiidii-tab        { font-family: var(--mono); font-size: 11px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg2); color: var(--text3); cursor: pointer; transition: all 0.15s; }
 .fiidii-tab:hover  { border-color: var(--border2); color: var(--text); }
 .fiidii-tab-active { border-color: #4A9EFF; color: #4A9EFF; background: rgba(74,158,255,0.08); }
-.fiidii-chart-wrap   { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px 12px; margin-top: 12px; }
+.fiidii-chart-wrap   { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px 12px; margin-top: 12px; min-width: 0; overflow: hidden; width: 100%; box-sizing: border-box; }
 .fiidii-chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
 .fiidii-chart-title  { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text2); }
 .fiidii-chart-legend { display: flex; gap: 12px; font-family: var(--mono); font-size: 10px; color: var(--text3); align-items: center; }

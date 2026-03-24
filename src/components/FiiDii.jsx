@@ -2,7 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 
-function fmtDate(str) {
+function fmtDateShort(str) {
+  try {
+    const d = new Date(str);
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+  } catch { return str; }
+}
+function fmtDateFull(str) {
   try {
     const d = new Date(str);
     return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -15,125 +21,176 @@ function fmtCr(n) {
   return `${sign}₹${abs.toFixed(0)} Cr`;
 }
 
+// Returns true if we should attempt a fetch right now (5pm, 6:30pm, 7pm IST)
+function shouldFetch() {
+  const ist  = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const h    = ist.getHours();
+  const m    = ist.getMinutes();
+  const mins = h * 60 + m;
+  // Windows: 17:00–17:05, 18:30–18:35, 19:00–19:05
+  return (mins >= 1020 && mins < 1025) ||
+         (mins >= 1110 && mins < 1115) ||
+         (mins >= 1140 && mins < 1145);
+}
+
 function FiiDiiChart({ history }) {
   const canvasRef = useRef(null);
   const chartRef  = useRef(null);
 
   useEffect(() => {
     if (!history?.length || !canvasRef.current) return;
-
     if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
 
-    const labels   = history.map(d => fmtDate(d.date));
-      const fiiData  = history.map(d => d.fiiNet);
-      const diiData  = history.map(d => d.diiNet);
-      // Fake Nifty line using cumulative net as proxy if no price data
-      const niftyData = history.map(d => d.niftyClose || null);
-      const hasNifty  = niftyData.some(v => v != null);
+    const labels    = history.map(d => fmtDateShort(d.date));
+    const fiiData   = history.map(d => d.fiiNet);
+    const diiData   = history.map(d => d.diiNet);
+    const niftyData = history.map(d => d.niftyClose || null);
+    const hasNifty  = niftyData.some(v => v != null);
 
-      const ctx = canvasRef.current.getContext('2d');
-      chartRef.current = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'FII',
-              data: fiiData,
-              backgroundColor: fiiData.map(v => v >= 0 ? 'rgba(255,165,50,0.85)' : 'rgba(255,80,50,0.85)'),
-              borderRadius: 2,
-              yAxisID: 'y1',
-              order: 2,
-            },
-            {
-              label: 'DII',
-              data: diiData,
-              backgroundColor: diiData.map(v => v >= 0 ? 'rgba(99,120,255,0.85)' : 'rgba(180,80,255,0.75)'),
-              borderRadius: 2,
-              yAxisID: 'y1',
-              order: 2,
-            },
-            ...(hasNifty ? [{
-              label: 'Nifty 50',
-              data: niftyData,
-              type: 'line',
-              borderColor: '#4A9EFF',
-              borderWidth: 2,
-              pointRadius: 0,
-              pointHoverRadius: 4,
-              fill: false,
-              tension: 0.4,
-              yAxisID: 'y0',
-              order: 1,
-            }] : []),
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                color: '#9CA3AF',
-                font: { family: 'monospace', size: 11 },
-                boxWidth: 12,
-                padding: 16,
-              },
-            },
-            tooltip: {
-              backgroundColor: '#1A1B1E',
-              borderColor: '#2D2E32',
-              borderWidth: 1,
-              titleColor: '#E5E7EB',
-              bodyColor: '#9CA3AF',
-              titleFont: { family: 'monospace', size: 11 },
-              bodyFont: { family: 'monospace', size: 11 },
-              callbacks: {
-                label: ctx => {
-                  const v = ctx.parsed.y;
-                  if (ctx.dataset.label === 'Nifty 50') return ` Nifty: ${v?.toLocaleString('en-IN')}`;
-                  return ` ${ctx.dataset.label}: ${fmtCr(v)}`;
-                },
+    const ctx = canvasRef.current.getContext('2d');
+    chartRef.current = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'FII',
+            data: fiiData,
+            backgroundColor: fiiData.map(v => v >= 0 ? 'rgba(0,200,150,0.85)' : 'rgba(255,68,85,0.85)'),
+            borderRadius: 2,
+            yAxisID: 'y1',
+            order: 2,
+          },
+          {
+            label: 'DII',
+            data: diiData,
+            backgroundColor: diiData.map(v => v >= 0 ? 'rgba(0,150,220,0.85)' : 'rgba(255,140,0,0.85)'),
+            borderRadius: 2,
+            yAxisID: 'y1',
+            order: 2,
+          },
+          ...(hasNifty ? [{
+            label: 'Nifty 50',
+            data: niftyData,
+            type: 'line',
+            borderColor: '#4A9EFF',
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            fill: false,
+            tension: 0.4,
+            yAxisID: 'y0',
+            order: 1,
+          }] : []),
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#9CA3AF',
+              font: { family: 'monospace', size: 11 },
+              boxWidth: 12,
+              padding: 16,
+              // Custom legend colours since backgroundColor is array
+              generateLabels: (chart) => {
+                return [
+                  { text: 'FII (buy)', fillStyle: 'rgba(0,200,150,0.85)',  strokeStyle: 'transparent', lineWidth: 0 },
+                  { text: 'FII (sell)', fillStyle: 'rgba(255,68,85,0.85)', strokeStyle: 'transparent', lineWidth: 0 },
+                  { text: 'DII (buy)', fillStyle: 'rgba(0,150,220,0.85)',  strokeStyle: 'transparent', lineWidth: 0 },
+                  { text: 'DII (sell)', fillStyle: 'rgba(255,140,0,0.85)', strokeStyle: 'transparent', lineWidth: 0 },
+                  ...(hasNifty ? [{ text: 'Nifty 50', fillStyle: '#4A9EFF', strokeStyle: '#4A9EFF', lineWidth: 2 }] : []),
+                ].map((l, i) => ({ ...l, datasetIndex: i, hidden: false, index: i }));
               },
             },
           },
-          scales: {
-            x: {
-              grid: { color: 'rgba(255,255,255,0.05)' },
-              ticks: { color: '#6B7280', font: { family: 'monospace', size: 10 }, maxRotation: 45 },
-            },
-            y0: {
-              type: 'linear',
-              position: 'left',
-              display: hasNifty,
-              grid: { color: 'rgba(255,255,255,0.05)' },
-              ticks: {
-                color: '#4A9EFF',
-                font: { family: 'monospace', size: 10 },
-                callback: v => v?.toLocaleString('en-IN'),
+          tooltip: {
+            backgroundColor: '#1A1B1E',
+            borderColor: '#2D2E32',
+            borderWidth: 1,
+            titleColor: '#E5E7EB',
+            bodyColor: '#9CA3AF',
+            titleFont: { family: 'monospace', size: 12, weight: 'bold' },
+            bodyFont: { family: 'monospace', size: 11 },
+            padding: 10,
+            callbacks: {
+              title: (items) => {
+                // Show full date from data
+                const idx = items[0]?.dataIndex;
+                return idx != null ? fmtDateFull(history[idx]?.date) : '';
               },
-              title: { display: true, text: 'Nifty 50', color: '#4A9EFF', font: { size: 10, family: 'monospace' } },
-            },
-            y1: {
-              type: 'linear',
-              position: 'right',
-              grid: { drawOnChartArea: !hasNifty, color: 'rgba(255,255,255,0.05)' },
-              ticks: {
-                color: '#9CA3AF',
-                font: { family: 'monospace', size: 10 },
-                callback: v => {
-                  const abs = Math.abs(v);
-                  if (abs >= 10000) return `${v < 0 ? '-' : ''}${(abs/100).toFixed(0)}K`;
-                  return `${v < 0 ? '-' : ''}${abs.toFixed(0)}`;
-                },
+              label: (ctx) => {
+                const idx  = ctx.dataIndex;
+                const day  = history[idx];
+                if (!day) return '';
+                if (ctx.dataset.label === 'Nifty 50') {
+                  return ` Nifty 50: ${day.niftyClose?.toLocaleString('en-IN') || '—'}`;
+                }
+                if (ctx.dataset.label === 'FII') {
+                  return [
+                    ` FII Net: ${fmtCr(day.fiiNet)}`,
+                    ` FII Buy: ₹${Math.abs(day.fiiBuy || 0).toFixed(0)} Cr`,
+                    ` FII Sell: ₹${Math.abs(day.fiiSell || 0).toFixed(0)} Cr`,
+                  ];
+                }
+                if (ctx.dataset.label === 'DII') {
+                  return [
+                    ` DII Net: ${fmtCr(day.diiNet)}`,
+                    ` DII Buy: ₹${Math.abs(day.diiBuy || 0).toFixed(0)} Cr`,
+                    ` DII Sell: ₹${Math.abs(day.diiSell || 0).toFixed(0)} Cr`,
+                  ];
+                }
+                return '';
               },
-              title: { display: true, text: 'Transactions (₹Cr)', color: '#9CA3AF', font: { size: 10, family: 'monospace' } },
+              afterBody: (items) => {
+                const idx = items[0]?.dataIndex;
+                const day = history[idx];
+                if (!day) return [];
+                const combined = (day.fiiNet || 0) + (day.diiNet || 0);
+                return [``, ` Combined: ${fmtCr(combined)} ${combined >= 0 ? '↑ Net Inflow' : '↓ Net Outflow'}`];
+              },
             },
           },
         },
-      });
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#6B7280', font: { family: 'monospace', size: 10 }, maxRotation: 45 },
+          },
+          y0: {
+            type: 'linear',
+            position: 'left',
+            display: hasNifty,
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: {
+              color: '#4A9EFF',
+              font: { family: 'monospace', size: 10 },
+              callback: v => v?.toLocaleString('en-IN'),
+            },
+            title: { display: hasNifty, text: 'Nifty 50', color: '#4A9EFF', font: { size: 10, family: 'monospace' } },
+          },
+          y1: {
+            type: 'linear',
+            position: 'right',
+            grid: { drawOnChartArea: !hasNifty, color: 'rgba(255,255,255,0.05)' },
+            ticks: {
+              color: '#9CA3AF',
+              font: { family: 'monospace', size: 10 },
+              callback: v => {
+                const abs = Math.abs(v);
+                if (abs >= 10000) return `${v < 0 ? '-' : ''}${(abs / 100).toFixed(0)}K`;
+                return `${v < 0 ? '-' : ''}${abs.toFixed(0)}`;
+              },
+            },
+            title: { display: true, text: 'Transactions (₹Cr)', color: '#9CA3AF', font: { size: 10, family: 'monospace' } },
+          },
+        },
+      },
+    });
 
     return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; } };
   }, [history]);
@@ -145,59 +202,48 @@ function FiiDiiChart({ history }) {
   );
 }
 
-const SEGMENTS = [
-  { key: 'equity',       label: 'Equity' },
-  { key: 'indexFutures', label: 'Index Future' },
-  { key: 'indexOptions', label: 'Index Option' },
-  { key: 'stockFutures', label: 'Stock Future' },
-  { key: 'stockOptions', label: 'Stock Options' },
-];
-
 export default function FiiDii() {
-  const [d, setD]           = useState(null);
-  const [loading, setL]     = useState(true);
-  const [error, setE]       = useState(false);
-  const [segment, setSegment] = useState('equity');
+  const [d, setD]       = useState(null);
+  const [loading, setL] = useState(true);
+  const [error, setE]   = useState(false);
 
-  useEffect(() => {
+  const doFetch = () => {
     fetch('/api/fiidii')
       .then(r => r.json())
-      .then(data => { if (data.error) setE(true); else setD(data); setL(false); })
+      .then(data => { if (data.error) setE(true); else { setD(data); setE(false); } setL(false); })
       .catch(() => { setE(true); setL(false); });
+  };
+
+  useEffect(() => {
+    // Always fetch once on mount to show latest cached data
+    doFetch();
+
+    // Auto-refetch only at 5:00 PM, 6:30 PM, 7:00 PM IST
+    // Check every minute if we're in a 5-min fetch window
+    const id = setInterval(() => {
+      if (shouldFetch()) doFetch();
+    }, 60 * 1000);
+
+    return () => clearInterval(id);
   }, []);
 
   if (loading) return <div className="fno-loading">Fetching FII / DII data...</div>;
   if (error || !d) return (
     <div className="fiidii-unavail">
       <div className="fiidii-unavail-msg">FII / DII data unavailable</div>
-      <div className="fiidii-unavail-sub">NSE intermittently blocks server requests.</div>
+      <div className="fiidii-unavail-sub">NSE intermittently blocks server requests. Data updates at 5:00 PM, 6:30 PM and 7:00 PM IST.</div>
     </div>
   );
 
-  // Map history to selected segment
-  const rawHistory = d.history || [];
-  const history = rawHistory.map(day => ({
-    date:       day.date,
-    niftyClose: day.niftyClose,
-    ...(day.segments?.[segment] || { fiiNet: day.fiiNet, fiiBuy: day.fiiBuy, fiiSell: day.fiiSell, diiNet: day.diiNet, diiBuy: day.diiBuy, diiSell: day.diiSell }),
-  }));
-
-  const latest  = history[history.length - 1] || {};
+  const history = d.history || [];
+  const latest  = history[history.length - 1] || d;
   const fP = latest.fiiNet >= 0, dP = latest.diiNet >= 0;
 
   return (
     <div className="fiidii-wrap">
 
-      {/* Segment tabs */}
-      <div className="fiidii-tabs">
-        {SEGMENTS.map(s => (
-          <button key={s.key}
-            className={`fiidii-tab ${segment === s.key ? 'fiidii-tab-active' : ''}`}
-            onClick={() => setSegment(s.key)}>
-            {s.label}
-          </button>
-        ))}
-      </div>
+      {/* Label */}
+      <div className="fiidii-segment-label">CASH MARKET (EQUITY)</div>
 
       {/* Summary cards */}
       <div className="fiidii-summary">
@@ -221,29 +267,30 @@ export default function FiiDii() {
           {!fP && !dP && <><div className="fiidii-mood fiidii-bearish">BEARISH</div><div className="fiidii-mood-sub">Both selling</div></>}
           {fP && !dP  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">FII buying · DII selling</div></>}
           {!fP && dP  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">DII buying · FII selling</div></>}
-          <div className="fiidii-card-sub">{latest.date ? `As of ${fmtDate(latest.date)}` : 'Latest'}</div>
+          <div className="fiidii-card-sub">{latest.date ? `As of ${fmtDateFull(latest.date)}` : 'Latest'} · Updates 5pm / 6:30pm / 7pm IST</div>
         </div>
       </div>
 
-      {/* Bar chart */}
+      {/* Chart */}
       {history.length > 1 && (
         <div className="fiidii-chart-wrap">
           <div className="fiidii-chart-header">
-            <span className="fiidii-chart-title">FII &amp; DII Net Flow — Last {history.length} Days</span>
+            <span className="fiidii-chart-title">FII &amp; DII Net Flow — Last {history.length} Trading Days</span>
             <div className="fiidii-chart-legend">
-              <span><span style={{display:'inline-block',width:10,height:10,background:'rgba(255,165,50,0.85)',borderRadius:2,marginRight:4}}/>FII</span>
-              <span><span style={{display:'inline-block',width:10,height:10,background:'rgba(99,120,255,0.85)',borderRadius:2,marginRight:4}}/>DII</span>
-              <span><span style={{display:'inline-block',width:20,height:2,background:'#4A9EFF',marginRight:4,verticalAlign:'middle'}}/>Nifty 50</span>
+              <span><span style={{display:'inline-block',width:10,height:10,background:'rgba(0,200,150,0.85)',borderRadius:2,marginRight:4}}/>FII buy</span>
+              <span><span style={{display:'inline-block',width:10,height:10,background:'rgba(255,68,85,0.85)',borderRadius:2,marginRight:4}}/>FII sell</span>
+              <span><span style={{display:'inline-block',width:10,height:10,background:'rgba(0,150,220,0.85)',borderRadius:2,marginRight:4}}/>DII buy</span>
+              <span><span style={{display:'inline-block',width:10,height:10,background:'rgba(255,140,0,0.85)',borderRadius:2,marginRight:4}}/>DII sell</span>
             </div>
           </div>
           <FiiDiiChart history={history} />
         </div>
       )}
 
-      {/* 7-day summary strip */}
+      {/* Summary strip */}
       {history.length > 1 && (() => {
-        const tf = history.reduce((s, d) => s + d.fiiNet, 0);
-        const td = history.reduce((s, d) => s + d.diiNet, 0);
+        const tf = history.reduce((s, day) => s + day.fiiNet, 0);
+        const td = history.reduce((s, day) => s + day.diiNet, 0);
         return (
           <div className="fc-summary">
             <div className="fc-sum-block">
