@@ -119,7 +119,8 @@ function FearGreedMeter({ vix }) {
 
   // Map VIX to Fear/Greed score (0–100)
   // VIX < 12 = Extreme Greed (100), VIX > 35 = Extreme Fear (0)
-  const score = Math.max(0, Math.min(100, Math.round(100 - ((val - 12) / 23) * 100)));
+  // Calibrated: VIX 12=74(Greed), VIX 18=56(Neutral), VIX 24=38(Fear), VIX 30+=Extreme Fear
+  const score = Math.max(0, Math.min(100, Math.round(110 - (val * 3))));
 
   const zones = [
     { label: 'Extreme Fear',  min: 0,  max: 20,  color: '#FF4455' },
@@ -320,18 +321,14 @@ export default function FnOPage() {
           {loading ? (
             <div className="fno-loading">Fetching India VIX...</div>
           ) : vix ? (
-            <VIXGauge vix={vix} />
+            <>
+              <VIXGauge vix={vix} />
+              <FearGreedMeter vix={vix} />
+            </>
           ) : (
             <div className="fno-loading">VIX data unavailable</div>
           )}
         </div>
-
-        {/* Fear & Greed below VIX */}
-        {vix && (
-          <div className="fno-section" style={{marginTop: 12}}>
-            <FearGreedMeter vix={vix} />
-          </div>
-        )}
 
       </div>
 

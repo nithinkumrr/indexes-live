@@ -1155,7 +1155,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 }
 
 /* ── Fear & Greed Meter ─────────────────────────────────────────────── */
-.fg-wrap         { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px; }
+.fg-wrap         { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px; margin-top: 12px; }
 .fg-header       { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .fg-title        { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); }
 .fg-based        { font-family: var(--mono); font-size: 10px; color: var(--text3); }
