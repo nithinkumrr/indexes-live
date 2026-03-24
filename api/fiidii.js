@@ -98,9 +98,8 @@ export default async function handler(req, res) {
 
         const f = parseRow(fiiRow), d = parseRow(diiRow);
 
-        // Only add if data is different from previous day (dedup NSE returning same day repeatedly)
-        const prev = history[history.length - 1];
-        if (prev && prev.fiiNet === f.net && prev.diiNet === d.net) continue;
+        // Only skip if this exact date is already in history
+        if (history.find(h => h.date === iso)) continue;
 
         history.push({ date: iso, fiiNet: f.net, fiiBuy: f.buy, fiiSell: f.sell, diiNet: d.net, diiBuy: d.buy, diiSell: d.sell });
       } catch (_) {}
