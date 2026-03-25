@@ -37,12 +37,12 @@ function MexSpot() {
               .then(r => r.json())
               .then(fx => {
                 const usdInr = fx?.chart?.result?.[0]?.meta?.regularMarketPrice || 84;
-                // Convert: USD/oz → INR/gram → INR/10g (MCX quotes per 10g)
-                const inrPer10g = Math.round((usdPrice * usdInr) / 31.1035 * 10);
-                const prevInr   = prevUsd ? Math.round((prevUsd * usdInr) / 31.1035 * 10) : null;
-                const chg       = prevInr ? inrPer10g - prevInr : null;
+                // Convert: USD/oz → INR/gram → INR/1kg
+                const inrPerKg  = Math.round((usdPrice * usdInr) / 31.1035 * 1000);
+                const prevInr   = prevUsd ? Math.round((prevUsd * usdInr) / 31.1035 * 1000) : null;
+                const chg       = prevInr ? inrPerKg - prevInr : null;
                 const chgPct    = prevInr ? ((chg / prevInr) * 100).toFixed(2) : null;
-                setSpot({ price: inrPer10g, chg, chgPct, isOpen });
+                setSpot({ price: inrPerKg, chg, chgPct, isOpen });
               }).catch(() => {});
           }
         }).catch(() => {});
@@ -57,7 +57,7 @@ function MexSpot() {
   return (
     <div className="gold-mcx-item gold-mcx-live">
       <span className="gold-mcx-name">
-        ⚡ MCX Gold Spot (10g)
+        ⚡ MCX Gold (1 kg)
         {spot.isOpen && <span className="gold-live-dot"/>}
       </span>
       <span className="gold-mcx-price">₹{spot.price?.toLocaleString('en-IN')}</span>
