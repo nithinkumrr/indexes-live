@@ -141,3 +141,72 @@ function FearGreedMeter() {
 }
 
 
+
+function WBCard({ market, data, nseData = {} }) {
+  const d      = data[market.id];
+  const status = getStatus(market);
+  const gain   = d ? d.changePct >= 0 : true;
+  const pe     = nseData[market.id]?.pe;
+  return (
+    <div className={`wb-card ${status === 'live' ? 'wb-live' : ''}`} data-market-id={market.id}>
+      <div className="wb-top">
+        <span className="wb-flag">{market.flag}</span>
+        <span className="wb-name">{market.name}</span>
+        <span className="wb-exch">{market.exchange}</span>
+      </div>
+      <div className={`wb-price ${gain ? 'gain' : 'loss'}`}>
+        {d ? fmtWB(d.price, market.id) : '—'}
+      </div>
+      <div className="wb-change">
+        {d && <span className={`wb-pct ${gain ? 'gain' : 'loss'}`}>{gain ? '▲' : '▼'} {formatPct(d.changePct)}</span>}
+        {pe > 0 && <span className="wb-pe">P/E {pe.toFixed(1)}x</span>}
+      </div>
+      {d?.spark && <Sparkline points={d.spark} gain={gain} height={40} />}
+    </div>
+  );
+}
+
+export default function SentimentTop({ data, nseData = {} }) {
+  const stripMarkets = COMMODITY_STRIP_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
+  const benchmarks   = MARKETS.filter(m => m.category === 'index' || m.id === 'giftnifty');
+
+  return (
+    <div className="st-wrap">
+
+      {/* 1. Commodity strip */}
+      <div className="commodity-strip">
+        <div className="commodity-strip-label">COMMODITY</div>
+        {stripMarkets.map(market => {
+          const d    = data[market.id];
+          const gain = d ? d.changePct >= 0 : true;
+          return (
+            <div key={market.id} className="commodity-strip-item">
+              <span className="cs-flag">{market.flag}</span>
+              <span className="cs-name">{market.name}</span>
+              <span className="cs-price">{d ? formatPrice(d.price, true) : '—'}</span>
+              <span className="cs-unit">{market.unit}</span>
+              {d && <span className={`cs-pct ${gain ? 'gain' : 'loss'}`}>{gain ? '▲' : '▼'} {formatPct(d.changePct)}</span>}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 2. FX + Crypto strip */}
+      <FxCryptoStrip data={data} />
+
+      {/* 3. Fear & Greed 20% | Benchmarks 80% */}
+      <div className="st-panels-v2">
+        <div className="st-fg-col">
+          <FearGreedMeter />
+        </div>
+        <div className="st-bm-col">
+          <div className="st-panel-label">BENCHMARKS</div>
+          <div className="wb-grid st-bm-grid">
+            {benchmarks.map(m => <WBCard key={m.id} market={m} data={data} nseData={nseData} />)}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+}
