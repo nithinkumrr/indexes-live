@@ -2,6 +2,16 @@ import { useState, useEffect } from 'react';
 import FiiDii from './FiiDii';
 import { getNiftyExpiries, getIndiaMarketStatus, formatDuration } from '../utils/timezone';
 
+// Reusable Kite login nudge
+function KitePrompt({ text }) {
+  return (
+    <div className="fno-kite-nudge">
+      <span className="fno-kite-nudge-text">{text}</span>
+      <a href="/api/kite-auth" className="fno-kite-nudge-btn">Login with Kite →</a>
+    </div>
+  );
+}
+
 // ── India VIX ────────────────────────────────────────────────────────
 function useIndiaVIX() {
   const [vix, setVix]       = useState(null);
@@ -196,7 +206,12 @@ function FuturesPremium() {
     return () => clearInterval(id);
   }, []);
 
-  if (!data) return null;
+  if (!data) return (
+    <div className="fp-wrap fno-kite-prompt">
+      <div className="fp-label">NIFTY FUTURES PREMIUM</div>
+      <KitePrompt text="Login with Kite for live futures data" />
+    </div>
+  );
   const pos = data.premium >= 0;
   return (
     <div className="fp-wrap">
@@ -263,7 +278,7 @@ function PCRPanel() {
   const signal  = pcr > 1.2 ? { label: 'BULLISH', color: '#00C896', note: 'Puts dominate — market hedged / bullish' }
                 : pcr < 0.8 ? { label: 'BEARISH',  color: '#FF4455', note: 'Calls dominate — market complacent / bearish' }
                 :              { label: 'NEUTRAL',  color: '#F59E0B', note: 'Balanced put-call activity' };
-
+  const noOI = data.totalCallOI === 0 && data.totalPutOI === 0;
   const maxPainDiff = data.maxPain && data.spot ? data.maxPain - data.spot : null;
 
   return (
@@ -286,8 +301,14 @@ function PCRPanel() {
       </div>
 
       <div className="pcr-signal-row">
-        <span className="pcr-badge" style={{ background: `${signal.color}18`, border: `1px solid ${signal.color}40`, color: signal.color }}>{signal.label}</span>
-        <span className="pcr-note">{signal.note}</span>
+        {noOI ? (
+          <span className="fno-unavail">OI data unavailable — market may be closed or NSE is not responding. Login with Kite for reliable data.</span>
+        ) : (
+          <>
+            <span className="pcr-badge" style={{ background: `${signal.color}18`, border: `1px solid ${signal.color}40`, color: signal.color }}>{signal.label}</span>
+            <span className="pcr-note">{signal.note}</span>
+          </>
+        )}
       </div>
 
       <div className="pcr-oi-row">
@@ -454,9 +475,12 @@ function VWAPPanel() {
     return () => clearInterval(id);
   }, []);
 
-  if (!data) return null;
-
-  const above  = data.signal === 'above';
+  if (!data) return (
+    <div className="vwap-wrap fno-kite-prompt">
+      <div className="vwap-label">NIFTY FUTURES — VWAP</div>
+      <KitePrompt text="Login with Kite for intraday VWAP" />
+    </div>
+  );
   const diff   = data.currentPrice && data.vwap ? (data.currentPrice - data.vwap).toFixed(2) : null;
 
   return (
@@ -503,9 +527,12 @@ function OIBuildup() {
     return () => clearInterval(id);
   }, []);
 
-  if (!data) return null;
-
-  const SIGNAL_META = {
+  if (!data) return (
+    <div className="oib-wrap fno-kite-prompt">
+      <div className="oib-label">OI BUILDUP — FUTURES</div>
+      <KitePrompt text="Login with Kite for OI buildup signals" />
+    </div>
+  );
     long_buildup:   { label: 'Long Buildup',   color: '#00C896', note: 'Price ↑ + OI ↑ — fresh longs being added' },
     short_buildup:  { label: 'Short Buildup',  color: '#FF4455', note: 'Price ↓ + OI ↑ — fresh shorts being added' },
     short_covering: { label: 'Short Covering', color: '#34D399', note: 'Price ↑ + OI ↓ — shorts exiting' },
@@ -569,10 +596,12 @@ function AdvanceDecline() {
     return () => clearInterval(id);
   }, []);
 
-  if (!data) return null;
-
-  return (
-    <div className="ad-wrap">
+  if (!data) return (
+    <div className="ad-wrap fno-kite-prompt">
+      <div className="ad-label">NIFTY 50 — ADVANCE / DECLINE</div>
+      <div className="fno-unavail">Market breadth data loading...</div>
+    </div>
+  );
       <div className="ad-label">NIFTY 50 — ADVANCE / DECLINE</div>
       <div className="ad-row">
         <div className="ad-stat">
