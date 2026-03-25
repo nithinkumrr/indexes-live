@@ -106,10 +106,10 @@ function FearGreedMeter() {
   ];
 
   return (
-    <div className="fg-card">
+    <div className="fg-st-wrap">
       <div className="fg-st-label">MARKET MOOD INDEX</div>
       <div className="fg-st-sub">6-factor sentiment · India equity</div>
-      <svg viewBox="0 0 180 100" className="fg-svg">
+      <svg viewBox="0 0 180 100" className="fg-st-svg">
         {arcs.map(function(arc, i) {
           var x1=CX+R*Math.cos(toRad(arc.from)), y1=CY+R*Math.sin(toRad(arc.from));
           var x2=CX+R*Math.cos(toRad(arc.to)),   y2=CY+R*Math.sin(toRad(arc.to));
@@ -119,19 +119,18 @@ function FearGreedMeter() {
         <circle cx={CX} cy={CY} r="4" fill="var(--text)"/>
         <text x={CX} y={CY - 14} textAnchor="middle" fontSize="18" fontWeight="800" fill={zoneColor}>{score}</text>
       </svg>
-      <div className="fg-zone" style={{ color: zoneColor }}>{zone}</div>
-      <div className="fg-desc">{zoneDesc}</div>
+      <div className="fg-st-zone" style={{ color: zoneColor }}>{zone}</div>
+      <div className="fg-st-desc">{zoneDesc}</div>
       <div className="fg-components">
         {comps.filter(function(c){ return c.val != null; }).map(function(c, i) {
           var barColor = c.val <= 25 ? '#FF4444' : c.val <= 45 ? '#FF8C42' : c.val <= 55 ? '#F5C842' : c.val <= 75 ? '#7DC67E' : '#2ECC71';
           return (
-            <div key={i} className="fg-comp-row">
+            <div key={i} className="fg-comp-row" title={c.detail || c.label}>
               <span className="fg-comp-label">{c.label}</span>
               <div className="fg-comp-bar-wrap">
                 <div className="fg-comp-bar" style={{ width: c.val + '%', background: barColor }}/>
               </div>
               <span className="fg-comp-val">{c.val}</span>
-              {c.detail ? <span className="fg-comp-detail">{c.detail}</span> : null}
             </div>
           );
         })}
