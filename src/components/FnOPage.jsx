@@ -36,13 +36,8 @@ function useIndiaVIX() {
   return { vix, loading };
 }
 
-function useKiteStatus() {
-  const [connected, setConnected] = useState(false);
-  useEffect(() => {
-    fetch('/api/kite-auth?type=status').then(r => r.json()).then(d => setConnected(!!d.authenticated)).catch(() => {});
-  }, []);
-  return connected;
-}
+// Always fetch — show login prompt only on actual 401 response
+// (never gate on a status check that might fail)
 
 function ExpiryCard({ label, date, secsLeft, color, shifted, originalDate, holidayName }) {
   const [secs, setSecs] = useState(secsLeft);
@@ -92,13 +87,15 @@ function VIXCard({ vix, loading }) {
   );
 }
 
-function FuturesPremium({ kiteConnected }) {
-  const [data, setData] = useState(null);
+function FuturesPremium() {
+  const [data, setData]       = useState(null);
+  const [noToken, setNoToken] = useState(false);
   useEffect(() => {
     const load = async () => {
       try {
         const [spotRes, futRes] = await Promise.all([fetch('/api/nse-india'), fetch('/api/kite-data?type=futures')]);
-        if (futRes.status === 401) return;
+        if (futRes.status === 401) { setNoToken(true); return; }
+        setNoToken(false);
         const spotD = await spotRes.json(), futD = await futRes.json();
         const spot = spotD?.nifty50?.price || spotD?.niftyLast, fut = futD?.price;
         if (spot && fut) {
@@ -115,7 +112,7 @@ function FuturesPremium({ kiteConnected }) {
   return (
     <div className="t-card">
       <div className="t-card-label">FUTURES PREMIUM {data?.symbol && <span className="t-sym">{data.symbol}</span>}</div>
-      {!kiteConnected ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">Fetching...</div> : (
+      {noToken ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">Fetching...</div> : (
         <>
           <div className="t-futures-row">
             <div className="t-stat"><div className="t-stat-l">Spot</div><div className="t-stat-v">{data.spot?.toLocaleString('en-IN')}</div></div>
@@ -166,14 +163,15 @@ function AdvanceDecline() {
   );
 }
 
-function VWAPCard({ kiteConnected }) {
-  const [data, setData] = useState(null);
+function VWAPCard() {
+  const [data, setData]       = useState(null);
+  const [noToken, setNoToken] = useState(false);
   useEffect(() => {
-    if (!kiteConnected) return;
     const load = async () => {
       try {
         const r = await fetch('/api/kite-data?type=vwap');
-        if (r.status === 401) return;
+        if (r.status === 401) { setNoToken(true); return; }
+        setNoToken(false);
         const j = await r.json();
         if (j.vwap) setData(j);
       } catch (_) {}
@@ -181,13 +179,13 @@ function VWAPCard({ kiteConnected }) {
     load();
     const id = setInterval(load, 60000);
     return () => clearInterval(id);
-  }, [kiteConnected]);
+  }, []);
   const above = data?.signal === 'above';
   const diff  = data?.currentPrice && data?.vwap ? data.currentPrice - data.vwap : 0;
   return (
     <div className="t-card">
       <div className="t-card-label">NIFTY FUTURES — VWAP</div>
-      {!kiteConnected ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">Available during market hours (9:15–15:30 IST)</div> : (
+      {noToken ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">Available during market hours (9:15–15:30 IST)</div> : (
         <>
           <div className="t-futures-row">
             <div className="t-stat"><div className="t-stat-l">VWAP</div><div className="t-stat-v">{data.vwap?.toLocaleString('en-IN')}</div></div>
@@ -202,8 +200,9 @@ function VWAPCard({ kiteConnected }) {
   );
 }
 
-function OIBuildup({ kiteConnected }) {
-  const [data, setData] = useState(null);
+function OIBuildup() {
+  const [data, setData]       = useState(null);
+  const [noToken, setNoToken] = useState(false);
   const SIGNALS = {
     long_buildup:   { label: 'Long Buildup',   color: '#00C896', note: 'Price ↑ + OI ↑ · Fresh longs added' },
     short_buildup:  { label: 'Short Buildup',  color: '#FF4455', note: 'Price ↓ + OI ↑ · Fresh shorts added' },
@@ -212,11 +211,11 @@ function OIBuildup({ kiteConnected }) {
     neutral:        { label: 'Neutral',         color: '#64748B', note: 'No clear direction' },
   };
   useEffect(() => {
-    if (!kiteConnected) return;
     const load = async () => {
       try {
         const r = await fetch('/api/kite-data?type=oi');
-        if (r.status === 401) return;
+        if (r.status === 401) { setNoToken(true); return; }
+        setNoToken(false);
         const j = await r.json();
         if (j.nifty) setData(j);
       } catch (_) {}
@@ -224,11 +223,40 @@ function OIBuildup({ kiteConnected }) {
     load();
     const id = setInterval(load, 60000);
     return () => clearInterval(id);
-  }, [kiteConnected]);
+  }, []);
   return (
     <div className="t-card">
       <div className="t-card-label">OI BUILDUP — FUTURES</div>
-      {!kiteConnected ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">Fetching OI data...</div> : (
+      {noToken ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">Fetching OI data...</div> : (
+        <div className="t-oi-body">
+          {[['nifty','Nifty 50'],['banknifty','Bank Nifty']].map(([key, name]) => {
+            const d = data[key]; if (!d) return null;
+            const m = SIGNALS[d.signal] || SIGNALS.neutral;
+            return (
+              <div key={key} className="t-oi-row">
+                <div className="t-oi-name">{name}</div>
+                <div className="t-oi-price">
+                  <span className={d.changePct>=0?'gain':'loss'}>{d.price?.toLocaleString('en-IN')}</span>
+                  <span className={`t-oi-chg ${d.changePct>=0?'gain':'loss'}`}>{d.changePct>=0?'+':''}{d.changePct}%</span>
+                </div>
+                <div className="t-oi-data">
+                  <span className="t-oi-val">{d.oi?(d.oi/100000).toFixed(1)+'L':'—'}</span>
+                  {d.oiChange!==0 && <span className={`t-oi-delta ${d.oiChange>0?'gain':'loss'}`}>{d.oiChange>0?'+':''}{d.oiChangePct}%</span>}
+                </div>
+                <div className="t-oi-sig" style={{color:m.color, background:`${m.color}12`, borderColor:`${m.color}30`}}>{m.label}</div>
+                <div className="t-oi-note">{m.note}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+  return (
+    <div className="t-card">
+      <div className="t-card-label">OI BUILDUP — FUTURES</div>
+      {noToken ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">Fetching OI data...</div> : (
         <div className="t-oi-body">
           {[['nifty','Nifty 50'],['banknifty','Bank Nifty']].map(([key, name]) => {
             const d = data[key]; if (!d) return null;
@@ -400,13 +428,18 @@ function StraddleChain() {
 
 export default function FnOPage() {
   const { vix, loading: vixLoading } = useIndiaVIX();
-  const kiteConnected                = useKiteStatus();
+  const [kiteOn, setKiteOn]          = useState(false);
   const FALLBACK_HOLIDAYS = ['2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31','2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25'];
   const FALLBACK_NAMES = {'2026-01-26':'Republic Day','2026-02-17':'Mahashivratri','2026-03-03':'Holi','2026-03-26':'Ram Navami','2026-03-31':'Mahavir Jayanti','2026-04-03':'Good Friday','2026-04-14':'Ambedkar Jayanti','2026-05-01':'Maharashtra Day','2026-05-28':'Bakri Id','2026-06-26':'Muharram','2026-09-14':'Ganesh Chaturthi','2026-10-02':'Gandhi Jayanti','2026-10-20':'Dussehra','2026-11-10':'Diwali Balipratipada','2026-11-24':'Guru Nanak Jayanti','2026-12-25':'Christmas'};
   const [holidays, setHolidays]           = useState(FALLBACK_HOLIDAYS);
   const [holidayNames, setHolidayNames]   = useState(FALLBACK_NAMES);
   const [expiries, setExpiries]           = useState(() => getNiftyExpiries(FALLBACK_HOLIDAYS, FALLBACK_NAMES));
   const [holidaySource, setHolidaySource] = useState('');
+
+  // Check Kite status just for the header badge — data components fetch independently
+  useEffect(() => {
+    fetch('/api/kite-auth?type=status').then(r=>r.json()).then(d=>setKiteOn(!!d.authenticated)).catch(()=>{});
+  }, []);
   useEffect(() => {
     fetch('/api/holidays').then(r=>r.json()).then(d=>{
       const h=d.holidays||[], n=d.holidayNames||{};
@@ -426,8 +459,8 @@ export default function FnOPage() {
           India F&amp;O <span className="t-fno-sub">Options · Futures · Flow</span>
         </div>
         <div className="t-fno-hdr-right">
-          {kiteConnected ? (
-            <div className="t-kite-status t-kite-on"><span className="t-kite-dot"/>Kite live</div>
+          {kiteOn ? (
+            <div className="t-kite-status t-kite-on"><span className="t-kite-dot"/>Kite live — all data active</div>
           ) : (
             <div className="t-kite-status t-kite-off"><span className="t-kite-dot"/><a href="/api/kite-auth">Login with Kite</a> for futures, VWAP &amp; OI</div>
           )}
@@ -458,15 +491,15 @@ export default function FnOPage() {
       {/* Row: VIX · Futures · Breadth · VWAP */}
       <div className="t-row t-row-4">
         <VIXCard vix={vix} loading={vixLoading} />
-        <FuturesPremium kiteConnected={kiteConnected} />
+        <FuturesPremium />
         <AdvanceDecline />
-        <VWAPCard kiteConnected={kiteConnected} />
+        <VWAPCard />
       </div>
 
       {/* Row: PCR + OI Buildup */}
       <div className="t-row t-row-pcr">
         <PCRPanel />
-        <OIBuildup kiteConnected={kiteConnected} />
+        <OIBuildup />
       </div>
 
       {/* Straddle Chain */}
