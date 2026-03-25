@@ -103,8 +103,8 @@ export default function Ticker({ data }) {
 
   return (
     <div className="ticker-rows">
-      {/* Global: 110s — ~30+ markets, steady readable pace */}
-      <TickerRow label="GLOBAL" labelClass="ticker-label-global" speed={110}>
+      {/* Global: 135s — ~30+ markets, steady readable pace */}
+      <TickerRow label="GLOBAL" labelClass="ticker-label-global" speed={135}>
         {globalItems}
       </TickerRow>
       {/* India: 65s — 14 indices, proportionally matched pace */}

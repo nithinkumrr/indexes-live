@@ -2,7 +2,7 @@
 // Nifty 50 treemap — sized by free-float market cap, coloured by % change
 // Grouped by sector. Polls every 20s during NSE hours, frozen outside.
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { formatPct } from '../utils/format';
 
 const SECTOR_ORDER = ['Financials', 'IT', 'Energy', 'Consumer', 'Auto', 'Industrials', 'Pharma', 'Discretionary', 'Metals'];
@@ -27,7 +27,6 @@ function isNSEOpen() {
   return mins >= 555 && mins < 930;
 }
 
-// Map % change to fill colour
 function getHeatColor(pct) {
   if (pct == null) return { bg: 'rgba(60,62,68,0.9)', border: 'rgba(80,82,90,0.5)', text: '#666' };
   const abs = Math.abs(pct);
@@ -47,79 +46,77 @@ function getHeatColor(pct) {
   }
 }
 
-// Squarified treemap — returns [{x,y,w,h}] for each item in data
+// Proper squarified treemap — fills rectangle completely
 function squarify(items, x, y, w, h) {
-  if (!items.length) return [];
+  if (!items.length || w < 1 || h < 1) return [];
   const totalWeight = items.reduce((s, i) => s + i.weight, 0);
-  const area        = w * h;
+  if (!totalWeight) return [];
 
-  const rects = [];
-  let remaining = [...items];
-  let rx = x, ry = y, rw = w, rh = h;
+  const rects     = [];
+  let remaining   = items.map(i => ({ ...i }));
+  let cx = x, cy = y, cw = w, ch = h;
 
-  while (remaining.length) {
-    const shortSide = Math.min(rw, rh);
-    const isWide    = rw >= rh;
-    const remWeight = remaining.reduce((s, i) => s + i.weight, 0);
-    const remArea   = (rw * rh * (remWeight / totalWeight)) || 0;
+  while (remaining.length > 0) {
+    if (remaining.length === 1) {
+      rects.push({ ...remaining[0], x: cx, y: cy, w: cw, h: ch });
+      break;
+    }
 
-    // Find optimal row to minimise worst aspect ratio
-    let row = [];
-    let rowWeight = 0;
-    let bestWorst = Infinity;
+    const remW = remaining.reduce((s, i) => s + i.weight, 0);
+    const isWide = cw >= ch;
+    const stripW = isWide ? cw : ch;  // length of strip
+    const stripH = isWide ? ch : cw;  // breadth of strip
 
-    for (let k = 0; k < remaining.length; k++) {
-      const item = remaining[k];
-      row.push(item);
-      rowWeight += item.weight;
-      const rowArea  = remArea * (rowWeight / remWeight);
-      const rowLen   = isWide ? rowArea / rh : rowArea / rw;
+    // Find best row
+    let bestRow = [remaining[0]];
+    let bestAR   = Infinity;
+
+    for (let k = 1; k <= remaining.length; k++) {
+      const row     = remaining.slice(0, k);
+      const rowW    = row.reduce((s, i) => s + i.weight, 0);
+      const stripLen = (rowW / remW) * stripW;
       let worstAR = 0;
-      for (const ri of row) {
-        const ri_area = remArea * (ri.weight / remWeight);
-        const ri_len  = isWide ? ri_area / rowLen : ri_area / rowLen;
-        const ar = Math.max(rowLen / ri_len, ri_len / rowLen);
+      for (const item of row) {
+        const itemLen = ((item.weight / rowW) * stripLen * stripH) / stripLen;
+        const ar = Math.max(stripLen / Math.max(itemLen, 0.01), Math.max(itemLen, 0.01) / stripLen);
         if (ar > worstAR) worstAR = ar;
       }
-      if (worstAR > bestWorst && k > 0) { row.pop(); break; }
-      bestWorst = worstAR;
+      if (worstAR < bestAR) { bestAR = worstAR; bestRow = row; }
+      else break;
     }
 
-    // Layout the row
-    const rowWeight2 = row.reduce((s, i) => s + i.weight, 0);
-    const rowArea2   = remArea * (rowWeight2 / remWeight);
-    const rowLen2    = isWide ? rowArea2 / rh : rowArea2 / rw;
-    let pos = isWide ? ry : rx;
+    // Layout bestRow as a strip
+    const rowW    = bestRow.reduce((s, i) => s + i.weight, 0);
+    const stripLen = (rowW / remW) * stripW;
+    let pos = isWide ? cy : cx;
 
-    for (const item of row) {
-      const itemArea  = remArea * (item.weight / remWeight);
-      const itemSlice = isWide ? itemArea / rowLen2 : itemArea / rowLen2;
+    for (const item of bestRow) {
+      const itemBreadth = (item.weight / rowW) * stripH;
       if (isWide) {
-        rects.push({ ...item, x: rx, y: pos, w: rowLen2, h: itemSlice });
-        pos += itemSlice;
+        rects.push({ ...item, x: cx, y: pos, w: stripLen, h: itemBreadth });
+        pos += itemBreadth;
       } else {
-        rects.push({ ...item, x: pos, y: ry, w: itemSlice, h: rowLen2 });
-        pos += itemSlice;
+        rects.push({ ...item, x: pos, y: cy, w: itemBreadth, h: stripLen });
+        pos += itemBreadth;
       }
     }
 
-    if (isWide) { rx += rowLen2; rw -= rowLen2; }
-    else        { ry += rowLen2; rh -= rowLen2; }
+    // Shrink remaining area
+    if (isWide) { cx += stripLen; cw -= stripLen; }
+    else        { cy += stripLen; ch -= stripLen; }
 
-    remaining = remaining.filter(i => !row.includes(i));
-    if (rw < 1 || rh < 1) break;
+    remaining = remaining.slice(bestRow.length);
   }
 
   return rects;
 }
 
-// Tooltip
 function Tooltip({ stock, x, y, containerW }) {
   if (!stock) return null;
-  const flip = x > containerW * 0.65;
+  const flip   = x > containerW * 0.65;
   const colors = getHeatColor(stock.changePct);
   return (
-    <div className="hm-tooltip" style={{ left: flip ? 'auto' : x + 12, right: flip ? containerW - x + 12 : 'auto', top: y + 8 }}>
+    <div className="hm-tooltip" style={{ left: flip ? 'auto' : x + 12, right: flip ? containerW - x + 12 : 'auto', top: Math.min(y + 8, 260) }}>
       <div className="hm-tt-name">{stock.name}</div>
       <div className="hm-tt-sector" style={{ color: SECTOR_COLORS[stock.sector] }}>{stock.sector}</div>
       {stock.price != null && (
@@ -136,7 +133,6 @@ function Tooltip({ stock, x, y, containerW }) {
   );
 }
 
-// Sector legend item
 function SectorBadge({ sector }) {
   return (
     <span className="hm-sector-badge">
@@ -147,14 +143,14 @@ function SectorBadge({ sector }) {
 }
 
 export default function IndiaHeatmap() {
-  const [stocks, setStocks]     = useState([]);
-  const [source, setSource]     = useState('');
-  const [loading, setLoading]   = useState(true);
-  const [hovered, setHovered]   = useState(null);   // { stock, x, y }
-  const [filter, setFilter]     = useState('ALL');   // sector filter
+  const [stocks, setStocks]         = useState([]);
+  const [source, setSource]         = useState('');
+  const [loading, setLoading]       = useState(true);
+  const [hovered, setHovered]       = useState(null);
+  const [filter, setFilter]         = useState('ALL');
   const [containerW, setContainerW] = useState(1200);
+  const containerRef                = useRef(null);
 
-  // Fetch data
   const load = useCallback(async (initial = false) => {
     if (!initial && !isNSEOpen()) return;
     try {
@@ -175,34 +171,30 @@ export default function IndiaHeatmap() {
     return () => clearInterval(id);
   }, [load]);
 
-  // Measure container width
   useEffect(() => {
-    const el = document.querySelector('.hm-container');
-    if (el) setContainerW(el.offsetWidth);
+    const el = containerRef.current;
+    if (!el) return;
+    setContainerW(el.offsetWidth);
     const ro = new ResizeObserver(([e]) => setContainerW(e.contentRect.width));
-    if (el) ro.observe(el);
+    ro.observe(el);
     return () => ro.disconnect();
   }, [loading]);
 
-  // Filter + sort
-  const visible = stocks.filter(s => filter === 'ALL' || s.sector === filter);
+  const visible    = stocks.filter(s => filter === 'ALL' || s.sector === filter);
+  const CANVAS_H   = Math.max(420, Math.round(containerW * 0.45));
+  const GAP        = 2;
 
-  // Build treemap rects grouped by sector
-  const grouped = SECTOR_ORDER.map(sector => {
-    const items = visible.filter(s => s.sector === sector);
-    return items.length ? { sector, items } : null;
-  }).filter(Boolean);
+  // Build sector blocks, then squarify stocks within each block
+  const grouped = SECTOR_ORDER
+    .map(sector => ({ sector, items: visible.filter(s => s.sector === sector) }))
+    .filter(g => g.items.length > 0);
 
-  // Flat list for squarify — sector total weight as one block, then sub-layout per sector
-  const totalWeight = visible.reduce((s, i) => s + i.weight, 0);
-  const CANVAS_H    = Math.max(380, Math.round(containerW * 0.42));
-  const GAP         = 3;
+  const sectorInputs = grouped.map(g => ({
+    sector: g.sector,
+    weight: g.items.reduce((s, i) => s + i.weight, 0),
+  }));
 
-  // Two-pass treemap: sector blocks first, then stocks within each sector
-  const sectorBlocks = squarify(
-    grouped.map(g => ({ sector: g.sector, weight: g.items.reduce((s, i) => s + i.weight, 0) })),
-    0, 0, containerW, CANVAS_H
-  );
+  const sectorBlocks = squarify(sectorInputs, 0, 0, containerW, CANVAS_H);
 
   const allRects = [];
   for (const block of sectorBlocks) {
@@ -210,28 +202,33 @@ export default function IndiaHeatmap() {
     if (!g) continue;
     const inner = squarify(
       g.items,
-      block.x + GAP, block.y + GAP,
-      block.w - GAP * 2, block.h - GAP * 2
+      block.x + GAP,
+      block.y + GAP,
+      Math.max(0, block.w - GAP * 2),
+      Math.max(0, block.h - GAP * 2)
     );
+    // Sector label on the largest cell in each sector
+    if (inner.length > 0) {
+      inner[0]._sectorLabel = block.sector;
+    }
     allRects.push(...inner);
   }
 
-  const sectors = [...new Set(stocks.map(s => s.sector))].filter(s => SECTOR_ORDER.includes(s));
-
-  // Market stats
+  const sectors  = SECTOR_ORDER.filter(s => stocks.some(st => st.sector === s));
   const gainers  = stocks.filter(s => s.changePct > 0).length;
   const losers   = stocks.filter(s => s.changePct < 0).length;
-  const avgChg   = stocks.length ? (stocks.reduce((s, i) => s + (i.changePct || 0), 0) / stocks.length).toFixed(2) : null;
+  const avgChg   = stocks.length
+    ? (stocks.reduce((s, i) => s + (i.changePct || 0), 0) / stocks.length).toFixed(2)
+    : null;
 
   return (
     <div className="hm-wrap">
-      {/* Header */}
       <div className="hm-header">
         <div className="hm-header-left">
           <div className="hm-title">
             <span className="hm-flag">🇮🇳</span>
             Nifty 50 Heatmap
-            {source === 'kite' && <span className="hm-source-badge hm-kite">via Kite</span>}
+            {source === 'kite'  && <span className="hm-source-badge hm-kite">via Kite</span>}
             {source === 'yahoo' && <span className="hm-source-badge hm-yahoo">via Yahoo</span>}
           </div>
           {avgChg != null && (
@@ -246,10 +243,7 @@ export default function IndiaHeatmap() {
         </div>
         <div className="hm-header-right">
           <div className="hm-filter-row">
-            <button
-              className={`hm-filter-btn ${filter === 'ALL' ? 'hm-filter-active' : ''}`}
-              onClick={() => setFilter('ALL')}
-            >All</button>
+            <button className={`hm-filter-btn ${filter === 'ALL' ? 'hm-filter-active' : ''}`} onClick={() => setFilter('ALL')}>All</button>
             {sectors.map(s => (
               <button
                 key={s}
@@ -262,10 +256,10 @@ export default function IndiaHeatmap() {
         </div>
       </div>
 
-      {/* Treemap canvas */}
       <div
         className="hm-container"
-        style={{ height: CANVAS_H, position: 'relative' }}
+        ref={containerRef}
+        style={{ height: CANVAS_H }}
         onMouseLeave={() => setHovered(null)}
       >
         {loading ? (
@@ -274,24 +268,31 @@ export default function IndiaHeatmap() {
             Fetching Nifty 50 data...
           </div>
         ) : allRects.map((rect, i) => {
-          const colors  = getHeatColor(rect.changePct);
-          const showName = rect.w > 52 && rect.h > 28;
-          const showPct  = rect.w > 48 && rect.h > 44;
+          const colors    = getHeatColor(rect.changePct);
+          const showName  = rect.w > 55 && rect.h > 28;
+          const showPct   = rect.w > 50 && rect.h > 46;
+          const showSector = rect._sectorLabel && rect.w > 80 && rect.h > 70;
           return (
             <div
               key={rect.id || i}
               className="hm-cell"
               style={{
-                left: rect.x, top: rect.y, width: rect.w, height: rect.h,
-                background: colors.bg, borderColor: colors.border,
+                left: rect.x, top: rect.y,
+                width: Math.max(0, rect.w - 1),
+                height: Math.max(0, rect.h - 1),
+                background: colors.bg,
+                borderColor: colors.border,
               }}
               onMouseEnter={e => {
                 const box = e.currentTarget.closest('.hm-container').getBoundingClientRect();
-                const cx  = e.clientX - box.left;
-                const cy  = e.clientY - box.top;
-                setHovered({ stock: rect, x: cx, y: cy });
+                setHovered({ stock: rect, x: e.clientX - box.left, y: e.clientY - box.top });
               }}
             >
+              {showSector && (
+                <span className="hm-cell-sector" style={{ color: SECTOR_COLORS[rect._sectorLabel] }}>
+                  {rect._sectorLabel}
+                </span>
+              )}
               {showName && (
                 <span className="hm-cell-name" style={{ color: colors.text }}>{rect.name}</span>
               )}
@@ -305,16 +306,10 @@ export default function IndiaHeatmap() {
         })}
 
         {hovered && (
-          <Tooltip
-            stock={hovered.stock}
-            x={hovered.x}
-            y={hovered.y}
-            containerW={containerW}
-          />
+          <Tooltip stock={hovered.stock} x={hovered.x} y={hovered.y} containerW={containerW} />
         )}
       </div>
 
-      {/* Legend */}
       <div className="hm-legend">
         <div className="hm-legend-colors">
           <span className="hm-leg-block hm-leg-sg">Strong gain</span>
