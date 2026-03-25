@@ -48,46 +48,32 @@ export default function GoldPage() {
 
   return (
     <div className="gold-wrap">
-      {/* IBJA + MCX Strip */}
+      {/* IBJA Rate Strip */}
       {apiData?.base?.gold24 && (
         <div className="gold-mcx-strip">
-          <div className="gold-mcx-label">DAILY RATES · {apiData.date}</div>
+          <div className="gold-mcx-label">IBJA DAILY RATE · {apiData.date}</div>
           <div className="gold-mcx-items">
-
-            {/* IBJA Block */}
-            <div className="gold-rate-block">
-              <div className="gold-rate-block-title">IBJA RATE (per gram)</div>
-              <div className="gold-rate-block-row">
-                <span className="gold-mcx-name">24K</span>
-                <span className="gold-mcx-price">₹{apiData.base.gold24?.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="gold-rate-block-row">
-                <span className="gold-mcx-name">22K</span>
-                <span className="gold-mcx-price" style={{fontSize:16}}>₹{apiData.base.gold22?.toLocaleString('en-IN')}</span>
-              </div>
+            <div className="gold-mcx-item">
+              <span className="gold-mcx-name">Gold 24K</span>
+              <span className="gold-mcx-price">₹{apiData.base.gold24?.toLocaleString('en-IN')}<span className="gold-mcx-unit">/gram</span></span>
+              <span className="gold-mcx-name" style={{marginLeft:8}}>₹{(apiData.base.gold24 * 10)?.toLocaleString('en-IN')}<span className="gold-mcx-unit">/10g</span></span>
             </div>
-
             <div className="gold-rate-divider"/>
-
-            {/* MCX Block */}
-            {apiData.mcx?.gold && (
-              <div className="gold-rate-block">
-                <div className="gold-rate-block-title">MCX SPOT (per gram)</div>
-                <div className="gold-rate-block-row">
-                  <span className="gold-mcx-name">Gold</span>
-                  <span className="gold-mcx-price">₹{apiData.mcx.gold?.toLocaleString('en-IN')}</span>
-                </div>
-                {apiData.mcx?.silver && (
-                  <div className="gold-rate-block-row">
-                    <span className="gold-mcx-name">Silver /kg</span>
-                    <span className="gold-mcx-price" style={{fontSize:16}}>₹{apiData.mcx.silver?.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
+            <div className="gold-mcx-item">
+              <span className="gold-mcx-name">Gold 22K</span>
+              <span className="gold-mcx-price">₹{apiData.base.gold22?.toLocaleString('en-IN')}<span className="gold-mcx-unit">/gram</span></span>
+              <span className="gold-mcx-name" style={{marginLeft:8}}>₹{(apiData.base.gold22 * 10)?.toLocaleString('en-IN')}<span className="gold-mcx-unit">/10g</span></span>
+            </div>
+            {apiData.base.silver && <>
+              <div className="gold-rate-divider"/>
+              <div className="gold-mcx-item">
+                <span className="gold-mcx-name">Silver</span>
+                <span className="gold-mcx-price">₹{apiData.base.silver?.toLocaleString('en-IN')}<span className="gold-mcx-unit">/kg</span></span>
+                <span className="gold-mcx-name" style={{marginLeft:8}}>₹{Math.round(apiData.base.silver/1000)}<span className="gold-mcx-unit">/gram</span></span>
               </div>
-            )}
-
+            </>}
           </div>
-          <div className="gold-mcx-note">IBJA sets the official daily gold rate used by all jewellers in India · MCX is the live commodity exchange price · City rates below include 3% GST + regional demand premium</div>
+          <div className="gold-mcx-note">IBJA official daily rate · Incl. 3% GST · Excludes jeweller making charges · City rates below include regional demand premium</div>
         </div>
       )}
 

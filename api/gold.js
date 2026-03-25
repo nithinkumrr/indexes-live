@@ -105,14 +105,49 @@ export default async function handler(req, res) {
     }
   } catch (_) {}
 
-  // Silver from GoodReturns if not already fetched
+  // Silver: scrape GoodReturns which publishes correct Indian market rate (incl. import duty)
   if (!silverPerKg) {
     try {
-      const r = await fetch('https://www.goodreturns.in/silver-rates/', { headers: { 'User-Agent': UA } });
+      const r = await fetch('https://www.goodreturns.in/silver-rates/', {
+        headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Referer': 'https://www.goodreturns.in/' }
+      });
       if (r.ok) {
         const html = await r.text();
-        const m    = html.match(/(?:1\s*Kg|per kg)[^0-9]*([\d,]+)/i);
-        if (m) silverPerKg = parseFloat(m[1].replace(/,/g,''));
+        // GoodReturns shows silver per kg prominently
+        const patterns = [
+          /Silver.*?per\s*kilogram.*?([\d,]{5,})/is,
+          /1\s*kg.*?silver.*?([\d,]{5,})/is,
+          /silver.*?1\s*kg.*?([\d,]{5,})/is,
+          /([\d,]{5,})\s*per\s*kg/i,
+          /Silver\s*([\d,]{5,})/i,
+        ];
+        for (const p of patterns) {
+          const m = html.match(p);
+          if (m) {
+            const v = parseFloat(m[1].replace(/,/g,''));
+            if (v > 50000 && v < 400000) { // valid silver per kg range in INR
+              silverPerKg = v;
+              break;
+            }
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Last resort: derive silver from COMEX + import duty adjustment (~12%)
+  if (!silverPerKg) {
+    try {
+      const fxR  = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/USDINR%3DX?interval=1d&range=1d', { headers: { 'User-Agent': UA } });
+      const fxD  = await fxR.json();
+      const usd  = fxD?.chart?.result?.[0]?.meta?.regularMarketPrice || 84;
+      const sR   = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/SI%3DF?interval=1d&range=1d', { headers: { 'User-Agent': UA } });
+      const sD   = await sR.json();
+      const sUsd = sD?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (sUsd) {
+        // COMEX price + 10% import duty + 3% GST = approx Indian market rate
+        const comexInrKg = (sUsd * usd) / 31.1035 * 1000;
+        silverPerKg = Math.round(comexInrKg * 1.10 * 1.03);
       }
     } catch (_) {}
   }
