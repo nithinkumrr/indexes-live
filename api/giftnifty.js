@@ -35,8 +35,8 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   const mins     = getISTMins();
-  const session1 = mins >= 390 && mins < 540;
-  const session2 = mins >= 995 || mins < 165;
+  const session1 = mins >= 390 && mins < 945;   // 6:30 AM – 3:45 PM
+  const session2 = mins >= 990 || mins < 150;   // 4:30 PM – 2:30 AM
   const isOpen   = session1 || session2;
 
   const apiKey = process.env.KITE_API_KEY;
