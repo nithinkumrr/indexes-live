@@ -5,27 +5,27 @@ export default async function handler(req, res) {
   const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
   let baseGold24 = null, baseGold22 = null, silverPerKg = null, source = '';
 
-  // Strategy 1: GoodReturns — most reliable Indian gold price (correct, incl. import duty)
+  // Strategy 1: GoodReturns — scrape 22K price (reliable), derive 24K from purity
   try {
     const r = await fetch('https://www.goodreturns.in/gold-rates/', {
       headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Referer': 'https://www.goodreturns.in/' }
     });
     if (r.ok) {
       const html = await r.text();
-      // Extract all prices between 8000-20000 range
-      const allPrices = [...html.matchAll(/₹\s*(1[0-9],[0-9]{3}|[89],[0-9]{3})/g)]
+      // Extract all ₹XX,XXX values in valid gold-per-gram range
+      const prices = [...html.matchAll(/₹\s*(\d{1,2},\d{3})/g)]
         .map(m => parseInt(m[1].replace(/,/g,'')))
         .filter(v => v > 8000 && v < 20000);
-      
-      // 24K > 22K always — find the highest and second highest
-      const sorted = [...new Set(allPrices)].sort((a,b) => b-a);
-      if (sorted.length >= 2) {
-        baseGold24 = sorted[0]; // highest = 24K
-        baseGold22 = sorted[1]; // second = 22K
-        source = 'goodreturns';
-      } else if (sorted.length === 1) {
-        baseGold24 = sorted[0];
-        baseGold22 = Math.round(sorted[0] * 0.916);
+      const unique = [...new Set(prices)].sort((a,b) => a-b);
+      // The lowest in valid range is typically 22K
+      // 24K = 22K / 0.916 (always)
+      if (unique.length > 0) {
+        // Find 22K — it's the most commonly occurring valid price
+        const freq = {};
+        prices.filter(v => v > 8000 && v < 20000).forEach(v => freq[v] = (freq[v]||0) + 1);
+        const sorted22 = Object.entries(freq).sort((a,b) => b[1]-a[1]);
+        baseGold22 = parseInt(sorted22[0][0]);
+        baseGold24 = Math.round(baseGold22 / 0.916);
         source = 'goodreturns';
       }
     }
@@ -88,9 +88,9 @@ export default async function handler(req, res) {
 
   if (!baseGold24) return res.json({ error: 'Could not fetch gold price', data: [] });
 
-  // Sanity check — real gold price should be 10,000–20,000/gram in 2026
-  if (baseGold24 < 10000 || baseGold24 > 20000) {
-    return res.json({ error: `Suspicious gold price: ${baseGold24}`, data: [] });
+  // Sanity check — 22K gold per gram in India 2026
+  if (!baseGold24 || baseGold22 < 10000 || baseGold22 > 20000) {
+    return res.json({ error: `Invalid price: 22K=${baseGold22}`, data: [] });
   }
 
   const cities = [

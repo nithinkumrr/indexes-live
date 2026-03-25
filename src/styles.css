@@ -1034,8 +1034,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 /* ── MCX Futures Strip ──────────────────────────────────────────────── */
 .gold-mcx-strip  { background: linear-gradient(135deg, rgba(212,160,23,0.08), rgba(212,160,23,0.03)); border: 1px solid rgba(212,160,23,0.3); border-radius: var(--r-lg); padding: 14px 20px; margin-bottom: 20px; }
 .gold-mcx-label  { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: #D4A017; margin-bottom: 12px; font-weight: 700; }
-.gold-mcx-items  { display: flex; gap: 0; align-items: center; flex-wrap: wrap; }
-.gold-mcx-item   { display: flex; align-items: center; gap: 10px; padding: 0 20px 0 0; border-right: 1px solid var(--border); margin-right: 20px; flex-wrap: wrap; }
+.gold-mcx-items  { display: flex; gap: 0; align-items: center; flex-wrap: nowrap; overflow-x: auto; }
+.gold-mcx-item   { display: flex; align-items: center; gap: 8px; padding: 0 20px 0 0; border-right: 1px solid var(--border); margin-right: 20px; flex-shrink: 0; flex-wrap: nowrap; }
 .gold-mcx-item:last-of-type { border-right: none; }
 .gold-mcx-name   { font-family: var(--mono); font-size: 11px; color: var(--text3); }
 .gold-mcx-price  { font-family: var(--mono); font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
@@ -1475,6 +1475,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .gold-rate-divider      { width: 1px; background: var(--border); align-self: stretch; margin: 0 20px; }
 .gold-mcx-unit { font-size: 10px; color: var(--text3); margin-left: 2px; font-weight: 400; }
 
-.gold-mcx-sub      { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 2px; display: block; }
+.gold-mcx-sub      { display: none; }
 .gold-mcx-live     { border-left: 2px solid var(--accent); padding-left: 12px !important; }
 .gold-live-dot     { display: inline-block; width: 6px; height: 6px; background: var(--gain); border-radius: 50%; margin-left: 5px; animation: pulse 1.5s infinite; vertical-align: middle; }
