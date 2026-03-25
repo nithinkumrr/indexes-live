@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 const METALS = [
   { key: 'gold22', label: 'Gold 22K', unit: '/ gram', color: '#D4A017', bg: 'rgba(212,160,23,0.1)', icon: '●' },
   { key: 'gold24', label: 'Gold 24K', unit: '/ gram', color: '#FFD700', bg: 'rgba(255,215,0,0.08)', icon: '●' },
-  { key: 'silver', label: 'Silver',   unit: '/ gram', color: '#A8A9AD', bg: 'rgba(168,169,173,0.08)', icon: '◆' },
 ];
 
 function fmtPrice(n) {
@@ -59,6 +58,7 @@ export default function GoldPage() {
         setApiData(d);
         setDate(d.date || '');
         setLoading(false);
+        // Use IBJA silver from gold API if available (more accurate than COMEX)
       })
       .catch(() => { setError(true); setLoading(false); });
   }, []);
@@ -95,6 +95,61 @@ export default function GoldPage() {
           </div>
         </div>
       )}
+
+      {/* Silver Section */}
+      {(apiData?.base?.silver || mcx?.silverKg) && (() => {
+        const silverKg  = apiData?.base?.silver || mcx?.silverKg;
+        const baseRate  = Math.round(silverKg / 1.03);
+        const gst1kg    = silverKg - baseRate;
+        const per1g     = Math.round(silverKg / 1000);
+        const per100g   = Math.round(silverKg / 10);
+        const src       = apiData?.base?.silver ? 'IBJA' : 'COMEX/MCX';
+        return (
+        <div className="silver-breakdown">
+          <div className="silver-bd-header">
+            <div className="silver-bd-title">🥈 Silver Rates</div>
+            <div className="silver-bd-src">{src} · Pan-India uniform rate</div>
+          </div>
+
+          {/* Price table */}
+          <div className="silver-price-table">
+            <div className="silver-pt-row silver-pt-header">
+              <span>Quantity</span>
+              <span>Base (ex-GST)</span>
+              <span>GST 3%</span>
+              <span>Total (incl. GST)</span>
+            </div>
+            <div className="silver-pt-row">
+              <span className="silver-pt-qty">1 gram</span>
+              <span>₹{Math.round(baseRate/1000).toLocaleString('en-IN')}</span>
+              <span>₹{Math.round(gst1kg/1000)}</span>
+              <span className="silver-pt-total">₹{per1g.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="silver-pt-row">
+              <span className="silver-pt-qty">100 grams</span>
+              <span>₹{Math.round(baseRate/10).toLocaleString('en-IN')}</span>
+              <span>₹{Math.round(gst1kg/10).toLocaleString('en-IN')}</span>
+              <span className="silver-pt-total">₹{per100g.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="silver-pt-row silver-pt-highlight">
+              <span className="silver-pt-qty">1 kg</span>
+              <span>₹{baseRate.toLocaleString('en-IN')}</span>
+              <span>₹{gst1kg.toLocaleString('en-IN')}</span>
+              <span className="silver-pt-total">₹{silverKg.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+
+          <div className="silver-bd-explain">
+            <div className="silver-explain-title">About Silver Pricing in India</div>
+            <div className="silver-explain-text">
+              Unlike gold, silver is priced uniformly across all cities in India — there is no regional premium. The rate is set daily by IBJA (India Bullion and Jewellers Association) based on MCX and international spot prices, inclusive of import duties and levies. The prices above reflect the standard market rate before jeweller margins.
+              <br/><br/>
+              For silver ornaments and jewellery, jewellers charge an additional making fee of ₹20–₹100 per gram depending on design complexity. For silver coins and bars, you typically pay market rate + 3% GST only.
+            </div>
+          </div>
+        </div>
+        );
+      })()}
 
       {/* Header */}
       <div className="gold-header">

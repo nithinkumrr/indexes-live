@@ -1441,3 +1441,29 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .gold-ibja-badge    { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text2); background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; }
 
 .gold-city-premium { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 2px; }
+
+/* ── Silver Breakdown ─────────────────────────────────────────────── */
+.silver-breakdown  { background: linear-gradient(135deg, rgba(74,101,128,0.08), rgba(74,101,128,0.03)); border: 1px solid rgba(74,101,128,0.3); border-radius: var(--r-lg); padding: 16px 20px; margin-bottom: 20px; }
+.silver-bd-title   { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+.silver-bd-grid    { display: flex; gap: 0; flex-wrap: wrap; margin-bottom: 12px; }
+.silver-bd-item    { display: flex; flex-direction: column; gap: 4px; padding: 0 20px 0 0; border-right: 1px solid var(--border); margin-right: 20px; }
+.silver-bd-item:last-of-type { border-right: none; }
+.silver-bd-total   { }
+.silver-bd-label   { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text3); }
+.silver-bd-val     { font-family: var(--mono); font-size: 16px; font-weight: 700; color: #4A6580; }
+.silver-bd-total .silver-bd-val { font-size: 20px; color: var(--text); }
+.silver-bd-note    { font-family: var(--mono); font-size: 10px; color: var(--text3); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 10px; }
+
+/* ── Silver Price Table ──────────────────────────────────────────── */
+.silver-bd-header    { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.silver-bd-src       { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.silver-price-table  { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 16px; }
+.silver-pt-row       { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1.2fr; padding: 10px 14px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; color: var(--text2); }
+.silver-pt-row:last-child { border-bottom: none; }
+.silver-pt-header    { background: var(--bg3); font-size: 9px; letter-spacing: 1px; color: var(--text3); font-weight: 700; padding: 8px 14px; }
+.silver-pt-highlight { background: rgba(74,101,128,0.06); }
+.silver-pt-qty       { font-weight: 700; color: var(--text); }
+.silver-pt-total     { font-weight: 700; color: #4A6580; }
+.silver-bd-explain   { border-top: 1px solid var(--border); padding-top: 14px; }
+.silver-explain-title { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
+.silver-explain-text  { font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.7; }
