@@ -312,12 +312,14 @@ async function handleFutures(token, res) {
 
     if (!fut) return res.json({ error: 'instrument_not_found', symbol });
 
-    const qr = await fetch(`https://api.kite.trade/quote?i=NFO:${fut.token}`, { headers: kiteHeaders(token) });
+    const qr = await fetch(`https://api.kite.trade/quote?i=NFO:${fut.token}&i=${encodeURIComponent('NSE:NIFTY 50')}`, { headers: kiteHeaders(token) });
     const qj = await qr.json();
-    const q  = Object.values(qj?.data || {})[0];
+    const q    = Object.values(qj?.data || {}).find(d => d.instrument_token === parseInt(fut.token)) || Object.values(qj?.data || {})[0];
+    const spotQ = qj?.data?.['NSE:NIFTY 50'];
     if (!q) return res.json({ error: 'no_quote', symbol: fut.sym });
     const price = q.last_price, pc = q.ohlc?.close || price;
-    return res.json({ symbol: fut.sym, price, prevClose: pc,
+    const spot  = spotQ?.last_price || pc;
+    return res.json({ symbol: fut.sym, price, prevClose: pc, spot,
       change: parseFloat((price-pc).toFixed(2)), changePct: parseFloat(((price-pc)/pc*100).toFixed(2)),
       oi: q.oi, oiChange: q.oi_day_change, open: q.ohlc?.open, high: q.ohlc?.high, low: q.ohlc?.low });
   } catch(e) { return res.status(500).json({ error: e.message, symbol }); }

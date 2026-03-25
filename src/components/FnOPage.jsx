@@ -90,19 +90,23 @@ function VIXCard({ vix, loading }) {
 function FuturesPremium() {
   const [data, setData]       = useState(null);
   const [noToken, setNoToken] = useState(false);
+  const [loaded, setLoaded]   = useState(false);
   useEffect(() => {
     const load = async () => {
       try {
-        const [spotRes, futRes] = await Promise.all([fetch('/api/nse-india'), fetch('/api/kite-data?type=futures')]);
-        if (futRes.status === 401) { setNoToken(true); return; }
+        const futRes = await fetch('/api/kite-data?type=futures');
+        if (futRes.status === 401) { setNoToken(true); setLoaded(true); return; }
         setNoToken(false);
-        const spotD = await spotRes.json(), futD = await futRes.json();
-        const spot = spotD?.nifty50?.price || spotD?.niftyLast, fut = futD?.price;
-        if (spot && fut) {
+        const futD = await futRes.json();
+        const fut  = futD?.price;
+        if (fut) {
+          // Kite now returns spot directly — no NSE dependency
+          const spot    = futD.spot || futD.prevClose;
           const premium = parseFloat((fut - spot).toFixed(2)), pct = parseFloat(((premium/spot)*100).toFixed(2));
           setData({ spot, fut, premium, pct, symbol: futD.symbol, oi: futD.oi });
         }
       } catch (_) {}
+      setLoaded(true);
     };
     load();
     const id = setInterval(load, 30000);
@@ -112,7 +116,7 @@ function FuturesPremium() {
   return (
     <div className="t-card">
       <div className="t-card-label">FUTURES PREMIUM {data?.symbol && <span className="t-sym">{data.symbol}</span>}</div>
-      {noToken ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">Fetching...</div> : (
+      {noToken ? <KitePrompt text="Requires Kite login" /> : !data && !loaded ? <div className="t-loading">Fetching...</div> : !data ? <div className="t-loading">No data — market closed or Kite token expired</div> : (
         <>
           <div className="t-futures-row">
             <div className="t-stat"><div className="t-stat-l">Spot</div><div className="t-stat-v">{data.spot?.toLocaleString('en-IN')}</div></div>
@@ -128,7 +132,8 @@ function FuturesPremium() {
 }
 
 function AdvanceDecline() {
-  const [data, setData] = useState(null);
+  const [data, setData]     = useState(null);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     const load = async () => {
       try {
@@ -138,6 +143,7 @@ function AdvanceDecline() {
           setData({ adv, dec, unch, advPct: Math.round((adv/total)*100), decPct: Math.round((dec/total)*100) });
         }
       } catch (_) {}
+      setLoaded(true);
     };
     load();
     const id = setInterval(load, 30000);
@@ -146,7 +152,7 @@ function AdvanceDecline() {
   return (
     <div className="t-card">
       <div className="t-card-label">NIFTY 50 BREADTH</div>
-      {!data ? <div className="t-loading">Loading...</div> : (
+      {!data && !loaded ? <div className="t-loading">Loading...</div> : !data ? <div className="t-loading">Breadth data unavailable — market closed</div> : (
         <>
           <div className="t-ad-row">
             <div className="t-ad-num gain">{data.adv}<span className="t-ad-sub">up</span></div>
@@ -166,15 +172,17 @@ function AdvanceDecline() {
 function VWAPCard() {
   const [data, setData]       = useState(null);
   const [noToken, setNoToken] = useState(false);
+  const [loaded, setLoaded]   = useState(false);
   useEffect(() => {
     const load = async () => {
       try {
         const r = await fetch('/api/kite-data?type=vwap');
-        if (r.status === 401) { setNoToken(true); return; }
+        if (r.status === 401) { setNoToken(true); setLoaded(true); return; }
         setNoToken(false);
         const j = await r.json();
         if (j.vwap) setData(j);
       } catch (_) {}
+      setLoaded(true);
     };
     load();
     const id = setInterval(load, 60000);
@@ -185,7 +193,7 @@ function VWAPCard() {
   return (
     <div className="t-card">
       <div className="t-card-label">NIFTY FUTURES — VWAP</div>
-      {noToken ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">Available during market hours (9:15–15:30 IST)</div> : (
+      {noToken ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">{loaded ? 'VWAP requires market to be open (9:15–15:30 IST Mon–Fri)' : 'Fetching...'}</div> : (
         <>
           <div className="t-futures-row">
             <div className="t-stat"><div className="t-stat-l">VWAP</div><div className="t-stat-v">{data.vwap?.toLocaleString('en-IN')}</div></div>
@@ -203,6 +211,7 @@ function VWAPCard() {
 function OIBuildup() {
   const [data, setData]       = useState(null);
   const [noToken, setNoToken] = useState(false);
+  const [loaded, setLoaded]   = useState(false);
   const SIGNALS = {
     long_buildup:   { label: 'Long Buildup',   color: '#00C896', note: 'Price ↑ + OI ↑ · Fresh longs added' },
     short_buildup:  { label: 'Short Buildup',  color: '#FF4455', note: 'Price ↓ + OI ↑ · Fresh shorts added' },
@@ -214,11 +223,12 @@ function OIBuildup() {
     const load = async () => {
       try {
         const r = await fetch('/api/kite-data?type=oi');
-        if (r.status === 401) { setNoToken(true); return; }
+        if (r.status === 401) { setNoToken(true); setLoaded(true); return; }
         setNoToken(false);
         const j = await r.json();
         if (j.nifty) setData(j);
       } catch (_) {}
+      setLoaded(true);
     };
     load();
     const id = setInterval(load, 60000);
@@ -227,7 +237,7 @@ function OIBuildup() {
   return (
     <div className="t-card">
       <div className="t-card-label">OI BUILDUP — FUTURES</div>
-      {noToken ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">Fetching OI data...</div> : (
+      {noToken ? <KitePrompt text="Requires Kite login" /> : !data && !loaded ? <div className="t-loading">Fetching OI data...</div> : !data ? <div className="t-loading">OI data unavailable — market closed or Kite token expired</div> : (
         <div className="t-oi-body">
           {[['nifty','Nifty 50'],['banknifty','Bank Nifty']].map(([key, name]) => {
             const d = data[key]; if (!d) return null;
@@ -287,7 +297,12 @@ function PCRPanel() {
             style={index===i.key?{borderColor:i.color,color:i.color}:{}} onClick={()=>setIndex(i.key)}>{i.label}</button>
         ))}</div>
       </div>
-      {loading ? <div className="t-loading">Fetching option chain...</div> : !data ? <div className="t-loading">Unavailable — market may be closed</div> : noOI ? (
+      {loading ? <div className="t-loading">Fetching option chain...</div> : !data ? (
+        <div className="t-loading">
+          Option chain unavailable. <a href="/api/kite-auth" className="fno-kite-nudge-btn" style={{display:'inline-block',marginLeft:8}}>Login with Kite →</a>
+          <div style={{marginTop:6,fontSize:10,color:'var(--text3)'}}>Kite returns today's closing OI &amp; prices — works after market hours too</div>
+        </div>
+      ) : noOI ? (
         <div className="t-loading">OI is 0 — NSE may be blocking. <a href="/api/kite-auth" className="fno-kite-nudge-btn" style={{display:'inline-block',marginLeft:8}}>Login with Kite</a></div>
       ) : (
         <>
@@ -371,7 +386,12 @@ function StraddleChain() {
             style={index===i.key?{borderColor:i.color,color:i.color}:{}} onClick={()=>setIndex(i.key)}>{i.label}</button>
         ))}</div>
       </div>
-      {loading ? <div className="t-loading">Fetching straddle chain...</div> : !data ? <div className="t-loading">Option chain unavailable — market may be closed</div> : (
+      {loading ? <div className="t-loading">Fetching straddle chain...</div> : !data ? (
+        <div className="t-loading">
+          Option chain unavailable. <a href="/api/kite-auth" className="fno-kite-nudge-btn" style={{display:'inline-block',marginLeft:8}}>Login with Kite →</a>
+          <div style={{marginTop:6,fontSize:10,color:'var(--text3)'}}>Kite returns today's closing option prices — works after market hours too</div>
+        </div>
+      ) : (
         <div className="t-straddle-table">
           <div className="t-straddle-hdr">
             <span className="t-sth-call">CALL LTP</span><span className="t-sth-coi">CALL OI</span>
