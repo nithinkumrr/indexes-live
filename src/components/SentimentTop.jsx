@@ -7,68 +7,164 @@ import Sparkline from './Sparkline';
 import FxCryptoStrip from './CurrencyStrip';
 
 function FearGreedMeter() {
-  const [vix, setVix] = useState(null);
+  const [mmi, setMmi] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    fetch('/api/quote?symbol=%5EINDIAVIX')
+    fetch('/api/nse-india')
       .then(r => r.json())
-      .then(json => {
-        const meta = json?.chart?.result?.[0]?.meta;
-        if (meta?.regularMarketPrice) setVix(meta.regularMarketPrice);
-      }).catch(() => {});
+      .then(d => {
+        // ── Component 1: VIX (inverted — high VIX = fear)
+        // Score 0-100: VIX 10 = 100 (greed), VIX 35+ = 0 (extreme fear)
+        const vixScore = d.vix
+          ? Math.max(0, Math.min(100, Math.round(100 - (d.vix - 10) * 4)))
+          : null;
+
+        // ── Component 2: FII Activity
+        // Normalize: net buy > 5000Cr = greed(100), net sell > 5000Cr = fear(0)
+        const fiiScore = d.fiiNet !== undefined
+          ? Math.max(0, Math.min(100, Math.round(50 + (d.fiiNet / 100))))
+          : null;
+
+        // ── Component 3: Nifty Momentum (EMA30 vs EMA90)
+        // Positive momentum (EMA30 > EMA90) = greed, negative = fear
+        const momScore = (d.ema30 && d.ema90)
+          ? Math.max(0, Math.min(100, Math.round(50 + ((d.ema30 - d.ema90) / d.ema90) * 1000)))
+          : null;
+
+        // ── Component 4: Market Breadth (Advance/Decline)
+        // More advancers = greed, more decliners = fear
+        const adScore = (d.advancers && d.decliners)
+          ? Math.max(0, Math.min(100, Math.round((d.advancers / (d.advancers + d.decliners)) * 100)))
+          : null;
+
+        // ── Component 5: Price Strength (52W highs vs lows)
+        // More highs = greed, more lows = fear
+        const psScore = (d.highs52w !== undefined && d.lows52w !== undefined && (d.highs52w + d.lows52w) > 0)
+          ? Math.max(0, Math.min(100, Math.round((d.highs52w / (d.highs52w + d.lows52w)) * 100)))
+          : null;
+
+        // ── Component 6: Nifty % change (momentum proxy)
+        // +2% = greed, -2% = fear
+        const chgScore = d.niftyChange !== undefined
+          ? Math.max(0, Math.min(100, Math.round(50 + d.niftyChange * 12.5)))
+          : null;
+
+        // Equal weight average of available components
+        const components = [vixScore, fiiScore, momScore, adScore, psScore, chgScore].filter(v => v !== null);
+        const score = components.length > 0
+          ? Math.round(components.reduce((a,b) => a+b, 0) / components.length)
+          : null;
+
+        setMmi({
+          score,
+          vix: d.vix,
+          components: { vixScore, fiiScore, momScore, adScore, psScore, chgScore },
+          componentCount: components.length,
+          fiiNet: d.fiiNet,
+          ema30: d.ema30, ema90: d.ema90,
+          advancers: d.advancers, decliners: d.decliners,
+          highs52w: d.highs52w, lows52w: d.lows52w,
+        });
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
-  if (!vix) return <div className="fg-loading">Loading VIX...</div>;
+  if (loading) return <div className="fg-loading">Computing MMI...</div>;
+  if (!mmi?.score) return <div className="fg-loading">MMI data unavailable</div>;
 
-  const score   = Math.max(0, Math.min(100, Math.round(100 - (vix - 10) * 5.3)));
-  const zones   = [
-    { label: 'Extreme Fear',  min: 0,  max: 20,  color: '#FF4455' },
-    { label: 'Fear',          min: 20, max: 40,  color: '#FF8C42' },
-    { label: 'Neutral',       min: 40, max: 60,  color: '#F5C518' },
-    { label: 'Greed',         min: 60, max: 80,  color: '#7BC67E' },
-    { label: 'Extreme Greed', min: 80, max: 100, color: '#00C896' },
+  const { score } = mmi;
+  const zone = score <= 25 ? 'EXTREME FEAR'
+    : score <= 45 ? 'FEAR'
+    : score <= 55 ? 'NEUTRAL'
+    : score <= 75 ? 'GREED'
+    : 'EXTREME GREED';
+
+  const zoneColor = score <= 25 ? '#FF4444'
+    : score <= 45 ? '#FF8C42'
+    : score <= 55 ? '#F5C842'
+    : score <= 75 ? '#7DC67E'
+    : '#2ECC71';
+
+  const zoneDesc = score <= 25 ? 'Extreme caution. Investors are panicking. Historically a contrarian buy signal.'
+    : score <= 45 ? 'Fear is driving the market. Caution is high, selling pressure persists.'
+    : score <= 55 ? 'Market is balanced. Neither fear nor greed dominates.'
+    : score <= 75 ? 'Optimism is building. Markets trending upward with broad participation.'
+    : 'Euphoria zone. Markets may be overbought. Exercise caution on new positions.';
+
+  // Gauge needle angle: 0 → -90°, 100 → +90°
+  const angle = -90 + (score / 100) * 180;
+  const r = 70, cx = 90, cy = 85;
+  const rad = (a) => (a * Math.PI) / 180;
+  const nx = cx + r * Math.cos(rad(angle));
+  const ny = cy + r * Math.sin(rad(angle));
+
+  const components = [
+    { label: 'India VIX',    val: mmi.components.vixScore,  detail: mmi.vix ? `VIX ${mmi.vix.toFixed(2)}` : '' },
+    { label: 'FII Activity', val: mmi.components.fiiScore,  detail: mmi.fiiNet ? `₹${(mmi.fiiNet/100).toFixed(0)}Cr net` : '' },
+    { label: 'Momentum',     val: mmi.components.momScore,  detail: (mmi.ema30 && mmi.ema90) ? `EMA30 vs EMA90` : '' },
+    { label: 'Breadth',      val: mmi.components.adScore,   detail: (mmi.advancers && mmi.decliners) ? `${mmi.advancers}A / ${mmi.decliners}D` : '' },
+    { label: '52W Strength', val: mmi.components.psScore,   detail: (mmi.highs52w !== undefined) ? `${mmi.highs52w}H / ${mmi.lows52w}L` : '' },
+    { label: 'Price Change', val: mmi.components.chgScore,  detail: '' },
   ];
-  const current = zones.find(z => score >= z.min && score <= z.max) || zones[0];
-  const angle   = -180 + (score / 100) * 180;  // -180=extreme fear(left), 0=extreme greed(right)
-  const rad     = (angle * Math.PI) / 180;
-  const cx = 90, cy = 82, r = 62;
-  const nx = cx + r * 0.75 * Math.cos(rad);
-  const ny = cy + r * 0.75 * Math.sin(rad);
 
   return (
-    <div className="fg-st-wrap">
-      <div className="fg-st-label">MARKET FEAR &amp; GREED</div>
-      <div className="fg-st-sub">India VIX: {vix.toFixed(2)}</div>
-      <svg viewBox="0 0 180 100" className="fg-st-svg">
-        {zones.map((z, i) => {
-          const sa = -180 + (z.min / 100) * 180;
-          const ea = -180 + (z.max / 100) * 180;
-          const sr = (sa * Math.PI) / 180, er = (ea * Math.PI) / 180;
-          const r2 = 62, r1 = 44;
-          const x1=cx+r2*Math.cos(sr),y1=cy+r2*Math.sin(sr);
-          const x2=cx+r2*Math.cos(er),y2=cy+r2*Math.sin(er);
-          const x3=cx+r1*Math.cos(er),y3=cy+r1*Math.sin(er);
-          const x4=cx+r1*Math.cos(sr),y4=cy+r1*Math.sin(sr);
-          return <path key={i} d={`M${x1},${y1} A${r2},${r2} 0 0,1 ${x2},${y2} L${x3},${y3} A${r1},${r1} 0 0,0 ${x4},${y4} Z`}
-            fill={z.color} opacity={current.label === z.label ? 1 : 0.25}/>;
+    <div className="fg-card">
+      <div className="fg-st-label">MARKET MOOD INDEX</div>
+      <div className="fg-st-sub">6-factor sentiment · India equity markets</div>
+
+      {/* Gauge */}
+      <svg viewBox="0 0 180 100" className="fg-svg">
+        {/* Arc segments */}
+        {[
+          { from:-90, to:-54, color:'#FF4444' },
+          { from:-54, to:-18, color:'#FF8C42' },
+          { from:-18, to: 18, color:'#F5C842' },
+          { from: 18, to: 54, color:'#7DC67E' },
+          { from: 54, to: 90, color:'#2ECC71' },
+        ].map(({from, to, color}, i) => {
+          const x1=cx+r*Math.cos(rad(from)), y1=cy+r*Math.sin(rad(from));
+          const x2=cx+r*Math.cos(rad(to)),   y2=cy+r*Math.sin(rad(to));
+          return <path key={i} d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`}
+            fill={color} opacity="0.15"/>;
         })}
+        {/* Arc outline */}
+        {[
+          { from:-90, to:-54, color:'#FF4444' },
+          { from:-54, to:-18, color:'#FF8C42' },
+          { from:-18, to: 18, color:'#F5C842' },
+          { from: 18, to: 54, color:'#7DC67E' },
+          { from: 54, to: 90, color:'#2ECC71' },
+        ].map(({from, to, color}, i) => {
+          const x1=cx+r*Math.cos(rad(from)), y1=cy+r*Math.sin(rad(from));
+          const x2=cx+r*Math.cos(rad(to)),   y2=cy+r*Math.sin(rad(to));
+          return <path key={i} d={`M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`}
+            fill="none" stroke={color} strokeWidth="6" strokeLinecap="round"/>;
+        })}
+        {/* Needle */}
         <line x1={cx} y1={cy} x2={nx} y2={ny} stroke="var(--text)" strokeWidth="2" strokeLinecap="round"/>
         <circle cx={cx} cy={cy} r="4" fill="var(--text)"/>
-        <circle cx={cx} cy={cy} r="2" fill="var(--bg2)"/>
-        <text x={cx} y={cy+16} textAnchor="middle" fontSize="16" fontFamily="monospace" fontWeight="700" fill={current.color}>{score}</text>
+        {/* Score */}
+        <text x={cx} y={cy-12} textAnchor="middle" fontSize="18" fontWeight="800" fill={zoneColor}>{score}</text>
       </svg>
-      <div className="fg-st-zone" style={{color: current.color}}>{current.label.toUpperCase()}</div>
-      <div className="fg-st-desc">
-        {score < 20 && 'Fear is driving the market. Selling pressure is extreme.'}
-        {score >= 20 && score < 40 && 'Fear is driving the market. Caution is high, selling pressure persists.'}
-        {score >= 40 && score < 60 && 'Sentiment is balanced. No strong directional bias.'}
-        {score >= 60 && score < 80 && 'Greed is building. Investors are optimistic.'}
-        {score >= 80 && 'Greed is driving the market. Risk of sharp reversal is higher.'}
-      </div>
-      <div className="fg-st-scale">
-        {zones.map(z => (
-          <div key={z.label} className="fg-st-row">
-            <span className="fg-dot" style={{background: z.color}}/>
-            <span>{z.label}</span>
+
+      <div className="fg-zone" style={{ color: zoneColor }}>{zone}</div>
+      <div className="fg-desc">{zoneDesc}</div>
+
+      {/* Component breakdown */}
+      <div className="fg-components">
+        {components.filter(c => c.val !== null).map((c, i) => (
+          <div key={i} className="fg-comp-row">
+            <span className="fg-comp-label">{c.label}</span>
+            <div className="fg-comp-bar-wrap">
+              <div className="fg-comp-bar" style={{
+                width: `${c.val}%`,
+                background: c.val <= 25 ? '#FF4444' : c.val <= 45 ? '#FF8C42' : c.val <= 55 ? '#F5C842' : c.val <= 75 ? '#7DC67E' : '#2ECC71'
+              }}/>
+            </div>
+            <span className="fg-comp-val">{c.val}</span>
+            {c.detail && <span className="fg-comp-detail">{c.detail}</span>}
           </div>
         ))}
       </div>
@@ -76,45 +172,6 @@ function FearGreedMeter() {
   );
 }
 
-const BENCHMARK_IDS = ['nifty50', 'sensex', 'banknifty', 'giftnifty', 'sp500', 'nasdaq', 'dowjones', 'ftse', 'dax', 'nikkei', 'hangseng', 'shanghai'];
-
-function fmtWB(value, id) {
-  if (value == null || isNaN(value)) return '—';
-  if (id === 'vix' || id === 'us10y') return value.toFixed(2);
-  if (value >= 10000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  if (value >= 1000)  return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  return value.toFixed(2);
-}
-
-function WBCard({ market, data, nseData = {} }) {
-  const d      = data[market.id];
-  const status = getStatus(market);
-  const gain   = d ? d.changePct >= 0 : true;
-  const pe     = nseData[market.id]?.pe;
-  return (
-    <div className={`wb-card ${status === 'live' ? 'wb-live' : ''}`} data-market-id={market.id}>
-      <div className="wb-top">
-        <span className="wb-flag">{market.flag}</span>
-        <div className="wb-info">
-          <span className="wb-name">{market.name}</span>
-          <span className="wb-exch">{market.exchange}</span>
-        </div>
-        {status === 'live' && <span className="wb-dot" />}
-      </div>
-      <div className="wb-price">
-        {d ? fmtWB(d.price, market.id) : '—'}
-        {market.unit && <span className="wb-unit"> {market.unit}</span>}
-      </div>
-      {d && (
-        <div className={`wb-pct ${gain ? 'gain' : 'loss'}`}>
-          {gain ? '▲' : '▼'} {formatPct(d.changePct)}
-          {pe > 0 && <span className="wb-pe">P/E {pe.toFixed(1)}x</span>}
-        </div>
-      )}
-      {d?.spark && <div className="wb-spark"><Sparkline points={d.spark} gain={gain} height={32} /></div>}
-    </div>
-  );
-}
 
 export default function SentimentTop({ data, nseData = {} }) {
   const stripMarkets = COMMODITY_STRIP_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);

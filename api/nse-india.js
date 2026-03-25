@@ -1,120 +1,108 @@
+// api/nse-india.js — NSE data: VIX, FII, Advance/Decline, 52W highs/lows, Nifty EMA
+// Used for MMI calculation
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=20, stale-while-revalidate=40');
+  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
 
   const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
+  const H  = (cookie='') => ({
+    'User-Agent': UA, 'Accept': 'application/json',
+    'Referer': 'https://www.nseindia.com/', Cookie: cookie
+  });
 
-  let cookies = '';
+  // Get NSE cookie
+  let cookie = '';
   try {
-    const home = await fetch('https://www.nseindia.com', {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' },
-    });
-    cookies = (home.headers.get('set-cookie') || '')
-      .split(/,(?=[^;]+=)/).map(c => c.split(';')[0].trim()).filter(Boolean).join('; ');
-  } catch (e) { return res.status(500).json({ error: 'NSE session failed' }); }
-
-  const H = { 'User-Agent': UA, 'Accept': 'application/json', 'Referer': 'https://www.nseindia.com/', Cookie: cookies };
-  const pf = v => { const n = parseFloat(String(v || '').replace(/,/g, '')); return isNaN(n) || n === 0 ? null : parseFloat(n.toFixed(2)); };
-  const pi = v => { const n = parseInt(v); return isNaN(n) ? 0 : n; };
+    const r = await fetch('https://www.nseindia.com', { headers: { 'User-Agent': UA, 'Accept': 'text/html' } });
+    cookie = (r.headers.get('set-cookie')||'').split(/,(?=[^;]+=)/).map(c=>c.split(';')[0].trim()).filter(Boolean).join('; ');
+  } catch(_) {}
 
   const result = {};
 
-  const KEY_MAP = {
-    'NIFTY 50': 'nifty50', 'NIFTY BANK': 'banknifty', 'NIFTY NEXT 50': 'niftynext50',
-    'NIFTY MIDCAP 50': 'niftymidcap50', 'INDIA VIX': 'indiavix',
-    'NIFTY IT': 'niftyit', 'NIFTY PHARMA': 'niftypharma', 'NIFTY AUTO': 'niftyauto',
-    'NIFTY FMCG': 'niftyfmcg', 'NIFTY METAL': 'niftymetal', 'NIFTY REALTY': 'niftyrealty',
-    'NIFTY PSU BANK': 'niftypsubank', 'NIFTY FIN SERVICE': 'niftyfinservice',
-    'S&P BSE SENSEX': 'sensex', 'SENSEX': 'sensex',
-  };
-
-  // NSE allIndices
+  // 1. VIX
   try {
-    const r = await fetch('https://www.nseindia.com/api/allIndices', { headers: H });
-    const body = await r.json();
-    for (const idx of (body.data || [])) {
-      const key = KEY_MAP[idx.index];
-      if (!key) continue;
-      result[key] = {
-        price: pf(idx.last), prevClose: pf(idx.previousClose),
-        change: pf(idx.variation || idx.change), changePct: pf(idx.percentChange || idx.pChange),
-        open: pf(idx.open), high: pf(idx.high), low: pf(idx.low),
-        yearHigh: pf(idx.yearHigh), yearLow: pf(idx.yearLow),
-        pe: pf(idx.pe), pb: pf(idx.pb), dy: pf(idx.dy),
-        advances: pi(idx.advances), declines: pi(idx.declines), unchanged: pi(idx.unchanged),
-        source: 'nse-live',
-      };
-    }
-  } catch (e) { console.error('allIndices failed:', e.message); }
-
-  // Enrich Nifty 50 + Bank Nifty with equity-stockIndices (richer ratios + advances)
-  for (const [sym, key] of [['NIFTY 50', 'nifty50'], ['NIFTY BANK', 'banknifty']]) {
-    try {
-      const r = await fetch(`https://www.nseindia.com/api/equity-stockIndices?index=${encodeURIComponent(sym)}`, { headers: H });
-      const body = await r.json();
-      if (!result[key]) result[key] = {};
-      const meta = body?.metadata || {};
-      if (meta.indexPe)       result[key].pe = pf(meta.indexPe);
-      if (meta.indexPb)       result[key].pb = pf(meta.indexPb);
-      if (meta.dividendYield) result[key].dy = pf(meta.dividendYield);
-      if (meta.open)          result[key].open = pf(meta.open);
-      if (meta.high)          result[key].high = pf(meta.high);
-      if (meta.low)           result[key].low  = pf(meta.low);
-      if (body?.advance) {
-        result[key].advances  = pi(body.advance.advances);
-        result[key].declines  = pi(body.advance.declines);
-        result[key].unchanged = pi(body.advance.unchanged);
+    const r = await fetch('https://www.nseindia.com/api/allIndices', { headers: H(cookie) });
+    if (r.ok) {
+      const d = await r.json();
+      const vixRow = (d?.data||[]).find(i => i.index === 'INDIA VIX');
+      if (vixRow) result.vix = parseFloat(vixRow.last);
+      const niftyRow = (d?.data||[]).find(i => i.index === 'NIFTY 50');
+      if (niftyRow) {
+        result.niftyLast   = parseFloat(niftyRow.last);
+        result.niftyChange = parseFloat(niftyRow.percentChange);
+        result.niftyHigh52 = parseFloat(niftyRow['52WeekHigh'] || 0);
+        result.niftyLow52  = parseFloat(niftyRow['52WeekLow']  || 0);
       }
-    } catch (_) {}
-  }
-
-  // Sensex — use Yahoo Finance (most reliable for OHLC)
-  // Yahoo symbol for Sensex: ^BSESN
-  try {
-    const yUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EBSESN?interval=1d&range=1d';
-    const yr   = await fetch(yUrl, {
-      headers: { 'User-Agent': UA, 'Accept': 'application/json', 'Accept-Language': 'en-US,en;q=0.9' }
-    });
-    const yData = await yr.json();
-    const meta  = yData?.chart?.result?.[0]?.meta;
-    if (meta) {
-      const existing = result['sensex'] || {};
-      result['sensex'] = {
-        price:     pf(meta.regularMarketPrice)    || existing.price,
-        prevClose: pf(meta.chartPreviousClose)    || existing.prevClose,
-        change:    pf(meta.regularMarketPrice - meta.chartPreviousClose) || existing.change,
-        changePct: pf((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose * 100) || existing.changePct,
-        open:      pf(meta.regularMarketOpen)     || existing.open,
-        high:      pf(meta.regularMarketDayHigh)  || existing.high,
-        low:       pf(meta.regularMarketDayLow)   || existing.low,
-        yearHigh:  pf(meta.fiftyTwoWeekHigh)      || existing.yearHigh,
-        yearLow:   pf(meta.fiftyTwoWeekLow)       || existing.yearLow,
-        pe:        existing.pe,
-        pb:        existing.pb,
-        dy:        existing.dy,
-        advances:  existing.advances,
-        declines:  existing.declines,
-        unchanged: existing.unchanged,
-        source:    'yahoo+nse',
-      };
     }
-  } catch (_) {}
+  } catch(_) {}
 
-  // VWAP for Nifty 50, Bank Nifty, Sensex using NSE's marketStatus / quote endpoints
-  const VWAP_SYMBOLS = [
-    { key: 'nifty50',   nseSymbol: 'NIFTY%2050' },
-    { key: 'banknifty', nseSymbol: 'NIFTY%20BANK' },
-  ];
-  for (const { key, nseSymbol } of VWAP_SYMBOLS) {
-    try {
-      const r = await fetch(`https://www.nseindia.com/api/equity-stockIndices?index=${nseSymbol}`, { headers: H });
-      const body = await r.json();
-      // NSE returns VWAP in the metadata or first data row
-      const meta = body?.metadata || {};
-      const vwap = pf(meta.vwap) || pf(body?.data?.[0]?.vwap);
-      if (vwap && result[key]) result[key].vwap = vwap;
-    } catch (_) {}
-  }
+  // 2. FII net activity (latest)
+  try {
+    const r = await fetch('https://www.nseindia.com/api/fiidiiTradeReact', { headers: H(cookie) });
+    if (r.ok) {
+      const rows = await r.json();
+      const arr  = Array.isArray(rows) ? rows : (rows?.data || []);
+      const fii  = arr.find(r => /FII|FPI/i.test(r?.category||r?.clientType||''));
+      if (fii) {
+        result.fiiNet  = parseFloat(fii.netValue ?? fii.net ?? 0);
+        result.fiiBuy  = parseFloat(fii.buyValue ?? fii.grossPurchase ?? 0);
+        result.fiiSell = parseFloat(fii.sellValue ?? fii.grossSales ?? 0);
+      }
+    }
+  } catch(_) {}
 
-  res.json({ data: result, timestamp: Date.now() });
+  // 3. Advance / Decline for Nifty 500 (broader market breadth)
+  try {
+    const r = await fetch('https://www.nseindia.com/api/live-analysis-variations?index=gainers', { headers: H(cookie) });
+    if (r.ok) {
+      const d = await r.json();
+      result.advancers = (d?.NIFTY?.data||d?.data||[]).length;
+    }
+  } catch(_) {}
+  try {
+    const r = await fetch('https://www.nseindia.com/api/live-analysis-variations?index=losers', { headers: H(cookie) });
+    if (r.ok) {
+      const d = await r.json();
+      result.decliners = (d?.NIFTY?.data||d?.data||[]).length;
+    }
+  } catch(_) {}
+
+  // 4. Nifty 50 historical for EMA calculation (90d and 30d)
+  try {
+    const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?interval=1d&range=6mo', {
+      headers: { 'User-Agent': UA }
+    });
+    if (r.ok) {
+      const d      = await r.json();
+      const closes = d?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || [];
+      const valid  = closes.filter(Boolean);
+      if (valid.length >= 90) {
+        const ema = (data, period) => {
+          const k = 2 / (period + 1);
+          return data.reduce((prev, cur, i) => i === 0 ? cur : cur * k + prev * (1-k));
+        };
+        result.ema30 = Math.round(ema(valid.slice(-30), 30));
+        result.ema90 = Math.round(ema(valid.slice(-90), 90));
+      }
+    }
+  } catch(_) {}
+
+  // 5. 52-week highs vs lows count
+  try {
+    const r = await fetch('https://www.nseindia.com/api/live-analysis-data?index=high52', { headers: H(cookie) });
+    if (r.ok) {
+      const d = await r.json();
+      result.highs52w = (d?.data||[]).length;
+    }
+  } catch(_) {}
+  try {
+    const r = await fetch('https://www.nseindia.com/api/live-analysis-data?index=low52', { headers: H(cookie) });
+    if (r.ok) {
+      const d = await r.json();
+      result.lows52w = (d?.data||[]).length;
+    }
+  } catch(_) {}
+
+  return res.json(result);
 }
