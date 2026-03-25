@@ -1,6 +1,6 @@
 // SentimentTop — shown on Sentiment page
 import { useState, useEffect } from 'react';
-import { MARKETS, COMMODITY_STRIP_IDS } from '../data/markets';
+import { MARKETS, COMMODITY_STRIP_IDS, WORLD_BENCHMARK_IDS } from '../data/markets';
 import { formatPrice, formatPct } from '../utils/format';
 import { getStatus } from '../utils/timezone';
 import Sparkline from './Sparkline';
@@ -175,7 +175,7 @@ function FearGreedMeter() {
 
 export default function SentimentTop({ data, nseData = {} }) {
   const stripMarkets = COMMODITY_STRIP_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
-  const benchmarks   = BENCHMARK_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
+  const benchmarks   = MARKETS.filter(m => m.category === 'index' || m.id === 'giftnifty');
 
   return (
     <div className="st-wrap">
