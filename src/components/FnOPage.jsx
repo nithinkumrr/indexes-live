@@ -230,8 +230,9 @@ function PCRPanel() {
       try {
         const r = await fetch('/api/kite-data?type=pcr');
         const j = await r.json();
-        if (j.pcr) { setData(j); setLoading(false); }
-      } catch(_) {}
+        if (j.pcr != null) { setData(j); setLoading(false); }
+        else setLoading(false); // API responded but no data
+      } catch(_) { setLoading(false); }
     };
     load();
     const id = setInterval(load, 60000);
@@ -327,7 +328,8 @@ function StraddleChain() {
         const r = await fetch('/api/kite-data?type=straddle');
         const j = await r.json();
         if (j.straddles) { setData(j); setLoading(false); }
-      } catch(_) {}
+        else setLoading(false);
+      } catch(_) { setLoading(false); }
     };
     load();
     const id = setInterval(load, 30000);

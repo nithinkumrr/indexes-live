@@ -317,7 +317,7 @@ async function handleFutures(token, res) {
 
 async function handlePCR(token, res) {
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
-  if (!token) return res.status(401).json({ error: 'no_token' });
+  // No token required — uses NSE public option chain API
   try {
     const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
     let cookie = '';
@@ -359,7 +359,7 @@ async function handlePCR(token, res) {
 
 async function handleStraddle(token, res) {
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
-  if (!token) return res.status(401).json({ error: 'no_token' });
+  // No token required — uses NSE public option chain API
   try {
     const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
     let cookie = '';
