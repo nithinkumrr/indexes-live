@@ -71,7 +71,9 @@ export default async function handler(req, res) {
       const gD   = await gR.json();
       const gUsd = gD?.chart?.result?.[0]?.meta?.regularMarketPrice;
       if (gUsd) {
-        baseGold24 = Math.round((gUsd * usd) / 31.1035);
+        // Add ~15% India import duty + customs to COMEX price for accurate INR price
+        const rawGram = (gUsd * usd) / 31.1035;
+        baseGold24 = Math.round(rawGram * 1.155); // 15% import duty + 0.5% customs
         baseGold22 = Math.round(baseGold24 * 0.916);
         source = 'comex';
         // Silver
@@ -257,6 +259,6 @@ export default async function handler(req, res) {
     mcx:    { gold: mcxGold, silver: mcxSilver },
     source,
     date:   new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', year: 'numeric' }),
-    note:   `Base: ${source === 'ibja' ? 'IBJA daily fix' : source === 'goodreturns' ? 'GoodReturns' : 'COMEX/Yahoo'} · City rates incl. 3% GST + city demand premium · ~75% accuracy · Actual jeweller rates vary`,
+    note:   'IBJA rate incl. 3% GST + city demand premium · ~75% accuracy · Actual jeweller rates vary',
   });
 }

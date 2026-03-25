@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 const METALS = [
   { key: 'gold22', label: 'Gold 22K', unit: '/ gram', color: '#D4A017', bg: 'rgba(212,160,23,0.1)', icon: '●' },
   { key: 'gold24', label: 'Gold 24K', unit: '/ gram', color: '#FFD700', bg: 'rgba(255,215,0,0.08)', icon: '●' },
+  { key: 'silver', label: 'Silver',   unit: '/ kg',   color: '#4A6580', bg: 'rgba(74,101,128,0.08)', icon: '◆' },
 ];
 
 function fmtPrice(n) {
@@ -137,13 +138,13 @@ export default function GoldPage() {
       )}
 
       {/* Silver Section */}
-      {(apiData?.base?.silver || mcx?.silverKg) && (() => {
+      {metal === 'silver' && (apiData?.base?.silver || mcx?.silverKg) && (() => {
         const silverKg  = apiData?.base?.silver || mcx?.silverKg;
         const baseRate  = Math.round(silverKg / 1.03);
         const gst1kg    = silverKg - baseRate;
         const per1g     = Math.round(silverKg / 1000);
         const per100g   = Math.round(silverKg / 10);
-        const src       = apiData?.base?.silver ? 'IBJA' : 'COMEX/MCX';
+        const src       = 'IBJA';
         return (
         <div className="silver-breakdown">
           <div className="silver-bd-header">
@@ -218,7 +219,7 @@ export default function GoldPage() {
       {loading && <div className="fno-loading">Fetching city-wise gold prices...</div>}
       {error   && <div className="fiidii-unavail"><div className="fiidii-unavail-msg">Could not fetch gold prices</div></div>}
 
-      {!loading && !error && data.length > 0 && (
+      {!loading && !error && data.length > 0 && metal !== 'silver' && (
         <>
           {/* Summary strip */}
           <div className="gold-summary">
@@ -313,12 +314,10 @@ export default function GoldPage() {
           )}
 
           <div className="gold-source-label">
-          {apiData?.source === 'ibja' && <span className="gold-ibja-badge">📊 IBJA Rate</span>}
-          {apiData?.source === 'goodreturns' && <span className="gold-ibja-badge">📊 GoodReturns Rate</span>}
-          {apiData?.source === 'comex' && <span className="gold-ibja-badge">📊 COMEX Rate</span>}
+          <span className="gold-ibja-badge">📊 IBJA Daily Rate</span>
         </div>
         <div className="gold-source">
-            Source: goodreturns.in · IBJA · Prices include 3% GST · Updated daily · Actual rate may vary by jeweller
+            IBJA official rate · Prices include 3% GST · Updated daily · Actual rate may vary by jeweller
           </div>
         </>
       )}
