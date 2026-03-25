@@ -1992,3 +1992,18 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .t-oi-row { grid-template-columns: 80px 80px 70px 1fr; }
   .t-oi-note { display: none; }
 }
+
+/* ── FnO Breadth card ─────────────────────────────────────────────────────── */
+.fno-breadth-card { }
+.fno-breadth-nums { display: flex; align-items: flex-end; gap: 24px; margin-bottom: 16px; }
+.fno-breadth-num  { font-family: var(--mono); font-size: 42px; font-weight: 700; line-height: 1; display: flex; flex-direction: column; }
+.fno-breadth-lbl  { font-family: var(--mono); font-size: 10px; color: var(--text3); font-weight: 400; letter-spacing: 0.5px; margin-top: 4px; }
+.fno-breadth-bar  { height: 8px; border-radius: 4px; background: var(--bg4); display: flex; overflow: hidden; margin-bottom: 12px; }
+.fno-breadth-bar-a { background: var(--gain); border-radius: 4px 0 0 4px; transition: width 0.5s ease; }
+.fno-breadth-bar-d { background: var(--loss); border-radius: 0 4px 4px 0; transition: width 0.5s ease; }
+.fno-breadth-signal { font-family: var(--mono); font-size: 12px; color: var(--text3); padding-top: 10px; border-top: 1px solid var(--border); }
+.fno-breadth-signal.gain { color: var(--gain); }
+.fno-breadth-signal.loss { color: var(--loss); }
+
+/* ── VIX scale ────────────────────────────────────────────────────────────── */
+.fno-vix-scale { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--text3); }
