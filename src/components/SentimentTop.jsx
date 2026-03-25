@@ -82,19 +82,44 @@ function FearGreedMeter() {
     : score <= 75 ? 'Optimism is building. Markets trending upward.'
     : 'Euphoria zone. Markets may be overbought.';
 
-  const angle = -90 + (score / 100) * 180;
-  const R = 70, CX = 90, CY = 85;
+  // Protractor geometry
+  const CX = 100, CY = 92, R = 74, ARC_W = 14;
   const toRad = (a) => (a * Math.PI) / 180;
-  const nx = CX + R * Math.cos(toRad(angle));
-  const ny = CY + R * Math.sin(toRad(angle));
+  const polarX = (a, r) => CX + r * Math.cos(toRad(a));
+  const polarY = (a, r) => CY + r * Math.sin(toRad(a));
 
-  const arcs = [
-    { from:-90, to:-54, color:'#FF4444' },
-    { from:-54, to:-18, color:'#FF8C42' },
-    { from:-18, to: 18, color:'#F5C842' },
-    { from: 18, to: 54, color:'#7DC67E' },
-    { from: 54, to: 90, color:'#2ECC71' },
+  // Needle angle: score 0 → -180°, score 100 → 0° (left to right semicircle)
+  const needleAngle = -180 + (score / 100) * 180;
+  const NEEDLE_LEN = R - ARC_W - 6;
+  const nx = polarX(needleAngle, NEEDLE_LEN);
+  const ny = polarY(needleAngle, NEEDLE_LEN);
+
+  // 5 color zones — each 36° of the 180° arc
+  const zones = [
+    { from: -180, to: -144, color: '#FF4444' },
+    { from: -144, to: -108, color: '#FF8C42' },
+    { from: -108, to:  -72, color: '#F5C842' },
+    { from:  -72, to:  -36, color: '#7DC67E' },
+    { from:  -36, to:    0, color: '#2ECC71' },
   ];
+
+  // Tick marks — every 5 units (= 9°), major every 25 (= 45°)
+  const ticks = [];
+  for (let i = 0; i <= 100; i += 5) {
+    const a = -180 + (i / 100) * 180;
+    const isMajor = i % 25 === 0;
+    const outerR = R + 2;
+    const innerR = isMajor ? R - ARC_W - 4 : R - ARC_W + 2;
+    ticks.push({ x1: polarX(a, outerR), y1: polarY(a, outerR), x2: polarX(a, innerR), y2: polarY(a, innerR), major: isMajor, label: isMajor ? i : null, labelX: polarX(a, R + 10), labelY: polarY(a, R + 10) });
+  }
+
+  // Arc path helper
+  const arcPath = (startAngle, endAngle, r) => {
+    const x1 = polarX(startAngle, r), y1 = polarY(startAngle, r);
+    const x2 = polarX(endAngle, r),   y2 = polarY(endAngle, r);
+    const sweep = endAngle - startAngle > 180 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${sweep} 1 ${x2} ${y2}`;
+  };
 
   const comps = [
     { label: 'India VIX',    val: mmi.scores.vixScore, detail: mmi.vix ? 'VIX ' + mmi.vix.toFixed(2) : '' },
@@ -109,15 +134,36 @@ function FearGreedMeter() {
     <div className="fg-st-wrap">
       <div className="fg-st-label">MARKET MOOD INDEX</div>
       <div className="fg-st-sub">6-factor sentiment · India equity</div>
-      <svg viewBox="0 0 180 100" className="fg-st-svg">
-        {arcs.map(function(arc, i) {
-          var x1=CX+R*Math.cos(toRad(arc.from)), y1=CY+R*Math.sin(toRad(arc.from));
-          var x2=CX+R*Math.cos(toRad(arc.to)),   y2=CY+R*Math.sin(toRad(arc.to));
-          return <path key={i} d={'M '+x1+' '+y1+' A '+R+' '+R+' 0 0 1 '+x2+' '+y2} fill="none" stroke={arc.color} strokeWidth="8" strokeLinecap="round"/>;
+      <svg viewBox="0 0 200 120" className="fg-st-svg">
+        {/* Track background */}
+        <path d={arcPath(-180, 0, R)} fill="none" stroke="var(--border)" strokeWidth={ARC_W + 4} strokeLinecap="butt" />
+
+        {/* Color zones */}
+        {zones.map(function(z, i) {
+          return <path key={i} d={arcPath(z.from, z.to, R)} fill="none" stroke={z.color} strokeWidth={ARC_W} strokeLinecap="butt" opacity="0.85" />;
         })}
-        <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="var(--text)" strokeWidth="2.5" strokeLinecap="round"/>
-        <circle cx={CX} cy={CY} r="4" fill="var(--text)"/>
-        <text x={CX} y={CY - 14} textAnchor="middle" fontSize="18" fontWeight="800" fill={zoneColor}>{score}</text>
+
+        {/* Tick marks */}
+        {ticks.map(function(t, i) {
+          return <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={t.major ? 'var(--text2)' : 'var(--text3)'} strokeWidth={t.major ? 1.2 : 0.6} />;
+        })}
+
+        {/* Scale labels: 0, 25, 50, 75, 100 */}
+        {ticks.filter(function(t) { return t.label != null; }).map(function(t, i) {
+          return <text key={i} x={t.labelX} y={t.labelY} textAnchor="middle" dominantBaseline="middle" fontSize="7" fontFamily="var(--mono)" fill="var(--text3)">{t.label}</text>;
+        })}
+
+        {/* FEAR / GREED labels */}
+        <text x={CX - R - 16} y={CY + 10} textAnchor="middle" fontSize="5.5" fontFamily="var(--mono)" fill="#FF4444" letterSpacing="0.5">FEAR</text>
+        <text x={CX + R + 16} y={CY + 10} textAnchor="middle" fontSize="5.5" fontFamily="var(--mono)" fill="#2ECC71" letterSpacing="0.5">GREED</text>
+
+        {/* Needle */}
+        <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="var(--text)" strokeWidth="2" strokeLinecap="round" />
+        <circle cx={CX} cy={CY} r="4.5" fill="var(--bg2)" stroke="var(--text)" strokeWidth="2" />
+        <circle cx={CX} cy={CY} r="2" fill={zoneColor} />
+
+        {/* Score */}
+        <text x={CX} y={CY - 20} textAnchor="middle" fontSize="22" fontWeight="800" fontFamily="var(--mono)" fill={zoneColor}>{score}</text>
       </svg>
       <div className="fg-st-zone" style={{ color: zoneColor }}>{zone}</div>
       <div className="fg-st-desc">{zoneDesc}</div>
