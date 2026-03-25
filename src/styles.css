@@ -2357,3 +2357,222 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .fno-strat-leg    { flex-wrap: wrap; gap: 8px; }
   .fno-strat-stats  { gap: 14px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FNO PAGE v2 — Full redesign with responsive layout
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Base page */
+.fno-page { background: var(--bg); }
+
+/* ── Section headers ─────────────────────────────────────────────────────── */
+.fnos-section-hdr {
+  display: flex; align-items: center; gap: 12px;
+  padding: 20px 20px 10px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 2px; font-weight: 700;
+  color: var(--text3);
+  border-top: 1px solid var(--border);
+}
+.fnos-section-hdr::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.fnos-section-sub {
+  font-size: 9px; font-weight: 400; letter-spacing: 0.5px;
+  color: var(--text3); opacity: 0.6;
+}
+
+/* ── Expiry strip ────────────────────────────────────────────────────────── */
+.fnos-expiry-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.fnos-expiry-group { padding: 16px 20px 14px; border-right: 1px solid var(--border); }
+.fnos-expiry-group:last-of-type { border-right: none; }
+.fnos-group-hdr   { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.fnos-group-name  { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text); }
+.fnos-group-rule  { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.fnos-expiry-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fnos-expiry-meta {
+  grid-column: 1 / -1; padding: 6px 20px 10px;
+  font-family: var(--mono); font-size: 10px; color: var(--text3);
+  border-top: 1px solid var(--border);
+}
+.fnos-live-badge { color: var(--accent); margin-left: 5px; }
+
+/* ── Market pulse 3-col ──────────────────────────────────────────────────── */
+.fnos-pulse-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  min-height: 280px;
+}
+.fnos-pulse-vix  { border-right: 1px solid var(--border); }
+.fnos-pulse-em   { border-right: 1px solid var(--border); }
+.fnos-pulse-roll { }
+
+/* VIX card inside pulse grid */
+.fnos-vix-card {
+  padding: 20px; height: 100%;
+}
+.fnos-vix-card .fno-vix-card {
+  padding: 20px; height: 100%;
+}
+
+/* Make fno-vix-card fill the pulse column */
+.fnos-pulse-vix .fno-vix-card { padding: 20px; }
+
+/* Widget padding in pulse grid */
+.fnos-pulse-em  .fno-widget,
+.fnos-pulse-roll .fno-widget { border-right: none; }
+
+/* ── Playbook wrap ───────────────────────────────────────────────────────── */
+.fnos-playbook-wrap {
+  padding: 0 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.fnos-playbook-wrap .fno-widget {
+  padding: 0; border-right: none;
+}
+.fnos-playbook-wrap .fno-strategy-grid {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.fnos-playbook-wrap .fno-strategy-zone {
+  padding: 16px;
+}
+.fnos-playbook-wrap .fno-strategy-note {
+  font-size: 11px; line-height: 1.5;
+}
+
+/* ── Calc grid (BS + Position Sizer) ────────────────────────────────────── */
+.fnos-calc-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.fnos-calc-grid > .fno-widget { border-bottom: none; }
+.fnos-calc-grid > .fno-widget:first-child { border-right: 1px solid var(--border); }
+.fnos-calc-grid > .fno-widget:last-child  { border-right: none; }
+
+/* ── Full section ────────────────────────────────────────────────────────── */
+.fnos-full-section {
+  border-bottom: 1px solid var(--border);
+  padding: 20px;
+}
+.fnos-full-section > .fno-widget { padding: 0; border-right: none; }
+
+/* ── Half grid ───────────────────────────────────────────────────────────── */
+.fnos-half-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.fnos-half-grid > .fno-widget:first-child { border-right: 1px solid var(--border); }
+.fnos-half-grid > .fno-widget:last-child  { border-right: none; }
+
+/* ── Ref grid (theta + calendar + lots) ─────────────────────────────────── */
+.fnos-ref-grid {
+  display: grid; grid-template-columns: 1fr 1fr 280px;
+  border-bottom: 1px solid var(--border);
+}
+.fnos-ref-grid > .fno-widget { border-right: 1px solid var(--border); }
+.fnos-ref-grid > .fno-widget:last-child { border-right: none; }
+
+/* ── FII/DII wrapper ─────────────────────────────────────────────────────── */
+.fnos-full-section .fno-fiidii,
+.fnos-full-section > div { min-width: 0; }
+
+/* ═══ RESPONSIVE ═══════════════════════════════════════════════════════════ */
+
+/* Tablet: 900–1200px */
+@media (max-width: 1200px) {
+  .fnos-pulse-grid    { grid-template-columns: 1fr 1fr; }
+  .fnos-pulse-vix     { grid-column: 1 / -1; border-right: none; border-bottom: 1px solid var(--border); }
+  .fnos-pulse-em      { border-right: 1px solid var(--border); }
+  .fnos-ref-grid      { grid-template-columns: 1fr 1fr; }
+  .fnos-ref-grid > .fno-widget:nth-child(2) { border-right: none; }
+  .fnos-ref-grid > .fno-widget:last-child   { grid-column: 1 / -1; border-top: 1px solid var(--border); border-right: none; }
+  .fnos-playbook-wrap .fno-strategy-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Mobile: ≤768px */
+@media (max-width: 768px) {
+  .fnos-section-hdr   { padding: 14px 14px 8px; }
+  .fnos-expiry-strip  { grid-template-columns: 1fr; }
+  .fnos-expiry-group  { border-right: none; border-bottom: 1px solid var(--border); padding: 12px 14px; }
+  .fnos-expiry-cards  { grid-template-columns: 1fr 1fr; }
+  .fnos-expiry-meta   { padding: 6px 14px 10px; }
+
+  .fnos-pulse-grid    { grid-template-columns: 1fr; min-height: auto; }
+  .fnos-pulse-vix     { grid-column: auto; border-bottom: 1px solid var(--border); }
+  .fnos-pulse-em,
+  .fnos-pulse-roll    { border-right: none; border-bottom: 1px solid var(--border); }
+
+  .fnos-playbook-wrap { padding: 0 14px 16px; }
+  .fnos-playbook-wrap .fno-strategy-grid { grid-template-columns: 1fr; gap: 8px; }
+
+  .fnos-calc-grid     { grid-template-columns: 1fr; }
+  .fnos-calc-grid > .fno-widget:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+
+  .fnos-half-grid     { grid-template-columns: 1fr; }
+  .fnos-half-grid > .fno-widget:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+
+  .fnos-ref-grid      { grid-template-columns: 1fr; }
+  .fnos-ref-grid > .fno-widget { border-right: none; border-bottom: 1px solid var(--border); }
+
+  .fnos-full-section  { padding: 14px; }
+
+  /* Expiry cards compact on mobile */
+  .fno-expiry-card { padding: 10px 12px; }
+  .fno-clock-num   { font-size: 28px; }
+  .fno-clock-secs  { font-size: 22px; }
+
+  /* Pivot tables stack */
+  .fno-pivot-tables { grid-template-columns: 1fr; }
+
+  /* Greeks 2 cols */
+  .fno-greeks-grid  { grid-template-columns: repeat(2, 1fr); }
+
+  /* BS inputs wrap */
+  .fno-bs-controls  { gap: 8px; }
+  .fno-payoff-input { width: 64px; }
+
+  /* Strategy calc */
+  .fno-strat-top    { gap: 8px; }
+  .fno-strat-leg    { flex-wrap: wrap; }
+  .fno-strat-stats  { gap: 12px; }
+
+  /* Lot grid */
+  .fno-lot-grid     { grid-template-columns: repeat(2, 1fr); }
+
+  /* Calendar */
+  .fno-cal-wrap     { grid-template-columns: 1fr; }
+
+  /* Expiry stats */
+  .fno-estat-grid   { grid-template-columns: 1fr; }
+
+  /* VIX seasonality */
+  .fno-season-grid  { grid-template-columns: repeat(6, 1fr); height: 140px; }
+
+  /* Sizer */
+  .fno-sizer-stats  { grid-template-columns: 1fr 1fr; }
+
+  /* Rollover */
+  .fno-rollover-row { grid-template-columns: 90px 1fr 40px; }
+}
+
+/* ── Widget padding standardisation ─────────────────────────────────────── */
+.fnos-pulse-em .fno-widget,
+.fnos-pulse-roll .fno-widget,
+.fnos-calc-grid .fno-widget,
+.fnos-half-grid .fno-widget,
+.fnos-ref-grid .fno-widget {
+  padding: 20px;
+}
+@media (max-width: 768px) {
+  .fnos-pulse-em .fno-widget,
+  .fnos-pulse-roll .fno-widget,
+  .fnos-calc-grid .fno-widget,
+  .fnos-half-grid .fno-widget,
+  .fnos-ref-grid .fno-widget { padding: 14px; }
+}

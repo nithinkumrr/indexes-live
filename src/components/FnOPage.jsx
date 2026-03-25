@@ -1489,78 +1489,107 @@ export default function FnOPage({ data = {} }) {
   }, [holidays, holidayNames]);
 
   return (
-    <div className="fno-wrap">
+    <div className="fno-page">
 
-      {/* Ticker — reuse the same one from markets page */}
+      {/* ══ TICKER ══════════════════════════════════════════════════════ */}
       <Ticker data={data} />
 
-      {/* Expiry countdowns */}
-      <div className="fno-expiry-vix-row">
-        <div className="fno-expiry-panel">
-          <div className="fno-expiry-group-label">Nifty 50 <span className="fno-expiry-rule">Tue weekly · last-Thu monthly</span></div>
-          <div className="fno-expiry-grid">
+      {/* ══ EXPIRY COUNTDOWNS ══════════════════════════════════════════ */}
+      <div className="fnos-expiry-strip">
+        <div className="fnos-expiry-group">
+          <div className="fnos-group-hdr">
+            <span className="fnos-group-name">Nifty 50</span>
+            <span className="fnos-group-rule">Tue weekly · last-Thu monthly</span>
+          </div>
+          <div className="fnos-expiry-cards">
             <ExpiryCard label="Weekly"  color="#4A9EFF" {...expiries.niftyWeekly}  />
             <ExpiryCard label="Monthly" color="#4A9EFF" {...expiries.niftyMonthly} />
           </div>
         </div>
-        <div className="fno-expiry-panel" style={{ borderRight: 'none' }}>
-          <div className="fno-expiry-group-label">Sensex <span className="fno-expiry-rule">Thu weekly · last-Thu monthly</span></div>
-          <div className="fno-expiry-grid">
+        <div className="fnos-expiry-group">
+          <div className="fnos-group-hdr">
+            <span className="fnos-group-name">Sensex</span>
+            <span className="fnos-group-rule">Thu weekly · last-Thu monthly</span>
+          </div>
+          <div className="fnos-expiry-cards">
             <ExpiryCard label="Weekly"  color="#F59E0B" {...expiries.sensexWeekly}  />
             <ExpiryCard label="Monthly" color="#F59E0B" {...expiries.sensexMonthly} />
           </div>
         </div>
-      </div>
-      <div className="fno-expiry-note">
-        Holiday-adjusted · 15:30 IST
-        {holidayLive && <span style={{ color: 'var(--accent)', marginLeft: 6 }}>· NSE calendar live</span>}
-      </div>
-
-      {/* VIX + Strategy Cheatsheet */}
-      <div className="fno-vix-breadth-row">
-        <VIXCard onVix={setLiveVix} />
-        <div style={{ padding: '20px', minWidth: 0 }}>
-          <StrategySheet vixLevel={liveVix} />
+        <div className="fnos-expiry-meta">
+          Holiday-adjusted · 15:30 IST
+          {holidayLive && <span className="fnos-live-badge">· NSE calendar live</span>}
         </div>
       </div>
 
-      {/* Rollover + Expected Move */}
-      <div className="fno-two-widgets">
-        <RolloverMeter expiries={expiries} />
-        <ExpectedMove data={data} expiries={expiries} />
+      {/* ══ SECTION: MARKET PULSE ══════════════════════════════════════ */}
+      <div className="fnos-section-hdr">
+        <span>MARKET PULSE</span>
+      </div>
+      <div className="fnos-pulse-grid">
+        <div className="fnos-pulse-vix">
+          <VIXCard onVix={setLiveVix} />
+        </div>
+        <div className="fnos-pulse-em">
+          <ExpectedMove data={data} expiries={expiries} />
+        </div>
+        <div className="fnos-pulse-roll">
+          <RolloverMeter expiries={expiries} />
+        </div>
       </div>
 
-      {/* Pivot Points */}
-      <div className="fno-section">
-        <PivotPoints data={data} />
+      {/* ══ SECTION: OPTIONS PLAYBOOK ══════════════════════════════════ */}
+      <div className="fnos-section-hdr">
+        <span>OPTIONS PLAYBOOK</span>
+        <span className="fnos-section-sub">Historical patterns · not advice</span>
+      </div>
+      <div className="fnos-playbook-wrap">
+        <StrategySheet vixLevel={liveVix} />
       </div>
 
-      {/* Black-Scholes Greeks + Position Sizer */}
-      <div className="fno-two-widgets">
+      {/* ══ SECTION: STRATEGY CALCULATOR ══════════════════════════════ */}
+      <div className="fnos-section-hdr">
+        <span>STRATEGY CALCULATOR</span>
+        <span className="fnos-section-sub">Theoretical payoff at expiry</span>
+      </div>
+      <PayoffBuilder data={data} />
+
+      {/* ══ SECTION: CALCULATORS ═══════════════════════════════════════ */}
+      <div className="fnos-section-hdr">
+        <span>CALCULATORS</span>
+      </div>
+      <div className="fnos-calc-grid">
         <BlackScholes data={data} />
         <PositionSizer data={data} />
       </div>
 
-      {/* Expiry Accuracy Stats + VIX Seasonality */}
-      <div className="fno-two-widgets">
+      {/* ══ SECTION: LEVELS & ANALYSIS ════════════════════════════════ */}
+      <div className="fnos-section-hdr">
+        <span>LEVELS & ANALYSIS</span>
+      </div>
+      <div className="fnos-full-section">
+        <PivotPoints data={data} />
+      </div>
+      <div className="fnos-half-grid">
         <ExpiryStats />
         <VixSeasonality />
       </div>
 
-      {/* Strategy Calculator — full width */}
-      <div className="fno-section" style={{ padding: 0 }}>
-        <PayoffBuilder data={data} />
+      {/* ══ SECTION: REFERENCE ════════════════════════════════════════ */}
+      <div className="fnos-section-hdr">
+        <span>REFERENCE</span>
       </div>
-
-      {/* Expiry Calendar + Lot Sizes */}
-      <div className="fno-two-widgets">
+      <div className="fnos-ref-grid">
+        <ThetaDecayCurve />
         <ExpiryCalendar holidays={holidays} holidayNames={holidayNames} />
         <LotSizes />
       </div>
 
-      {/* FII / DII */}
-      <div className="fno-section">
-        <div className="fno-section-label">FII / DII FLOW</div>
+      {/* ══ FII / DII ════════════════════════════════════════════════ */}
+      <div className="fnos-section-hdr">
+        <span>FII / DII FLOW</span>
+      </div>
+      <div className="fnos-full-section">
         <FiiDii />
       </div>
 
