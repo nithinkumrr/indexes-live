@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const REGIONS = {
-  'South': ['Bangalore', 'Chennai', 'Hyderabad', 'Kochi', 'Coimbatore', 'Visakhapatnam'],
-  'West':  ['Mumbai', 'Pune', 'Ahmedabad', 'Surat', 'Nagpur'],
-  'North': ['Delhi', 'Jaipur', 'Lucknow', 'Chandigarh', 'Bhopal', 'Patna'],
-  'East':  ['Kolkata'],
-};
+// Regions derived dynamically from API response — no hardcoding needed
 
 const METALS = [
   { key: 'gold22', label: 'Gold 22K', unit: '/ gram', color: '#D4A017', bg: 'rgba(212,160,23,0.1)', icon: '●' },
@@ -20,6 +15,7 @@ function fmtPrice(n) {
 
 export default function GoldPage() {
   const [data, setData]       = useState([]);
+  const [apiData, setApiData]   = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(false);
   const [metal, setMetal]     = useState('gold22');
@@ -60,6 +56,7 @@ export default function GoldPage() {
       .then(r => r.json())
       .then(d => {
         setData(d.data || []);
+        setApiData(d);
         setDate(d.date || '');
         setLoading(false);
       })
@@ -157,8 +154,9 @@ export default function GoldPage() {
           {/* Grid view — by region */}
           {view === 'grid' && (
             <div className="gold-regions">
-              {Object.entries(REGIONS).map(([region, regionCities]) => {
-                const regionData = regionCities.map(c => data.find(d => d.city === c)).filter(Boolean);
+              {/* Build regions dynamically from API data — add cities in API only */}
+              {['South','West','North','East'].map(region => {
+                const regionData = data.filter(c => c.region === region);
                 if (!regionData.length) return null;
                 return (
                   <div key={region} className="gold-region">
@@ -220,9 +218,9 @@ export default function GoldPage() {
           )}
 
           <div className="gold-source-label">
-          {data?.source === 'ibja' && <span className="gold-ibja-badge">📊 IBJA Rate</span>}
-          {data?.source === 'goodreturns' && <span className="gold-ibja-badge">📊 GoodReturns Rate</span>}
-          {data?.source === 'comex-yahoo' && <span className="gold-ibja-badge">📊 COMEX Rate</span>}
+          {apiData?.source === 'ibja' && <span className="gold-ibja-badge">📊 IBJA Rate</span>}
+          {apiData?.source === 'goodreturns' && <span className="gold-ibja-badge">📊 GoodReturns Rate</span>}
+          {apiData?.source === 'comex' && <span className="gold-ibja-badge">📊 COMEX Rate</span>}
         </div>
         <div className="gold-source">
             Source: goodreturns.in · IBJA · Prices include 3% GST · Updated daily · Actual rate may vary by jeweller
