@@ -148,7 +148,7 @@ export default function IndiaHeatmap() {
   const [loading, setLoading]       = useState(true);
   const [hovered, setHovered]       = useState(null);
   const [filter, setFilter]         = useState('ALL');
-  const [containerW, setContainerW] = useState(1200);
+  const [containerW, setContainerW] = useState(0);
   const containerRef                = useRef(null);
 
   const load = useCallback(async (initial = false) => {
