@@ -1467,3 +1467,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .silver-bd-explain   { border-top: 1px solid var(--border); padding-top: 14px; }
 .silver-explain-title { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
 .silver-explain-text  { font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.7; }
+
+/* ── Gold Rate Block ─────────────────────────────────────────────── */
+.gold-rate-block        { display: flex; flex-direction: column; gap: 8px; }
+.gold-rate-block-title  { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 2px; }
+.gold-rate-block-row    { display: flex; align-items: center; gap: 10px; }
+.gold-rate-divider      { width: 1px; background: var(--border); align-self: stretch; margin: 0 20px; }

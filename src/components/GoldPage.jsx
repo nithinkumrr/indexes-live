@@ -24,30 +24,8 @@ export default function GoldPage() {
 
   useEffect(() => {
     // Fetch MCX futures: GOLDM (mini gold per 10g), SILVERM (mini silver per kg), GOLD (1kg)
-    Promise.all([
-      fetch('/api/quote?symbol=GC%3DF').then(r=>r.json()),     // COMEX gold USD/oz
-      fetch('/api/quote?symbol=SI%3DF').then(r=>r.json()),     // COMEX silver USD/oz  
-      fetch('/api/quote?symbol=USDINR%3DX').then(r=>r.json()), // USD/INR
-    ]).then(([goldD, silvD, fxD]) => {
-      const usd = fxD?.chart?.result?.[0]?.meta?.regularMarketPrice || 84;
-      const gP  = goldD?.chart?.result?.[0]?.meta?.regularMarketPrice;
-      const sP  = silvD?.chart?.result?.[0]?.meta?.regularMarketPrice;
-      const gPrev = goldD?.chart?.result?.[0]?.meta?.chartPreviousClose;
-      const sPrev = silvD?.chart?.result?.[0]?.meta?.chartPreviousClose;
-      if (gP) {
-        const gInrKg = Math.round(gP * usd / 31.1035 * 1000);
-        const sInrKg = sP ? Math.round(sP * usd / 31.1035 * 1000) : null;
-        setMcx({
-          goldKg:     gInrKg,
-          goldChgPct: gPrev ? ((gP - gPrev) / gPrev * 100).toFixed(2) : null,
-          silverKg:   sInrKg,
-          silvChgPct: sPrev && sP ? ((sP - sPrev) / sPrev * 100).toFixed(2) : null,
-          usdInr:     Math.round(usd * 100)/100,
-          goldOz:     gP,
-          month:      new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' }),
-        });
-      }
-    }).catch(() => {});
+    // MCX strip uses data from gold API (already calculated correctly server-side)
+    // No separate COMEX fetch needed
   }, []);
 
   useEffect(() => {
@@ -70,29 +48,46 @@ export default function GoldPage() {
 
   return (
     <div className="gold-wrap">
-      {/* MCX Futures Strip */}
-      {mcx && (
+      {/* IBJA + MCX Strip */}
+      {apiData?.base?.gold24 && (
         <div className="gold-mcx-strip">
-          <div className="gold-mcx-label">MCX FUTURES · {mcx.month}</div>
+          <div className="gold-mcx-label">DAILY RATES · {apiData.date}</div>
           <div className="gold-mcx-items">
-            <div className="gold-mcx-item">
-              <span className="gold-mcx-name">🥇 Gold (1 kg)</span>
-              <span className="gold-mcx-price">₹{mcx.goldKg?.toLocaleString('en-IN')}</span>
-              {mcx.goldChgPct && <span className={`gold-mcx-chg ${parseFloat(mcx.goldChgPct)>=0?'gain':'loss'}`}>{parseFloat(mcx.goldChgPct)>=0?'▲':'▼'} {Math.abs(mcx.goldChgPct)}%</span>}
+
+            {/* IBJA Block */}
+            <div className="gold-rate-block">
+              <div className="gold-rate-block-title">IBJA RATE (per gram)</div>
+              <div className="gold-rate-block-row">
+                <span className="gold-mcx-name">24K</span>
+                <span className="gold-mcx-price">₹{apiData.base.gold24?.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="gold-rate-block-row">
+                <span className="gold-mcx-name">22K</span>
+                <span className="gold-mcx-price" style={{fontSize:16}}>₹{apiData.base.gold22?.toLocaleString('en-IN')}</span>
+              </div>
             </div>
-            {mcx.silverKg && (
-              <div className="gold-mcx-item">
-                <span className="gold-mcx-name">🥈 Silver (1 kg)</span>
-                <span className="gold-mcx-price">₹{mcx.silverKg?.toLocaleString('en-IN')}</span>
-                {mcx.silvChgPct && <span className={`gold-mcx-chg ${parseFloat(mcx.silvChgPct)>=0?'gain':'loss'}`}>{parseFloat(mcx.silvChgPct)>=0?'▲':'▼'} {Math.abs(mcx.silvChgPct)}%</span>}
+
+            <div className="gold-rate-divider"/>
+
+            {/* MCX Block */}
+            {apiData.mcx?.gold && (
+              <div className="gold-rate-block">
+                <div className="gold-rate-block-title">MCX SPOT (per gram)</div>
+                <div className="gold-rate-block-row">
+                  <span className="gold-mcx-name">Gold</span>
+                  <span className="gold-mcx-price">₹{apiData.mcx.gold?.toLocaleString('en-IN')}</span>
+                </div>
+                {apiData.mcx?.silver && (
+                  <div className="gold-rate-block-row">
+                    <span className="gold-mcx-name">Silver /kg</span>
+                    <span className="gold-mcx-price" style={{fontSize:16}}>₹{apiData.mcx.silver?.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
               </div>
             )}
-            <div className="gold-mcx-item gold-mcx-fx">
-              <span className="gold-mcx-name">USD/INR</span>
-              <span className="gold-mcx-price">₹{mcx.usdInr}</span>
-            </div>
-            <div className="gold-mcx-note">Source: COMEX via Yahoo · Converted at live USD/INR · Incl. 3% GST</div>
+
           </div>
+          <div className="gold-mcx-note">IBJA sets the official daily gold rate used by all jewellers in India · MCX is the live commodity exchange price · City rates below include 3% GST + regional demand premium</div>
         </div>
       )}
 

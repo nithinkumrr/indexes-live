@@ -85,6 +85,26 @@ export default async function handler(req, res) {
 
   if (!baseGold24) return res.json({ error: 'Could not fetch gold price', data: [] });
 
+  // ── MCX Spot Price (separate from IBJA) ─────────────────────────────
+  let mcxGold = null, mcxSilver = null;
+  try {
+    const UA2 = UA;
+    const [gR, sR] = await Promise.all([
+      fetch('https://query1.finance.yahoo.com/v8/finance/chart/GOLD.MCX?interval=1d&range=1d', { headers: { 'User-Agent': UA2 } }),
+      fetch('https://query1.finance.yahoo.com/v8/finance/chart/SILVER.MCX?interval=1d&range=1d', { headers: { 'User-Agent': UA2 } }),
+    ]);
+    if (gR.ok) {
+      const gD = await gR.json();
+      const p  = gD?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (p) mcxGold = Math.round(p / 10); // MCX gold is per 10g, convert to per gram
+    }
+    if (sR.ok) {
+      const sD = await sR.json();
+      const p  = sD?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (p) mcxSilver = Math.round(p); // MCX silver is per kg
+    }
+  } catch (_) {}
+
   // Silver from GoodReturns if not already fetched
   if (!silverPerKg) {
     try {
@@ -199,8 +219,9 @@ export default async function handler(req, res) {
   return res.json({
     data,
     base:   { gold24: baseGold24, gold22: baseGold22, silver: silverPerKg },
+    mcx:    { gold: mcxGold, silver: mcxSilver },
     source,
     date:   new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', year: 'numeric' }),
-    note:   `Base: ${source === 'ibja' ? 'IBJA (official)' : source === 'goodreturns' ? 'GoodReturns' : 'COMEX/Yahoo'} · City rates incl. 3% GST + city demand premium · ~75% accuracy · Actual jeweller rates vary`,
+    note:   `Base: ${source === 'ibja' ? 'IBJA daily fix' : source === 'goodreturns' ? 'GoodReturns' : 'COMEX/Yahoo'} · City rates incl. 3% GST + city demand premium · ~75% accuracy · Actual jeweller rates vary`,
   });
 }
