@@ -553,6 +553,86 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-clock-unit   { font-family: var(--mono); font-size: 14px; color: var(--text3); margin-right: 6px; }
 .fno-clock-secs   { font-size: 28px; color: var(--text2); }
 .fno-expiry-sub   { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.fno-expiry-index { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--expiry-color); letter-spacing: 0.5px; margin-bottom: 2px; }
+.fno-expiry-flat  { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+
+/* Desktop: show columns, hide flat grid */
+.fno-desktop-only { display: grid; }
+.fno-mobile-only  { display: none; }
+
+@media (max-width: 768px) {
+  .fno-desktop-only { display: none !important; }
+  .fno-mobile-only  { display: grid !important; }
+
+  /* ── Compact 2×2 expiry cards ───────────────────── */
+  .fno-expiry-flat .fno-expiry-card { padding: 10px 12px; }
+  .fno-expiry-flat .fno-expiry-index { font-size: 10px; margin-bottom: 0; }
+  .fno-expiry-flat .fno-expiry-label { font-size: 8px; letter-spacing: 1px; margin-bottom: 2px; }
+  .fno-expiry-flat .fno-expiry-date  { font-size: 11px; margin-bottom: 4px; }
+  .fno-expiry-flat .fno-expiry-nudge { font-size: 8px; padding: 2px 5px; margin-bottom: 6px; }
+  .fno-expiry-flat .fno-clock-num    { font-size: 22px; }
+  .fno-expiry-flat .fno-clock-unit   { font-size: 10px; margin-right: 3px; }
+  .fno-expiry-flat .fno-clock-secs   { font-size: 18px; }
+  .fno-expiry-flat .fno-expiry-sub   { font-size: 8px; }
+  .fno-expiry-flat .fno-expiry-clock { margin-bottom: 4px; }
+
+  /* ── Stack expiry + VIX vertically ──────────────── */
+  .fno-expiry-vix-row { grid-template-columns: 1fr !important; }
+  .fno-expiry-panel { border-right: none; border-bottom: 1px solid var(--border); padding: 14px; }
+  .fno-vix-panel { padding: 14px; }
+  .fno-expiry-note { font-size: 9px; }
+
+  /* ── Compact VIX card ───────────────────────────── */
+  .fno-vix-card { padding: 14px; }
+  .fno-vix-price { font-size: 32px !important; margin-bottom: 4px; }
+  .fno-vix-row { margin-bottom: 12px; gap: 10px; }
+  .fno-vix-change { font-size: 12px; }
+  .fno-vix-dir { font-size: 10px; }
+  .fno-vix-about { display: none; }
+  .fno-vix-bar-wrap { margin-bottom: 10px; }
+
+  /* ── Hide VIX trend chart on mobile ─────────────── */
+  .vix-trend-wrap { display: none; }
+
+  /* ── Futures Premium + A/D: stack cleanly ────────── */
+  .fno-two-col { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+  .fp-wrap, .ad-wrap { padding: 10px 12px; }
+  .fp-label, .ad-label { font-size: 8px; letter-spacing: 1.5px; margin-bottom: 6px; }
+  .fp-row { gap: 4px; flex-direction: column; align-items: flex-start; }
+  .fp-stat { flex-direction: row; gap: 6px; align-items: baseline; }
+  .fp-stat-label { font-size: 8px; min-width: 40px; }
+  .fp-stat-val { font-size: 12px !important; }
+  .fp-big { font-size: 14px !important; }
+  .fp-signal { margin-left: 0; align-items: flex-start; margin-top: 4px; }
+  .fp-badge { font-size: 9px; padding: 2px 6px; }
+  .fp-note { font-size: 8px; }
+  .ad-row { gap: 8px; }
+  .ad-num { font-size: 18px; }
+  .ad-sub { font-size: 8px; }
+  .ad-bar-wrap { flex: 1; min-width: 0; }
+  .ad-ratio { font-size: 9px; }
+  .ad-note { font-size: 8px; margin-top: 4px; }
+  .ad-unch { font-size: 8px; }
+
+  /* ── Compact FII/DII ────────────────────────────── */
+  .fiidii-main-layout { grid-template-columns: 1fr !important; }
+  .fiidii-chart-wrap { display: none; }
+  .fiidii-summary { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .fiidii-card { padding: 8px 10px; }
+  .fiidii-card-value { font-size: 18px; }
+  .fiidii-card-label { font-size: 8px; }
+  .fiidii-card-tag { font-size: 9px; }
+  .fiidii-card-sub { font-size: 8px; }
+  .fiidii-bar-date { font-size: 7px; }
+  .fiidii-cards-col { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+  .fiidii-card-side { min-width: 0; flex: 1; }
+
+  /* ── Section padding ────────────────────────────── */
+  .fno-section { padding: 14px 14px 0; }
+  .fno-section-label { font-size: 9px; margin-bottom: 10px; }
+  .fno-page-header { padding: 12px 14px; }
+  .fno-page-name { font-size: 16px; }
+}
 .fno-expiry-note  { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 6px; }
 
 /* VIX card */
@@ -603,14 +683,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* Mobile */
 @media (max-width: 640px) {
-  .fno-expiry-grid { grid-template-columns: 1fr; }
-  .fno-expiry-grid-2x2 { grid-template-columns: 1fr; }
-  .fno-expiry-columns { grid-template-columns: 1fr; grid-template-rows: auto; }
-  .fno-expiry-col { grid-row: auto; grid-template-rows: auto; }
-  .fno-expiry-vix-row { grid-template-columns: 1fr; }
-  .fno-expiry-panel { border-right: none; border-bottom: 1px solid var(--border); }
   .fno-coming-grid { grid-template-columns: 1fr 1fr; }
-  .fno-clock-num   { font-size: 28px; }
   .fno-vix-price   { font-size: 40px; }
   .fno-page-header { padding: 14px 16px; }
   .fno-section     { padding: 16px 16px 0; }
@@ -1392,7 +1465,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── Two column layout ───────────────────────────────────────────── */
 .fno-two-col       { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 768px) { .fno-two-col { grid-template-columns: 1fr; } }
 
 /* ── MTF Page ───────────────────────────────────────────────────────── */
 .mtf-wrap         { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
@@ -1460,17 +1532,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   /* Market grid — 2 col */
   .market-grid { grid-template-columns: repeat(2, 1fr) !important; }
 
-  /* FnO page */
-  .fno-expiry-vix-row { flex-direction: column !important; }
-  .fno-vix-panel { width: 100% !important; }
-  .fno-expiry-grid { grid-template-columns: 1fr 1fr !important; }
-  .fno-two-col { grid-template-columns: 1fr !important; }
-
-  /* FII DII */
-  .fiidii-main-layout { grid-template-columns: 1fr !important; }
-  .fiidii-cards-col   { flex-direction: row; flex-wrap: wrap; }
-  .fiidii-card        { min-width: 140px; flex: 1; }
-
   /* Gold page */
   .gold-city-grid { grid-template-columns: repeat(2, 1fr) !important; }
   .gold-mcx-items { flex-wrap: wrap; gap: 12px; }
@@ -1515,6 +1576,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .wb-price { font-size: 12px !important; }
   .wb-card  { padding: 6px 7px !important; }
   .fno-expiry-grid { grid-template-columns: 1fr !important; }
+
+  /* FnO: stack FP + A/D at very small screens */
+  .fno-two-col { grid-template-columns: 1fr !important; }
+  .fno-expiry-flat .fno-clock-num { font-size: 18px !important; }
+  .fno-expiry-flat .fno-clock-secs { font-size: 15px !important; }
+  .fno-expiry-flat .fno-expiry-card { padding: 8px 10px !important; }
   .gold-city-grid  { grid-template-columns: 1fr !important; }
   .ipo-card-grid   { grid-template-columns: 1fr !important; }
 

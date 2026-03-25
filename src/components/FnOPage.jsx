@@ -27,7 +27,7 @@ function useIndiaVIX() {
 }
 
 // ── Expiry countdown card ─────────────────────────────────────────────
-function ExpiryCard({ label, date, secsLeft, color, shifted, originalDate, holidayName }) {
+function ExpiryCard({ label, date, secsLeft, color, shifted, originalDate, holidayName, indexName }) {
   const [secs, setSecs] = useState(secsLeft);
   useEffect(() => {
     setSecs(secsLeft);
@@ -43,6 +43,7 @@ function ExpiryCard({ label, date, secsLeft, color, shifted, originalDate, holid
 
   return (
     <div className="fno-expiry-card" style={{ '--expiry-color': color }}>
+      {indexName && <div className="fno-expiry-index">{indexName}</div>}
       <div className="fno-expiry-label">{label}</div>
       <div className="fno-expiry-date">{date}</div>
       {shifted && (
@@ -344,8 +345,9 @@ export default function FnOPage() {
         {/* Left: expiry countdowns */}
         <div className="fno-expiry-panel">
           <div className="fno-section-label">EXPIRY COUNTDOWN</div>
-          <div className="fno-expiry-columns">
 
+          {/* Desktop: column layout with group headers */}
+          <div className="fno-expiry-columns fno-desktop-only">
             <div className="fno-expiry-col">
               <div className="fno-expiry-group-label">
                 Nifty 50 <span className="fno-expiry-rule">Tue · last Thu</span>
@@ -353,7 +355,6 @@ export default function FnOPage() {
               <ExpiryCard label="Weekly"  {...expiries.niftyWeekly}  color="#4A9EFF" />
               <ExpiryCard label="Monthly" {...expiries.niftyMonthly} color="#4A9EFF" />
             </div>
-
             <div className="fno-expiry-col">
               <div className="fno-expiry-group-label">
                 Sensex <span className="fno-expiry-rule">Thu · last Thu</span>
@@ -361,7 +362,14 @@ export default function FnOPage() {
               <ExpiryCard label="Weekly"  {...expiries.sensexWeekly}  color="#F59E0B" />
               <ExpiryCard label="Monthly" {...expiries.sensexMonthly} color="#F59E0B" />
             </div>
+          </div>
 
+          {/* Mobile: flat 2x2 grid, each card self-identifies */}
+          <div className="fno-expiry-flat fno-mobile-only">
+            <ExpiryCard indexName="Nifty" label="Weekly"  {...expiries.niftyWeekly}  color="#4A9EFF" />
+            <ExpiryCard indexName="Sensex" label="Weekly"  {...expiries.sensexWeekly}  color="#F59E0B" />
+            <ExpiryCard indexName="Nifty" label="Monthly" {...expiries.niftyMonthly} color="#4A9EFF" />
+            <ExpiryCard indexName="Sensex" label="Monthly" {...expiries.sensexMonthly} color="#F59E0B" />
           </div>
           <div className="fno-expiry-note">
             Holiday-adjusted · 15:30 IST · Shifts to previous trading day if holiday
