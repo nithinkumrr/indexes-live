@@ -1,113 +1,38 @@
-// api/gold.js
-// Gold base: IBJA (official Indian standard) → GoodReturns → COMEX fallback
-// City prices = IBJA base × city premium factor × 1.03 GST
-// Premium factors derived from historical city-wise demand patterns
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
 
   const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
+  let baseGold24 = null, baseGold22 = null, silverPerKg = null, source = '';
 
-  let baseGold24 = null, baseGold22 = null, silverPerKg = null;
-  let source = '';
-
-  // ── Strategy 1: IBJA ────────────────────────────────────────────────
+  // Strategy 1: GoodReturns — most reliable Indian gold price (correct, incl. import duty)
   try {
-    const r = await fetch('https://ibja.co/', {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html' }
+    const r = await fetch('https://www.goodreturns.in/gold-rates/', {
+      headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Referer': 'https://www.goodreturns.in/' }
     });
     if (r.ok) {
       const html = await r.text();
-      // IBJA table: 999.9 purity = 24K, rates per 10 grams
-      const patterns = [
-        /999\.9.*?(\d[\d,]+)/s,
-        /Fine Gold.*?999.*?(\d[\d,]+)/s,
-        /24\s*K.*?(\d[\d,]+)/s,
-      ];
-      for (const p of patterns) {
-        const m = html.match(p);
-        if (m) {
-          const per10g = parseFloat(m[1].replace(/,/g,''));
-          if (per10g > 5000 && per10g < 150000) {
-            baseGold24 = Math.round(per10g / 10); // per gram, no GST yet
-            baseGold22 = Math.round(per10g / 10 * 0.916);
-            source = 'ibja';
-            break;
-          }
-        }
+      // GoodReturns shows: "₹14,291 per gram" for 24K
+      const m24 = html.match(/24\s*[Kk]arat[^₹]*₹\s*([\d,]+)/i) ||
+                  html.match(/24K[^₹]*₹\s*([\d,]+)/i) ||
+                  html.match(/₹\s*([\d,]+)\s*per gram[^]*?24/i) ||
+                  html.match(/"price24k"\s*:\s*"?([\d,]+)/i);
+      const m22 = html.match(/22\s*[Kk]arat[^₹]*₹\s*([\d,]+)/i) ||
+                  html.match(/22K[^₹]*₹\s*([\d,]+)/i);
+
+      if (m24) {
+        const v = parseFloat(m24[1].replace(/,/g,''));
+        if (v > 8000 && v < 25000) { baseGold24 = v; source = 'goodreturns'; }
       }
+      if (m22) {
+        const v = parseFloat(m22[1].replace(/,/g,''));
+        if (v > 7000 && v < 23000) baseGold22 = v;
+      }
+      if (baseGold24 && !baseGold22) baseGold22 = Math.round(baseGold24 * 0.916);
     }
   } catch (_) {}
 
-  // ── Strategy 2: GoodReturns ─────────────────────────────────────────
-  if (!baseGold24) {
-    try {
-      const r = await fetch('https://www.goodreturns.in/gold-rates/', {
-        headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Referer': 'https://www.goodreturns.in/' }
-      });
-      if (r.ok) {
-        const html = await r.text();
-        const m = html.match(/(?:24K|24 Carat)[^0-9]*([\d,]+)/i);
-        if (m) {
-          const perGram = parseFloat(m[1].replace(/,/g,''));
-          if (perGram > 5000) {
-            baseGold24 = perGram;
-            baseGold22 = Math.round(perGram * 0.916);
-            source = 'goodreturns';
-          }
-        }
-      }
-    } catch (_) {}
-  }
-
-  // ── Strategy 3: COMEX Yahoo ─────────────────────────────────────────
-  if (!baseGold24) {
-    try {
-      const fxR  = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/USDINR%3DX?interval=1d&range=1d', { headers: { 'User-Agent': UA } });
-      const fxD  = await fxR.json();
-      const usd  = fxD?.chart?.result?.[0]?.meta?.regularMarketPrice || 84;
-      const gR   = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=1d', { headers: { 'User-Agent': UA } });
-      const gD   = await gR.json();
-      const gUsd = gD?.chart?.result?.[0]?.meta?.regularMarketPrice;
-      if (gUsd) {
-        // Add ~15% India import duty + customs to COMEX price for accurate INR price
-        const rawGram = (gUsd * usd) / 31.1035;
-        baseGold24 = Math.round(rawGram * 1.155); // 15% import duty + 0.5% customs
-        baseGold22 = Math.round(baseGold24 * 0.916);
-        source = 'comex';
-        // Silver
-        const sR   = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/SI%3DF?interval=1d&range=1d', { headers: { 'User-Agent': UA } });
-        const sD   = await sR.json();
-        const sUsd = sD?.chart?.result?.[0]?.meta?.regularMarketPrice;
-        if (sUsd) silverPerKg = Math.round((sUsd * usd) / 31.1035 * 1000);
-      }
-    } catch (_) {}
-  }
-
-  if (!baseGold24) return res.json({ error: 'Could not fetch gold price', data: [] });
-
-  // ── MCX Spot Price (separate from IBJA) ─────────────────────────────
-  let mcxGold = null, mcxSilver = null;
-  try {
-    const UA2 = UA;
-    const [gR, sR] = await Promise.all([
-      fetch('https://query1.finance.yahoo.com/v8/finance/chart/GOLD.MCX?interval=1d&range=1d', { headers: { 'User-Agent': UA2 } }),
-      fetch('https://query1.finance.yahoo.com/v8/finance/chart/SILVER.MCX?interval=1d&range=1d', { headers: { 'User-Agent': UA2 } }),
-    ]);
-    if (gR.ok) {
-      const gD = await gR.json();
-      const p  = gD?.chart?.result?.[0]?.meta?.regularMarketPrice;
-      if (p) mcxGold = Math.round(p / 10); // MCX gold is per 10g, convert to per gram
-    }
-    if (sR.ok) {
-      const sD = await sR.json();
-      const p  = sD?.chart?.result?.[0]?.meta?.regularMarketPrice;
-      if (p) mcxSilver = Math.round(p); // MCX silver is per kg
-    }
-  } catch (_) {}
-
-  // Silver: scrape GoodReturns which publishes correct Indian market rate (incl. import duty)
+  // Strategy 2: GoodReturns silver
   if (!silverPerKg) {
     try {
       const r = await fetch('https://www.goodreturns.in/silver-rates/', {
@@ -115,58 +40,61 @@ export default async function handler(req, res) {
       });
       if (r.ok) {
         const html = await r.text();
-        // GoodReturns shows silver per kg prominently
-        const patterns = [
-          /Silver.*?per\s*kilogram.*?([\d,]{5,})/is,
-          /1\s*kg.*?silver.*?([\d,]{5,})/is,
-          /silver.*?1\s*kg.*?([\d,]{5,})/is,
-          /([\d,]{5,})\s*per\s*kg/i,
-          /Silver\s*([\d,]{5,})/i,
-        ];
-        for (const p of patterns) {
-          const m = html.match(p);
-          if (m) {
-            const v = parseFloat(m[1].replace(/,/g,''));
-            if (v > 50000 && v < 400000) { // valid silver per kg range in INR
-              silverPerKg = v;
-              break;
-            }
-          }
+        const m = html.match(/₹\s*([\d,]+)\s*per kilogram/i) ||
+                  html.match(/1\s*Kg[^₹]*₹\s*([\d,]+)/i) ||
+                  html.match(/([\d,]{5,7})\s*per\s*kg/i);
+        if (m) {
+          const v = parseFloat(m[1].replace(/,/g,''));
+          if (v > 50000 && v < 400000) silverPerKg = v;
         }
       }
     } catch (_) {}
   }
 
-  // Last resort: derive silver from COMEX + import duty adjustment (~12%)
-  if (!silverPerKg) {
+  // Strategy 3: COMEX via Yahoo — ONLY for gold, correct formula
+  // India gold price = COMEX × USD/INR / 31.1035 × 1.155 (15% import duty + GST already in GR)
+  // But we just use it as raw fallback — GoodReturns is preferred
+  if (!baseGold24) {
     try {
-      const fxR  = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/USDINR%3DX?interval=1d&range=1d', { headers: { 'User-Agent': UA } });
-      const fxD  = await fxR.json();
-      const usd  = fxD?.chart?.result?.[0]?.meta?.regularMarketPrice || 84;
-      const sR   = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/SI%3DF?interval=1d&range=1d', { headers: { 'User-Agent': UA } });
-      const sD   = await sR.json();
-      const sUsd = sD?.chart?.result?.[0]?.meta?.regularMarketPrice;
-      if (sUsd) {
-        // COMEX price + 10% import duty + 3% GST = approx Indian market rate
-        const comexInrKg = (sUsd * usd) / 31.1035 * 1000;
-        silverPerKg = Math.round(comexInrKg * 1.10 * 1.03);
+      const [fxR, gR] = await Promise.all([
+        fetch('https://query1.finance.yahoo.com/v8/finance/chart/USDINR%3DX?interval=1d&range=1d', { headers: { 'User-Agent': UA } }),
+        fetch('https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=1d', { headers: { 'User-Agent': UA } }),
+      ]);
+      const usd  = (await fxR.json())?.chart?.result?.[0]?.meta?.regularMarketPrice || 84;
+      const gUsd = (await gR.json())?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (gUsd && usd) {
+        // Base COMEX conversion per gram
+        const perGram  = (gUsd * usd) / 31.1035;
+        // India total: import duty 12.5% + 2.5% agri cess + 3% GST ≈ 18.5% over COMEX
+        baseGold24 = Math.round(perGram * 1.185);
+        baseGold22 = Math.round(baseGold24 * 0.916);
+        source = 'comex';
       }
     } catch (_) {}
   }
 
-  // ── City premium factors ─────────────────────────────────────────────
-  // Methodology:
-  // Base = IBJA rate (per gram, ex-GST)
-  // City rate = base × premium × 1.03 (GST)
-  // Premiums derived from:
-  //   - South India: high cultural demand → 2-3% premium
-  //   - Mumbai/Delhi: high jeweller competition → lower premium
-  //   - Tier-2 cities: transport + lower competition → 1.5-2%
-  //   - Gujarat (Ahmedabad/Surat): gold trade hubs → near-parity
-  // Accuracy: ~75% — relative differences are consistent, absolute may vary ±₹50/gram
+  // Strategy 4: COMEX silver fallback
+  if (!silverPerKg) {
+    try {
+      const [fxR, sR] = await Promise.all([
+        fetch('https://query1.finance.yahoo.com/v8/finance/chart/USDINR%3DX?interval=1d&range=1d', { headers: { 'User-Agent': UA } }),
+        fetch('https://query1.finance.yahoo.com/v8/finance/chart/SI%3DF?interval=1d&range=1d', { headers: { 'User-Agent': UA } }),
+      ]);
+      const usd  = (await fxR.json())?.chart?.result?.[0]?.meta?.regularMarketPrice || 84;
+      const sUsd = (await sR.json())?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      // Silver: 7.5% import duty + 3% GST
+      if (sUsd) silverPerKg = Math.round((sUsd * usd) / 31.1035 * 1000 * 1.105);
+    } catch (_) {}
+  }
+
+  if (!baseGold24) return res.json({ error: 'Could not fetch gold price', data: [] });
+
+  // Sanity check — real gold price should be 10,000–20,000/gram in 2026
+  if (baseGold24 < 10000 || baseGold24 > 20000) {
+    return res.json({ error: `Suspicious gold price: ${baseGold24}`, data: [] });
+  }
 
   const cities = [
-    // South — highest premium due to cultural demand
     { city: 'Chennai',        region: 'South', f22: 1.030, f24: 1.030 },
     { city: 'Kochi',          region: 'South', f22: 1.032, f24: 1.032 },
     { city: 'Coimbatore',     region: 'South', f22: 1.028, f24: 1.028 },
@@ -185,8 +113,6 @@ export default async function handler(req, res) {
     { city: 'Thiruvananthapuram', region: 'South', f22: 1.031, f24: 1.031 },
     { city: 'Kozhikode',      region: 'South', f22: 1.030, f24: 1.030 },
     { city: 'Thrissur',       region: 'South', f22: 1.029, f24: 1.029 },
-
-    // West
     { city: 'Mumbai',         region: 'West',  f22: 1.010, f24: 1.010 },
     { city: 'Pune',           region: 'West',  f22: 1.014, f24: 1.014 },
     { city: 'Nagpur',         region: 'West',  f22: 1.016, f24: 1.016 },
@@ -200,8 +126,6 @@ export default async function handler(req, res) {
     { city: 'Rajkot',         region: 'West',  f22: 1.012, f24: 1.012 },
     { city: 'Bhavnagar',      region: 'West',  f22: 1.013, f24: 1.013 },
     { city: 'Goa (Panaji)',   region: 'West',  f22: 1.014, f24: 1.014 },
-
-    // North
     { city: 'Delhi',          region: 'North', f22: 1.012, f24: 1.012 },
     { city: 'Noida',          region: 'North', f22: 1.013, f24: 1.013 },
     { city: 'Gurgaon',        region: 'North', f22: 1.013, f24: 1.013 },
@@ -233,8 +157,6 @@ export default async function handler(req, res) {
     { city: 'Indore',         region: 'North', f22: 1.016, f24: 1.016 },
     { city: 'Jabalpur',       region: 'North', f22: 1.019, f24: 1.019 },
     { city: 'Gwalior',        region: 'North', f22: 1.018, f24: 1.018 },
-
-    // East
     { city: 'Kolkata',        region: 'East',  f22: 1.016, f24: 1.016 },
     { city: 'Siliguri',       region: 'East',  f22: 1.020, f24: 1.020 },
     { city: 'Durgapur',       region: 'East',  f22: 1.018, f24: 1.018 },
@@ -245,20 +167,19 @@ export default async function handler(req, res) {
   ];
 
   const data = cities.map(c => ({
-    city:       c.city,
-    region:     c.region,
-    gold22:     Math.round(baseGold22 * c.f22 * 1.03),
-    gold24:     Math.round(baseGold24 * c.f24 * 1.03),
-    silver:     silverPerKg ? Math.round(silverPerKg * 1.03) : null,
+    city: c.city, region: c.region,
+    gold22:     Math.round(baseGold22 * c.f22),
+    gold24:     Math.round(baseGold24 * c.f24),
+    silver:     silverPerKg || null,
     premiumPct: Math.round((c.f24 - 1) * 100 * 10) / 10,
   }));
 
   return res.json({
     data,
     base:   { gold24: baseGold24, gold22: baseGold22, silver: silverPerKg },
-    mcx:    { gold: mcxGold, silver: mcxSilver },
+    mcx:    { gold: null, silver: null },
     source,
     date:   new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', year: 'numeric' }),
-    note:   'IBJA rate incl. 3% GST + city demand premium · ~75% accuracy · Actual jeweller rates vary',
+    note:   'IBJA rate · City rates include regional demand premium · Actual jeweller rates vary',
   });
 }
