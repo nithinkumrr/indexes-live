@@ -1,6 +1,6 @@
 // src/components/HeroSection.jsx
 // NSE countdown is inline with the INDIA header — saves vertical space
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MARKETS, HERO_BY_REGION, COMMODITY_STRIP_IDS } from '../data/markets';
 import { formatPrice, formatChange, formatPct } from '../utils/format';
 import { getStatus, getLocalTime, getIndiaMarketStatus, formatDuration, getMarketHoursLabel } from '../utils/timezone';
@@ -19,6 +19,62 @@ const REGION_META = {
   MEA:      { flag: '🌍',  label: 'MIDDLE EAST & AFRICA',note: 'Tadawul · DFM · JSE' },
   GLOBAL:   { flag: '🌐',  label: 'GLOBAL TOP 4',        note: 'World benchmarks' },
 };
+
+const INDIA_HERO_IDS = new Set(['nifty50', 'sensex', 'banknifty']);
+
+function isNSEOpen() {
+  const ist  = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const day  = ist.getDay();
+  if (day === 0 || day === 6) return false;
+  const mins = ist.getHours() * 60 + ist.getMinutes();
+  return mins >= 555 && mins < 930; // 9:15 AM – 3:30 PM
+}
+
+// 1-second Kite polling for Nifty 50, Sensex, Bank Nifty during market hours
+function useKiteHero() {
+  const [kiteData, setKiteData] = useState({});
+  const sparkRef                = useRef({}); // maintain running spark per symbol
+  const errorCount              = useRef(0);
+
+  useEffect(() => {
+    let id;
+
+    const poll = async () => {
+      if (!isNSEOpen()) return;
+      try {
+        const r    = await fetch('/api/kite-hero');
+        if (r.status === 401) { clearInterval(id); return; } // no token — stop polling
+        if (!r.ok) return;
+        const json = await r.json();
+        if (!json.data) return;
+        errorCount.current = 0;
+
+        // Merge new prices with running spark arrays
+        const merged = {};
+        for (const [id_, d] of Object.entries(json.data)) {
+          const existing = sparkRef.current[id_] || [];
+          const spark = existing.length >= 5
+            ? [...existing.slice(-199), d.price]  // keep up to 200 points
+            : [...existing, d.price];
+          sparkRef.current[id_] = spark;
+          merged[id_] = { ...d, spark };
+        }
+        setKiteData(merged);
+      } catch (_) {
+        errorCount.current++;
+        if (errorCount.current > 10) clearInterval(id); // stop after 10 consecutive failures
+      }
+    };
+
+    if (isNSEOpen()) {
+      poll(); // immediate first call
+      id = setInterval(poll, 1000);
+    }
+    return () => clearInterval(id);
+  }, []);
+
+  return kiteData;
+}
 
 // Inline countdown — just the number + status, no full row
 function InlineCountdown() {
@@ -45,6 +101,7 @@ function InlineCountdown() {
 
 export default function HeroSection({ data, region, nseData = {} }) {
   const heroIds     = HERO_BY_REGION[region] || HERO_BY_REGION.GLOBAL;
+  const kiteHero    = useKiteHero(); // 1s live data for India heroes
   const heroMarkets = heroIds.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
   const stripMarkets = COMMODITY_STRIP_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
   const meta    = REGION_META[region] || REGION_META.GLOBAL;
@@ -65,7 +122,8 @@ export default function HeroSection({ data, region, nseData = {} }) {
 
         <div className="hero-cards">
           {heroMarkets.map(market => {
-            const d      = data[market.id];
+            // Prefer 1s Kite data for India heroes during market hours, fall back to 20s NSE data
+            const d      = (INDIA_HERO_IDS.has(market.id) && kiteHero[market.id]) ? kiteHero[market.id] : data[market.id];
             const status = getStatus(market);
             const gain   = d ? d.changePct >= 0 : true;
             const hrs    = getMarketHoursLabel(market);
