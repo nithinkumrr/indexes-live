@@ -116,7 +116,7 @@ export default function GoldPage() {
             <div className="gold-mcx-item">
               <span className="gold-mcx-name">🥇 Gold 1 kg (24K)</span>
               <span className="gold-mcx-price">₹{(apiData.base.gold24 * 1000)?.toLocaleString('en-IN')}</span>
-              <span className="gold-mcx-sub">IBJA · updates daily</span>
+              <span className="gold-mcx-sub">IBJA · incl. 3% GST · ex-making charges</span>
             </div>
 
             {/* Silver 1kg */}
@@ -124,7 +124,7 @@ export default function GoldPage() {
               <div className="gold-mcx-item">
                 <span className="gold-mcx-name">🥈 Silver 1 kg</span>
                 <span className="gold-mcx-price">₹{apiData.base.silver?.toLocaleString('en-IN')}</span>
-                <span className="gold-mcx-sub">IBJA · updates daily</span>
+                <span className="gold-mcx-sub">IBJA · incl. 3% GST</span>
               </div>
             )}
 
@@ -132,7 +132,7 @@ export default function GoldPage() {
             <MexSpot />
 
           </div>
-          <div className="gold-mcx-note">IBJA official daily rate · MCX spot updates live during market hours (9 AM – 11:30 PM) · Excl. jeweller making charges</div>
+          <div className="gold-mcx-note">IBJA rate incl. 3% GST · City prices below are higher due to regional demand premium · MCX spot updates live 9 AM – 11:30 PM IST · All prices excl. jeweller making charges</div>
         </div>
       )}
 
