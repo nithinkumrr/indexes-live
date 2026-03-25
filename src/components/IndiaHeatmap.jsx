@@ -158,7 +158,7 @@ export default function IndiaHeatmap() {
   const load = useCallback(async (initial = false) => {
     if (!initial && !isNSEOpen()) return;
     try {
-      const r    = await fetch('/api/kite-nifty50');
+      const r    = await fetch('/api/kite-data?type=nifty50');
       const json = await r.json();
       if (Array.isArray(json.data) && json.data.length > 0) {
         setStocks(json.data);

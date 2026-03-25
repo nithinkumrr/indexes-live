@@ -27,7 +27,7 @@ function useIndiaIndices() {
       // so we have the last close price to display
       if (!forceFirstLoad && !isNSEOpen()) return;
       try {
-        const r    = await fetch('/api/kite-indices');
+        const r    = await fetch('/api/kite-data?type=indices');
         const json = await r.json();
         if (Array.isArray(json.data) && json.data.length > 0) {
           frozenRef.current = json.data;

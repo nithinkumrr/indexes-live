@@ -42,7 +42,7 @@ function useKiteHero() {
     const poll = async () => {
       if (!isNSEOpen()) return;
       try {
-        const r    = await fetch('/api/kite-hero');
+        const r    = await fetch('/api/kite-data?type=hero');
         if (r.status === 401) { clearInterval(id); return; } // no token — stop polling
         if (!r.ok) return;
         const json = await r.json();

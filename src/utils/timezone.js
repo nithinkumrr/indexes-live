@@ -7,7 +7,28 @@ function getLocalDate(tz) {
 export function isMarketOpen(market) {
   const d   = getLocalDate(market.tz);
   const day = d.getDay();
-  const mins  = d.getHours() * 60 + d.getMinutes();
+  const mins = d.getHours() * 60 + d.getMinutes();
+
+  // Multi-session markets (e.g. Gift Nifty: 6:30–15:40 and 16:35–02:45)
+  if (market.sessions) {
+    // Saturday: only the tail of an overnight session 2 could be active
+    // Sunday: no trading on Gift Nifty
+    if (day === 0) return false; // Sunday always closed
+    return market.sessions.some(sess => {
+      const open  = sess.open[0]  * 60 + sess.open[1];
+      const close = sess.close[0] * 60 + sess.close[1];
+      if (open < close) {
+        // Normal intraday session
+        if (day === 6) return false; // Saturday: no intraday
+        return mins >= open && mins < close;
+      } else {
+        // Overnight session (crosses midnight)
+        if (day === 6) return mins < close; // Saturday: only before close
+        return mins >= open || mins < close;
+      }
+    });
+  }
+
   const open  = market.open[0]  * 60 + market.open[1];
   const close = market.close[0] * 60 + market.close[1];
 
