@@ -126,6 +126,13 @@ function Tooltip({ stock, x, y, containerW }) {
             {stock.changePct >= 0 ? '+' : ''}{formatPct(stock.changePct)}
             <span className="hm-tt-abs"> ({stock.change >= 0 ? '+' : ''}{stock.change?.toFixed(2)})</span>
           </div>
+          {stock.open != null && (
+            <div className="hm-tt-ohlc">
+              <span><span className="hm-tt-ol">O</span>₹{stock.open?.toLocaleString('en-IN', { maximumFractionDigits: 1 })}</span>
+              <span className="hm-tt-oh"><span className="hm-tt-ol">H</span>₹{stock.high?.toLocaleString('en-IN', { maximumFractionDigits: 1 })}</span>
+              <span className="hm-tt-olow"><span className="hm-tt-ol">L</span>₹{stock.low?.toLocaleString('en-IN', { maximumFractionDigits: 1 })}</span>
+            </div>
+          )}
           <div className="hm-tt-prev">Prev close: ₹{stock.prevClose?.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div>
         </>
       )}

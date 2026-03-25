@@ -129,7 +129,12 @@ function parseKiteQuote(q, price) {
   const prevClose = q.ohlc?.close || price;
   const change    = parseFloat((price - prevClose).toFixed(2));
   const changePct = prevClose ? parseFloat(((change / prevClose) * 100).toFixed(2)) : 0;
-  return { price, prevClose, change, changePct };
+  return {
+    price, prevClose, change, changePct,
+    open:  q.ohlc?.open  ?? null,
+    high:  q.ohlc?.high  ?? null,
+    low:   q.ohlc?.low   ?? null,
+  };
 }
 
 async function kiteQuote(instruments, token) {
@@ -155,7 +160,6 @@ async function handleHero(token, res) {
       if (!q) continue;
       result[h.id] = {
         ...parseKiteQuote(q, q.last_price),
-        open: q.ohlc?.open, high: q.ohlc?.high, low: q.ohlc?.low,
         volume: q.volume_traded,
       };
     }
@@ -197,7 +201,14 @@ async function handleIndices(token, res) {
       if (!meta?.regularMarketPrice) return null;
       const price     = meta.regularMarketPrice;
       const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
-      return { name: idx.name, price, prevClose, ...parseKiteQuote({ ohlc: { close: prevClose } }, price) };
+      return {
+        name: idx.name, price, prevClose,
+        change:    parseFloat((price - prevClose).toFixed(2)),
+        changePct: prevClose ? parseFloat(((price - prevClose) / prevClose * 100).toFixed(2)) : 0,
+        open:  meta.regularMarketOpen        ?? null,
+        high:  meta.regularMarketDayHigh     ?? null,
+        low:   meta.regularMarketDayLow      ?? null,
+      };
     }));
     return res.json({ source: 'yahoo', data: results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean) });
   } catch (e) {
@@ -240,7 +251,14 @@ async function handleNifty50(token, res) {
         if (!meta?.regularMarketPrice) return null;
         const price     = meta.regularMarketPrice;
         const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
-        return { ...stock, price, prevClose, ...parseKiteQuote({ ohlc: { close: prevClose } }, price) };
+        return {
+          ...stock, price, prevClose,
+          change:    parseFloat((price - prevClose).toFixed(2)),
+          changePct: prevClose ? parseFloat(((price - prevClose) / prevClose * 100).toFixed(2)) : 0,
+          open:  meta.regularMarketOpen    ?? null,
+          high:  meta.regularMarketDayHigh ?? null,
+          low:   meta.regularMarketDayLow  ?? null,
+        };
       }))
     ));
     const data = settled.flatMap(r => r.status === 'fulfilled' ? r.value : [])

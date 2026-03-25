@@ -157,6 +157,14 @@ export default function HeroSection({ data, region, nseData = {} }) {
                 <div className="hero-spark">
                   {d && <Sparkline points={d.spark} gain={gain} height={60} />}
                 </div>
+                {/* OHLC row — shown for Indian hero markets when data available */}
+                {INDIA_HERO_IDS.has(market.id) && d?.open != null && (
+                  <div className="hero-ohlc">
+                    <span className="hero-ohlc-item"><span className="hero-ohlc-label">O</span>{formatPrice(d.open)}</span>
+                    <span className="hero-ohlc-item hero-ohlc-high"><span className="hero-ohlc-label">H</span>{formatPrice(d.high)}</span>
+                    <span className="hero-ohlc-item hero-ohlc-low"><span className="hero-ohlc-label">L</span>{formatPrice(d.low)}</span>
+                  </div>
+                )}
                 <div className="hero-footer">
                   <span className="hero-localtime">
                     {market.id === 'giftnifty' && d?.fetchedAt
