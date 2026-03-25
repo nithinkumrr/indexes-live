@@ -164,7 +164,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* Scroll area */
 .ticker-scroll-area  { flex:1; overflow:hidden; height:30px; display:flex; align-items:center; }
-.ticker-inner        { display:inline-flex; align-items:center; white-space:nowrap; animation:tickScroll 45s linear infinite; }
+.ticker-inner        { display:inline-flex; align-items:center; white-space:nowrap; animation:tickScroll 110s linear infinite; }
 
 .ticker-item  { display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; border-right: 1px solid var(--border); height: 30px; }
 .ticker-name  { font-family: var(--mono); font-size: 10.5px; color: var(--text3); }

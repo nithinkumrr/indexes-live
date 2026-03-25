@@ -5,16 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { MARKETS } from '../data/markets';
 import { isMarketOpen } from '../utils/timezone';
 
-const REFRESH_MS = 20000;
-
-// Gift Nifty uses server-side smart caching (10min market hours, 15min off-hours)
-// Frontend refreshes it every 10 minutes to match
-function getGiftNiftyRefreshMs() {
-  const ist  = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-  const mins = ist.getHours() * 60 + ist.getMinutes();
-  const isOpen = (mins >= 390 && mins < 940) || mins >= 995 || mins < 165;
-  return isOpen ? 10 * 60 * 1000 : 15 * 60 * 1000; // 10min or 15min
-}
+const REFRESH_MS = 20000; // all markets including Gift Nifty refresh every 20s
 
 function makeSpark(basePrice, changePct, n = 40) {
   const start = basePrice / (1 + changePct / 100);

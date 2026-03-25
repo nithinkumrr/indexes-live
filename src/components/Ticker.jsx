@@ -1,28 +1,49 @@
 // src/components/Ticker.jsx
 // Two ticker rows: GLOBAL (all markets) + INDIA (sector indices via Kite)
-import { useState, useEffect } from 'react';
+// India row: polls every 20s during NSE hours (9:15–3:30 IST Mon–Fri), frozen outside
+import { useState, useEffect, useRef } from 'react';
 import { MARKETS } from '../data/markets';
 import { formatPrice, formatPct } from '../utils/format';
 
-// ── India ticker — polls /api/kite-indices every 20s ─────────────────
+// Returns true if NSE sector indices are live right now
+function isNSEOpen() {
+  const ist  = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const day  = ist.getDay(); // 0=Sun, 6=Sat
+  if (day === 0 || day === 6) return false;
+  const mins = ist.getHours() * 60 + ist.getMinutes();
+  return mins >= 555 && mins < 930; // 9:15 AM to 3:30 PM
+}
+
+// ── India indices hook — smart polling ───────────────────────────────
+// Calls API only during NSE hours; outside hours shows frozen last-close
 function useIndiaIndices() {
-  const [items, setItems] = useState([]);
+  const [items, setItems]     = useState([]);
+  const frozenRef             = useRef([]); // holds last close snapshot
+  const intervalRef           = useRef(null);
 
   useEffect(() => {
     const load = async () => {
+      if (!isNSEOpen()) return; // market closed — don't call, keep frozen value
       try {
         const r    = await fetch('/api/kite-indices');
         const json = await r.json();
         if (Array.isArray(json.data) && json.data.length > 0) {
+          frozenRef.current = json.data;
           setItems(json.data);
         }
       } catch (_) {}
     };
+
+    // Initial fetch (will no-op if market closed, but frozenRef stays empty until first open)
     load();
-    const id = setInterval(load, 20000);
-    return () => clearInterval(id);
+
+    // Poll every 20s — load() itself gates on market hours
+    intervalRef.current = setInterval(load, 20000);
+    return () => clearInterval(intervalRef.current);
   }, []);
 
+  // Return live items during hours, frozen snapshot outside hours
+  // (state already holds last received value — no extra logic needed)
   return items;
 }
 
@@ -34,7 +55,6 @@ function TickerRow({ label, labelClass, children, speed }) {
       <div className="ticker-scroll-area">
         <div className="ticker-inner" style={{ animationDuration: `${speed}s` }}>
           {children}
-          {/* duplicate for seamless loop */}
           {Array.isArray(children) && children.map((c, i) => (
             <span key={`dup-${i}`} aria-hidden="true">{c}</span>
           ))}
@@ -63,7 +83,7 @@ export default function Ticker({ data }) {
     );
   });
 
-  // India — sector indices
+  // India — sector indices (live or frozen last close)
   const indiaItems = indiaRaw.map(idx => {
     const gain = idx.changePct >= 0;
     return (
@@ -81,11 +101,13 @@ export default function Ticker({ data }) {
 
   return (
     <div className="ticker-rows">
-      <TickerRow label="GLOBAL" labelClass="ticker-label-global" speed={45}>
+      {/* Global: 110s — ~30+ markets, steady readable pace */}
+      <TickerRow label="GLOBAL" labelClass="ticker-label-global" speed={110}>
         {globalItems}
       </TickerRow>
+      {/* India: 65s — 14 indices, proportionally matched pace */}
       {indiaItems.length > 0 && (
-        <TickerRow label="INDIA" labelClass="ticker-label-india" speed={38}>
+        <TickerRow label="INDIA" labelClass="ticker-label-india" speed={65}>
           {indiaItems}
         </TickerRow>
       )}
