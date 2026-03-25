@@ -72,7 +72,7 @@ export default function App() {
       <Header lastUpdate={lastUpdate} view={view} setView={navigate} />
 
       {isFullPage ? (
-        view === 'fno'       ? <FnOPage /> :
+        view === 'fno'       ? <FnOPage data={data} nseData={nseData} /> :
         view === 'gold'      ? <GoldPage /> :
         view === 'ipo'       ? <IpoPage /> :
         null

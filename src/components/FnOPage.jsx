@@ -2,7 +2,39 @@
 import { useState, useEffect } from 'react';
 import FiiDii from './FiiDii';
 import { getNiftyExpiries } from '../utils/timezone';
+import { formatPrice, formatPct } from '../utils/format';
 
+// ── India indices strip (uses already-fetched market data, zero extra calls) ─
+const INDIA_IDS = [
+  { id: 'giftnifty', name: 'Gift Nifty' },
+  { id: 'nifty50',   name: 'Nifty 50'  },
+  { id: 'banknifty', name: 'Bank Nifty'},
+  { id: 'sensex',    name: 'Sensex'    },
+];
+
+function IndiaStrip({ data }) {
+  const items = INDIA_IDS.map(m => ({ ...m, d: data?.[m.id] })).filter(m => m.d);
+  if (!items.length) return null;
+  return (
+    <div className="fno-india-strip">
+      <span className="fno-india-strip-label">INDIA</span>
+      {items.map(({ id, name, d }) => {
+        const gain = d.changePct >= 0;
+        return (
+          <span key={id} className="fno-india-item">
+            <span className="fno-india-name">{name}</span>
+            <span className="fno-india-price">{formatPrice(d.price)}</span>
+            <span className={`fno-india-chg ${gain ? 'gain' : 'loss'}`}>
+              {gain ? '▲' : '▼'} {formatPct(d.changePct)}
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Expiry countdown card ─────────────────────────────────────────────────────
 function ExpiryCard({ label, date, secsLeft, color, shifted, originalDate, holidayName }) {
   const [secs, setSecs] = useState(secsLeft);
   useEffect(() => {
@@ -30,6 +62,7 @@ function ExpiryCard({ label, date, secsLeft, color, shifted, originalDate, holid
   );
 }
 
+// ── India VIX ─────────────────────────────────────────────────────────────────
 function VIXCard() {
   const [vix, setVix]         = useState(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +97,10 @@ function VIXCard() {
              : v < 30 ? { label: 'ELEVATED',  color: '#F59E0B' }
              :           { label: 'HIGH FEAR', color: '#FF4455' };
   const falling = vix.changePct < 0;
+  const note    = v < 15 ? 'Calm markets — cheap premiums'
+                : v < 20 ? 'Normal range — balanced premiums'
+                : v < 30 ? 'Elevated fear — expensive premiums'
+                :           'High fear — premiums very expensive';
   return (
     <div className="fno-metric-card">
       <div className="fno-metric-label">
@@ -81,10 +118,12 @@ function VIXCard() {
         </div>
         <div className="fno-vix-scale"><span>0</span><span>12</span><span>20</span><span>30</span><span>50</span></div>
       </div>
+      <div className="fno-vix-about">{note}</div>
     </div>
   );
 }
 
+// ── Nifty 50 Breadth ──────────────────────────────────────────────────────────
 function BreadthCard() {
   const [data, setData]     = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -119,22 +158,23 @@ function BreadthCard() {
       : (
         <>
           <div className="fno-breadth-row">
-            <span className="fno-breadth-n gain">{data.adv} <span className="fno-breadth-lbl">up</span></span>
-            {data.unch > 0 && <span className="fno-breadth-n" style={{color:'var(--text3)'}}>{data.unch} <span className="fno-breadth-lbl">unch</span></span>}
-            <span className="fno-breadth-n loss">{data.dec} <span className="fno-breadth-lbl">dn</span></span>
+            <span className="fno-breadth-n gain">{data.adv}<span className="fno-breadth-lbl">up</span></span>
+            {data.unch > 0 && <span className="fno-breadth-n" style={{ color: 'var(--text3)' }}>{data.unch}<span className="fno-breadth-lbl">unch</span></span>}
+            <span className="fno-breadth-n loss">{data.dec}<span className="fno-breadth-lbl">dn</span></span>
           </div>
           <div className="fno-breadth-bar">
             <div style={{ width: `${data.advPct}%`, background: 'var(--gain)', height: '100%', borderRadius: '4px 0 0 4px', transition: 'width .5s' }} />
             <div style={{ width: `${data.decPct}%`, background: 'var(--loss)', height: '100%', borderRadius: '0 4px 4px 0', transition: 'width .5s' }} />
           </div>
-          {signal && <div className="fno-metric-note" style={{ color: signal.color, marginTop: 6 }}>{signal.label}</div>}
+          {signal && <div className="fno-metric-note" style={{ color: signal.color, marginTop: 8 }}>{signal.label}</div>}
         </>
       )}
     </div>
   );
 }
 
-export default function FnOPage() {
+// ── Main ──────────────────────────────────────────────────────────────────────
+export default function FnOPage({ data = {} }) {
   const FALLBACK_HOLIDAYS = ['2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31','2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25'];
   const FALLBACK_NAMES    = {'2026-01-26':'Republic Day','2026-02-17':'Mahashivratri','2026-03-03':'Holi','2026-03-26':'Ram Navami','2026-03-31':'Mahavir Jayanti','2026-04-03':'Good Friday','2026-04-14':'Ambedkar Jayanti','2026-05-01':'Maharashtra Day','2026-05-28':'Bakri Id','2026-06-26':'Muharram','2026-09-14':'Ganesh Chaturthi','2026-10-02':'Gandhi Jayanti','2026-10-20':'Dussehra','2026-11-10':'Diwali Balipratipada','2026-11-24':'Guru Nanak Jayanti','2026-12-25':'Christmas'};
   const [holidays, setHolidays]         = useState(FALLBACK_HOLIDAYS);
@@ -158,7 +198,10 @@ export default function FnOPage() {
   return (
     <div className="fno-wrap">
 
-      {/* ── Expiry row — all 4 cards inline ── */}
+      {/* India indices strip */}
+      <IndiaStrip data={data} />
+
+      {/* Expiry countdowns */}
       <div className="fno-top-strip">
         <div className="fno-expiry-row">
           <div className="fno-expiry-group-label">
@@ -169,7 +212,7 @@ export default function FnOPage() {
             <ExpiryCard label="Monthly" color="#4A9EFF" {...expiries.niftyMonthly} />
           </div>
         </div>
-        <div className="fno-expiry-row">
+        <div className="fno-expiry-row" style={{ borderRight: 'none' }}>
           <div className="fno-expiry-group-label">
             Sensex <span className="fno-group-rule">Thu weekly · last-Thu monthly</span>
           </div>
@@ -178,19 +221,19 @@ export default function FnOPage() {
             <ExpiryCard label="Monthly" color="#F59E0B" {...expiries.sensexMonthly} />
           </div>
         </div>
-        <div className="fno-expiry-note">
+        <div className="fno-expiry-note-row">
           Holiday-adjusted · 15:30 IST
           {holidayLive && <span style={{ color: 'var(--accent)', marginLeft: 5 }}>· NSE calendar live</span>}
         </div>
       </div>
 
-      {/* ── VIX + Breadth ── */}
+      {/* VIX + Breadth */}
       <div className="fno-metrics-row">
         <VIXCard />
         <BreadthCard />
       </div>
 
-      {/* ── FII / DII ── */}
+      {/* FII / DII */}
       <div className="fno-section">
         <div className="fno-section-label">FII / DII FLOW</div>
         <FiiDii />
