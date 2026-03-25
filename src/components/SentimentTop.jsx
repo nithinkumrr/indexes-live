@@ -140,9 +140,14 @@ function FearGreedMeter() {
   );
 }
 
+const SENTIMENT_BENCHMARK_IDS = [
+  'nifty50','sensex','giftnifty','banknifty',
+  'sp500','nasdaq','dowjones','ftse','dax','nikkei','hangseng','shanghai'
+];
+
 export default function SentimentTop({ data, nseData = {} }) {
   const stripMarkets = COMMODITY_STRIP_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
-  const benchmarks   = MARKETS.filter(m => m.category === 'index' || m.id === 'giftnifty');
+  const benchmarks   = SENTIMENT_BENCHMARK_IDS.map(id => MARKETS.find(m => m.id === id)).filter(Boolean);
 
   return (
     <div className="st-wrap">
