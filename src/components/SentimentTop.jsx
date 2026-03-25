@@ -20,7 +20,7 @@ function WBCard({ market, data, nseData = {} }) {
   const gain   = d ? d.changePct >= 0 : true;
   const pe     = nseData[market.id]?.pe;
   return (
-    <div className={`wb-card ${status === 'live' ? 'wb-live' : ''}`} data-market-id={market.id}>
+    <div className={`wb-card ${status === 'live' ? 'wb-live' : ''} ${d ? (gain ? 'wb-gain' : 'wb-loss') : ''}`} data-market-id={market.id}>
       <div className="wb-top">
         <span className="wb-flag">{market.flag}</span>
         <div className="wb-info">

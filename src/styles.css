@@ -75,13 +75,63 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* HEADER */
 .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; z-index: 100; gap: 10px; flex-wrap: nowrap; }
-.header-left { display: flex; align-items: center; flex-shrink: 0; }
+.header-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.header-controls { display: flex; align-items: center; gap: 8px; }
 .logo { display: flex; align-items: baseline; }
 .logo-text { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; }
 .logo-dot  { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text3); }
 .logo-live { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--live); letter-spacing: -0.5px; }
-.header-right { display: flex; align-items: center; gap: 8px; overflow-x: auto; flex: 1; scrollbar-width: none; }
-.header-right::-webkit-scrollbar { display: none; }
+.desktop-nav { display: flex; background: var(--bg3); border: 1px solid var(--border2); border-radius: 14px; padding: 2px; gap: 2px; flex-shrink: 0; }
+.view-btn    { font-family: var(--mono); font-size: 11px; padding: 4px 12px; border-radius: 12px; border: none; background: transparent; color: var(--text2); cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+.view-btn:hover { color: var(--text); }
+.view-active { background: var(--bg4); color: var(--text); }
+
+/* Mobile bottom nav — hidden on desktop */
+.mobile-nav { display: none; }
+
+@media (max-width: 768px) {
+  /* Hide desktop nav, show bottom bar */
+  .desktop-nav { display: none; }
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 200;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 4px 0 calc(4px + env(safe-area-inset-bottom, 0px));
+    justify-content: space-around;
+    align-items: center;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .mnav-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    background: none; border: none; cursor: pointer;
+    padding: 4px 6px; border-radius: 8px;
+    color: var(--text3); transition: color 0.15s;
+    min-width: 0; flex: 1;
+  }
+  .mnav-btn:active { transform: scale(0.95); }
+  .mnav-icon { font-size: 18px; line-height: 1.2; }
+  .mnav-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.3px; line-height: 1; white-space: nowrap; }
+  .mnav-active { color: var(--text); }
+  .mnav-active .mnav-label { font-weight: 700; }
+  .mnav-active.tab-gold  { color: #D4A017; }
+  .mnav-active.tab-teal  { color: #00C896; }
+  .mnav-active.tab-purple { color: #8B5CF6; }
+
+  /* Add bottom padding so content doesn't hide behind bottom nav */
+  .app { padding-bottom: 60px; }
+
+  /* Slim down top header on mobile */
+  .header { padding: 8px 12px; }
+  .header-left { gap: 8px; flex: 1; justify-content: space-between; }
+  .logo-text, .logo-dot, .logo-live { font-size: 17px; }
+  .update-time { display: none; }
+}
+
+[data-theme="light"] .mobile-nav { background: rgba(255,255,255,0.92); }
 .sim-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 3px 8px; border-radius: var(--r); background: rgba(245,158,11,0.12); color: var(--pre); border: 1px solid rgba(245,158,11,0.25); }
 .update-time { display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; color: var(--text3); }
 .update-dot  { width: 4px; height: 4px; border-radius: 50%; background: var(--text3); }
@@ -89,12 +139,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .live-pulse  { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--live); animation: pulse 1.4s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.25;transform:scale(0.75)} }
 
-.view-toggle { display: flex; background: var(--bg3); border: 1px solid var(--border2); border-radius: 14px; padding: 2px; gap: 2px; flex-shrink: 0; }
-.view-btn    { font-family: var(--mono); font-size: 11px; padding: 4px 12px; border-radius: 12px; border: none; background: transparent; color: var(--text2); cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
-.view-btn:hover { color: var(--text); }
-.fno-btn { color: #FF9933 !important; }
 .fno-btn.view-active { background: rgba(255,153,51,0.15) !important; color: #FF9933 !important; }
-.view-active { background: var(--bg4); color: var(--text); }
 
 .bell-btn { display: flex; align-items: center; gap: 6px; background: var(--bg4); border: 1px solid var(--border2); color: var(--text2); border-radius: var(--r); padding: 4px 10px; cursor: pointer; font-family: var(--mono); font-size: 11px; transition: all 0.2s; }
 .bell-btn:hover { border-color: var(--accent); color: var(--text); }
@@ -353,11 +398,16 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .ic-sub { display: none; }
   .logo-text, .logo-dot, .logo-live { font-size: 17px; }
 
-  /* Fix 4: commodity strip on mobile — hide labels, wrap items in 2-col grid */
-  .commodity-strip { flex-wrap: wrap; }
+  /* Fix 4: commodity strip on mobile — compact 2-col, no wasted space */
+  .commodity-strip { flex-wrap: wrap; border-bottom: none; }
   .commodity-strip-label { display: none; }
-  .commodity-strip-item { flex: 0 0 50%; border-bottom: 1px solid var(--border); }
+  .commodity-strip-item { flex: 0 0 50%; padding: 6px 10px; gap: 5px; border-bottom: 1px solid var(--border); justify-content: flex-start; }
   .commodity-strip-item:nth-child(even) { border-right: none; }
+  .cs-flag  { font-size: 11px; }
+  .cs-name  { font-size: 10px; min-width: 0; }
+  .cs-price { font-size: 13px; }
+  .cs-unit  { font-size: 8px; }
+  .cs-pct   { font-size: 10px; }
 
   /* Fix 4: FX/Crypto strip on mobile — hide section labels, 2-col wrap */
   .fxrow-strip { flex-wrap: wrap; }
@@ -366,10 +416,24 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .fxrow-group, .fxrow-group-crypto { flex: 0 0 100%; flex-wrap: wrap; }
   .fxrow-item { flex: 0 0 50%; min-width: 0; }
 
-  /* Fix 5: footer on mobile — stack vertically, left aligned */
-  .footer { flex-direction: column; align-items: flex-start; padding: 14px 16px; gap: 8px; }
-  .footer-left { gap: 6px; }
-  .footer-right { align-self: flex-start; }
+  /* Fix: Benchmark grid on mobile — no sparklines, color-coded prices, clean 3-col */
+  .wb-spark { display: none !important; }
+  .wb-grid  { grid-template-columns: repeat(3, 1fr) !important; }
+  .wb-card  { padding: 7px 8px !important; gap: 0 !important; }
+  .wb-flag  { font-size: 12px; }
+  .wb-name  { font-size: 9px !important; }
+  .wb-exch  { font-size: 8px !important; }
+  .wb-price { font-size: 13px !important; }
+  .wb-pct   { font-size: 9px !important; }
+  .wb-pe    { display: none; }
+  .wb-gain .wb-price { color: var(--gain) !important; }
+  .wb-loss .wb-price { color: var(--loss) !important; }
+  .st-bm-col .wb-grid { grid-template-columns: repeat(3, 1fr) !important; }
+
+  /* Fix 5: footer on mobile — stack vertically, center aligned */
+  .footer { flex-direction: column; align-items: center; padding: 14px 16px; gap: 8px; text-align: center; }
+  .footer-left { gap: 6px; justify-content: center; }
+  .footer-right { align-self: center; }
   .footer-sep { display: none; }
   .footer-brand { margin-bottom: 2px; }
   .footer-text { font-size: 11px; line-height: 1.6; }
@@ -1373,27 +1437,25 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── Mobile Responsive ──────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Header */
-  .header { padding: 8px 12px; }
-  .logo-text, .logo-dot, .logo-live { font-size: 16px; }
-  .update-time { display: none; }
-  .view-toggle { background: none; border: none; padding: 0; }
-  .view-btn { font-size: 11px; padding: 5px 10px; border-radius: 8px; }
-
   /* Hero cards — 2 col */
   .hero-cards { grid-template-columns: 1fr 1fr !important; }
   .hero-card  { min-height: 120px; }
   .hero-price { font-size: 22px; }
 
-  /* Commodity strip — wrap */
-  .commodity-strip { flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
-  .commodity-strip-item { font-size: 10px; }
+  /* Commodity strip — compact */
+  .commodity-strip { flex-wrap: wrap; }
+  .commodity-strip-label { display: none; }
+  .commodity-strip-item { flex: 0 0 50%; padding: 6px 10px; gap: 5px; border-bottom: 1px solid var(--border); justify-content: flex-start; }
 
   /* FX strip */
   .fx-strip { overflow-x: auto; flex-wrap: nowrap; }
 
-  /* World Benchmarks — 2 col */
-  .wb-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  /* World Benchmarks — 3 col, no sparklines, color prices */
+  .wb-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  .wb-spark { display: none !important; }
+  .wb-gain .wb-price { color: var(--gain) !important; }
+  .wb-loss .wb-price { color: var(--loss) !important; }
+  .wb-pe { display: none; }
 
   /* Market grid — 2 col */
   .market-grid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -1439,12 +1501,32 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 }
 
 @media (max-width: 480px) {
-  .hero-cards { grid-template-columns: 1fr !important; }
+  .hero-cards { grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; }
+  .hero-price { font-size: 18px !important; }
+  .hero-name  { font-size: 13px !important; }
+  .hero-card  { padding: 10px !important; }
+  .hero-abs   { font-size: 11px !important; }
+  .hero-pct-badge { font-size: 10px !important; padding: 1px 5px !important; }
+  .hero-exchange { font-size: 9px !important; }
+  .hero-spark svg { height: 24px !important; }
+  .hero-footer { font-size: 9px !important; }
   .wb-grid    { grid-template-columns: 1fr 1fr !important; }
+  .st-bm-col .wb-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .wb-price { font-size: 12px !important; }
+  .wb-card  { padding: 6px 7px !important; }
   .fno-expiry-grid { grid-template-columns: 1fr !important; }
   .gold-city-grid  { grid-template-columns: 1fr !important; }
   .ipo-card-grid   { grid-template-columns: 1fr !important; }
-  .view-btn { font-size: 10px; padding: 4px 8px; }
+
+  /* Compact commodity cards on mobile */
+  .market-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; }
+  .market-card { padding: 8px 10px !important; }
+  .mc-price { font-size: 15px !important; }
+  .mc-name  { font-size: 10px !important; }
+  .mc-flag  { font-size: 14px !important; }
+  .mc-unit  { font-size: 8px !important; }
+  .mc-spark svg { height: 24px !important; }
+  .mc-changes { font-size: 10px !important; }
 }
 
 /* IBJA badge */
