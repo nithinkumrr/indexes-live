@@ -149,14 +149,26 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .bell-toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg3); border: 1px solid var(--pre); color: var(--pre); font-family: var(--mono); font-size: 13px; padding: 12px 20px; border-radius: var(--r-lg); display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 24px rgba(0,0,0,0.5); z-index: 999; animation: toastIn 0.3s ease; }
 @keyframes toastIn { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
 
-/* TICKER */
-.ticker-wrap  { overflow: hidden; background: var(--bg3); border-bottom: 1px solid var(--border); height: 32px; display: flex; align-items: center; }
-.ticker-inner { display: inline-flex; align-items: center; white-space: nowrap; animation: tickScroll 80s linear infinite; }
+/* TICKER — two-row layout */
+.ticker-rows  { border-bottom: 1px solid var(--border); }
+
+.ticker-wrap  { overflow: hidden; background: var(--bg3); border-bottom: 1px solid var(--border); height: 30px; display: flex; align-items: center; }
+.ticker-rows .ticker-wrap:last-child { border-bottom: none; }
 .ticker-wrap:hover .ticker-inner { animation-play-state: paused; }
 @keyframes tickScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-.ticker-item  { display: inline-flex; align-items: center; gap: 7px; padding: 0 18px; border-right: 1px solid var(--border); height: 32px; }
-.ticker-name  { font-family: var(--mono); font-size: 11px; color: var(--text3); }
-.ticker-price { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--text); }
+
+/* Pinned label */
+.ticker-label        { flex-shrink:0; font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:0.08em; padding:0 10px; height:30px; display:flex; align-items:center; border-right:1px solid var(--border); white-space:nowrap; }
+.ticker-label-global { color:var(--text3); }
+.ticker-label-india  { color:#f59e0b; }
+
+/* Scroll area */
+.ticker-scroll-area  { flex:1; overflow:hidden; height:30px; display:flex; align-items:center; }
+.ticker-inner        { display:inline-flex; align-items:center; white-space:nowrap; animation:tickScroll 45s linear infinite; }
+
+.ticker-item  { display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; border-right: 1px solid var(--border); height: 30px; }
+.ticker-name  { font-family: var(--mono); font-size: 10.5px; color: var(--text3); }
+.ticker-price { font-family: var(--mono); font-size: 10.5px; font-weight: 500; color: var(--text); }
 .ticker-chg   { font-family: var(--mono); font-size: 10px; padding: 1px 5px; border-radius: 3px; }
 
 /* CLOCKS */
