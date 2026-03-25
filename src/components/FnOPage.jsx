@@ -275,54 +275,55 @@ function BreadthCard() {
 function StrategySheet({ vixLevel }) {
   const STRATEGIES = [
     {
-      zone: 'VIX < 15 — Low volatility',
+      zone: 'VIX < 15 — Complacency',
       color: '#00C896',
       active: vixLevel != null && vixLevel < 15,
       strategies: [
-        { name: 'Long Straddle',  note: 'Buy ATM call + put. Cheap premiums — profit from any big move' },
-        { name: 'Long Strangle', note: 'Buy OTM call + put. Even cheaper, needs bigger move' },
-        { name: 'Debit Spreads',  note: 'Buy spread — defined risk directional play' },
+        { name: 'Long Straddle',   note: 'Premiums historically cheap here. ATM call + put costs less — any sharp move tends to pay off.' },
+        { name: 'Long Strangle',   note: 'Even cheaper. OTM wings need a bigger swing but the cost-to-move ratio is often favourable.' },
+        { name: 'Debit Spreads',   note: 'Defined cost, defined max loss. Directional plays tend to be more efficient when IV is suppressed.' },
       ],
-      avoid: 'Avoid selling naked options — premiums too cheap to justify risk',
+      pattern: 'Historically: low VIX periods precede the sharpest moves. Premium sellers get slowly ground down; buyers wait for the snap.',
     },
     {
-      zone: 'VIX 15–20 — Normal',
+      zone: 'VIX 15–20 — Equilibrium',
       color: '#4A9EFF',
       active: vixLevel != null && vixLevel >= 15 && vixLevel < 20,
       strategies: [
-        { name: 'Iron Condor',     note: 'Sell OTM call + put spread. Balanced risk/reward' },
-        { name: 'Covered Calls',   note: 'Moderate IV good for writing calls against positions' },
-        { name: 'Vertical Spreads',note: 'Credit or debit spreads — flexible for any bias' },
+        { name: 'Iron Condor',      note: 'OTM call + put spreads on both sides. The "sweet spot" range — premium is fair, defined risk.' },
+        { name: 'Covered Calls',    note: 'Writing calls against held positions tends to work well when IV is neither rich nor cheap.' },
+        { name: 'Vertical Spreads', note: 'Both credit and debit flavours are viable. Market is typically pricing moves accurately here.' },
       ],
-      avoid: 'Balanced market — mix of buying and selling strategies work',
+      pattern: 'The zone where most textbook strategies play out as designed. Neither premium buyers nor sellers have a structural edge.',
     },
     {
-      zone: 'VIX 20–30 — Elevated',
+      zone: 'VIX 20–30 — Fear Spike',
       color: '#F59E0B',
       active: vixLevel != null && vixLevel >= 20 && vixLevel < 30,
       strategies: [
-        { name: 'Short Straddle',  note: 'Sell ATM call + put. Fat premiums, needs range-bound market' },
-        { name: 'Short Strangle',  note: 'Sell OTM call + put. More margin of safety' },
-        { name: 'Bull/Bear Put Spread', note: 'Defined-risk directional — elevated IV boosts credit received' },
+        { name: 'Short Straddle',   note: 'IV is historically "expensive" here. Selling ATM call + put captures inflated premium if market settles.' },
+        { name: 'Short Strangle',   note: 'Wider strikes, more room to be wrong. Premium sellers have historically had an edge in this band.' },
+        { name: 'Credit Spreads',   note: 'Defined-risk premium selling — elevated IV means more credit collected per unit of risk taken.' },
       ],
-      avoid: 'Avoid unhedged long options — overpaying for vol',
+      pattern: 'Historically: elevated VIX tends to mean-revert. Markets that stay range-bound after a fear spike reward premium sellers.',
     },
     {
-      zone: 'VIX > 30 — High fear',
+      zone: 'VIX > 30 — Panic',
       color: '#FF4455',
       active: vixLevel != null && vixLevel >= 30,
       strategies: [
-        { name: 'Reduce size',     note: 'High uncertainty — smaller positions, wider stops' },
-        { name: 'Sell far OTM',    note: 'Extreme premium — sell wide strangles with defined risk' },
-        { name: 'Buy protective puts', note: 'Hedge existing longs — insurance is cheap vs risk' },
+        { name: 'Far OTM Puts',     note: 'Extreme IV means put sellers can collect enormous premium. Also the most dangerous trade — tails are fat.' },
+        { name: 'Ratio Spreads',    note: 'Buy ATM protection, sell 2× OTM. Lets you participate in mean-reversion without pure naked exposure.' },
+        { name: 'Wait & Observe',   note: 'Many professional desks reduce size during panic. Historically, entering too early in fear spikes is costly.' },
       ],
-      avoid: 'Avoid large directional bets — gaps and reversals common',
+      pattern: 'The most dangerous and most profitable zone — simultaneously. Markets can gap 5%+ overnight. Position sizing matters more than strategy choice.',
     },
   ];
 
   return (
     <div className="fno-widget fno-strategy-widget">
-      <div className="fno-widget-title">OPTIONS STRATEGY GUIDE <span className="fno-widget-formula">based on live VIX</span></div>
+      <div className="fno-widget-title">OPTIONS PLAYBOOK <span className="fno-widget-formula">based on live VIX · for educational reference only</span></div>
+      <div className="fno-strategy-disclaimer">Historical patterns only · Not investment advice · Options trading involves substantial risk of loss</div>
       <div className="fno-strategy-grid">
         {STRATEGIES.map(s => (
           <div key={s.zone} className={`fno-strategy-zone ${s.active ? 'fno-strategy-active' : ''}`}
@@ -330,7 +331,7 @@ function StrategySheet({ vixLevel }) {
             <div className="fno-strategy-zone-label" style={s.active ? { color: s.color } : {}}>
               {s.active && <span className="fno-strategy-dot" style={{ background: s.color }} />}
               {s.zone}
-              {s.active && <span className="fno-strategy-current" style={{ color: s.color }}>← YOU ARE HERE</span>}
+              {s.active && <span className="fno-strategy-current" style={{ color: s.color }}>← NOW</span>}
             </div>
             <div className="fno-strategy-list">
               {s.strategies.map(st => (
@@ -340,7 +341,7 @@ function StrategySheet({ vixLevel }) {
                 </div>
               ))}
             </div>
-            <div className="fno-strategy-avoid">{s.avoid}</div>
+            <div className="fno-strategy-avoid">{s.pattern}</div>
           </div>
         ))}
       </div>
@@ -833,10 +834,12 @@ export default function FnOPage({ data = {} }) {
         {holidayLive && <span style={{ color: 'var(--accent)', marginLeft: 6 }}>· NSE calendar live</span>}
       </div>
 
-      {/* VIX + Breadth */}
+      {/* VIX + Strategy Cheatsheet */}
       <div className="fno-vix-breadth-row">
         <VIXCard onVix={setLiveVix} />
-        <BreadthCard />
+        <div style={{ padding: '20px', minWidth: 0 }}>
+          <StrategySheet vixLevel={liveVix} />
+        </div>
       </div>
 
       {/* Rollover + Expected Move */}

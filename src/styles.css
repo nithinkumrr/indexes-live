@@ -2163,7 +2163,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-em-note  { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 
 /* Strategy guide */
-.fno-strategy-widget { border-right: none !important; }
+.fno-strategy-widget { border-right: none !important; padding: 0 !important; }
 .fno-strategy-grid   { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 4px; }
 .fno-strategy-zone   { border: 1px solid var(--border); border-radius: var(--r); padding: 12px; transition: all .2s; }
 .fno-strategy-active { border-width: 2px !important; }
@@ -2174,7 +2174,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-strategy-item   { display: flex; flex-direction: column; gap: 2px; }
 .fno-strategy-name   { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text); }
 .fno-strategy-note   { font-family: var(--mono); font-size: 10px; color: var(--text3); line-height: 1.4; }
-.fno-strategy-avoid  { font-family: var(--mono); font-size: 9px; color: var(--text3); border-top: 1px solid var(--border); padding-top: 8px; font-style: italic; line-height: 1.4; }
+.fno-strategy-disclaimer { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-bottom: 12px; opacity: 0.6; }
 
 /* Pivot Points */
 .fno-pivot-tables  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -2245,3 +2245,4 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .fno-lot-grid        { grid-template-columns: repeat(2, 1fr); }
   .fno-rollover-row    { grid-template-columns: 90px 1fr 40px; }
 }
+.fno-strategy-avoid  { font-family: var(--mono); font-size: 9px; color: var(--text3); border-top: 1px solid var(--border); padding-top: 8px; font-style: italic; line-height: 1.4; }
