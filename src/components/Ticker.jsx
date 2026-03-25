@@ -22,8 +22,10 @@ function useIndiaIndices() {
   const intervalRef           = useRef(null);
 
   useEffect(() => {
-    const load = async () => {
-      if (!isNSEOpen()) return; // market closed — don't call, keep frozen value
+    const load = async (forceFirstLoad = false) => {
+      // Skip polling outside market hours — but always run on first load
+      // so we have the last close price to display
+      if (!forceFirstLoad && !isNSEOpen()) return;
       try {
         const r    = await fetch('/api/kite-indices');
         const json = await r.json();
@@ -34,11 +36,11 @@ function useIndiaIndices() {
       } catch (_) {}
     };
 
-    // Initial fetch (will no-op if market closed, but frozenRef stays empty until first open)
-    load();
+    // Always fetch once on mount regardless of market hours
+    load(true);
 
-    // Poll every 20s — load() itself gates on market hours
-    intervalRef.current = setInterval(load, 20000);
+    // Subsequent polls: gated on market hours inside load()
+    intervalRef.current = setInterval(() => load(false), 20000);
     return () => clearInterval(intervalRef.current);
   }, []);
 
