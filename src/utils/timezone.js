@@ -166,9 +166,25 @@ export function getNiftyExpiries(holidays = [], holidayNames = {}) {
     return info;
   }
 
-  const niftyWeeklyInfo   = adjustExpiryWithInfo(nextWeekday(2), holidaySet, holidayNames);
+  function getWeeklyWithRollover(targetDay, hSet, hNames) {
+    let raw = nextWeekday(targetDay);
+    let info = adjustExpiryWithInfo(raw, hSet, hNames);
+    // If holiday adjustment pushed expiry into the past, advance 7 days and retry
+    if (info.date <= now) {
+      raw = new Date(ist);
+      const day = raw.getDay();
+      let daysUntil = (targetDay - day + 7) % 7;
+      daysUntil += 7; // force next week
+      raw.setDate(raw.getDate() + daysUntil);
+      raw.setHours(15, 30, 0, 0);
+      info = adjustExpiryWithInfo(raw, hSet, hNames);
+    }
+    return info;
+  }
+
+  const niftyWeeklyInfo   = getWeeklyWithRollover(2, holidaySet, holidayNames);
   const niftyMonthlyInfo  = getMonthly();
-  const sensexWeeklyInfo  = adjustExpiryWithInfo(nextWeekday(4), holidaySet, holidayNames);
+  const sensexWeeklyInfo  = getWeeklyWithRollover(4, holidaySet, holidayNames);
   const sensexMonthlyInfo = getMonthly();
 
   const secsLeft = d => Math.max(0, Math.floor((d - now) / 1000));
