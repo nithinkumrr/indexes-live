@@ -176,6 +176,7 @@ export default function GoldPage() {
                               {fmtPrice(val)}
                             </div>
                             <div className="gold-city-unit">{activeMetal.unit}</div>
+                            {city.premiumPct > 0 && <div className="gold-city-premium">+{city.premiumPct}% city premium</div>}
                             {isHigh && <div className="gold-badge gold-badge-high">Highest</div>}
                             {isLow  && <div className="gold-badge gold-badge-low">Lowest</div>}
                           </div>
@@ -218,7 +219,12 @@ export default function GoldPage() {
             </div>
           )}
 
-          <div className="gold-source">
+          <div className="gold-source-label">
+          {data?.source === 'ibja' && <span className="gold-ibja-badge">📊 IBJA Rate</span>}
+          {data?.source === 'goodreturns' && <span className="gold-ibja-badge">📊 GoodReturns Rate</span>}
+          {data?.source === 'comex-yahoo' && <span className="gold-ibja-badge">📊 COMEX Rate</span>}
+        </div>
+        <div className="gold-source">
             Source: goodreturns.in · IBJA · Prices include 3% GST · Updated daily · Actual rate may vary by jeweller
           </div>
         </>

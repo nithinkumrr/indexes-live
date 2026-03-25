@@ -1435,3 +1435,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .ipo-card-grid   { grid-template-columns: 1fr !important; }
   .view-btn { font-size: 10px; padding: 4px 8px; }
 }
+
+/* IBJA badge */
+.gold-source-label  { margin-bottom: 6px; }
+.gold-ibja-badge    { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text2); background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; }
+
+.gold-city-premium { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 2px; }
