@@ -222,25 +222,42 @@ function FuturesPremium() {
 
 // ── PCR + Max Pain ────────────────────────────────────────────────────
 function PCRPanel() {
-  const [data, setData] = useState(null);
+  const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
+  const [index, setIndex]   = useState('NIFTY');
+
+  const INDICES = [
+    { key: 'NIFTY',     label: 'Nifty 50',   color: '#4A9EFF' },
+    { key: 'BANKNIFTY', label: 'Bank Nifty', color: '#F59E0B' },
+    { key: 'SENSEX',    label: 'Sensex',     color: '#A78BFA' },
+  ];
 
   useEffect(() => {
+    setLoading(true); setData(null);
     const load = async () => {
       try {
-        const r = await fetch('/api/kite-data?type=pcr');
+        const r = await fetch(`/api/kite-data?type=pcr&index=${index}`);
         const j = await r.json();
-        if (j.pcr != null) { setData(j); setLoading(false); }
-        else setLoading(false); // API responded but no data
+        if (j.pcr != null) { setData(j); }
+        setLoading(false);
       } catch(_) { setLoading(false); }
     };
+    load();
+    const id = setInterval(load, 60000);
+    return () => clearInterval(id);
+  }, [index]);
     load();
     const id = setInterval(load, 60000);
     return () => clearInterval(id);
   }, []);
 
   if (loading) return <div className="fno-loading">Fetching PCR data...</div>;
-  if (!data)   return null;
+  if (!data)   return (
+    <div className="pcr-wrap">
+      <div className="pcr-title">PCR — PUT CALL RATIO</div>
+      <div className="fno-unavail">Option chain data unavailable — NSE may be blocking or market is closed</div>
+    </div>
+  );
 
   const pcr     = data.pcr;
   const signal  = pcr > 1.2 ? { label: 'BULLISH', color: '#00C896', note: 'Puts dominate — market hedged / bullish' }
@@ -254,9 +271,18 @@ function PCRPanel() {
       <div className="pcr-header">
         <div>
           <div className="pcr-title">PCR — PUT CALL RATIO</div>
-          <div className="pcr-expiry">{data.expiry} · Nifty Weekly</div>
+          <div className="pcr-expiry">{data?.expiry || '—'} · {INDICES.find(i=>i.key===index)?.label} Weekly</div>
         </div>
-        <div className="pcr-value" style={{ color: signal.color }}>{pcr.toFixed(2)}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+          <div className="fno-index-tabs">
+            {INDICES.map(i => (
+              <button key={i.key} className={`fno-index-tab ${index === i.key ? 'fno-index-tab-active' : ''}`}
+                style={index === i.key ? { borderColor: i.color, color: i.color } : {}}
+                onClick={() => setIndex(i.key)}>{i.label}</button>
+            ))}
+          </div>
+          {data && <div className="pcr-value" style={{ color: (() => { const pcr=data.pcr; return pcr>1.2?'#00C896':pcr<0.8?'#FF4455':'#F59E0B'; })() }}>{data.pcr.toFixed(2)}</div>}
+        </div>
       </div>
 
       <div className="pcr-signal-row">
@@ -321,38 +347,67 @@ function PCRPanel() {
 function StraddleChain() {
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
+  const [index, setIndex]   = useState('NIFTY');
+
+  const INDICES = [
+    { key: 'NIFTY',     label: 'Nifty 50',   color: '#4A9EFF' },
+    { key: 'BANKNIFTY', label: 'Bank Nifty', color: '#F59E0B' },
+    { key: 'SENSEX',    label: 'Sensex',     color: '#A78BFA' },
+  ];
 
   useEffect(() => {
+    setLoading(true); setData(null);
     const load = async () => {
       try {
-        const r = await fetch('/api/kite-data?type=straddle');
+        const r = await fetch(`/api/kite-data?type=straddle&index=${index}`);
         const j = await r.json();
-        if (j.straddles) { setData(j); setLoading(false); }
-        else setLoading(false);
+        if (j.straddles) { setData(j); }
+        setLoading(false);
       } catch(_) { setLoading(false); }
     };
+    load();
+    const id = setInterval(load, 30000);
+    return () => clearInterval(id);
+  }, [index]);
     load();
     const id = setInterval(load, 30000);
     return () => clearInterval(id);
   }, []);
 
   if (loading) return <div className="fno-loading">Fetching straddle chain...</div>;
-  if (!data)   return null;
+  if (!data)   return (
+    <div className="straddle-wrap">
+      <div className="straddle-title">STRADDLE CHAIN — NIFTY</div>
+      <div className="fno-unavail">Option chain data unavailable — NSE may be blocking or market is closed</div>
+    </div>
+  );
 
   return (
     <div className="straddle-wrap">
       <div className="straddle-header">
         <div>
-          <div className="straddle-title">STRADDLE CHAIN — NIFTY</div>
-          <div className="straddle-sub">{data.expiry} · Spot: {data.spot?.toLocaleString('en-IN')}</div>
-        </div>
-        {data.expectedMove != null && (
-          <div className="straddle-move">
-            <span className="straddle-move-label">Expected move</span>
-            <span className="straddle-move-val">±{data.expectedMove}%</span>
-            <span className="straddle-move-pts">±{Math.round(data.spot * data.expectedMove / 100)} pts</span>
+          <div className="straddle-title">STRADDLE CHAIN
+            {data?.source === 'kite' && <span className="hm-source-badge hm-kite" style={{marginLeft:8}}>via Kite</span>}
+            {data?.source === 'nse'  && <span className="hm-source-badge hm-yahoo" style={{marginLeft:8}}>via NSE</span>}
           </div>
-        )}
+          <div className="straddle-sub">{data?.expiry || '—'} · Spot: {data?.spot?.toLocaleString('en-IN') || '—'}</div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+          <div className="fno-index-tabs">
+            {INDICES.map(i => (
+              <button key={i.key} className={`fno-index-tab ${index === i.key ? 'fno-index-tab-active' : ''}`}
+                style={index === i.key ? { borderColor: i.color, color: i.color } : {}}
+                onClick={() => setIndex(i.key)}>{i.label}</button>
+            ))}
+          </div>
+          {data?.expectedMove != null && (
+            <div className="straddle-move">
+              <span className="straddle-move-label">Expected move</span>
+              <span className="straddle-move-val">±{data.expectedMove}%</span>
+              <span className="straddle-move-pts">±{Math.round((data.spot||0) * data.expectedMove / 100)} pts</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="straddle-table">

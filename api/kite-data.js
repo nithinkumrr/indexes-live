@@ -315,85 +315,186 @@ async function handleFutures(token, res) {
   } catch(e) { return res.status(500).json({ error: e.message, symbol }); }
 }
 
+
+// Index config — expiry day, Kite name, spot instrument, NSE API symbol
+const INDEX_CONFIG = {
+  NIFTY:      { kiteName: 'NIFTY',      expiryDay: 2, spotInstr: 'NSE:NIFTY 50',   nseSymbol: 'NIFTY',      label: 'Nifty 50'   },
+  BANKNIFTY:  { kiteName: 'BANKNIFTY',  expiryDay: 3, spotInstr: 'NSE:NIFTY BANK', nseSymbol: 'BANKNIFTY',  label: 'Bank Nifty' },
+  SENSEX:     { kiteName: 'SENSEX',     expiryDay: 4, spotInstr: 'BSE:SENSEX',      nseSymbol: 'SENSEX',     label: 'Sensex',     bse: true },
+};
+
+// Fetch option chain via Kite — instruments + batch quote
+// Returns { spot, expiry, strikes: [{strike, callOI, putOI, callLTP, putLTP}] }
+async function fetchKiteOptionChain(token, indexKey = 'NIFTY') {
+  if (!token) throw new Error('no_token');
+  const cfg = INDEX_CONFIG[indexKey] || INDEX_CONFIG.NIFTY;
+
+  const text  = await getNFOInstruments(token);
+  const lines = text.split('\n').filter(Boolean);
+
+  // Find next weekly expiry for this index
+  const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const day = ist.getDay();
+  let daysUntil = (cfg.expiryDay - day + 7) % 7;
+  if (daysUntil === 0 && ist.getHours() * 60 + ist.getMinutes() >= 15 * 30) daysUntil = 7;
+  const expDate = new Date(ist);
+  expDate.setDate(ist.getDate() + daysUntil);
+  const expStr = `${expDate.getFullYear()}-${String(expDate.getMonth()+1).padStart(2,'0')}-${String(expDate.getDate()).padStart(2,'0')}`;
+
+  // Filter options for this index + expiry
+  // CSV: instrument_token,exchange_token,tradingsymbol,name,last_price,expiry,strike,tick_size,lot_size,instrument_type,segment,exchange
+  const options = [];
+  for (const line of lines) {
+    const cols = line.split(',');
+    if (cols.length < 12) continue;
+    const instrToken = cols[0];
+    const name       = cols[3];
+    const expiry     = cols[5];
+    const instrType  = cols[9];
+    const exchange   = cols[11]?.trim();
+    if (name !== cfg.kiteName) continue;
+    if (!expiry.startsWith(expStr)) continue;
+    if (instrType !== 'CE' && instrType !== 'PE') continue;
+    const strike = parseFloat(cols[6]);
+    if (isNaN(strike)) continue;
+    options.push({ instrToken, strike, type: instrType });
+  }
+
+  if (!options.length) throw new Error(`No ${cfg.kiteName} options found for expiry ${expStr}`);
+
+  // Get spot price
+  const spotQ = await fetch(`https://api.kite.trade/quote?i=${encodeURIComponent(cfg.spotInstr)}`, { headers: kiteHeaders(token) });
+  const spotJ = await spotQ.json();
+  const spot  = Object.values(spotJ?.data || {})[0]?.last_price || 0;
+
+  // Batch quote all option tokens
+  const instruments = options.map(o => `NFO:${o.instrToken}`);
+  const quoteData   = {};
+  for (let i = 0; i < instruments.length; i += 500) {
+    const chunk  = instruments.slice(i, i + 500);
+    const params = chunk.map(i => `i=${encodeURIComponent(i)}`).join('&');
+    const r = await fetch(`https://api.kite.trade/quote?${params}`, { headers: kiteHeaders(token) });
+    if (!r.ok) continue;
+    Object.assign(quoteData, (await r.json())?.data || {});
+  }
+
+  // Build strike map
+  const strikeMap = {};
+  for (const opt of options) {
+    const key = `NFO:${opt.instrToken}`;
+    const q   = quoteData[key];
+    if (!strikeMap[opt.strike]) strikeMap[opt.strike] = { strike: opt.strike, callOI:0, putOI:0, callLTP:0, putLTP:0 };
+    if (q) {
+      if (opt.type === 'CE') { strikeMap[opt.strike].callOI = q.oi||0; strikeMap[opt.strike].callLTP = q.last_price||0; }
+      if (opt.type === 'PE') { strikeMap[opt.strike].putOI  = q.oi||0; strikeMap[opt.strike].putLTP  = q.last_price||0; }
+    }
+  }
+
+  return {
+    spot,
+    expiry:    expStr,
+    indexKey,
+    label:     cfg.label,
+    strikes:   Object.values(strikeMap).sort((a, b) => a.strike - b.strike),
+  };
+}
+
+// NSE fallback — supports NIFTY, BANKNIFTY, SENSEX
+async function fetchNSEOptionChain(nseSymbol = 'NIFTY') {
+  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+  let cookie = '';
+  try {
+    const home = await fetch('https://www.nseindia.com', { headers: { 'User-Agent': UA, 'Accept': 'text/html,*/*', 'Accept-Language': 'en-US,en;q=0.9' } });
+    cookie = (home.headers.get('set-cookie')||'').split(/,(?=[^;]+=)/).map(c=>c.split(';')[0].trim()).filter(Boolean).join('; ');
+  } catch(_) {}
+  try { await fetch('https://www.nseindia.com/option-chain', { headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Cookie': cookie } }); } catch(_) {}
+  const H = { 'User-Agent': UA, 'Accept': 'application/json, */*', 'Referer': 'https://www.nseindia.com/option-chain', 'Cookie': cookie, 'X-Requested-With': 'XMLHttpRequest' };
+  const endpoint = nseSymbol === 'SENSEX'
+    ? `https://www.nseindia.com/api/option-chain-indices?symbol=SENSEX`
+    : `https://www.nseindia.com/api/option-chain-indices?symbol=${nseSymbol}`;
+  const r = await fetch(endpoint, { headers: H });
+  if (!r.ok) throw new Error(`NSE ${r.status}`);
+  const json = await r.json();
+  if (!json?.records?.data?.length) throw new Error('NSE empty response');
+  const records  = json.records.data;
+  const spot     = json.records.underlyingValue || 0;
+  const expiries = [...new Set(records.map(r => r.expiryDate))].sort((a,b) => new Date(a)-new Date(b));
+  const near     = records.filter(r => r.expiryDate === expiries[0]);
+  const strikeMap = {};
+  for (const rec of near) {
+    const s = rec.strikePrice;
+    if (!strikeMap[s]) strikeMap[s] = { strike:s, callOI:0, putOI:0, callLTP:0, putLTP:0, callIV:0, putIV:0 };
+    if (rec.CE) { strikeMap[s].callOI=rec.CE.openInterest||0; strikeMap[s].callLTP=rec.CE.lastPrice||0; strikeMap[s].callIV=rec.CE.impliedVolatility||0; }
+    if (rec.PE) { strikeMap[s].putOI=rec.PE.openInterest||0;  strikeMap[s].putLTP=rec.PE.lastPrice||0;  strikeMap[s].putIV=rec.PE.impliedVolatility||0; }
+  }
+  const cfg = Object.values(INDEX_CONFIG).find(c => c.nseSymbol === nseSymbol) || INDEX_CONFIG.NIFTY;
+  return { spot, expiry: expiries[0], indexKey: nseSymbol, label: cfg.label, strikes: Object.values(strikeMap).sort((a,b)=>a.strike-b.strike) };
+}
+
 async function handlePCR(token, res) {
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
-  // No token required — uses NSE public option chain API
-  try {
-    const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
-    let cookie = '';
-    try { const r = await fetch('https://www.nseindia.com', { headers: { 'User-Agent': UA, 'Accept': 'text/html' } }); cookie = (r.headers.get('set-cookie')||'').split(/,(?=[^;]+=)/).map(c=>c.split(';')[0].trim()).filter(Boolean).join('; '); } catch(_) {}
-    const H = { 'User-Agent': UA, 'Accept': 'application/json', 'Referer': 'https://www.nseindia.com/', Cookie: cookie };
-    const r = await fetch('https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY', { headers: H });
-    if (!r.ok) throw new Error(`NSE ${r.status}`);
-    const json    = await r.json();
-    const records = json?.records?.data || [];
-    const spot    = json?.records?.underlyingValue || 0;
-    const expiries = [...new Set(records.map(r => r.expiryDate))].sort((a,b) => new Date(a)-new Date(b));
-    const nearRecords = records.filter(r => r.expiryDate === expiries[0]);
-    let totalCallOI = 0, totalPutOI = 0;
-    const strikeData = {};
-    for (const rec of nearRecords) {
-      const strike = rec.strikePrice;
-      if (!strikeData[strike]) strikeData[strike] = { strike, callOI:0, putOI:0, callLTP:0, putLTP:0, callIV:0, putIV:0 };
-      if (rec.CE) { strikeData[strike].callOI=rec.CE.openInterest||0; strikeData[strike].callLTP=rec.CE.lastPrice||0; strikeData[strike].callIV=rec.CE.impliedVolatility||0; totalCallOI+=rec.CE.openInterest||0; }
-      if (rec.PE) { strikeData[strike].putOI=rec.PE.openInterest||0;  strikeData[strike].putLTP=rec.PE.lastPrice||0;  strikeData[strike].putIV=rec.PE.impliedVolatility||0;  totalPutOI+=rec.PE.openInterest||0; }
-    }
-    const pcr     = totalCallOI > 0 ? parseFloat((totalPutOI/totalCallOI).toFixed(3)) : 0;
-    const strikes = Object.values(strikeData).sort((a,b) => a.strike-b.strike);
-    let maxPainStrike = 0, maxPainLoss = Infinity;
-    for (const { strike: settlement } of strikes) {
-      let loss = 0;
-      for (const s of strikes) {
-        loss += s.callOI * Math.max(0, s.strike - settlement);
-        loss += s.putOI  * Math.max(0, settlement - s.strike);
-      }
-      if (loss < maxPainLoss) { maxPainLoss = loss; maxPainStrike = settlement; }
-    }
-    const atm = strikes.reduce((b,s) => Math.abs(s.strike-spot)<Math.abs(b.strike-spot)?s:b, strikes[0]);
-    const topStrikes = strikes.map(s=>({...s,totalOI:s.callOI+s.putOI})).sort((a,b)=>b.totalOI-a.totalOI).slice(0,10).sort((a,b)=>a.strike-b.strike);
-    return res.json({ spot, expiry: expiries[0], pcr, totalCallOI, totalPutOI, maxPain: maxPainStrike,
-      atmStrike: atm?.strike, atmCallLTP: atm?.callLTP, atmPutLTP: atm?.putLTP,
-      atmIV: atm ? parseFloat(((atm.callIV+atm.putIV)/2).toFixed(1)) : null, topStrikes });
-  } catch(e) { return res.status(500).json({ error: e.message }); }
+  const indexKey = (['NIFTY','BANKNIFTY','SENSEX'].includes(res.req?.query?.index)) ? res.req.query.index : 'NIFTY';
+
+  let chain = null;
+  if (token) {
+    try { chain = await fetchKiteOptionChain(token, indexKey); } catch(e) { console.warn('Kite option chain failed:', e.message); }
+  }
+  if (!chain) {
+    try {
+      const cfg = INDEX_CONFIG[indexKey] || INDEX_CONFIG.NIFTY;
+      chain = await fetchNSEOptionChain(cfg.nseSymbol);
+    } catch(e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  const { spot, expiry, strikes } = chain;
+  let totalCallOI = 0, totalPutOI = 0;
+  strikes.forEach(s => { totalCallOI += s.callOI; totalPutOI += s.putOI; });
+  const pcr = totalCallOI > 0 ? parseFloat((totalPutOI/totalCallOI).toFixed(3)) : 0;
+
+  let maxPainStrike = 0, maxPainLoss = Infinity;
+  for (const { strike: settlement } of strikes) {
+    let loss = 0;
+    strikes.forEach(s => { loss += s.callOI * Math.max(0, s.strike - settlement); loss += s.putOI * Math.max(0, settlement - s.strike); });
+    if (loss < maxPainLoss) { maxPainLoss = loss; maxPainStrike = settlement; }
+  }
+  const atm = strikes.length ? strikes.reduce((b,s) => Math.abs(s.strike-spot)<Math.abs(b.strike-spot)?s:b, strikes[0]) : null;
+  const topStrikes = strikes.map(s=>({...s,totalOI:s.callOI+s.putOI})).sort((a,b)=>b.totalOI-a.totalOI).slice(0,10).sort((a,b)=>a.strike-b.strike);
+  return res.json({ spot, expiry, pcr, totalCallOI, totalPutOI, maxPain: maxPainStrike,
+    atmStrike: atm?.strike, atmCallLTP: atm?.callLTP, atmPutLTP: atm?.putLTP,
+    atmIV: atm?.callIV && atm?.putIV ? parseFloat(((atm.callIV+atm.putIV)/2).toFixed(1)) : null,
+    topStrikes, source: token ? 'kite' : 'nse' });
 }
 
 async function handleStraddle(token, res) {
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
-  // No token required — uses NSE public option chain API
-  try {
-    const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
-    let cookie = '';
-    try { const r = await fetch('https://www.nseindia.com', { headers: { 'User-Agent': UA, 'Accept': 'text/html' } }); cookie = (r.headers.get('set-cookie')||'').split(/,(?=[^;]+=)/).map(c=>c.split(';')[0].trim()).filter(Boolean).join('; '); } catch(_) {}
-    const H = { 'User-Agent': UA, 'Accept': 'application/json', 'Referer': 'https://www.nseindia.com/', Cookie: cookie };
-    const r = await fetch('https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY', { headers: H });
-    if (!r.ok) throw new Error(`NSE ${r.status}`);
-    const json = await r.json();
-    const records = json?.records?.data || [];
-    const spot    = json?.records?.underlyingValue || 0;
-    const expiries = [...new Set(records.map(r => r.expiryDate))].sort((a,b) => new Date(a)-new Date(b));
-    const nearRecords = records.filter(r => r.expiryDate === expiries[0]);
-    const strikeMap = {};
-    for (const rec of nearRecords) {
-      const s = rec.strikePrice;
-      if (!strikeMap[s]) strikeMap[s] = { strike:s, callLTP:0, putLTP:0, callOI:0, putOI:0, callIV:0, putIV:0 };
-      if (rec.CE) { strikeMap[s].callLTP=rec.CE.lastPrice||0; strikeMap[s].callOI=rec.CE.openInterest||0; strikeMap[s].callIV=rec.CE.impliedVolatility||0; }
-      if (rec.PE) { strikeMap[s].putLTP=rec.PE.lastPrice||0;  strikeMap[s].putOI=rec.PE.openInterest||0;  strikeMap[s].putIV=rec.PE.impliedVolatility||0; }
-    }
-    const allStrikes = Object.values(strikeMap).sort((a,b) => a.strike-b.strike);
-    const atm      = allStrikes.reduce((b,s) => Math.abs(s.strike-spot)<Math.abs(b.strike-spot)?s:b, allStrikes[0]);
-    const atmIdx   = allStrikes.indexOf(atm);
-    const window_  = allStrikes.slice(Math.max(0,atmIdx-6), atmIdx+7);
-    const straddles = window_.map(s => ({
-      strike: s.strike, callLTP: s.callLTP, putLTP: s.putLTP,
-      straddle: parseFloat((s.callLTP+s.putLTP).toFixed(2)),
-      callOI: s.callOI, putOI: s.putOI,
-      iv: s.callIV && s.putIV ? parseFloat(((s.callIV+s.putIV)/2).toFixed(1)) : s.callIV||s.putIV,
-      isATM: s.strike === atm.strike,
-    }));
-    const atmS = straddles.find(s => s.isATM);
-    return res.json({ spot, expiry: expiries[0], atm: atm.strike, straddles,
-      expectedMove: atmS ? parseFloat((atmS.straddle/spot*100).toFixed(2)) : null });
-  } catch(e) { return res.status(500).json({ error: e.message }); }
+  const indexKey = (['NIFTY','BANKNIFTY','SENSEX'].includes(res.req?.query?.index)) ? res.req.query.index : 'NIFTY';
+
+  let chain = null;
+  if (token) {
+    try { chain = await fetchKiteOptionChain(token, indexKey); } catch(e) { console.warn('Kite straddle failed:', e.message); }
+  }
+  if (!chain) {
+    try {
+      const cfg = INDEX_CONFIG[indexKey] || INDEX_CONFIG.NIFTY;
+      chain = await fetchNSEOptionChain(cfg.nseSymbol);
+    } catch(e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  const { spot, expiry, strikes } = chain;
+  const atm    = strikes.reduce((b,s) => Math.abs(s.strike-spot)<Math.abs(b.strike-spot)?s:b, strikes[0]);
+  const atmIdx = strikes.indexOf(atm);
+  const window_ = strikes.slice(Math.max(0,atmIdx-6), atmIdx+7);
+  const straddles = window_.map(s => ({
+    strike: s.strike, callLTP: s.callLTP, putLTP: s.putLTP,
+    straddle: parseFloat((s.callLTP+s.putLTP).toFixed(2)),
+    callOI: s.callOI, putOI: s.putOI,
+    iv: s.callIV && s.putIV ? parseFloat(((s.callIV+s.putIV)/2).toFixed(1)) : (s.callIV||s.putIV||0),
+    isATM: s.strike === atm.strike,
+  }));
+  const atmS = straddles.find(s => s.isATM);
+  return res.json({ spot, expiry, atm: atm.strike, straddles,
+    expectedMove: atmS && spot ? parseFloat((atmS.straddle/spot*100).toFixed(2)) : null,
+    source: token ? 'kite' : 'nse' });
 }
 
 async function handleVWAP(token, res) {
@@ -459,8 +560,8 @@ export default async function handler(req, res) {
   if (type === 'indices')  return handleIndices(token, res);
   if (type === 'nifty50')  return handleNifty50(token, res);
   if (type === 'futures')  return handleFutures(token, res);
-  if (type === 'pcr')      return handlePCR(token, res);
-  if (type === 'straddle') return handleStraddle(token, res);
+  if (type === 'pcr')      { res.req = req; return handlePCR(token, res); }
+  if (type === 'straddle') { res.req = req; return handleStraddle(token, res); }
   if (type === 'vwap')     return handleVWAP(token, res);
   if (type === 'oi')       return handleOI(token, res);
 

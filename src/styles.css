@@ -1812,3 +1812,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .oib-signal-col   { display: flex; flex-direction: column; gap: 3px; }
 .oib-sig-badge    { font-family: var(--mono); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 4px; border: 1px solid; width: fit-content; }
 .oib-sig-note     { font-size: 11px; color: var(--text3); }
+.fno-unavail { font-family: var(--mono); font-size: 12px; color: var(--text3); padding: 16px 0; }
+
+/* ── F&O index selector tabs ─────────────────────────────────────────── */
+.fno-index-tabs      { display: flex; gap: 5px; }
+.fno-index-tab       { font-family: var(--mono); font-size: 10px; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.fno-index-tab:hover { border-color: var(--text2); color: var(--text); }
+.fno-index-tab-active{ background: rgba(255,255,255,0.05); color: var(--text); }
