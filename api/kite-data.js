@@ -269,6 +269,184 @@ async function handleNifty50(token, res) {
   }
 }
 
+// ── type=futures ─────────────────────────────────────────────────────
+function getCurrentMonthlyExpiry() {
+  const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  function lastThursday(y, m) {
+    const d = new Date(y, m + 1, 0);
+    while (d.getDay() !== 4) d.setDate(d.getDate() - 1);
+    return d;
+  }
+  let exp = lastThursday(ist.getFullYear(), ist.getMonth());
+  if (exp <= ist) {
+    const nm = ist.getMonth() === 11 ? 0 : ist.getMonth() + 1;
+    const ny = ist.getMonth() === 11 ? ist.getFullYear() + 1 : ist.getFullYear();
+    exp = lastThursday(ny, nm);
+  }
+  const YY  = String(exp.getFullYear()).slice(2);
+  const MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][exp.getMonth()];
+  return { symbol: `NIFTY${YY}${MON}FUT`, date: exp };
+}
+
+async function getNFOInstruments(token) {
+  const r = await fetch('https://api.kite.trade/instruments?exchange=NFO', { headers: kiteHeaders(token) });
+  if (!r.ok) throw new Error(`instruments ${r.status}`);
+  return r.text();
+}
+
+async function handleFutures(token, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  if (!token) return res.status(401).json({ error: 'no_token' });
+  const { symbol, date } = getCurrentMonthlyExpiry();
+  try {
+    const text   = await getNFOInstruments(token);
+    const expStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    const line   = text.split('\n').find(l => l.includes(expStr) && l.includes(',NIFTY,') && l.includes('FUT'));
+    if (!line) return res.json({ error: 'instrument_not_found', symbol });
+    const itoken = line.split(',')[0];
+    const qr = await fetch(`https://api.kite.trade/quote?i=NFO:${itoken}`, { headers: kiteHeaders(token) });
+    const qj = await qr.json();
+    const q  = Object.values(qj?.data || {})[0];
+    if (!q) return res.json({ error: 'no_quote', symbol });
+    const price = q.last_price, pc = q.ohlc?.close || price;
+    return res.json({ symbol, price, prevClose: pc,
+      change: parseFloat((price-pc).toFixed(2)), changePct: parseFloat(((price-pc)/pc*100).toFixed(2)),
+      oi: q.oi, oiChange: q.oi_day_change, open: q.ohlc?.open, high: q.ohlc?.high, low: q.ohlc?.low });
+  } catch(e) { return res.status(500).json({ error: e.message, symbol }); }
+}
+
+async function handlePCR(token, res) {
+  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+  if (!token) return res.status(401).json({ error: 'no_token' });
+  try {
+    const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
+    let cookie = '';
+    try { const r = await fetch('https://www.nseindia.com', { headers: { 'User-Agent': UA, 'Accept': 'text/html' } }); cookie = (r.headers.get('set-cookie')||'').split(/,(?=[^;]+=)/).map(c=>c.split(';')[0].trim()).filter(Boolean).join('; '); } catch(_) {}
+    const H = { 'User-Agent': UA, 'Accept': 'application/json', 'Referer': 'https://www.nseindia.com/', Cookie: cookie };
+    const r = await fetch('https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY', { headers: H });
+    if (!r.ok) throw new Error(`NSE ${r.status}`);
+    const json    = await r.json();
+    const records = json?.records?.data || [];
+    const spot    = json?.records?.underlyingValue || 0;
+    const expiries = [...new Set(records.map(r => r.expiryDate))].sort((a,b) => new Date(a)-new Date(b));
+    const nearRecords = records.filter(r => r.expiryDate === expiries[0]);
+    let totalCallOI = 0, totalPutOI = 0;
+    const strikeData = {};
+    for (const rec of nearRecords) {
+      const strike = rec.strikePrice;
+      if (!strikeData[strike]) strikeData[strike] = { strike, callOI:0, putOI:0, callLTP:0, putLTP:0, callIV:0, putIV:0 };
+      if (rec.CE) { strikeData[strike].callOI=rec.CE.openInterest||0; strikeData[strike].callLTP=rec.CE.lastPrice||0; strikeData[strike].callIV=rec.CE.impliedVolatility||0; totalCallOI+=rec.CE.openInterest||0; }
+      if (rec.PE) { strikeData[strike].putOI=rec.PE.openInterest||0;  strikeData[strike].putLTP=rec.PE.lastPrice||0;  strikeData[strike].putIV=rec.PE.impliedVolatility||0;  totalPutOI+=rec.PE.openInterest||0; }
+    }
+    const pcr     = totalCallOI > 0 ? parseFloat((totalPutOI/totalCallOI).toFixed(3)) : 0;
+    const strikes = Object.values(strikeData).sort((a,b) => a.strike-b.strike);
+    let maxPainStrike = 0, maxPainLoss = Infinity;
+    for (const { strike: settlement } of strikes) {
+      let loss = 0;
+      for (const s of strikes) {
+        loss += s.callOI * Math.max(0, s.strike - settlement);
+        loss += s.putOI  * Math.max(0, settlement - s.strike);
+      }
+      if (loss < maxPainLoss) { maxPainLoss = loss; maxPainStrike = settlement; }
+    }
+    const atm = strikes.reduce((b,s) => Math.abs(s.strike-spot)<Math.abs(b.strike-spot)?s:b, strikes[0]);
+    const topStrikes = strikes.map(s=>({...s,totalOI:s.callOI+s.putOI})).sort((a,b)=>b.totalOI-a.totalOI).slice(0,10).sort((a,b)=>a.strike-b.strike);
+    return res.json({ spot, expiry: expiries[0], pcr, totalCallOI, totalPutOI, maxPain: maxPainStrike,
+      atmStrike: atm?.strike, atmCallLTP: atm?.callLTP, atmPutLTP: atm?.putLTP,
+      atmIV: atm ? parseFloat(((atm.callIV+atm.putIV)/2).toFixed(1)) : null, topStrikes });
+  } catch(e) { return res.status(500).json({ error: e.message }); }
+}
+
+async function handleStraddle(token, res) {
+  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+  if (!token) return res.status(401).json({ error: 'no_token' });
+  try {
+    const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
+    let cookie = '';
+    try { const r = await fetch('https://www.nseindia.com', { headers: { 'User-Agent': UA, 'Accept': 'text/html' } }); cookie = (r.headers.get('set-cookie')||'').split(/,(?=[^;]+=)/).map(c=>c.split(';')[0].trim()).filter(Boolean).join('; '); } catch(_) {}
+    const H = { 'User-Agent': UA, 'Accept': 'application/json', 'Referer': 'https://www.nseindia.com/', Cookie: cookie };
+    const r = await fetch('https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY', { headers: H });
+    if (!r.ok) throw new Error(`NSE ${r.status}`);
+    const json = await r.json();
+    const records = json?.records?.data || [];
+    const spot    = json?.records?.underlyingValue || 0;
+    const expiries = [...new Set(records.map(r => r.expiryDate))].sort((a,b) => new Date(a)-new Date(b));
+    const nearRecords = records.filter(r => r.expiryDate === expiries[0]);
+    const strikeMap = {};
+    for (const rec of nearRecords) {
+      const s = rec.strikePrice;
+      if (!strikeMap[s]) strikeMap[s] = { strike:s, callLTP:0, putLTP:0, callOI:0, putOI:0, callIV:0, putIV:0 };
+      if (rec.CE) { strikeMap[s].callLTP=rec.CE.lastPrice||0; strikeMap[s].callOI=rec.CE.openInterest||0; strikeMap[s].callIV=rec.CE.impliedVolatility||0; }
+      if (rec.PE) { strikeMap[s].putLTP=rec.PE.lastPrice||0;  strikeMap[s].putOI=rec.PE.openInterest||0;  strikeMap[s].putIV=rec.PE.impliedVolatility||0; }
+    }
+    const allStrikes = Object.values(strikeMap).sort((a,b) => a.strike-b.strike);
+    const atm      = allStrikes.reduce((b,s) => Math.abs(s.strike-spot)<Math.abs(b.strike-spot)?s:b, allStrikes[0]);
+    const atmIdx   = allStrikes.indexOf(atm);
+    const window_  = allStrikes.slice(Math.max(0,atmIdx-6), atmIdx+7);
+    const straddles = window_.map(s => ({
+      strike: s.strike, callLTP: s.callLTP, putLTP: s.putLTP,
+      straddle: parseFloat((s.callLTP+s.putLTP).toFixed(2)),
+      callOI: s.callOI, putOI: s.putOI,
+      iv: s.callIV && s.putIV ? parseFloat(((s.callIV+s.putIV)/2).toFixed(1)) : s.callIV||s.putIV,
+      isATM: s.strike === atm.strike,
+    }));
+    const atmS = straddles.find(s => s.isATM);
+    return res.json({ spot, expiry: expiries[0], atm: atm.strike, straddles,
+      expectedMove: atmS ? parseFloat((atmS.straddle/spot*100).toFixed(2)) : null });
+  } catch(e) { return res.status(500).json({ error: e.message }); }
+}
+
+async function handleVWAP(token, res) {
+  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+  if (!token) return res.status(401).json({ error: 'no_token' });
+  try {
+    const text   = await getNFOInstruments(token);
+    const { date } = getCurrentMonthlyExpiry();
+    const expStr   = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    const line     = text.split('\n').find(l => l.includes(expStr) && l.includes(',NIFTY,') && l.includes('FUT'));
+    if (!line) throw new Error('Nifty futures not found');
+    const instrToken = line.split(',')[0];
+    const ist   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const today = `${ist.getFullYear()}-${String(ist.getMonth()+1).padStart(2,'0')}-${String(ist.getDate()).padStart(2,'0')}`;
+    const histR = await fetch(`https://api.kite.trade/instruments/historical/${instrToken}/5minute?from=${today}+09:15:00&to=${today}+15:30:00`, { headers: kiteHeaders(token) });
+    if (!histR.ok) throw new Error(`historical ${histR.status}`);
+    const candles = (await histR.json())?.data?.candles || [];
+    if (!candles.length) return res.json({ error: 'no_candles' });
+    let sumTPV = 0, sumV = 0;
+    for (const [,o,h,l,c,v] of candles) { const tp=(h+l+c)/3; sumTPV+=tp*v; sumV+=v; }
+    const vwap = sumV > 0 ? parseFloat((sumTPV/sumV).toFixed(2)) : null;
+    const currentPrice = candles[candles.length-1]?.[4] ?? null;
+    return res.json({ vwap, currentPrice, signal: vwap&&currentPrice?(currentPrice>vwap?'above':'below'):null, candles: candles.length });
+  } catch(e) { return res.status(500).json({ error: e.message }); }
+}
+
+async function handleOI(token, res) {
+  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+  if (!token) return res.status(401).json({ error: 'no_token' });
+  try {
+    const text   = await getNFOInstruments(token);
+    const { date } = getCurrentMonthlyExpiry();
+    const expStr   = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    const lines    = text.split('\n');
+    const niftyLine = lines.find(l => l.includes(expStr) && l.includes(',NIFTY,')    && l.includes('FUT'));
+    const bankLine  = lines.find(l => l.includes(expStr) && l.includes(',BANKNIFTY,') && l.includes('FUT'));
+    const instrs    = [niftyLine, bankLine].filter(Boolean).map(l => l.split(',')[0]);
+    if (!instrs.length) throw new Error('instruments not found');
+    const qj = await (await fetch(`https://api.kite.trade/quote?${instrs.map(i=>`i=NFO:${i}`).join('&')}`, { headers: kiteHeaders(token) })).json();
+    const result = {};
+    Object.entries(qj?.data||{}).forEach(([,q], idx) => {
+      const name = idx===0?'nifty':'banknifty', price=q.last_price, pc=q.ohlc?.close||price, oiChg=q.oi_day_change||0;
+      let signal='neutral';
+      if (price>pc&&oiChg>0) signal='long_buildup';
+      if (price<pc&&oiChg>0) signal='short_buildup';
+      if (price>pc&&oiChg<0) signal='short_covering';
+      if (price<pc&&oiChg<0) signal='long_unwinding';
+      result[name]={ price, prevClose:pc, change:parseFloat((price-pc).toFixed(2)), changePct:parseFloat(((price-pc)/pc*100).toFixed(2)), oi:q.oi, oiChange:oiChg, oiChangePct:q.oi>0?parseFloat((oiChg/(q.oi-oiChg)*100).toFixed(2)):0, signal };
+    });
+    return res.json(result);
+  } catch(e) { return res.status(500).json({ error: e.message }); }
+}
+
 // ── Main handler ─────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -277,9 +455,14 @@ export default async function handler(req, res) {
   const type  = req.query.type;
   const token = await getToken();
 
-  if (type === 'hero')    return handleHero(token, res);
-  if (type === 'indices') return handleIndices(token, res);
-  if (type === 'nifty50') return handleNifty50(token, res);
+  if (type === 'hero')     return handleHero(token, res);
+  if (type === 'indices')  return handleIndices(token, res);
+  if (type === 'nifty50')  return handleNifty50(token, res);
+  if (type === 'futures')  return handleFutures(token, res);
+  if (type === 'pcr')      return handlePCR(token, res);
+  if (type === 'straddle') return handleStraddle(token, res);
+  if (type === 'vwap')     return handleVWAP(token, res);
+  if (type === 'oi')       return handleOI(token, res);
 
-  return res.status(400).json({ error: 'type must be hero, indices, or nifty50' });
+  return res.status(400).json({ error: 'unknown type' });
 }

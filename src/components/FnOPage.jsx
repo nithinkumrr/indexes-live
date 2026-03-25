@@ -169,25 +169,25 @@ function VixTrend({ vix }) {
 }
 
 // ── Futures Premium ───────────────────────────────────────────────────
+// ── Futures Premium (auto-rolling via Kite) ───────────────────────────
 function FuturesPremium() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
     const load = async () => {
       try {
-        // Get Nifty spot from NSE
         const [spotRes, futRes] = await Promise.all([
           fetch('/api/nse-india'),
-          fetch('/api/quote?symbol=NIFTY25MARFUT.NS'),
+          fetch('/api/kite-data?type=futures'),
         ]);
         const spotD = await spotRes.json();
         const futD  = await futRes.json();
-        const spot  = spotD?.nifty50?.price;
-        const fut   = futD?.chart?.result?.[0]?.meta?.regularMarketPrice;
+        const spot  = spotD?.nifty50?.price || spotD?.niftyLast;
+        const fut   = futD?.price;
         if (spot && fut) {
           const premium = parseFloat((fut - spot).toFixed(2));
           const pct     = parseFloat(((premium / spot) * 100).toFixed(2));
-          setData({ spot, fut, premium, pct });
+          setData({ spot, fut, premium, pct, symbol: futD.symbol, oi: futD.oi });
         }
       } catch(_) {}
     };
@@ -198,32 +198,294 @@ function FuturesPremium() {
 
   if (!data) return null;
   const pos = data.premium >= 0;
-
   return (
     <div className="fp-wrap">
-      <div className="fp-label">NIFTY FUTURES PREMIUM</div>
+      <div className="fp-label">
+        NIFTY FUTURES PREMIUM
+        {data.symbol && <span className="fp-sym">{data.symbol}</span>}
+      </div>
       <div className="fp-row">
-        <div className="fp-stat">
-          <span className="fp-stat-label">Spot</span>
-          <span className="fp-stat-val">{data.spot?.toLocaleString('en-IN')}</span>
-        </div>
-        <div className="fp-stat">
-          <span className="fp-stat-label">Futures</span>
-          <span className="fp-stat-val">{data.fut?.toLocaleString('en-IN')}</span>
-        </div>
+        <div className="fp-stat"><span className="fp-stat-label">Spot</span><span className="fp-stat-val">{data.spot?.toLocaleString('en-IN')}</span></div>
+        <div className="fp-stat"><span className="fp-stat-label">Futures</span><span className="fp-stat-val">{data.fut?.toLocaleString('en-IN')}</span></div>
         <div className="fp-stat">
           <span className="fp-stat-label">Premium</span>
-          <span className={`fp-stat-val fp-big ${pos ? 'gain' : 'loss'}`}>
-            {pos ? '+' : ''}{data.premium} ({pos ? '+' : ''}{data.pct}%)
-          </span>
+          <span className={`fp-stat-val fp-big ${pos ? 'gain' : 'loss'}`}>{pos?'+':''}{data.premium} ({pos?'+':''}{data.pct}%)</span>
         </div>
         <div className="fp-signal">
-          <span className={`fp-badge ${pos ? 'fp-bull' : 'fp-bear'}`}>
-            {pos ? '📈 Bullish Bias' : '📉 Bearish Bias'}
-          </span>
+          <span className={`fp-badge ${pos ? 'fp-bull' : 'fp-bear'}`}>{pos ? '📈 Bullish Bias' : '📉 Bearish Bias'}</span>
           <span className="fp-note">{pos ? 'Market expects upside' : 'Market expects downside'}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── PCR + Max Pain ────────────────────────────────────────────────────
+function PCRPanel() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const r = await fetch('/api/kite-data?type=pcr');
+        const j = await r.json();
+        if (j.pcr) { setData(j); setLoading(false); }
+      } catch(_) {}
+    };
+    load();
+    const id = setInterval(load, 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (loading) return <div className="fno-loading">Fetching PCR data...</div>;
+  if (!data)   return null;
+
+  const pcr     = data.pcr;
+  const signal  = pcr > 1.2 ? { label: 'BULLISH', color: '#00C896', note: 'Puts dominate — market hedged / bullish' }
+                : pcr < 0.8 ? { label: 'BEARISH',  color: '#FF4455', note: 'Calls dominate — market complacent / bearish' }
+                :              { label: 'NEUTRAL',  color: '#F59E0B', note: 'Balanced put-call activity' };
+
+  const maxPainDiff = data.maxPain && data.spot ? data.maxPain - data.spot : null;
+
+  return (
+    <div className="pcr-wrap">
+      <div className="pcr-header">
+        <div>
+          <div className="pcr-title">PCR — PUT CALL RATIO</div>
+          <div className="pcr-expiry">{data.expiry} · Nifty Weekly</div>
+        </div>
+        <div className="pcr-value" style={{ color: signal.color }}>{pcr.toFixed(2)}</div>
+      </div>
+
+      <div className="pcr-signal-row">
+        <span className="pcr-badge" style={{ background: `${signal.color}18`, border: `1px solid ${signal.color}40`, color: signal.color }}>{signal.label}</span>
+        <span className="pcr-note">{signal.note}</span>
+      </div>
+
+      <div className="pcr-oi-row">
+        <div className="pcr-oi-item">
+          <span className="pcr-oi-label">Total Call OI</span>
+          <span className="pcr-oi-val loss">{(data.totalCallOI/100000).toFixed(1)}L</span>
+        </div>
+        <div className="pcr-oi-item">
+          <span className="pcr-oi-label">Total Put OI</span>
+          <span className="pcr-oi-val gain">{(data.totalPutOI/100000).toFixed(1)}L</span>
+        </div>
+        <div className="pcr-oi-item">
+          <span className="pcr-oi-label">ATM IV</span>
+          <span className="pcr-oi-val">{data.atmIV ? `${data.atmIV}%` : '—'}</span>
+        </div>
+      </div>
+
+      {data.maxPain > 0 && (
+        <div className="pcr-maxpain">
+          <span className="pcr-mp-label">MAX PAIN</span>
+          <span className="pcr-mp-val">{data.maxPain.toLocaleString('en-IN')}</span>
+          {maxPainDiff !== null && (
+            <span className={`pcr-mp-diff ${maxPainDiff >= 0 ? 'gain' : 'loss'}`}>
+              {maxPainDiff >= 0 ? '+' : ''}{maxPainDiff.toFixed(0)} pts from spot
+            </span>
+          )}
+          <span className="pcr-mp-note">Gravity level — index often pulls toward this at expiry</span>
+        </div>
+      )}
+
+      {data.topStrikes?.length > 0 && (
+        <div className="pcr-strikes">
+          <div className="pcr-strikes-label">OI CONCENTRATION</div>
+          {data.topStrikes.map(s => {
+            const isATM = s.strike === data.atmStrike;
+            const callW = s.totalOI > 0 ? (s.callOI / s.totalOI) * 100 : 50;
+            return (
+              <div key={s.strike} className={`pcr-strike-row ${isATM ? 'pcr-strike-atm' : ''}`}>
+                <span className="pcr-strike-val">{s.strike.toLocaleString('en-IN')}{isATM ? ' ★' : ''}</span>
+                <div className="pcr-oi-bar">
+                  <div className="pcr-oi-bar-call" style={{ width: `${callW}%` }} />
+                  <div className="pcr-oi-bar-put"  style={{ width: `${100-callW}%` }} />
+                </div>
+                <span className="pcr-oi-c loss">{(s.callOI/100000).toFixed(1)}L</span>
+                <span className="pcr-oi-p gain">{(s.putOI/100000).toFixed(1)}L</span>
+              </div>
+            );
+          })}
+          <div className="pcr-oi-legend"><span className="loss">■ Call OI</span><span className="gain">■ Put OI</span></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Straddle Chain ────────────────────────────────────────────────────
+function StraddleChain() {
+  const [data, setData]     = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const r = await fetch('/api/kite-data?type=straddle');
+        const j = await r.json();
+        if (j.straddles) { setData(j); setLoading(false); }
+      } catch(_) {}
+    };
+    load();
+    const id = setInterval(load, 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (loading) return <div className="fno-loading">Fetching straddle chain...</div>;
+  if (!data)   return null;
+
+  return (
+    <div className="straddle-wrap">
+      <div className="straddle-header">
+        <div>
+          <div className="straddle-title">STRADDLE CHAIN — NIFTY</div>
+          <div className="straddle-sub">{data.expiry} · Spot: {data.spot?.toLocaleString('en-IN')}</div>
+        </div>
+        {data.expectedMove != null && (
+          <div className="straddle-move">
+            <span className="straddle-move-label">Expected move</span>
+            <span className="straddle-move-val">±{data.expectedMove}%</span>
+            <span className="straddle-move-pts">±{Math.round(data.spot * data.expectedMove / 100)} pts</span>
+          </div>
+        )}
+      </div>
+
+      <div className="straddle-table">
+        <div className="straddle-thead">
+          <span>Call LTP</span>
+          <span>Call OI</span>
+          <span>Strike</span>
+          <span>Put OI</span>
+          <span>Put LTP</span>
+          <span>Straddle</span>
+          <span>IV</span>
+        </div>
+        {data.straddles.map(s => (
+          <div key={s.strike} className={`straddle-row ${s.isATM ? 'straddle-atm' : ''}`}>
+            <span className="loss">{s.callLTP.toFixed(1)}</span>
+            <span className="straddle-oi">{(s.callOI/100000).toFixed(1)}L</span>
+            <span className="straddle-strike">{s.strike.toLocaleString('en-IN')}{s.isATM ? ' ★' : ''}</span>
+            <span className="straddle-oi">{(s.putOI/100000).toFixed(1)}L</span>
+            <span className="gain">{s.putLTP.toFixed(1)}</span>
+            <span className="straddle-total">{s.straddle.toFixed(1)}</span>
+            <span className="straddle-iv">{s.iv ? `${s.iv}%` : '—'}</span>
+          </div>
+        ))}
+      </div>
+      <div className="straddle-note">★ ATM strike · Straddle = Call LTP + Put LTP · Expected move based on ATM straddle cost</div>
+    </div>
+  );
+}
+
+// ── VWAP ──────────────────────────────────────────────────────────────
+function VWAPPanel() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const r = await fetch('/api/kite-data?type=vwap');
+        const j = await r.json();
+        if (j.vwap) setData(j);
+      } catch(_) {}
+    };
+    load();
+    const id = setInterval(load, 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!data) return null;
+
+  const above  = data.signal === 'above';
+  const diff   = data.currentPrice && data.vwap ? (data.currentPrice - data.vwap).toFixed(2) : null;
+
+  return (
+    <div className="vwap-wrap">
+      <div className="vwap-label">NIFTY FUTURES — VWAP</div>
+      <div className="vwap-row">
+        <div className="vwap-item">
+          <span className="vwap-item-label">VWAP</span>
+          <span className="vwap-item-val">{data.vwap?.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="vwap-item">
+          <span className="vwap-item-label">Last Price</span>
+          <span className={`vwap-item-val ${above ? 'gain' : 'loss'}`}>{data.currentPrice?.toLocaleString('en-IN')}</span>
+        </div>
+        {diff && (
+          <div className="vwap-item">
+            <span className="vwap-item-label">vs VWAP</span>
+            <span className={`vwap-item-val ${above ? 'gain' : 'loss'}`}>{above ? '+' : ''}{diff}</span>
+          </div>
+        )}
+        <div className={`vwap-signal ${above ? 'vwap-above' : 'vwap-below'}`}>
+          <span className="vwap-sig-dot" />
+          {above ? 'Above VWAP — Bullish intraday' : 'Below VWAP — Bearish intraday'}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── OI Buildup ────────────────────────────────────────────────────────
+function OIBuildup() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const r = await fetch('/api/kite-data?type=oi');
+        const j = await r.json();
+        if (j.nifty) setData(j);
+      } catch(_) {}
+    };
+    load();
+    const id = setInterval(load, 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!data) return null;
+
+  const SIGNAL_META = {
+    long_buildup:   { label: 'Long Buildup',   color: '#00C896', note: 'Price ↑ + OI ↑ — fresh longs being added' },
+    short_buildup:  { label: 'Short Buildup',  color: '#FF4455', note: 'Price ↓ + OI ↑ — fresh shorts being added' },
+    short_covering: { label: 'Short Covering', color: '#34D399', note: 'Price ↑ + OI ↓ — shorts exiting' },
+    long_unwinding: { label: 'Long Unwinding', color: '#F97316', note: 'Price ↓ + OI ↓ — longs exiting' },
+    neutral:        { label: 'Neutral',         color: '#64748B', note: 'No clear directional signal' },
+  };
+
+  return (
+    <div className="oib-wrap">
+      <div className="oib-label">OI BUILDUP — FUTURES</div>
+      {[['nifty', 'Nifty 50'], ['banknifty', 'Bank Nifty']].map(([key, name]) => {
+        const d = data[key];
+        if (!d) return null;
+        const m = SIGNAL_META[d.signal] || SIGNAL_META.neutral;
+        return (
+          <div key={key} className="oib-row">
+            <div className="oib-name">{name}</div>
+            <div className="oib-price-col">
+              <span className={`oib-price ${d.changePct >= 0 ? 'gain' : 'loss'}`}>{d.price?.toLocaleString('en-IN')}</span>
+              <span className={`oib-chg ${d.changePct >= 0 ? 'gain' : 'loss'}`}>{d.changePct >= 0 ? '+' : ''}{d.changePct}%</span>
+            </div>
+            <div className="oib-oi-col">
+              <span className="oib-oi-label">OI</span>
+              <span className="oib-oi-val">{d.oi ? (d.oi/100000).toFixed(1) + 'L' : '—'}</span>
+              {d.oiChange !== 0 && (
+                <span className={`oib-oi-chg ${d.oiChange > 0 ? 'gain' : 'loss'}`}>
+                  {d.oiChange > 0 ? '+' : ''}{d.oiChangePct}%
+                </span>
+              )}
+            </div>
+            <div className="oib-signal-col">
+              <span className="oib-sig-badge" style={{ color: m.color, borderColor: `${m.color}40`, background: `${m.color}12` }}>{m.label}</span>
+              <span className="oib-sig-note">{m.note}</span>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -401,6 +663,24 @@ export default function FnOPage() {
           <FuturesPremium />
           <AdvanceDecline />
         </div>
+      </div>
+
+      {/* VWAP + OI Buildup */}
+      <div className="fno-section">
+        <div className="fno-two-col">
+          <VWAPPanel />
+          <OIBuildup />
+        </div>
+      </div>
+
+      {/* PCR + Max Pain */}
+      <div className="fno-section">
+        <PCRPanel />
+      </div>
+
+      {/* Straddle Chain */}
+      <div className="fno-section">
+        <StraddleChain />
       </div>
 
       {/* FII / DII */}
