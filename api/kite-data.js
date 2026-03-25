@@ -297,19 +297,27 @@ async function getNFOInstruments(token) {
 async function handleFutures(token, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (!token) return res.status(401).json({ error: 'no_token' });
-  const { symbol, date } = getCurrentMonthlyExpiry();
+  const { symbol } = getCurrentMonthlyExpiry();
   try {
-    const text   = await getNFOInstruments(token);
-    const expStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-    const line   = text.split('\n').find(l => l.includes(expStr) && l.includes(',NIFTY,') && l.includes('FUT'));
-    if (!line) return res.json({ error: 'instrument_not_found', symbol });
-    const itoken = line.split(',')[0];
-    const qr = await fetch(`https://api.kite.trade/quote?i=NFO:${itoken}`, { headers: kiteHeaders(token) });
+    const text  = await getNFOInstruments(token);
+    const ist   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const today = `${ist.getFullYear()}-${String(ist.getMonth()+1).padStart(2,'0')}-${String(ist.getDate()).padStart(2,'0')}`;
+
+    // Find nearest Nifty futures (not fragile date string matching)
+    const fut = text.split('\n')
+      .filter(l => l.includes(',NIFTY,') && l.includes(',FUT,'))
+      .map(l => { const c = l.split(','); return { token: c[0], expiry: c[5], sym: c[2] }; })
+      .filter(f => f.expiry >= today)
+      .sort((a, b) => new Date(a.expiry) - new Date(b.expiry))[0];
+
+    if (!fut) return res.json({ error: 'instrument_not_found', symbol });
+
+    const qr = await fetch(`https://api.kite.trade/quote?i=NFO:${fut.token}`, { headers: kiteHeaders(token) });
     const qj = await qr.json();
     const q  = Object.values(qj?.data || {})[0];
-    if (!q) return res.json({ error: 'no_quote', symbol });
+    if (!q) return res.json({ error: 'no_quote', symbol: fut.sym });
     const price = q.last_price, pc = q.ohlc?.close || price;
-    return res.json({ symbol, price, prevClose: pc,
+    return res.json({ symbol: fut.sym, price, prevClose: pc,
       change: parseFloat((price-pc).toFixed(2)), changePct: parseFloat(((price-pc)/pc*100).toFixed(2)),
       oi: q.oi, oiChange: q.oi_day_change, open: q.ohlc?.open, high: q.ohlc?.high, low: q.ohlc?.low });
   } catch(e) { return res.status(500).json({ error: e.message, symbol }); }
@@ -501,18 +509,31 @@ async function handleVWAP(token, res) {
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
   if (!token) return res.status(401).json({ error: 'no_token' });
   try {
-    const text   = await getNFOInstruments(token);
-    const { date } = getCurrentMonthlyExpiry();
-    const expStr   = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-    const line     = text.split('\n').find(l => l.includes(expStr) && l.includes(',NIFTY,') && l.includes('FUT'));
-    if (!line) throw new Error('Nifty futures not found');
-    const instrToken = line.split(',')[0];
-    const ist   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const text  = await getNFOInstruments(token);
+    const lines = text.split('\n');
+
+    // Find nearest Nifty futures (any FUT on NIFTY, pick closest expiry)
+    const niftyFuts = lines
+      .filter(l => l.includes(',NIFTY,') && l.includes(',FUT,'))
+      .map(l => { const c = l.split(','); return { token: c[0], expiry: c[5] }; })
+      .filter(f => f.expiry)
+      .sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+
+    const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    // Filter to expiry >= today
     const today = `${ist.getFullYear()}-${String(ist.getMonth()+1).padStart(2,'0')}-${String(ist.getDate()).padStart(2,'0')}`;
-    const histR = await fetch(`https://api.kite.trade/instruments/historical/${instrToken}/5minute?from=${today}+09:15:00&to=${today}+15:30:00`, { headers: kiteHeaders(token) });
+    const fut = niftyFuts.find(f => f.expiry >= today) || niftyFuts[0];
+    if (!fut) throw new Error('Nifty futures not found');
+
+    const instrToken = fut.token;
+    // Fix: encode space as %20, not +
+    const histR = await fetch(
+      `https://api.kite.trade/instruments/historical/${instrToken}/5minute?from=${today}%2009:15:00&to=${today}%2015:30:00`,
+      { headers: kiteHeaders(token) }
+    );
     if (!histR.ok) throw new Error(`historical ${histR.status}`);
     const candles = (await histR.json())?.data?.candles || [];
-    if (!candles.length) return res.json({ error: 'no_candles' });
+    if (!candles.length) return res.json({ error: 'no_candles', date: today });
     let sumTPV = 0, sumV = 0;
     for (const [,o,h,l,c,v] of candles) { const tp=(h+l+c)/3; sumTPV+=tp*v; sumV+=v; }
     const vwap = sumV > 0 ? parseFloat((sumTPV/sumV).toFixed(2)) : null;
@@ -525,24 +546,42 @@ async function handleOI(token, res) {
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
   if (!token) return res.status(401).json({ error: 'no_token' });
   try {
-    const text   = await getNFOInstruments(token);
-    const { date } = getCurrentMonthlyExpiry();
-    const expStr   = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-    const lines    = text.split('\n');
-    const niftyLine = lines.find(l => l.includes(expStr) && l.includes(',NIFTY,')    && l.includes('FUT'));
-    const bankLine  = lines.find(l => l.includes(expStr) && l.includes(',BANKNIFTY,') && l.includes('FUT'));
-    const instrs    = [niftyLine, bankLine].filter(Boolean).map(l => l.split(',')[0]);
-    if (!instrs.length) throw new Error('instruments not found');
-    const qj = await (await fetch(`https://api.kite.trade/quote?${instrs.map(i=>`i=NFO:${i}`).join('&')}`, { headers: kiteHeaders(token) })).json();
+    const text  = await getNFOInstruments(token);
+    const lines = text.split('\n');
+    const ist   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const today = `${ist.getFullYear()}-${String(ist.getMonth()+1).padStart(2,'0')}-${String(ist.getDate()).padStart(2,'0')}`;
+
+    // Find nearest futures for each index
+    function findNearest(indexName) {
+      return lines
+        .filter(l => l.includes(`,${indexName},`) && l.includes(',FUT,'))
+        .map(l => { const c = l.split(','); return { token: c[0], expiry: c[5] }; })
+        .filter(f => f.expiry >= today)
+        .sort((a, b) => new Date(a.expiry) - new Date(b.expiry))[0];
+    }
+
+    const niftyFut = findNearest('NIFTY');
+    const bankFut  = findNearest('BANKNIFTY');
+    const instrs   = [niftyFut, bankFut].filter(Boolean).map(f => `NFO:${f.token}`);
+    if (!instrs.length) throw new Error('No futures instruments found');
+
+    const params = instrs.map(i => `i=${encodeURIComponent(i)}`).join('&');
+    const qj = await (await fetch(`https://api.kite.trade/quote?${params}`, { headers: kiteHeaders(token) })).json();
     const result = {};
-    Object.entries(qj?.data||{}).forEach(([,q], idx) => {
-      const name = idx===0?'nifty':'banknifty', price=q.last_price, pc=q.ohlc?.close||price, oiChg=q.oi_day_change||0;
-      let signal='neutral';
-      if (price>pc&&oiChg>0) signal='long_buildup';
-      if (price<pc&&oiChg>0) signal='short_buildup';
-      if (price>pc&&oiChg<0) signal='short_covering';
-      if (price<pc&&oiChg<0) signal='long_unwinding';
-      result[name]={ price, prevClose:pc, change:parseFloat((price-pc).toFixed(2)), changePct:parseFloat(((price-pc)/pc*100).toFixed(2)), oi:q.oi, oiChange:oiChg, oiChangePct:q.oi>0?parseFloat((oiChg/(q.oi-oiChg)*100).toFixed(2)):0, signal };
+    const names  = ['nifty', 'banknifty'];
+    Object.entries(qj?.data || {}).forEach(([, q], idx) => {
+      const name = names[idx];
+      const price = q.last_price, pc = q.ohlc?.close || price, oiChg = q.oi_day_change || 0;
+      let signal = 'neutral';
+      if (price > pc && oiChg > 0) signal = 'long_buildup';
+      if (price < pc && oiChg > 0) signal = 'short_buildup';
+      if (price > pc && oiChg < 0) signal = 'short_covering';
+      if (price < pc && oiChg < 0) signal = 'long_unwinding';
+      result[name] = { price, prevClose: pc,
+        change: parseFloat((price-pc).toFixed(2)), changePct: parseFloat(((price-pc)/pc*100).toFixed(2)),
+        oi: q.oi, oiChange: oiChg,
+        oiChangePct: q.oi > 0 ? parseFloat((oiChg/(q.oi - oiChg)*100).toFixed(2)) : 0,
+        signal };
     });
     return res.json(result);
   } catch(e) { return res.status(500).json({ error: e.message }); }

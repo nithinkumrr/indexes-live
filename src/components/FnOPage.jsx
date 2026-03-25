@@ -181,7 +181,8 @@ function VixTrend({ vix }) {
 // ── Futures Premium ───────────────────────────────────────────────────
 // ── Futures Premium (auto-rolling via Kite) ───────────────────────────
 function FuturesPremium() {
-  const [data, setData] = useState(null);
+  const [data, setData]     = useState(null);
+  const [noToken, setNoToken] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -190,6 +191,7 @@ function FuturesPremium() {
           fetch('/api/nse-india'),
           fetch('/api/kite-data?type=futures'),
         ]);
+        if (futRes.status === 401) { setNoToken(true); return; }
         const spotD = await spotRes.json();
         const futD  = await futRes.json();
         const spot  = spotD?.nifty50?.price || spotD?.niftyLast;
@@ -198,6 +200,7 @@ function FuturesPremium() {
           const premium = parseFloat((fut - spot).toFixed(2));
           const pct     = parseFloat(((premium / spot) * 100).toFixed(2));
           setData({ spot, fut, premium, pct, symbol: futD.symbol, oi: futD.oi });
+          setNoToken(false);
         }
       } catch(_) {}
     };
@@ -206,15 +209,18 @@ function FuturesPremium() {
     return () => clearInterval(id);
   }, []);
 
-  if (!data) return (
+  if (noToken) return (
     <div className="fp-wrap fno-kite-prompt">
       <div className="fp-label">NIFTY FUTURES PREMIUM</div>
       <KitePrompt text="Login with Kite for live futures data" />
     </div>
   );
-  const pos = data.premium >= 0;
-  return (
-    <div className="fp-wrap">
+  if (!data) return (
+    <div className="fp-wrap fno-kite-prompt">
+      <div className="fp-label">NIFTY FUTURES PREMIUM</div>
+      <div className="fno-unavail">Fetching futures data...</div>
+    </div>
+  );
       <div className="fp-label">
         NIFTY FUTURES PREMIUM
         {data.symbol && <span className="fp-sym">{data.symbol}</span>}
@@ -460,14 +466,16 @@ function StraddleChain() {
 
 // ── VWAP ──────────────────────────────────────────────────────────────
 function VWAPPanel() {
-  const [data, setData] = useState(null);
+  const [data, setData]       = useState(null);
+  const [noToken, setNoToken] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
         const r = await fetch('/api/kite-data?type=vwap');
+        if (r.status === 401) { setNoToken(true); return; }
         const j = await r.json();
-        if (j.vwap) setData(j);
+        if (j.vwap) { setData(j); setNoToken(false); }
       } catch(_) {}
     };
     load();
@@ -475,13 +483,20 @@ function VWAPPanel() {
     return () => clearInterval(id);
   }, []);
 
-  if (!data) return (
+  if (noToken) return (
     <div className="vwap-wrap fno-kite-prompt">
       <div className="vwap-label">NIFTY FUTURES — VWAP</div>
       <KitePrompt text="Login with Kite for intraday VWAP" />
     </div>
   );
-  const diff   = data.currentPrice && data.vwap ? (data.currentPrice - data.vwap).toFixed(2) : null;
+  if (!data) return (
+    <div className="vwap-wrap fno-kite-prompt">
+      <div className="vwap-label">NIFTY FUTURES — VWAP</div>
+      <div className="fno-unavail">VWAP available during market hours (9:15–15:30 IST)</div>
+    </div>
+  );
+  const above = data.signal === 'above';
+  const diff  = data.currentPrice && data.vwap ? (data.currentPrice - data.vwap).toFixed(2) : null;
 
   return (
     <div className="vwap-wrap">
@@ -512,14 +527,16 @@ function VWAPPanel() {
 
 // ── OI Buildup ────────────────────────────────────────────────────────
 function OIBuildup() {
-  const [data, setData] = useState(null);
+  const [data, setData]       = useState(null);
+  const [noToken, setNoToken] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
         const r = await fetch('/api/kite-data?type=oi');
+        if (r.status === 401) { setNoToken(true); return; }
         const j = await r.json();
-        if (j.nifty) setData(j);
+        if (j.nifty) { setData(j); setNoToken(false); }
       } catch(_) {}
     };
     load();
@@ -527,10 +544,16 @@ function OIBuildup() {
     return () => clearInterval(id);
   }, []);
 
-  if (!data) return (
+  if (noToken) return (
     <div className="oib-wrap fno-kite-prompt">
       <div className="oib-label">OI BUILDUP — FUTURES</div>
       <KitePrompt text="Login with Kite for OI buildup signals" />
+    </div>
+  );
+  if (!data) return (
+    <div className="oib-wrap fno-kite-prompt">
+      <div className="oib-label">OI BUILDUP — FUTURES</div>
+      <div className="fno-unavail">Fetching OI data...</div>
     </div>
   );
     long_buildup:   { label: 'Long Buildup',   color: '#00C896', note: 'Price ↑ + OI ↑ — fresh longs being added' },
