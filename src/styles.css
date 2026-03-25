@@ -2303,3 +2303,57 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .fno-greeks-grid  { grid-template-columns: repeat(2, 1fr); }
   .fno-sizer-stats  { grid-template-columns: 1fr; }
 }
+
+/* ── Strategy Calculator ─────────────────────────────────────────────────── */
+.fno-strat-calc      { border-bottom: 1px solid var(--border); }
+.fno-strat-top       { display: flex; align-items: flex-end; gap: 12px; padding: 12px 20px 0; flex-wrap: wrap; }
+.fno-strat-selector-wrap { position: relative; }
+.fno-strat-selector-btn  {
+  display: flex; align-items: center; gap: 10px; justify-content: space-between;
+  font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text);
+  background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r);
+  padding: 6px 12px; cursor: pointer; min-width: 200px; transition: border-color .15s;
+}
+.fno-strat-selector-btn:hover { border-color: var(--accent); }
+.fno-strat-sel-arrow { color: var(--text3); font-size: 10px; }
+.fno-strat-menu {
+  position: absolute; top: 100%; left: 0; z-index: 50; min-width: 220px;
+  background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r);
+  max-height: 360px; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  margin-top: 4px;
+}
+.fno-strat-menu-group { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px;
+  color: var(--accent); padding: 8px 12px 4px; }
+.fno-strat-menu-item  { font-family: var(--mono); font-size: 12px; color: var(--text2);
+  padding: 7px 16px; cursor: pointer; transition: background .1s; }
+.fno-strat-menu-item:hover  { background: var(--bg4); color: var(--text); }
+.fno-strat-menu-active      { color: var(--accent) !important; background: rgba(74,158,255,0.08); }
+
+/* Legs */
+.fno-strat-legs   { display: flex; flex-direction: column; gap: 0; padding: 12px 20px 0; }
+.fno-strat-leg    { display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+  border-radius: var(--r); margin-bottom: 6px; background: var(--bg2); border: 1px solid var(--border); }
+.fno-leg-buy      { border-left: 3px solid #4A9EFF; }
+.fno-leg-sell     { border-left: 3px solid #F59E0B; }
+.fno-leg-dir      { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; min-width: 44px; }
+.fno-leg-type     { font-family: var(--mono); font-size: 10px; font-weight: 700; min-width: 36px; }
+.fno-leg-field    { display: flex; flex-direction: column; gap: 1px; font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.fno-leg-input    { font-family: var(--mono); font-size: 12px; background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text); border-radius: 4px; padding: 3px 7px; width: 80px; }
+.fno-leg-cost     { font-family: var(--mono); font-size: 11px; font-weight: 600; margin-left: auto; }
+.fno-leg-net      { font-family: var(--mono); font-size: 12px; color: var(--text3); text-align: right; padding: 4px 0 8px; }
+
+/* Chart area */
+.fno-strat-chart  { padding: 8px 20px 0; }
+
+/* Stats row */
+.fno-strat-stats  { display: flex; gap: 24px; padding: 12px 20px; flex-wrap: wrap; border-top: 1px solid var(--border); }
+.fno-strat-stat   { display: flex; flex-direction: column; gap: 3px; }
+.fno-strat-stat-l { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text3); }
+.fno-strat-stat-v { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); }
+
+@media (max-width: 768px) {
+  .fno-strat-top    { gap: 8px; }
+  .fno-strat-leg    { flex-wrap: wrap; gap: 8px; }
+  .fno-strat-stats  { gap: 14px; }
+}

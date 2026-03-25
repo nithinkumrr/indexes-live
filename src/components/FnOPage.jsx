@@ -532,7 +532,378 @@ function ThetaDecayCurve() {
 // ─────────────────────────────────────────────────────────────────────────────
 // PAYOFF DIAGRAM BUILDER
 // ─────────────────────────────────────────────────────────────────────────────
-function PayoffBuilder({ data }) {
+function PayoffBuilder({ data }) { return <StrategyCalculator data={data} />; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STRATEGY CALCULATOR — full multi-leg payoff builder
+// ─────────────────────────────────────────────────────────────────────────────
+const STRATEGY_GROUPS = [
+  { group: 'SINGLE LEG', items: [
+    { id: 'long_call',  label: 'Long Call'  },
+    { id: 'long_put',   label: 'Long Put'   },
+    { id: 'short_call', label: 'Short Call' },
+    { id: 'short_put',  label: 'Short Put'  },
+  ]},
+  { group: 'VOLATILITY', items: [
+    { id: 'long_straddle',  label: 'Long Straddle'  },
+    { id: 'short_straddle', label: 'Short Straddle' },
+    { id: 'long_strangle',  label: 'Long Strangle'  },
+    { id: 'short_strangle', label: 'Short Strangle' },
+    { id: 'long_guts',      label: 'Long Guts'      },
+    { id: 'short_guts',     label: 'Short Guts'     },
+  ]},
+  { group: 'VERTICAL SPREADS', items: [
+    { id: 'bull_call_spread', label: 'Bull Call Spread' },
+    { id: 'bear_call_spread', label: 'Bear Call Spread' },
+    { id: 'bull_put_spread',  label: 'Bull Put Spread'  },
+    { id: 'bear_put_spread',  label: 'Bear Put Spread'  },
+  ]},
+  { group: 'IRON STRATS', items: [
+    { id: 'short_iron_condor',    label: 'Short Iron Condor'    },
+    { id: 'long_iron_condor',     label: 'Long Iron Condor'     },
+    { id: 'short_iron_butterfly', label: 'Short Iron Butterfly' },
+    { id: 'long_iron_butterfly',  label: 'Long Iron Butterfly'  },
+  ]},
+  { group: 'BUTTERFLY', items: [
+    { id: 'long_call_butterfly',  label: 'Long Call Butterfly'  },
+    { id: 'short_call_butterfly', label: 'Short Call Butterfly' },
+    { id: 'long_put_butterfly',   label: 'Long Put Butterfly'   },
+    { id: 'short_put_butterfly',  label: 'Short Put Butterfly'  },
+  ]},
+  { group: 'CONDOR', items: [
+    { id: 'long_call_condor',  label: 'Long Call Condor'  },
+    { id: 'short_call_condor', label: 'Short Call Condor' },
+    { id: 'long_put_condor',   label: 'Long Put Condor'   },
+    { id: 'short_put_condor',  label: 'Short Put Condor'  },
+  ]},
+  { group: 'SYNTHETIC', items: [
+    { id: 'synthetic_long',  label: 'Synthetic Long'  },
+    { id: 'synthetic_short', label: 'Synthetic Short' },
+  ]},
+];
+
+// Returns default legs for a strategy given a spot price
+function defaultLegs(stratId, spot) {
+  const S = spot, step = S > 10000 ? 100 : 50;
+  const atm = Math.round(S / step) * step;
+  const w   = step * 2; // wing width
+
+  // leg shape: { type:'call'|'put', qty:+1|-1, strike, premium, label }
+  const C = (K, p, q, lbl) => ({ type:'call', qty:q, strike:K, premium:p, label:lbl });
+  const P = (K, p, q, lbl) => ({ type:'put',  qty:q, strike:K, premium:p, label:lbl });
+
+  const map = {
+    long_call:  [C(atm, 150, 1, 'Long Call')],
+    long_put:   [P(atm, 150, 1, 'Long Put')],
+    short_call: [C(atm, 150,-1, 'Short Call')],
+    short_put:  [P(atm, 150,-1, 'Short Put')],
+
+    long_straddle:  [C(atm,150, 1,'Call'), P(atm,150, 1,'Put')],
+    short_straddle: [C(atm,150,-1,'Call'), P(atm,150,-1,'Put')],
+    long_strangle:  [C(atm+w,100, 1,'OTM Call'), P(atm-w,100, 1,'OTM Put')],
+    short_strangle: [C(atm+w,100,-1,'OTM Call'), P(atm-w,100,-1,'OTM Put')],
+    long_guts:      [C(atm-w,250, 1,'ITM Call'), P(atm+w,250, 1,'ITM Put')],
+    short_guts:     [C(atm-w,250,-1,'ITM Call'), P(atm+w,250,-1,'ITM Put')],
+
+    bull_call_spread: [C(atm,150, 1,'Buy Call'), C(atm+w, 70,-1,'Sell Call')],
+    bear_call_spread: [C(atm,150,-1,'Sell Call'), C(atm+w, 70, 1,'Buy Call')],
+    bull_put_spread:  [P(atm-w, 70,-1,'Sell Put'), P(atm,150, 1,'Buy Put')],
+    bear_put_spread:  [P(atm,150, 1,'Buy Put'), P(atm-w, 70,-1,'Sell Put')],
+
+    short_iron_condor:    [P(atm-w*2,40, 1,'Buy Put'), P(atm-w,80,-1,'Sell Put'), C(atm+w,80,-1,'Sell Call'), C(atm+w*2,40, 1,'Buy Call')],
+    long_iron_condor:     [P(atm-w*2,40,-1,'Sell Put'), P(atm-w,80, 1,'Buy Put'), C(atm+w,80, 1,'Buy Call'), C(atm+w*2,40,-1,'Sell Call')],
+    short_iron_butterfly: [P(atm-w,80, 1,'Buy Put'), P(atm,150,-1,'Sell Put'), C(atm,150,-1,'Sell Call'), C(atm+w,80, 1,'Buy Call')],
+    long_iron_butterfly:  [P(atm-w,80,-1,'Sell Put'), P(atm,150, 1,'Buy Put'), C(atm,150, 1,'Buy Call'), C(atm+w,80,-1,'Sell Call')],
+
+    long_call_butterfly:  [C(atm-w,120, 1,'Buy Call'), C(atm,150,-2,'Sell 2× Call'), C(atm+w, 80, 1,'Buy Call')],
+    short_call_butterfly: [C(atm-w,120,-1,'Sell Call'), C(atm,150, 2,'Buy 2× Call'), C(atm+w, 80,-1,'Sell Call')],
+    long_put_butterfly:   [P(atm-w, 80, 1,'Buy Put'), P(atm,150,-2,'Sell 2× Put'), P(atm+w,120, 1,'Buy Put')],
+    short_put_butterfly:  [P(atm-w, 80,-1,'Sell Put'), P(atm,150, 2,'Buy 2× Put'), P(atm+w,120,-1,'Sell Put')],
+
+    long_call_condor:  [C(atm-w*2,150, 1,'Buy Call'), C(atm-w,120,-1,'Sell Call'), C(atm+w,80,-1,'Sell Call'), C(atm+w*2,60, 1,'Buy Call')],
+    short_call_condor: [C(atm-w*2,150,-1,'Sell Call'), C(atm-w,120, 1,'Buy Call'), C(atm+w,80, 1,'Buy Call'), C(atm+w*2,60,-1,'Sell Call')],
+    long_put_condor:   [P(atm-w*2, 60, 1,'Buy Put'), P(atm-w, 80,-1,'Sell Put'), P(atm+w,120,-1,'Sell Put'), P(atm+w*2,150, 1,'Buy Put')],
+    short_put_condor:  [P(atm-w*2, 60,-1,'Sell Put'), P(atm-w, 80, 1,'Buy Put'), P(atm+w,120, 1,'Buy Put'), P(atm+w*2,150,-1,'Sell Put')],
+
+    synthetic_long:  [C(atm,150, 1,'Long Call'), P(atm,150,-1,'Short Put')],
+    synthetic_short: [C(atm,150,-1,'Short Call'), P(atm,150, 1,'Long Put')],
+  };
+  return (map[stratId] || map.long_call).map(l => ({ ...l }));
+}
+
+function StrategyCalculator({ data }) {
+  const spotDefault  = data?.nifty50?.price ? Math.round(data.nifty50.price / 100) * 100 : 23000;
+  const [stratId,  setStratId]  = useState('long_straddle');
+  const [spot,     setSpot]     = useState(spotDefault);
+  const [lots,     setLots]     = useState(1);
+  const [legs,     setLegs]     = useState(() => defaultLegs('long_straddle', spotDefault));
+  const [menuOpen, setMenuOpen] = useState(false);
+  const LOT = 75;
+
+  const selectStrategy = (id) => {
+    setStratId(id);
+    setLegs(defaultLegs(id, spot));
+    setMenuOpen(false);
+  };
+
+  const updateLeg = (i, field, val) => {
+    setLegs(prev => prev.map((l, idx) => idx === i ? { ...l, [field]: +val } : l));
+  };
+
+  const stratLabel = STRATEGY_GROUPS.flatMap(g => g.items).find(s => s.id === stratId)?.label || '';
+
+  // Compute PnL across price range
+  const { range, pnls, netCredit } = useMemo(() => {
+    const allStrikes = legs.map(l => l.strike);
+    const minS = Math.min(...allStrikes), maxS = Math.max(...allStrikes);
+    const step  = spot > 10000 ? 50 : 25;
+    const from  = Math.min(minS - step * 10, spot - step * 10);
+    const to    = Math.max(maxS + step * 10, spot + step * 10);
+    const range = [];
+    for (let s = from; s <= to; s += step) range.push(s);
+
+    const pnls = range.map(s => {
+      let total = 0;
+      for (const leg of legs) {
+        const intrinsic = leg.type === 'call'
+          ? Math.max(0, s - leg.strike)
+          : Math.max(0, leg.strike - s);
+        total += leg.qty * (intrinsic - leg.premium) * lots * LOT;
+      }
+      return total;
+    });
+
+    const netCredit = -legs.reduce((sum, l) => sum + l.qty * l.premium * lots * LOT, 0);
+    return { range, pnls, netCredit };
+  }, [legs, lots, spot]);
+
+  const maxPnl = Math.max(...pnls), minPnl = Math.min(...pnls);
+  const span   = Math.max(maxPnl - minPnl, 1);
+
+  // Breakeven points
+  const breakevens = useMemo(() => {
+    const bvs = [];
+    for (let i = 0; i < pnls.length - 1; i++) {
+      if ((pnls[i] < 0 && pnls[i+1] >= 0) || (pnls[i] >= 0 && pnls[i+1] < 0)) {
+        const frac = -pnls[i] / (pnls[i+1] - pnls[i]);
+        bvs.push(Math.round(range[i] + frac * (range[i+1] - range[i])));
+      }
+    }
+    return bvs;
+  }, [pnls, range]);
+
+  // SVG dims
+  const W = 640, H = 200, PAD = { t: 20, r: 20, b: 36, l: 60 };
+  const CW = W - PAD.l - PAD.r, CH = H - PAD.t - PAD.b;
+
+  const toX = (s) => PAD.l + ((s - range[0]) / (range[range.length-1] - range[0])) * CW;
+  const toY = (p) => PAD.t + CH - ((p - minPnl) / span) * CH;
+  const zeroY = toY(0);
+
+  const pathD = range.map((s, i) => `${i===0?'M':'L'}${toX(s).toFixed(1)},${toY(pnls[i]).toFixed(1)}`).join(' ');
+
+  // Colour based on whether net debit or credit
+  const curveColor = netCredit >= 0 ? '#F59E0B' : '#4A9EFF';
+
+  // X-axis labels — show strikes + a few others
+  const strikeSet = new Set(legs.map(l => l.strike));
+  const xLabels = range.filter((s, i) => {
+    if (strikeSet.has(s)) return true;
+    return i % Math.floor(range.length / 6) === 0;
+  });
+
+  const fmt  = n => Math.abs(n) >= 100000 ? `₹${(n/100000).toFixed(1)}L` : `₹${Math.abs(n/1000).toFixed(0)}k`;
+  const fmtN = n => n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+  const isUnlimited = (v) => Math.abs(v) > 5000000;
+
+  return (
+    <div className="fno-strat-calc">
+      <div className="fno-widget-title" style={{ padding: '20px 20px 0' }}>
+        STRATEGY CALCULATOR
+        <span className="fno-widget-formula">payoff at expiry · for reference only</span>
+      </div>
+
+      <div className="fno-strat-top">
+        {/* Strategy selector */}
+        <div className="fno-strat-selector-wrap">
+          <button className="fno-strat-selector-btn" onClick={() => setMenuOpen(m => !m)}>
+            <span className="fno-strat-sel-label">{stratLabel}</span>
+            <span className="fno-strat-sel-arrow">{menuOpen ? '▲' : '▼'}</span>
+          </button>
+          {menuOpen && (
+            <div className="fno-strat-menu">
+              {STRATEGY_GROUPS.map(g => (
+                <div key={g.group}>
+                  <div className="fno-strat-menu-group">{g.group}</div>
+                  {g.items.map(s => (
+                    <div key={s.id}
+                      className={`fno-strat-menu-item ${s.id === stratId ? 'fno-strat-menu-active' : ''}`}
+                      onClick={() => selectStrategy(s.id)}>{s.label}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Spot + lots */}
+        <label className="fno-payoff-field">
+          <span>Spot</span>
+          <input type="number" value={spot} step={50} className="fno-payoff-input"
+            onChange={e => { setSpot(+e.target.value); setLegs(defaultLegs(stratId, +e.target.value)); }} />
+        </label>
+        <label className="fno-payoff-field">
+          <span>Lots</span>
+          <input type="number" value={lots} step={1} min={1} className="fno-payoff-input" style={{ width: 60 }}
+            onChange={e => setLots(+e.target.value)} />
+        </label>
+      </div>
+
+      {/* Leg inputs */}
+      <div className="fno-strat-legs">
+        {legs.map((leg, i) => (
+          <div key={i} className={`fno-strat-leg ${leg.qty > 0 ? 'fno-leg-buy' : 'fno-leg-sell'}`}>
+            <span className="fno-leg-dir" style={{ color: leg.qty > 0 ? '#4A9EFF' : '#F59E0B' }}>
+              {leg.qty > 0 ? 'BUY' : 'SELL'} {Math.abs(leg.qty) > 1 ? `${Math.abs(leg.qty)}×` : ''}
+            </span>
+            <span className={`fno-leg-type ${leg.type === 'call' ? 'loss' : 'gain'}`}>{leg.type.toUpperCase()}</span>
+            <label className="fno-leg-field">
+              <span>Strike</span>
+              <input type="number" value={leg.strike} step={50} className="fno-leg-input"
+                onChange={e => updateLeg(i, 'strike', e.target.value)} />
+            </label>
+            <label className="fno-leg-field">
+              <span>Premium</span>
+              <input type="number" value={leg.premium} step={5} min={1} className="fno-leg-input"
+                onChange={e => updateLeg(i, 'premium', e.target.value)} />
+            </label>
+            <span className="fno-leg-cost" style={{ color: leg.qty > 0 ? 'var(--loss)' : 'var(--gain)' }}>
+              {leg.qty > 0 ? '-' : '+'}₹{Math.abs(leg.qty * leg.premium * lots * LOT).toLocaleString('en-IN')}
+            </span>
+          </div>
+        ))}
+        <div className="fno-leg-net">
+          Net {netCredit >= 0 ? <span className="gain">Credit ₹{netCredit.toLocaleString('en-IN')}</span> : <span className="loss">Debit ₹{Math.abs(netCredit).toLocaleString('en-IN')}</span>}
+        </div>
+      </div>
+
+      {/* Payoff chart */}
+      <div className="fno-strat-chart">
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%' }}>
+          <defs>
+            <linearGradient id="stratGradPos" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={curveColor} stopOpacity="0.2" />
+              <stop offset="100%" stopColor={curveColor} stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+
+          {/* Grid */}
+          {[minPnl, 0, maxPnl].map(v => {
+            const y = toY(v); if (y < PAD.t - 2 || y > PAD.t + CH + 2) return null;
+            return <line key={v} x1={PAD.l} y1={y} x2={PAD.l + CW} y2={y} stroke="var(--border)" strokeWidth="1" />;
+          })}
+
+          {/* Zero line */}
+          {zeroY >= PAD.t && zeroY <= PAD.t + CH && (
+            <line x1={PAD.l} y1={zeroY} x2={PAD.l + CW} y2={zeroY} stroke="var(--border2)" strokeWidth="1.5" strokeDasharray="5,4" />
+          )}
+
+          {/* Strike lines */}
+          {legs.map((leg, i) => {
+            const x = toX(leg.strike);
+            if (x < PAD.l || x > PAD.l + CW) return null;
+            return <line key={i} x1={x} y1={PAD.t} x2={x} y2={PAD.t + CH}
+              stroke={leg.type === 'call' ? 'rgba(255,68,85,0.3)' : 'rgba(0,200,150,0.3)'}
+              strokeWidth="1" strokeDasharray="3,3" />;
+          })}
+
+          {/* Breakeven lines */}
+          {breakevens.map((be, i) => {
+            const x = toX(be);
+            if (x < PAD.l || x > PAD.l + CW) return null;
+            return <line key={i} x1={x} y1={PAD.t} x2={x} y2={PAD.t + CH}
+              stroke="#F59E0B" strokeWidth="1" strokeDasharray="2,3" />;
+          })}
+
+          {/* Area fill */}
+          <path d={`${pathD} L${toX(range[range.length-1])},${zeroY} L${toX(range[0])},${zeroY} Z`}
+            fill={`url(#stratGradPos)`} opacity="0.6" />
+
+          {/* Main curve */}
+          <path d={pathD} fill="none" stroke={curveColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+          {/* Y labels */}
+          {[minPnl, 0, maxPnl].filter((v,i,a) => a.indexOf(v) === i).map(v => {
+            const y = toY(v); if (y < PAD.t || y > PAD.t + CH) return null;
+            return <text key={v} x={PAD.l - 5} y={y + 4} textAnchor="end"
+              fill={v > 0 ? 'var(--gain)' : v < 0 ? 'var(--loss)' : 'var(--text3)'}
+              fontSize="9" fontFamily="monospace">
+              {v === 0 ? '0' : isUnlimited(v) ? '∞' : fmt(v)}
+            </text>;
+          })}
+
+          {/* X labels */}
+          {xLabels.map(s => {
+            const x = toX(s); if (x < PAD.l || x > PAD.l + CW) return null;
+            const isStrike = strikeSet.has(s);
+            return <text key={s} x={x} y={PAD.t + CH + 14} textAnchor="middle"
+              fill={isStrike ? 'var(--text2)' : 'var(--text3)'}
+              fontSize={isStrike ? '9' : '8'} fontWeight={isStrike ? '700' : '400'}
+              fontFamily="monospace">{fmtN(s)}</text>;
+          })}
+
+          {/* Axes */}
+          <line x1={PAD.l} y1={PAD.t} x2={PAD.l} y2={PAD.t + CH} stroke="var(--border2)" strokeWidth="1" />
+          <line x1={PAD.l} y1={PAD.t + CH} x2={PAD.l + CW} y2={PAD.t + CH} stroke="var(--border2)" strokeWidth="1" />
+
+          {/* Spot marker */}
+          {(() => {
+            const x = toX(spot);
+            if (x < PAD.l || x > PAD.l + CW) return null;
+            return <>
+              <line x1={x} y1={PAD.t} x2={x} y2={PAD.t + CH} stroke="var(--accent)" strokeWidth="1" strokeDasharray="2,2" />
+              <text x={x} y={PAD.t - 4} textAnchor="middle" fill="var(--accent)" fontSize="8" fontFamily="monospace">SPOT</text>
+            </>;
+          })()}
+        </svg>
+      </div>
+
+      {/* Stats */}
+      <div className="fno-strat-stats">
+        <div className="fno-strat-stat">
+          <span className="fno-strat-stat-l">Max Profit</span>
+          <span className="fno-strat-stat-v gain">{isUnlimited(maxPnl) ? 'Unlimited' : `₹${maxPnl.toLocaleString('en-IN',{maximumFractionDigits:0})}`}</span>
+        </div>
+        <div className="fno-strat-stat">
+          <span className="fno-strat-stat-l">Max Loss</span>
+          <span className="fno-strat-stat-v loss">{isUnlimited(minPnl) ? 'Unlimited' : `₹${Math.abs(minPnl).toLocaleString('en-IN',{maximumFractionDigits:0})}`}</span>
+        </div>
+        {!isUnlimited(maxPnl) && !isUnlimited(minPnl) && minPnl !== 0 && (
+          <div className="fno-strat-stat">
+            <span className="fno-strat-stat-l">Risk:Reward</span>
+            <span className="fno-strat-stat-v">1 : {(maxPnl / Math.abs(minPnl)).toFixed(2)}</span>
+          </div>
+        )}
+        {breakevens.map((be, i) => (
+          <div key={i} className="fno-strat-stat">
+            <span className="fno-strat-stat-l">Breakeven {breakevens.length > 1 ? i+1 : ''}</span>
+            <span className="fno-strat-stat-v">{fmtN(be)}</span>
+          </div>
+        ))}
+        <div className="fno-strat-stat">
+          <span className="fno-strat-stat-l">Net {netCredit >= 0 ? 'Credit' : 'Debit'}</span>
+          <span className={`fno-strat-stat-v ${netCredit >= 0 ? 'gain' : 'loss'}`}>₹{Math.abs(netCredit).toLocaleString('en-IN')}</span>
+        </div>
+      </div>
+      <div style={{ padding: '8px 20px 16px', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text3)' }}>
+        Historical patterns only · Theoretical payoff at expiry · Not investment advice · Actual P&L may differ
+      </div>
+    </div>
+  );
+}
+
+function _OldPayoffBuilderUnused({ data }) {
   const spotDefault = data?.nifty50?.price ? Math.round(data.nifty50.price / 50) * 50 : 23000;
   const [type,    setType]    = useState('call');
   const [action,  setAction]  = useState('buy');
@@ -1176,9 +1547,8 @@ export default function FnOPage({ data = {} }) {
         <VixSeasonality />
       </div>
 
-      {/* Theta + Payoff side by side */}
-      <div className="fno-two-widgets">
-        <ThetaDecayCurve />
+      {/* Strategy Calculator — full width */}
+      <div className="fno-section" style={{ padding: 0 }}>
         <PayoffBuilder data={data} />
       </div>
 
