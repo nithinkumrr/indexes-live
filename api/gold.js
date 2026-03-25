@@ -12,23 +12,22 @@ export default async function handler(req, res) {
     });
     if (r.ok) {
       const html = await r.text();
-      // GoodReturns shows: "₹14,291 per gram" for 24K
-      const m24 = html.match(/24\s*[Kk]arat[^₹]*₹\s*([\d,]+)/i) ||
-                  html.match(/24K[^₹]*₹\s*([\d,]+)/i) ||
-                  html.match(/₹\s*([\d,]+)\s*per gram[^]*?24/i) ||
-                  html.match(/"price24k"\s*:\s*"?([\d,]+)/i);
-      const m22 = html.match(/22\s*[Kk]arat[^₹]*₹\s*([\d,]+)/i) ||
-                  html.match(/22K[^₹]*₹\s*([\d,]+)/i);
-
-      if (m24) {
-        const v = parseFloat(m24[1].replace(/,/g,''));
-        if (v > 8000 && v < 25000) { baseGold24 = v; source = 'goodreturns'; }
+      // Extract all prices between 8000-20000 range
+      const allPrices = [...html.matchAll(/₹\s*(1[0-9],[0-9]{3}|[89],[0-9]{3})/g)]
+        .map(m => parseInt(m[1].replace(/,/g,'')))
+        .filter(v => v > 8000 && v < 20000);
+      
+      // 24K > 22K always — find the highest and second highest
+      const sorted = [...new Set(allPrices)].sort((a,b) => b-a);
+      if (sorted.length >= 2) {
+        baseGold24 = sorted[0]; // highest = 24K
+        baseGold22 = sorted[1]; // second = 22K
+        source = 'goodreturns';
+      } else if (sorted.length === 1) {
+        baseGold24 = sorted[0];
+        baseGold22 = Math.round(sorted[0] * 0.916);
+        source = 'goodreturns';
       }
-      if (m22) {
-        const v = parseFloat(m22[1].replace(/,/g,''));
-        if (v > 7000 && v < 23000) baseGold22 = v;
-      }
-      if (baseGold24 && !baseGold22) baseGold22 = Math.round(baseGold24 * 0.916);
     }
   } catch (_) {}
 
