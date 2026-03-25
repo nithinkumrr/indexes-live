@@ -288,10 +288,16 @@ function getCurrentMonthlyExpiry() {
   return { symbol: `NIFTY${YY}${MON}FUT`, date: exp };
 }
 
-async function getNFOInstruments(token) {
-  const r = await fetch('https://api.kite.trade/instruments?exchange=NFO', { headers: kiteHeaders(token) });
+// Fetch instruments for any exchange (NFO, BFO, etc.)
+async function getInstruments(token, exchange = 'NFO') {
+  const r = await fetch(`https://api.kite.trade/instruments?exchange=${exchange}`, { headers: kiteHeaders(token) });
   if (!r.ok) throw new Error(`instruments ${r.status}`);
   return r.text();
+}
+
+// Backward compat alias
+async function getNFOInstruments(token) {
+  return getInstruments(token, 'NFO');
 }
 
 async function handleFutures(token, res) {
@@ -312,9 +318,9 @@ async function handleFutures(token, res) {
 
     if (!fut) return res.json({ error: 'instrument_not_found', symbol });
 
-    const qr = await fetch(`https://api.kite.trade/quote?i=NFO:${fut.token}&i=${encodeURIComponent('NSE:NIFTY 50')}`, { headers: kiteHeaders(token) });
+    const qr = await fetch(`https://api.kite.trade/quote?i=NFO:${encodeURIComponent(fut.sym)}&i=${encodeURIComponent('NSE:NIFTY 50')}`, { headers: kiteHeaders(token) });
     const qj = await qr.json();
-    const q    = Object.values(qj?.data || {}).find(d => d.instrument_token === parseInt(fut.token)) || Object.values(qj?.data || {})[0];
+    const q    = qj?.data?.[`NFO:${fut.sym}`] || Object.values(qj?.data || {}).find(d => d.instrument_token === parseInt(fut.token));
     const spotQ = qj?.data?.['NSE:NIFTY 50'];
     if (!q) return res.json({ error: 'no_quote', symbol: fut.sym });
     const price = q.last_price, pc = q.ohlc?.close || price;
@@ -339,14 +345,17 @@ async function fetchKiteOptionChain(token, indexKey = 'NIFTY') {
   if (!token) throw new Error('no_token');
   const cfg = INDEX_CONFIG[indexKey] || INDEX_CONFIG.NIFTY;
 
-  const text  = await getNFOInstruments(token);
+  // Sensex options are on BFO, everything else on NFO
+  const exchange = cfg.bse ? 'BFO' : 'NFO';
+  const text  = await getInstruments(token, exchange);
   const lines = text.split('\n').filter(Boolean);
 
   // Find next weekly expiry for this index
   const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const day = ist.getDay();
   let daysUntil = (cfg.expiryDay - day + 7) % 7;
-  if (daysUntil === 0 && ist.getHours() * 60 + ist.getMinutes() >= 15 * 30) daysUntil = 7;
+  // Only skip to next week AFTER market close (15:30 IST = 930 minutes)
+  if (daysUntil === 0 && ist.getHours() * 60 + ist.getMinutes() >= 15 * 60 + 30) daysUntil = 7;
   const expDate = new Date(ist);
   expDate.setDate(ist.getDate() + daysUntil);
   const expStr = `${expDate.getFullYear()}-${String(expDate.getMonth()+1).padStart(2,'0')}-${String(expDate.getDate()).padStart(2,'0')}`;
@@ -357,17 +366,16 @@ async function fetchKiteOptionChain(token, indexKey = 'NIFTY') {
   for (const line of lines) {
     const cols = line.split(',');
     if (cols.length < 12) continue;
-    const instrToken = cols[0];
-    const name       = cols[3];
-    const expiry     = cols[5];
-    const instrType  = cols[9];
-    const exchange   = cols[11]?.trim();
+    const tradingsymbol = cols[2];
+    const name          = cols[3];
+    const expiry        = cols[5];
+    const instrType     = cols[9];
     if (name !== cfg.kiteName) continue;
     if (!expiry.startsWith(expStr)) continue;
     if (instrType !== 'CE' && instrType !== 'PE') continue;
     const strike = parseFloat(cols[6]);
     if (isNaN(strike)) continue;
-    options.push({ instrToken, strike, type: instrType });
+    options.push({ tradingsymbol, strike, type: instrType });
   }
 
   if (!options.length) throw new Error(`No ${cfg.kiteName} options found for expiry ${expStr}`);
@@ -377,12 +385,12 @@ async function fetchKiteOptionChain(token, indexKey = 'NIFTY') {
   const spotJ = await spotQ.json();
   const spot  = Object.values(spotJ?.data || {})[0]?.last_price || 0;
 
-  // Batch quote all option tokens
-  const instruments = options.map(o => `NFO:${o.instrToken}`);
+  // Batch quote all options using exchange:tradingsymbol format
+  const instruments = options.map(o => `${exchange}:${o.tradingsymbol}`);
   const quoteData   = {};
   for (let i = 0; i < instruments.length; i += 500) {
     const chunk  = instruments.slice(i, i + 500);
-    const params = chunk.map(i => `i=${encodeURIComponent(i)}`).join('&');
+    const params = chunk.map(inst => `i=${encodeURIComponent(inst)}`).join('&');
     const r = await fetch(`https://api.kite.trade/quote?${params}`, { headers: kiteHeaders(token) });
     if (!r.ok) continue;
     Object.assign(quoteData, (await r.json())?.data || {});
@@ -391,9 +399,9 @@ async function fetchKiteOptionChain(token, indexKey = 'NIFTY') {
   // Build strike map
   const strikeMap = {};
   for (const opt of options) {
-    const key = `NFO:${opt.instrToken}`;
+    const key = `${exchange}:${opt.tradingsymbol}`;
     const q   = quoteData[key];
-    if (!strikeMap[opt.strike]) strikeMap[opt.strike] = { strike: opt.strike, callOI:0, putOI:0, callLTP:0, putLTP:0 };
+    if (!strikeMap[opt.strike]) strikeMap[opt.strike] = { strike: opt.strike, callOI:0, putOI:0, callLTP:0, putLTP:0, callIV:0, putIV:0 };
     if (q) {
       if (opt.type === 'CE') { strikeMap[opt.strike].callOI = q.oi||0; strikeMap[opt.strike].callLTP = q.last_price||0; }
       if (opt.type === 'PE') { strikeMap[opt.strike].putOI  = q.oi||0; strikeMap[opt.strike].putLTP  = q.last_price||0; }
@@ -557,21 +565,24 @@ async function handleOI(token, res) {
     function findNearest(indexName) {
       return lines
         .filter(l => l.includes(`,${indexName},`) && l.includes(',FUT,'))
-        .map(l => { const c = l.split(','); return { token: c[0], expiry: c[5] }; })
+        .map(l => { const c = l.split(','); return { token: c[0], sym: c[2], expiry: c[5] }; })
         .filter(f => f.expiry >= today)
         .sort((a, b) => new Date(a.expiry) - new Date(b.expiry))[0];
     }
 
     const niftyFut = findNearest('NIFTY');
     const bankFut  = findNearest('BANKNIFTY');
-    const instrs   = [niftyFut, bankFut].filter(Boolean).map(f => `NFO:${f.token}`);
+    const futs     = [niftyFut, bankFut].filter(Boolean);
+    const instrs   = futs.map(f => `NFO:${f.sym}`);
     if (!instrs.length) throw new Error('No futures instruments found');
 
     const params = instrs.map(i => `i=${encodeURIComponent(i)}`).join('&');
     const qj = await (await fetch(`https://api.kite.trade/quote?${params}`, { headers: kiteHeaders(token) })).json();
     const result = {};
     const names  = ['nifty', 'banknifty'];
-    Object.entries(qj?.data || {}).forEach(([, q], idx) => {
+    futs.forEach((f, idx) => {
+      const q = qj?.data?.[`NFO:${f.sym}`];
+      if (!q) return;
       const name = names[idx];
       const price = q.last_price, pc = q.ohlc?.close || price, oiChg = q.oi_day_change || 0;
       let signal = 'neutral';
