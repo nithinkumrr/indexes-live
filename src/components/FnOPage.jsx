@@ -253,35 +253,6 @@ function OIBuildup() {
     </div>
   );
 }
-  return (
-    <div className="t-card">
-      <div className="t-card-label">OI BUILDUP — FUTURES</div>
-      {noToken ? <KitePrompt text="Requires Kite login" /> : !data ? <div className="t-loading">Fetching OI data...</div> : (
-        <div className="t-oi-body">
-          {[['nifty','Nifty 50'],['banknifty','Bank Nifty']].map(([key, name]) => {
-            const d = data[key]; if (!d) return null;
-            const m = SIGNALS[d.signal] || SIGNALS.neutral;
-            return (
-              <div key={key} className="t-oi-row">
-                <div className="t-oi-name">{name}</div>
-                <div className="t-oi-price">
-                  <span className={d.changePct>=0?'gain':'loss'}>{d.price?.toLocaleString('en-IN')}</span>
-                  <span className={`t-oi-chg ${d.changePct>=0?'gain':'loss'}`}>{d.changePct>=0?'+':''}{d.changePct}%</span>
-                </div>
-                <div className="t-oi-data">
-                  <span className="t-oi-val">{d.oi?(d.oi/100000).toFixed(1)+'L':'—'}</span>
-                  {d.oiChange!==0 && <span className={`t-oi-delta ${d.oiChange>0?'gain':'loss'}`}>{d.oiChange>0?'+':''}{d.oiChangePct}%</span>}
-                </div>
-                <div className="t-oi-sig" style={{color:m.color, background:`${m.color}12`, borderColor:`${m.color}30`}}>{m.label}</div>
-                <div className="t-oi-note">{m.note}</div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function PCRPanel() {
   const [data, setData]       = useState(null);
