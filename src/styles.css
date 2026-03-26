@@ -3290,3 +3290,28 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-it-price { font-size: 11px !important; }
 .fno-it-chg   { font-size: 10px !important; }
 .fno-india-ticker-inner { animation-duration: 25s !important; }
+
+/* ── Ticker seamless loop fix ────────────────────────────────────────────── */
+.fno-india-ticker       { overflow: hidden !important; }
+.fno-india-ticker-inner {
+  display: flex !important;
+  width: max-content !important;
+  animation: fno-ticker-scroll 35s linear infinite !important;
+  will-change: transform;
+}
+@keyframes fno-ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
+
+/* ── F&O India Ticker — proven seamless pattern ─────────────────────────── */
+.fno-india-ticker              { display: flex; align-items: center; height: 30px; border-bottom: 1px solid var(--border); background: var(--bg3); overflow: hidden; }
+.fno-india-ticker-scroll-area  { flex: 1; overflow: hidden; height: 30px; display: flex; align-items: center; }
+.fno-india-ticker-inner        { display: inline-flex; align-items: center; white-space: nowrap; animation: fnoTickScroll 80s linear infinite; }
+.fno-india-ticker-inner:hover  { animation-play-state: paused; }
+@keyframes fnoTickScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.fno-it-item  { display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; border-right: 1px solid var(--border); height: 30px !important; flex-shrink: 0; }
+.fno-it-label { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.fno-it-price { font-family: var(--mono); font-size: 10.5px; font-weight: 600; color: var(--text); }
+.fno-it-chg   { font-family: var(--mono); font-size: 10px; }
+.fno-it-meta  { flex-shrink: 0; font-family: var(--mono); font-size: 9px; padding: 0 10px; border-left: 1px solid var(--border); height: 30px; display: flex; align-items: center; }

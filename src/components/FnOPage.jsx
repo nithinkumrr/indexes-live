@@ -1943,8 +1943,10 @@ function IndiaTickerFno() {
 
   return (
     <div className="fno-india-ticker">
-      <div className="fno-india-ticker-inner">
-        {tickerItems}{tickerItems}
+      <div className="fno-india-ticker-scroll-area">
+        <div className="fno-india-ticker-inner">
+          {tickerItems}{tickerItems}
+        </div>
       </div>
       <div className="fno-it-meta">
         {isMarketOpen()
