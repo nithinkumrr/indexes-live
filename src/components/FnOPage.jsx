@@ -390,7 +390,7 @@ function PivotPoints({ data, horizontal = false }) {
   };
 
   const fmt = (n) => n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-  const LEVELS = ['R3','R2','R1','Pivot','S1','S2','S3'];
+  const LEVELS = ['R3','R2','R1','PP','S1','S2','S3'];
 
   if (horizontal) {
     // Horizontal layout: each index is a row, levels are columns
@@ -1461,7 +1461,7 @@ function PivotPointsV2({ data }) {
             { key:'R3', val:p.R3, type:'res',   opacity: p.C < p.R3 ? 0.4 : 1 },
             { key:'R2', val:p.R2, type:'res',   opacity: p.C < p.R2 ? 0.4 : 1 },
             { key:'R1', val:p.R1, type:'res',   opacity: p.C < p.R1 ? 0.4 : 1 },
-            { key:'Pivot', val:p.PP, type:'pivot', opacity: 1 },
+            { key:'PP', val:p.PP, type:'pivot', opacity: 1 },
             { key:'S1', val:p.S1, type:'sup',   opacity: p.C > p.S1 ? 0.4 : 1 },
             { key:'S2', val:p.S2, type:'sup',   opacity: p.C > p.S2 ? 0.4 : 1 },
             { key:'S3', val:p.S3, type:'sup',   opacity: p.C > p.S3 ? 0.4 : 1 },
@@ -1496,7 +1496,7 @@ function PivotPointsV2({ data }) {
                 return (
                   <div key={l.key} className={`fno-pv2-level ${near?'fno-pv2-near':''} ${l.type==='pivot'?'fno-pv2-pp':''}`}
                     style={{ background: near ? `${color}20` : bg, opacity: l.opacity }}>
-                    <span className="fno-pv2-key" style={{ color: textColor }}>{l.key}</span>
+                    <span className="fno-pv2-key" style={{ color: textColor }} title={l.key === 'PP' ? 'Pivot Point — central reference level' : l.key.startsWith('R') ? 'Resistance level' : 'Support level'}>{l.key}</span>
                     <span className="fno-pv2-val" style={{ color: near ? color : textColor }}>
                       {fmt(l.val)}{near ? ' ★' : ''}
                     </span>

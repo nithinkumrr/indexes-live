@@ -3059,3 +3059,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 /* Market Pulse header bigger */
 .fno-pv2-extra-label { font-size: 10px !important; letter-spacing: 1.5px; }
 .fno-pv2-extra-section:first-of-type { padding-top: 14px; }
+
+/* ── Fix blank space in pivot V2 ────────────────────────────────────────── */
+.fno-overview-row2      { align-items: stretch; }
+.fno-overview-pivots    { display: flex; flex-direction: column; }
+.fno-pv2-wrap           { flex: 1; display: flex; flex-direction: column; }
+.fno-pv2-cols           { flex: 1; min-height: 0; }
+.fno-pv2-col            { overflow: hidden; }
+/* Remove gap at bottom of each column */
+.fno-pv2-level:last-of-type { border-bottom: 1px solid var(--border); }
+.fno-pv2-wrap > .fno-widget-sub { margin-top: auto; }
