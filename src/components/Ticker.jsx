@@ -27,11 +27,16 @@ function useIndiaIndices() {
       // so we have the last close price to display
       if (!forceFirstLoad && !isNSEOpen()) return;
       try {
-        const r    = await fetch('/api/kite-data?type=indices');
+        const r    = await fetch('/api/kite-quote');
         const json = await r.json();
-        if (Array.isArray(json.data) && json.data.length > 0) {
-          frozenRef.current = json.data;
-          setItems(json.data);
+        const data = (json.quotes || []).map(q => ({
+          name: q.label, price: q.price, changePct: q.changePct, change: q.change,
+        })).filter(q => q.price);
+        if (data.length > 0) {
+          frozenRef.current = data;
+          setItems(data);
+        } else if (frozenRef.current.length > 0) {
+          setItems(frozenRef.current);
         }
       } catch (_) {}
     };
@@ -40,7 +45,7 @@ function useIndiaIndices() {
     load(true);
 
     // Subsequent polls: gated on market hours inside load()
-    intervalRef.current = setInterval(() => load(false), 20000);
+    intervalRef.current = setInterval(() => load(false), isNSEOpen() ? 5000 : 60000);
     return () => clearInterval(intervalRef.current);
   }, []);
 
@@ -67,7 +72,7 @@ function TickerRow({ label, labelClass, children, speed }) {
 }
 
 // ── Main export ───────────────────────────────────────────────────────
-export default function Ticker({ data }) {
+export default function Ticker({ data, indiaOnly = false }) {
   const indiaRaw = useIndiaIndices();
 
   // Global — all markets with live data
@@ -99,15 +104,17 @@ export default function Ticker({ data }) {
     );
   });
 
-  if (globalItems.length === 0) return null;
+  if (!indiaOnly && globalItems.length === 0) return null;
 
   return (
     <div className="ticker-rows">
-      {/* Global: 135s — ~30+ markets, steady readable pace */}
-      <TickerRow label="GLOBAL" labelClass="ticker-label-global" speed={135}>
-        {globalItems}
-      </TickerRow>
-      {/* India: 65s — 14 indices, proportionally matched pace */}
+      {/* Global row — skip when indiaOnly */}
+      {!indiaOnly && (
+        <TickerRow label="GLOBAL" labelClass="ticker-label-global" speed={135}>
+          {globalItems}
+        </TickerRow>
+      )}
+      {/* India: 65s */}
       {indiaItems.length > 0 && (
         <TickerRow label="INDIA" labelClass="ticker-label-india" speed={65}>
           {indiaItems}

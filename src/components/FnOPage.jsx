@@ -1753,7 +1753,7 @@ export default function FnOPage({ data = {} }) {
     <div className="fno-page">
 
       {/* ══ TICKER ══════════════════════════════════════════════════════ */}
-      <IndiaTickerFno />
+      <Ticker data={data} indiaOnly />
 
       {/* ══ COMPACT EXPIRY STRIP ════════════════════════════════════════ */}
       <ExpiryStrip expiries={expiries} holidayLive={holidayLive} holidayNames={holidayNames} />
