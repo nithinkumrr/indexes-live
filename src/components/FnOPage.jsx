@@ -1389,8 +1389,192 @@ function VixSeasonality() {
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
-// VIX ZONE CARD — inline playbook reference for Overview tab
+// PIVOT POINTS V2 — 3 vertical columns + breadth + day range
 // ─────────────────────────────────────────────────────────────────────────────
+function PivotPointsV2({ data }) {
+  const [breadth, setBreadth] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const r = await fetch('/api/nse-india');
+        const d = await r.json();
+        const n = d?.nifty50;
+        if (n?.advances != null) {
+          const adv = n.advances, dec = n.declines, unch = n.unchanged || 0;
+          const total = adv + dec + unch || 50;
+          setBreadth({ adv, dec, unch, advPct: Math.round((adv/total)*100), decPct: Math.round((dec/total)*100) });
+        }
+      } catch (_) {}
+    };
+    load();
+    const id = setInterval(load, 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  const INDICES = [
+    { id: 'nifty50',   label: 'Nifty 50',   color: '#4A9EFF' },
+    { id: 'sensex',    label: 'Sensex',      color: '#F59E0B' },
+    { id: 'banknifty', label: 'Bank Nifty',  color: '#A78BFA' },
+  ];
+
+  const computePivots = (d) => {
+    if (!d) return null;
+    const H = d.high || d.price * 1.005;
+    const L = d.low  || d.price * 0.995;
+    const C = d.price;
+    const P = (H + L + C) / 3;
+    return {
+      R3: H + 2*(P-L), R2: P+(H-L), R1: 2*P-L,
+      PP: P,
+      S1: 2*P-H, S2: P-(H-L), S3: L-2*(H-P),
+      C, H, L,
+      dayRangePct: H > L ? Math.round(((C-L)/(H-L))*100) : 50,
+      rangePct: H > L ? (((H-L)/L)*100).toFixed(2) : '—',
+    };
+  };
+
+  const fmt = n => n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+  return (
+    <div className="fno-pv2-wrap">
+      <div className="fno-pv2-header">
+        <span className="fno-widget-title" style={{padding:0}}>PIVOT POINTS <span className="fno-widget-formula">Classic · (H+L+C)÷3</span></span>
+        <span className="fno-widget-sub" style={{margin:0}}>Today's support & resistance · ★ = price near level</span>
+      </div>
+
+      {/* 3 pivot columns */}
+      <div className="fno-pv2-cols">
+        {INDICES.map(({ id, label, color }) => {
+          const d = data?.[id];
+          const p = computePivots(d);
+          if (!p) return (
+            <div key={id} className="fno-pv2-col">
+              <div className="fno-pv2-col-hdr" style={{ borderTopColor: color }}>
+                <span className="fno-pv2-col-name">{label}</span>
+              </div>
+              <div className="fno-loading" style={{padding:'12px 16px',fontSize:11}}>Loading...</div>
+            </div>
+          );
+
+          const levels = [
+            { key:'R3', val:p.R3, type:'res',   opacity: p.C < p.R3 ? 0.4 : 1 },
+            { key:'R2', val:p.R2, type:'res',   opacity: p.C < p.R2 ? 0.4 : 1 },
+            { key:'R1', val:p.R1, type:'res',   opacity: p.C < p.R1 ? 0.4 : 1 },
+            { key:'PP', val:p.PP, type:'pivot', opacity: 1 },
+            { key:'S1', val:p.S1, type:'sup',   opacity: p.C > p.S1 ? 0.4 : 1 },
+            { key:'S2', val:p.S2, type:'sup',   opacity: p.C > p.S2 ? 0.4 : 1 },
+            { key:'S3', val:p.S3, type:'sup',   opacity: p.C > p.S3 ? 0.4 : 1 },
+          ];
+
+          const chg = d?.changePct || 0;
+          const gain = chg >= 0;
+
+          return (
+            <div key={id} className="fno-pv2-col">
+              <div className="fno-pv2-col-hdr" style={{ borderTopColor: color }}>
+                <span className="fno-pv2-col-name" style={{ color }}>{label}</span>
+                <span className="fno-pv2-col-price">{fmt(p.C)}</span>
+                <span className={`fno-pv2-col-chg ${gain?'gain':'loss'}`}>{gain?'▲':'▼'} {Math.abs(chg).toFixed(2)}%</span>
+              </div>
+
+              {/* Day range bar */}
+              <div className="fno-pv2-range">
+                <span className="fno-pv2-range-l loss">{fmt(p.L)}</span>
+                <div className="fno-pv2-range-bar">
+                  <div className="fno-pv2-range-fill" style={{ left:`${p.dayRangePct}%`, background: color }} />
+                </div>
+                <span className="fno-pv2-range-h gain">{fmt(p.H)}</span>
+                <span className="fno-pv2-range-pct" style={{ color }}>({p.rangePct}% range)</span>
+              </div>
+
+              {/* Pivot levels */}
+              {levels.map(l => {
+                const near = p.C > l.val*0.998 && p.C < l.val*1.002;
+                const bg = l.type==='res' ? 'rgba(255,68,85,0.1)' : l.type==='sup' ? 'rgba(0,200,150,0.1)' : `${color}15`;
+                const textColor = l.type==='res' ? 'var(--loss)' : l.type==='sup' ? 'var(--gain)' : color;
+                return (
+                  <div key={l.key} className={`fno-pv2-level ${near?'fno-pv2-near':''} ${l.type==='pivot'?'fno-pv2-pp':''}`}
+                    style={{ background: near ? `${color}20` : bg, opacity: l.opacity }}>
+                    <span className="fno-pv2-key" style={{ color: textColor }}>{l.key}</span>
+                    <span className="fno-pv2-val" style={{ color: near ? color : textColor }}>
+                      {fmt(l.val)}{near ? ' ★' : ''}
+                    </span>
+                    {/* Mini bar showing distance from current */}
+                    <div className="fno-pv2-dist-bar">
+                      <div style={{
+                        width: `${Math.min(100, Math.abs((l.val-p.C)/p.C*1000))}%`,
+                        background: l.val > p.C ? 'rgba(255,68,85,0.5)' : 'rgba(0,200,150,0.5)',
+                        height: '100%', borderRadius: 2,
+                      }} />
+                    </div>
+                    <span className="fno-pv2-dist">
+                      {l.val > p.C ? '+' : ''}{(l.val - p.C).toFixed(0)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+
+        {/* 4th column: Breadth + summary */}
+        <div className="fno-pv2-col fno-pv2-extra">
+          <div className="fno-pv2-col-hdr" style={{ borderTopColor: '#64748B' }}>
+            <span className="fno-pv2-col-name" style={{ color: '#64748B' }}>Market Pulse</span>
+          </div>
+
+          {/* Nifty 50 breadth */}
+          <div className="fno-pv2-extra-section">
+            <div className="fno-pv2-extra-label">NIFTY 50 BREADTH</div>
+            {breadth ? (
+              <>
+                <div className="fno-pv2-breadth-nums">
+                  <span className="gain" style={{fontSize:28,fontFamily:'var(--mono)',fontWeight:700}}>{breadth.adv}</span>
+                  <span style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)',margin:'0 6px'}}>up</span>
+                  <span className="loss" style={{fontSize:28,fontFamily:'var(--mono)',fontWeight:700}}>{breadth.dec}</span>
+                  <span style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)',marginLeft:6}}>dn</span>
+                </div>
+                <div style={{height:6,background:'var(--bg4)',borderRadius:4,display:'flex',overflow:'hidden',margin:'8px 0'}}>
+                  <div style={{width:`${breadth.advPct}%`,background:'var(--gain)',transition:'width .5s'}}/>
+                  <div style={{width:`${breadth.decPct}%`,background:'var(--loss)',transition:'width .5s'}}/>
+                </div>
+                <div style={{fontFamily:'var(--mono)',fontSize:11,color: breadth.adv > breadth.dec*1.5 ? 'var(--gain)' : breadth.dec > breadth.adv*1.5 ? 'var(--loss)' : 'var(--text3)'}}>
+                  {breadth.adv > breadth.dec*1.5 ? '↑ Broad strength' : breadth.dec > breadth.adv*1.5 ? '↓ Broad weakness' : '⇌ Mixed market'}
+                </div>
+              </>
+            ) : <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--text3)'}}>Market closed</div>}
+          </div>
+
+          {/* Index day change summary */}
+          <div className="fno-pv2-extra-section" style={{borderTop:'1px solid var(--border)',paddingTop:12,marginTop:12}}>
+            <div className="fno-pv2-extra-label">DAY CHANGE</div>
+            {INDICES.map(({ id, label, color }) => {
+              const d = data?.[id];
+              if (!d) return null;
+              const gain = d.changePct >= 0;
+              const barW = Math.min(Math.abs(d.changePct) * 20, 100);
+              return (
+                <div key={id} style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                  <span style={{fontFamily:'var(--mono)',fontSize:10,color,minWidth:72}}>{label}</span>
+                  <div style={{flex:1,height:4,background:'var(--bg4)',borderRadius:2,overflow:'hidden'}}>
+                    <div style={{width:`${barW}%`,background:gain?'var(--gain)':'var(--loss)',height:'100%',borderRadius:2}}/>
+                  </div>
+                  <span style={{fontFamily:'var(--mono)',fontSize:11,fontWeight:700,color:gain?'var(--gain)':'var(--loss)',minWidth:52,textAlign:'right'}}>
+                    {gain?'+':''}{d.changePct?.toFixed(2)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      <div className="fno-widget-sub" style={{padding:'6px 16px 10px'}}>Based on today's high/low/close · Levels reset daily · ★ = price within 0.2% of level</div>
+    </div>
+  );
+}
+
+
 function VixZoneCard({ vixLevel, onStrategyClick }) {
   const ZONES = [
     {
@@ -1537,14 +1721,14 @@ export default function FnOPage({ data = {} }) {
             </div>
           </div>
 
-          {/* Row 2: Small cards left + Pivot Points right */}
+          {/* Row 2: Metrics left + Pivots + extras right */}
           <div className="fno-overview-row2">
             <div className="fno-overview-metrics">
               <ExpectedMove data={data} expiries={expiries} />
               <RolloverMeter expiries={expiries} />
             </div>
             <div className="fno-overview-pivots">
-              <PivotPoints data={data} horizontal />
+              <PivotPointsV2 data={data} />
             </div>
           </div>
 
