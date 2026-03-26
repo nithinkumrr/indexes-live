@@ -61,7 +61,7 @@ function getStrike(spot, index, offset, direction = 'up') {
 
 // ── Fetch historical NSE data ─────────────────────────────────────────────────
 async function getHistoricalData(index, fromYear, toYear) {
-  const cacheKey = `bt:hist:${index}:${fromYear}:${toYear}`;
+  const cacheKey = `bt:hist2:${index}:${fromYear}:${toYear}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) return typeof cached === 'string' ? JSON.parse(cached) : cached;
@@ -111,7 +111,7 @@ async function getHistoricalData(index, fromYear, toYear) {
 
 // ── VIX history (India VIX proxy) ────────────────────────────────────────────
 async function getVIXHistory(fromYear, toYear) {
-  const cacheKey = `bt:vix:${fromYear}:${toYear}`;
+  const cacheKey = `bt:vix2:${fromYear}:${toYear}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) return typeof cached === 'string' ? JSON.parse(cached) : cached;
