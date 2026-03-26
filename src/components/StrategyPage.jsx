@@ -17,7 +17,13 @@ function bsTheta(S,K,T,sig,tp){if(T<=0.001)return 0;const d1=(Math.log(S/K)+(R+s
 function bsGamma(S,K,T,sig){if(T<=0)return 0;const d1=(Math.log(S/K)+(R+sig*sig/2)*T)/(sig*Math.sqrt(T));return 0.3989423*Math.exp(-d1*d1/2)/(S*sig*Math.sqrt(T));}
 function bsVega(S,K,T,sig){if(T<=0)return 0;const d1=(Math.log(S/K)+(R+sig*sig/2)*T)/(sig*Math.sqrt(T));return S*0.3989423*Math.exp(-d1*d1/2)*Math.sqrt(T)/100;}
 
-const LOT=75;
+// ── LOT SIZES (NSE/BSE — effective 2024) ─────────────────────────────────────
+const LOT_SIZES = {
+  NIFTY:65, BANKNIFTY:30, FINNIFTY:60, MIDCPNIFTY:120, NIFTYNXT50:25,
+  SENSEX:20, BANKEX:30, SENSEX50:75,
+};
+function getLot(symbol) { return LOT_SIZES[symbol] || 65; }
+const LOT=65; // default used in standalone calcs — overridden per symbol in components
 
 // ── STRATEGIES ────────────────────────────────────────────────────────────────
 const GROUPS=[
@@ -121,6 +127,7 @@ function parseShareUrl() {
 
 // ── PAYOFF CHART ──────────────────────────────────────────────────────────────
 function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
+  const LOT = getLot(symbol);
   const [tSpot, setTSpot] = useState(spot);
   const [tDte,  setTDte]  = useState(dte);
   const [hx, setHx] = useState(null);
@@ -299,7 +306,8 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
 }
 
 // ── GREEKS ────────────────────────────────────────────────────────────────────
-function Greeks({ legs, spot, vix, dte, lots }) {
+function Greeks({ legs, spot, vix, dte, lots, symbol }) {
+  const LOT = getLot(symbol);
   const sig=(vix||15)/100, T=Math.max(dte,0.25)/365;
   const g = useMemo(() => {
     if (!legs?.length) return { d:0, th:0, ga:0, v:0 };
@@ -377,6 +385,7 @@ function Greeks({ legs, spot, vix, dte, lots }) {
 
 // ── DETAIL PANEL ──────────────────────────────────────────────────────────────
 function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, sharedFrom, symbol }) {
+  const LOT  = getLot(symbol);
   const step = spot > 10000 ? 100 : 50;
   const atm  = Math.round(spot / step) * step;
   const w    = step * 2;
@@ -516,10 +525,9 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
           {iu(maxL)&&<div className="spc-stat-sub" style={{color:'#FF4455'}}>use stop loss</div>}
         </div>
         <div className="spc-stat-cell" style={{borderColor:'#4A9EFF30'}}>
-          <div className="spc-stat-lbl">LOTS</div>
-          <input type="number" value={lots} min={1} step={1} className="spc-lots-input"
-            onChange={e=>setLots(Math.max(1,+e.target.value))}/>
-          <div className="spc-stat-sub">{lots*LOT} units</div>
+          <div className="spc-stat-lbl">POSITION SIZE</div>
+          <div className="spc-stat-val" style={{color:'#4A9EFF'}}>{lots} lot{lots>1?'s':''}</div>
+          <div className="spc-stat-sub">{lots*LOT} units · {LOT}/lot</div>
         </div>
         <div className="spc-stat-cell" style={{borderColor:'#F59E0B30',background:'#F59E0B06'}}>
           <div className="spc-stat-lbl">DTE</div>
@@ -586,12 +594,12 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
 
           {showPremiumHint && (
             <div className="spc-hint-box">
-              <div className="spc-hint-title">📲 Getting real premiums from Kite</div>
+              <div className="spc-hint-title">📲 How to get real market premiums</div>
               <ol>
-                <li>Open <strong>Kite</strong> → go to Option Chain</li>
+                <li>Open your broker's <strong>Option Chain</strong></li>
                 <li>Select the expiry you want to trade</li>
-                <li>Find your strike row, copy the <strong>LTP</strong></li>
-                <li>Paste it in the Premium field above</li>
+                <li>Find your strike row, copy the <strong>LTP</strong> (Last Traded Price)</li>
+                <li>Paste it in the Premium ₹ field above</li>
               </ol>
               <div className="spc-hint-note">💡 Or use <strong>Auto-fill</strong> for a quick Black-Scholes estimate based on current VIX {vix.toFixed(1)}.</div>
             </div>
@@ -602,7 +610,7 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
         <div className="spc-col-chart">
           <div className="spc-col-title">
             <span>PAYOFF DIAGRAM</span>
-            <span className="spc-col-title-sub">Black-Scholes · {symbol||'NIFTY'} · Lot={LOT}</span>
+            <span className="spc-col-title-sub">Black-Scholes · {symbol||'NIFTY'} · {LOT} units/lot</span>
           </div>
 
           {hasPremiums ? (
@@ -613,13 +621,13 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
                 <span>GREEKS</span>
                 <span className="spc-col-title-sub">per {lots} lot{lots>1?'s':''} · live estimates</span>
               </div>
-              <Greeks legs={legs} spot={spot} vix={vix} dte={dte} lots={lots}/>
+              <Greeks legs={legs} spot={spot} vix={vix} dte={dte} lots={lots} symbol={symbol}/>
             </>
           ) : (
             <div className="spc-no-prem">
               <div className="spc-no-prem-icon">📊</div>
               <div className="spc-no-prem-title">Enter premiums to see payoff</div>
-              <div className="spc-no-prem-sub">Type real premiums from Kite option chain, or auto-fill from Black-Scholes</div>
+              <div className="spc-no-prem-sub">Type real premiums from the option chain, or auto-fill from Black-Scholes</div>
               <button className="spc-legbtn spc-legbtn-primary" style={{marginTop:14,width:'auto',alignSelf:'center'}} onClick={resetPremiums}>
                 ↺ Auto-fill with Black-Scholes estimate
               </button>
@@ -655,10 +663,10 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
             <div className="spc-checklist-title">BEFORE YOU TRADE</div>
             {[
               ['Pick expiry',         'Match DTE to your strategy'],
-              ['Enter real premiums', 'Use Kite option chain LTP'],
+              ['Enter real premiums', 'Use option chain LTP from your broker'],
               ['Set your stop loss',  'Know exit before you enter'],
               ['Check VIX regime',    'Confirms strategy fit today'],
-              [strat.credit?'Check SPAN margin':'Arrange capital', strat.credit?'SPAN margin needed in Kite':'Full debit must be available'],
+              [strat.credit?'Check SPAN margin':'Arrange capital', strat.credit?'Check SPAN margin in your broker platform':'Full debit amount must be available'],
             ].map(([s, n]) => (
               <label key={s} className="spc-checklist-row">
                 <input type="checkbox" className="spc-check"/>
@@ -710,7 +718,8 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
   //   BANKNIFTY → Wednesday (3) — monthly only now, keep for reference
   //   FINNIFTY  → Tuesday  (2)
   //   MIDCPNIFTY→ Monday   (1)
-  const EXPIRY_DAY = { NIFTY:2, SENSEX:4, BANKNIFTY:3, FINNIFTY:2, MIDCPNIFTY:1 };
+  const EXPIRY_DAY = { NIFTY:2, SENSEX:4, BANKNIFTY:3, FINNIFTY:2, MIDCPNIFTY:1, BANKEX:4, SENSEX50:4, NIFTYNXT50:2 };
+  const topbarLot = getLot(symbol);
 
   // NSE holidays 2025-2026 (hardcoded fallback — used only when API fails)
   const NSE_HOLIDAYS = new Set([
@@ -820,7 +829,7 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
           <div className="spc-tb-pill spc-tb-pill-select">
             <span className="spc-tb-lbl">SYMBOL</span>
             <select className="spc-tb-select" value={symbol} onChange={e => setSymbol(e.target.value)}>
-              {['NIFTY','BANKNIFTY','SENSEX','FINNIFTY','MIDCPNIFTY'].map(s => (
+              {['NIFTY','BANKNIFTY','FINNIFTY','MIDCPNIFTY','SENSEX','BANKEX','SENSEX50'].map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
@@ -872,7 +881,7 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
                 onChange={e => setLots(Math.max(1, +e.target.value || 1))}/>
               <button className="spc-tb-lots-btn" onClick={() => setLots(l => l+1)}>+</button>
             </div>
-            <span className="spc-tb-lots-units">{lots * LOT} units</span>
+            <span className="spc-tb-lots-units">{lots * topbarLot} units</span>
           </div>
 
         </div>
@@ -880,7 +889,7 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
         {/* Right cluster: top setups */}
         {top.length > 0 && (
           <div className="spc-tb-right">
-            <span className="spc-tb-setups-lbl">TODAY'S SETUPS</span>
+            <span className="spc-tb-setups-lbl">SETUPS IDENTIFIED — NOT A RECOMMENDATION</span>
             {top.map(s => (
               <button key={s.id} className={`spc-tb-setup-btn ${selId===s.id?'active':''}`} onClick={() => setSelId(s.id)}>
                 <span className="spc-tb-setup-name">{s.label}</span>
