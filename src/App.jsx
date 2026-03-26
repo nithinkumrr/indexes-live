@@ -84,11 +84,13 @@ export default function App() {
           {view !== 'bubble' && <WorldBenchmarks data={data} region={region} nseData={nseData} />}
           {view === 'grid'   && <MarketGrid data={data} nseData={nseData} />}
           {view === 'bubble' && <SentimentTop data={data} nseData={nseData} />}
-          {view === 'bubble' && <BubbleView data={data} />}
           {view === 'bubble' && (
-            <div className="sentiment-fiidii-wrap">
-              <div className="sentiment-fiidii-hdr">🇮🇳 FII / DII FLOW</div>
-              <FiiDii />
+            <div className="sentiment-bubble-row">
+              <div className="sentiment-bubble-main"><BubbleView data={data} /></div>
+              <div className="sentiment-fiidii-panel">
+                <div className="sentiment-fiidii-hdr">FII / DII FLOW</div>
+                <FiiDii />
+              </div>
             </div>
           )}
           {view === 'bubble' && <IndiaHeatmap />}
