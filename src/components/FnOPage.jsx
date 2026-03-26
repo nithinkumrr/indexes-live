@@ -146,7 +146,7 @@ function ExpectedMove({ data, expiries }) {
                 <div className="fno-em-label">{lbl}</div>
                 <div className="fno-em-range">
                   <span className="fno-em-up gain">▲ {em.up.toLocaleString('en-IN')}</span>
-                  <span className="fno-em-pts" style={{ color }}>±{em.pts}</span>
+                  <span className="fno-em-pts" style={{ color }}>±{em.pts} <span style={{fontSize:9,opacity:0.7}}>pts move</span></span>
                   <span className="fno-em-dn loss">▼ {em.dn.toLocaleString('en-IN')}</span>
                 </div>
               </div>
