@@ -1,3 +1,7 @@
+if (!requireNamespace("nser", quietly = TRUE)) install.packages("nser", repos = "https://cran.r-project.org")
+if (!requireNamespace("httr", quietly = TRUE)) install.packages("httr", repos = "https://cran.r-project.org")
+if (!requireNamespace("jsonlite", quietly = TRUE)) install.packages("jsonlite", repos = "https://cran.r-project.org")
+
 library(nser)
 library(httr)
 library(jsonlite)
@@ -47,28 +51,34 @@ safe_int <- function(x) {
 
 process_date <- function(d) {
   date_str <- format(d, "%d%m%Y")
+
   if (weekdays(d) %in% c("Saturday", "Sunday")) {
     cat(sprintf("%s -- weekend, skipping\n", d))
     return(invisible(NULL))
   }
+
   check <- GET(
     paste0(SUPABASE_URL, "/rest/v1/bhav_options?date=eq.", as.character(d), "&limit=1&select=date"),
     auth_headers()
   )
   existing <- fromJSON(content(check, "text", encoding="UTF-8"))
-  if (length(existing) > 0 && nrow(existing) > 0) {
+  if (length(existing) > 0 && nrow(as.data.frame(existing)) > 0) {
     cat(sprintf("%s -- already in DB, skipping\n", d))
     return(invisible(NULL))
   }
+
   tryCatch({
     df <- tryCatch({
       if (d >= as.Date("2024-07-06")) fobhav(date_str) else fobhav1(date_str)
     }, error = function(e) NULL)
+
     if (is.null(df) || nrow(df) == 0) {
       cat(sprintf("%s -- holiday/no data\n", d))
       return(invisible(NULL))
     }
+
     names(df) <- toupper(trimws(names(df)))
+
     aliases <- list(
       SYMBOL=c("FINSYMBOL"), EXPIRY_DT=c("EXPIRYDATE","EXPIRY_DATE"),
       OPTION_TYP=c("OPTIONTYPE"), STRIKE_PR=c("STRIKEPRICE","STRIKE"),
@@ -83,9 +93,15 @@ process_date <- function(d) {
         }
       }
     }
+
     if ("OPTION_TYP" %in% names(df)) df <- df[df$OPTION_TYP %in% c("CE","PE"), ]
     if ("SYMBOL" %in% names(df)) df <- df[df$SYMBOL %in% TARGET_SYMBOLS, ]
-    if (is.null(df) || nrow(df) == 0) return(invisible(NULL))
+
+    if (is.null(df) || nrow(df) == 0) {
+      cat(sprintf("%s -- no target symbols\n", d))
+      return(invisible(NULL))
+    }
+
     rows <- list()
     for (j in 1:nrow(df)) {
       row <- df[j, ]
@@ -94,20 +110,30 @@ process_date <- function(d) {
       strike_val <- safe_num(row[["STRIKE_PR"]])
       if (is.na(strike_val)) next
       rows[[length(rows)+1]] <- list(
-        date=as.character(d), symbol=trimws(as.character(row[["SYMBOL"]])),
-        expiry=expiry_val, strike=strike_val, type=trimws(as.character(row[["OPTION_TYP"]])),
-        open=safe_num(row[["OPEN"]]), high=safe_num(row[["HIGH"]]),
-        low=safe_num(row[["LOW"]]), close=safe_num(row[["CLOSE"]]),
-        settle=safe_num(row[["SETTLE_PR"]]), oi=safe_int(row[["OPEN_INT"]]),
-        volume=safe_int(row[["VOLUME"]])
+        date   = as.character(d),
+        symbol = trimws(as.character(row[["SYMBOL"]])),
+        expiry = expiry_val,
+        strike = strike_val,
+        type   = trimws(as.character(row[["OPTION_TYP"]])),
+        open   = safe_num(row[["OPEN"]]),
+        high   = safe_num(row[["HIGH"]]),
+        low    = safe_num(row[["LOW"]]),
+        close  = safe_num(row[["CLOSE"]]),
+        settle = safe_num(row[["SETTLE_PR"]]),
+        oi     = safe_int(row[["OPEN_INT"]]),
+        volume = safe_int(row[["VOLUME"]])
       )
     }
+
     if (length(rows) == 0) return(invisible(NULL))
+
     for (b in seq(1, length(rows), by=200)) {
       batch <- rows[b:min(b+199, length(rows))]
       insert_batch(batch)
     }
+
     cat(sprintf("%s -- %d rows stored\n", d, length(rows)))
+
   }, error = function(e) {
     cat(sprintf("%s -- error: %s\n", d, conditionMessage(e)))
   })
@@ -115,7 +141,11 @@ process_date <- function(d) {
 
 today     <- Sys.Date()
 yesterday <- today - 1
+
 cat("Running daily bhav download...\n")
+cat(sprintf("Date: %s\n\n", today))
+
 process_date(yesterday)
 process_date(today)
+
 cat("\nDone!\n")
