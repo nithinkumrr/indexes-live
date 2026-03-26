@@ -399,7 +399,18 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
 
   return (
     <div className="spc-detail">
-      {/* Header */}
+      {/* Banners */}
+      {hasLastSession && (
+        <div className="spc-session-banner">
+          <span>📋 Restored your last session</span>
+          <button onClick={resetLegs} className="spc-session-reset">Reset</button>
+        </div>
+      )}
+      {sharedFrom?.stratId === strat.id && (
+        <div className="spc-share-banner"><span>🔗 Someone shared this setup with you</span></div>
+      )}
+
+      {/* Header row */}
       <div className="spc-dhead">
         <div>
           <div className="spc-dname">{strat.label}</div>
@@ -407,133 +418,109 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
         </div>
         <div className="spc-dscore" style={{borderColor:scoreC+'40',background:scoreC+'0D'}}>
           <div className="spc-dscore-num" style={{color:scoreC}}>{sc}/10</div>
-          <div className="spc-dscore-lbl" style={{color:scoreC}}>{sc>=8?'Strong setup':sc>=6?'Decent':'Weak'}</div>
+          <div className="spc-dscore-lbl" style={{color:scoreC}}>{sc>=8?'Strong':sc>=6?'Decent':'Weak'}</div>
         </div>
       </div>
 
-      {/* Last session banner */}
-      {hasLastSession && (
-        <div className="spc-session-banner">
-          <span>📋 Restored your last session for this strategy</span>
-          <button onClick={resetLegs} className="spc-session-reset">Reset to default</button>
+      {/* Highlighted key stats */}
+      <div className="spc-hero-stats">
+        <div className="spc-hero-stat spc-hero-net" style={{borderColor:isC?'rgba(0,200,150,.3)':'rgba(255,68,85,.3)',background:isC?'rgba(0,200,150,.06)':'rgba(255,68,85,.06)'}}>
+          <div className="spc-hero-lbl">Net {isC?'Collected':'Cost'}</div>
+          <div className="spc-hero-val" style={{color:isC?'#00C896':'#FF4455'}}>{net===0?'—':fmt(Math.abs(net*lots*LOT))}</div>
         </div>
-      )}
-
-      {/* Shared from banner */}
-      {sharedFrom?.stratId === strat.id && (
-        <div className="spc-share-banner">
-          <span>🔗 Someone shared this setup with you</span>
+        <div className="spc-hero-stat" style={{borderColor:'rgba(0,200,150,.2)',background:'rgba(0,200,150,.04)'}}>
+          <div className="spc-hero-lbl">Max Profit</div>
+          <div className="spc-hero-val gain">{maxP===0&&net===0?'—':iu(maxP)?'∞':fmt(maxP)}</div>
         </div>
-      )}
-
-      {/* Stats */}
-      <div className="spc-dstats">
-        {[
-          ['Net '+(isC?'Collected':'Cost'), fmt(Math.abs(net*lots*LOT)), isC?'#00C896':'#FF4455'],
-          ['Max Profit', iu(maxP)?'Unlimited':fmt(maxP), '#00C896'],
-          ['Max Loss',   iu(maxL)?'Unlimited':fmt(Math.abs(maxL)), '#FF4455'],
-        ].map(([l,v,c]) => (
-          <div key={l} className="spc-dstat">
-            <div className="spc-dstat-l">{l}</div>
-            <div className="spc-dstat-v" style={{color:c}}>{v}</div>
-          </div>
-        ))}
-        <div className="spc-dstat">
-          <div className="spc-dstat-l">Lots</div>
+        <div className="spc-hero-stat" style={{borderColor:'rgba(255,68,85,.2)',background:'rgba(255,68,85,.04)'}}>
+          <div className="spc-hero-lbl">Max Loss</div>
+          <div className="spc-hero-val loss">{maxL===0&&net===0?'—':iu(maxL)?'∞':fmt(Math.abs(maxL))}</div>
+        </div>
+        <div className="spc-hero-stat">
+          <div className="spc-hero-lbl">Lots</div>
           <input type="number" value={lots} min={1} step={1} className="spc-lots" onChange={e=>setLots(Math.max(1,+e.target.value))}/>
         </div>
       </div>
 
-      {/* Premium input section */}
-      <div className="spc-prem-header">
-        <div>
-          <span className="spc-section-lbl" style={{marginBottom:0}}>LEGS · enter premiums from your broker</span>
-          {saved && <span className="spc-autosave">✓ auto-saved</span>}
-        </div>
-        <div style={{display:'flex',gap:6}}>
-          <button className="spc-prem-hint-btn" onClick={() => setShowPremiumHint(v=>!v)}>
-            How to get premiums?
-          </button>
-          <button className="spc-reset-btn" onClick={resetPremiums}>↺ Estimate</button>
-          <button className="spc-reset-btn" onClick={resetLegs}>↺ Reset ATM</button>
-        </div>
-      </div>
-
-      {showPremiumHint && (
-        <div className="spc-hint-box">
-          <strong>How to get live premiums:</strong>
-          <ol>
-            <li>Open Kite (or any broker) → Option Chain</li>
-            <li>Select the same expiry as chosen above</li>
-            <li>Find your strike → note the LTP (Last Traded Price)</li>
-            <li>Type that number in the Premium field below</li>
-          </ol>
-          <p>Or click <strong>↺ Estimate</strong> to auto-fill with Black-Scholes estimates based on current VIX.</p>
-        </div>
-      )}
-
-      <div className="spc-dlegs">
-        {legs.map((l,i) => (
-          <div key={i} className="spc-dleg">
-            <span style={{color:l.q>0?'#4A9EFF':'#F59E0B',fontWeight:700,fontSize:11,fontFamily:'monospace',flexShrink:0}}>
-              {l.q>0?'BUY':'SELL'}{Math.abs(l.q)>1?` ${Math.abs(l.q)}×`:''}
-            </span>
-            <span style={{color:l.t==='CE'?'#FF8090':'#80FFD0',fontWeight:700,fontSize:11,fontFamily:'monospace',flexShrink:0}}>
-              {l.t==='CE'?'CALL':'PUT'}
-            </span>
-            <div className="spc-strike-wrap">
-              <span className="spc-strike-lbl">Strike</span>
-              <input type="number" value={l.k} step={step} className="spc-strike-input" onChange={e=>updK(i,e.target.value)}/>
-            </div>
-            <div className="spc-prem-wrap">
-              <span className="spc-strike-lbl">Premium ₹</span>
-              <input type="number" value={l.p||''} step={0.5} min={0} placeholder="0"
-                className={`spc-prem-input ${l.p>0?'spc-prem-filled':''}`}
-                onChange={e=>updP(i,e.target.value)}/>
-            </div>
-            {l.p > 0 && (
-              <span style={{marginLeft:'auto',color:l.q>0?'#FF4455':'#00C896',fontSize:11,fontFamily:'monospace',fontWeight:600,flexShrink:0}}>
-                {l.q>0?'-':'+'}₹{fmt(Math.abs(l.q*l.p*lots*LOT))}
-              </span>
-            )}
+      {/* TWO COLUMN: inputs left, chart right */}
+      <div className="spc-two-col">
+        {/* LEFT: leg inputs */}
+        <div className="spc-inputs-col">
+          <div className="spc-inputs-hdr">
+            <span className="spc-section-lbl" style={{marginBottom:0}}>LEGS</span>
+            {saved && <span className="spc-autosave">✓ saved</span>}
           </div>
-        ))}
-      </div>
-
-      {/* Payoff */}
-      {legs.some(l => l.p > 0) ? (
-        <>
-          <div className="spc-section-lbl">PAYOFF · hover for P&L · sliders to model scenarios</div>
-          <PayoffChart legs={legs} spot={spot} vix={vix} dte={dte} lots={lots}/>
-          <div className="spc-section-lbl" style={{marginTop:10}}>GREEKS · per {lots} lot{lots>1?'s':''}</div>
-          <Greeks legs={legs} spot={spot} vix={vix} dte={dte} lots={lots}/>
-        </>
-      ) : (
-        <div className="spc-prem-prompt">
-          Enter the premium above to view the payoff diagram and greeks
+          <div className="spc-dlegs-v">
+            {legs.map((l,i) => (
+              <div key={i} className="spc-dleg-v">
+                <div className="spc-dleg-top">
+                  <span className="spc-leg-act" style={{color:l.q>0?'#4A9EFF':'#F59E0B'}}>{l.q>0?'BUY':'SELL'}{Math.abs(l.q)>1?` ${Math.abs(l.q)}×`:''}</span>
+                  <span className="spc-leg-tp" style={{color:l.t==='CE'?'#FF8090':'#80FFD0'}}>{l.t==='CE'?'CALL':'PUT'}</span>
+                  {l.p>0&&<span className="spc-leg-net" style={{color:l.q>0?'#FF4455':'#00C896'}}>{l.q>0?'-':'+'}₹{fmt(Math.abs(l.q*l.p*lots*LOT))}</span>}
+                </div>
+                <div className="spc-dleg-inputs">
+                  <div className="spc-dleg-field">
+                    <span className="spc-strike-lbl">Strike</span>
+                    <input type="number" value={l.k} step={step} className="spc-strike-input-v" onChange={e=>updK(i,e.target.value)}/>
+                  </div>
+                  <div className="spc-dleg-field">
+                    <span className="spc-strike-lbl">Premium ₹</span>
+                    <input type="number" value={l.p||''} step={0.5} min={0} placeholder="enter"
+                      className={`spc-prem-input-v ${l.p>0?'spc-prem-filled':''}`}
+                      onChange={e=>updP(i,e.target.value)}/>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="spc-inputs-actions">
+            <button className="spc-prem-hint-btn" onClick={() => setShowPremiumHint(v=>!v)}>How to get premium?</button>
+            <button className="spc-reset-btn" onClick={resetPremiums}>↺ Estimate</button>
+            <button className="spc-reset-btn" onClick={resetLegs}>↺ ATM</button>
+          </div>
+          {showPremiumHint && (
+            <div className="spc-hint-box">
+              <strong>How to get premiums:</strong>
+              <ol>
+                <li>Open Kite → Option Chain</li>
+                <li>Select the same expiry</li>
+                <li>Note the LTP for your strike</li>
+                <li>Type it in Premium above</li>
+              </ol>
+              <p>Or click <strong>↺ Estimate</strong> for Black-Scholes estimate.</p>
+            </div>
+          )}
+          {/* Education */}
+          <div className="spc-edu" style={{marginTop:'auto',paddingTop:10}}>
+            <div className="spc-edu-block">
+              <div className="spc-edu-h">WHY IT WORKS</div>
+              <div className="spc-edu-t">{strat.why}</div>
+            </div>
+            <div className="spc-edu-block spc-edu-danger">
+              <div className="spc-edu-h">WHAT KILLS IT</div>
+              <div className="spc-edu-t">{strat.kill}</div>
+            </div>
+          </div>
+          <div className="spc-actions" style={{marginTop:8}}>
+            <button className="spc-share-btn" onClick={handleShare}>{copied?'✓ Copied!':'🔗 Share'}</button>
+            <button className="spc-bt-btn" onClick={() => onBT && onBT(strat.id)}>Backtest →</button>
+          </div>
         </div>
-      )}
 
-      {/* Education */}
-      <div className="spc-edu">
-        <div className="spc-edu-block">
-          <div className="spc-edu-h">WHY IT WORKS</div>
-          <div className="spc-edu-t">{strat.why}</div>
+        {/* RIGHT: chart + greeks */}
+        <div className="spc-chart-col">
+          {legs.some(l => l.p > 0) ? (
+            <>
+              <PayoffChart legs={legs} spot={spot} vix={vix} dte={dte} lots={lots}/>
+              <div className="spc-section-lbl" style={{marginTop:10}}>GREEKS · per {lots} lot{lots>1?'s':''}</div>
+              <Greeks legs={legs} spot={spot} vix={vix} dte={dte} lots={lots}/>
+            </>
+          ) : (
+            <div className="spc-prem-prompt">
+              ↑ Enter premium on the left to see payoff diagram and greeks
+            </div>
+          )}
         </div>
-        <div className="spc-edu-block spc-edu-danger">
-          <div className="spc-edu-h">WHAT KILLS IT</div>
-          <div className="spc-edu-t">{strat.kill}</div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="spc-actions">
-        <button className="spc-share-btn" onClick={handleShare}>
-          {copied ? '✓ Link copied!' : '🔗 Share this setup'}
-        </button>
-        <button className="spc-bt-btn" onClick={() => onBT && onBT(strat.id)}>
-          Backtest with real NSE data →
-        </button>
       </div>
     </div>
   );
