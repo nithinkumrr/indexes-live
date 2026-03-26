@@ -8,7 +8,6 @@ import HeroSection from './components/HeroSection';
 import WorldBenchmarks from './components/WorldBenchmarks';
 import MarketGrid from './components/MarketGrid';
 import BubbleView from './components/BubbleView';
-import SentimentLayout from './components/SentimentLayout';
 import FnOPage from './components/FnOPage';
 import GoldPage from './components/GoldPage';
 import IpoPage from './components/IpoPage';
@@ -90,7 +89,7 @@ export default function App() {
               <div className="sentiment-bubble-main"><BubbleView data={data} /></div>
               <div className="sentiment-fiidii-panel">
                 <div className="sentiment-fiidii-hdr">FII / DII FLOW</div>
-                <FiiDii cardsOnly={true} />
+                <FiiDii />
               </div>
             </div>
           )}
