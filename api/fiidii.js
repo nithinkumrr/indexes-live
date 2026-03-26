@@ -54,9 +54,10 @@ export default async function handler(req, res) {
     } catch (_) {}
   }
 
-  // Step 2: Always fetch live data for today from NSE
+  // Step 2: Fetch live today only if it's a trading day
   let liveToday = null;
-  try {
+  const todayIsHoliday = HOLIDAYS.has(today) || new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay() === 0 || new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay() === 6;
+  if (!todayIsHoliday) {
     let cookies = '';
     const home = await fetch('https://www.nseindia.com', {
       headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' }
@@ -75,7 +76,7 @@ export default async function handler(req, res) {
         liveToday = { date: today, fiiNet: f.net, fiiBuy: f.buy, fiiSell: f.sell, diiNet: d.net, diiBuy: d.buy, diiSell: d.sell };
       }
     }
-  } catch (_) {}
+  } // end !todayIsHoliday
 
   // Step 3: Merge today's live data
   if (liveToday) {
