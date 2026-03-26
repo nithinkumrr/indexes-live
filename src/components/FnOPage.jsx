@@ -1887,11 +1887,25 @@ function IndiaTickerFno() {
 
   const load = async () => {
     try {
-      const r = await fetch('/api/nse-india');
+      // Try Kite first (most accurate, live data)
+      const r = await fetch('/api/kite-quote');
       const d = await r.json();
+      if (d.quotes?.length) {
+        const q = SYMBOLS.map(s => {
+          const kq = d.quotes.find(q => q.id === s.id);
+          return kq ? { ...s, price: kq.price, change: kq.change, changePct: kq.changePct } : null;
+        }).filter(Boolean);
+        if (q.length) { setQuotes(q); setLastUpdate(new Date()); return; }
+      }
+    } catch (_) {}
+    // Fallback to NSE + Gift Nifty
+    try {
+      const [r1, r2] = await Promise.all([fetch('/api/nse-india'), fetch('/api/giftnifty')]);
+      const [d, gn] = await Promise.all([r1.json(), r2.json()]);
+      if (gn?.price) d.giftnifty = { price: gn.price, change: gn.change, changePct: gn.changePct };
       const q = SYMBOLS.map(s => {
         const idx = d?.[s.id];
-        if (!idx) return null;
+        if (!idx?.price) return null;
         return { ...s, price: idx.price, change: idx.change, changePct: idx.changePct };
       }).filter(Boolean);
       if (q.length) { setQuotes(q); setLastUpdate(new Date()); }
@@ -1900,8 +1914,10 @@ function IndiaTickerFno() {
 
   useEffect(() => {
     load();
-    // Only poll during market hours, every 5 min
-    const id = setInterval(() => { if (isMarketOpen()) load(); }, 5 * 60 * 1000);
+    // Poll every 5s during market hours via Kite, every 5min otherwise
+    const id = setInterval(() => {
+      if (isMarketOpen()) load();
+    }, isMarketOpen() ? 5000 : 5 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -1932,7 +1948,7 @@ function IndiaTickerFno() {
       </div>
       <div className="fno-it-meta">
         {isMarketOpen()
-          ? <span className="fno-it-live">● LIVE · updates every 5m</span>
+          ? <span className="fno-it-live">● LIVE · Kite · every 5s</span>
           : <span className="fno-it-closed">Market closed{istStr ? ` · as of ${istStr} IST` : ''}</span>
         }
       </div>

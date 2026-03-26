@@ -63,11 +63,11 @@
       clearLog();
       document.getElementById('btnSeed').disabled = true;
       log('🚀 Seeding historical data to KV...', 'info');
-      log(`📡 POST → ${BASE}/api/fiidii-backfill`, 'dim');
+      log(`📡 POST → ${BASE}/api/fiidii-store`, 'dim');
       log('');
 
       try {
-        const r = await fetch(`${BASE}/api/fiidii-backfill`, {
+        const r = await fetch(`${BASE}/api/fiidii-store`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ records: HISTORICAL }),
@@ -96,7 +96,7 @@
       clearLog();
       log('🔍 Checking KV...', 'info');
       try {
-        const r = await fetch(`${BASE}/api/fiidii-backfill`);
+        const r = await fetch(`${BASE}/api/fiidii-store`);
         const result = await r.json();
         if (result.stored === 0) {
           log('KV is empty — run the seed first.', 'err');

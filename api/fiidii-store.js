@@ -53,6 +53,35 @@ async function fetchDayData(iso, H) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // POST: manual seed from backfill tool
+  if (req.method === 'POST') {
+    try {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      const records = body?.records;
+      if (!Array.isArray(records) || !records.length) return res.status(400).json({ error: 'Expected { records: [...] }' });
+      const stored = [];
+      for (const rec of records) {
+        if (!rec.date) continue;
+        await kv.set(`fiidii:${rec.date}`, JSON.stringify(rec), { ex: 90 * 24 * 60 * 60 });
+        stored.push(rec.date);
+      }
+      return res.status(200).json({ success: true, stored });
+    } catch(e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  // GET: check KV or run backfill
+  if (req.query?.action === 'check') {
+    const results = {};
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const iso = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      try { const val = await kv.get(`fiidii:${iso}`); if (val) results[`fiidii:${iso}`] = typeof val === 'string' ? JSON.parse(val) : val; } catch(_) {}
+    }
+    return res.status(200).json({ stored: Object.keys(results).length, data: results });
+  }
 
   const days = parseInt(req.query?.days || '1');
   const tradingDays = getTradingDays(Math.min(days, 10));

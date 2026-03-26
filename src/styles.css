@@ -3283,3 +3283,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-esv2-clock { justify-content: center; }
 .fno-esv2-name  { font-size: 12px !important; font-weight: 700 !important; }
 .fno-esv2-date  { font-size: 11px !important; color: var(--text2) !important; }
+
+/* ── India ticker — compact + faster ────────────────────────────────────── */
+.fno-it-item  { padding: 0 10px !important; gap: 5px !important; }
+.fno-it-label { font-size: 9px !important; }
+.fno-it-price { font-size: 11px !important; }
+.fno-it-chg   { font-size: 10px !important; }
+.fno-india-ticker-inner { animation-duration: 25s !important; }

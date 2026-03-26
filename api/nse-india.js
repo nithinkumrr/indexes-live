@@ -89,15 +89,24 @@ export default async function handler(req, res) {
         'INDIA VIX':'indiavix','NIFTY 50':'nifty50','NIFTY BANK':'banknifty',
         'NIFTY NEXT 50':'niftynext50','NIFTY 100':'nifty100','NIFTY 200':'nifty200',
         'NIFTY 500':'nifty500','NIFTY MIDCAP 150':'niftymidcap150',
-        'NIFTY MIDCAP SELECT':'niftymidcapselect','NIFTY SMALLCAP 250':'niftysmallcap250',
-        'NIFTY TOTAL MARKET':'niftytotalmkt','NIFTY IT':'niftyit','NIFTY AUTO':'niftyauto',
+        'NIFTY MIDCAP SELECT':'niftymidcapselect','NIFTY MID SELECT':'niftymidcapselect',
+        'NIFTY SMALLCAP 250':'niftysmallcap250','NIFTY SMLCAP 250':'niftysmallcap250',
+        'NIFTY TOTAL MARKET':'niftytotalmkt','NIFTY TOTALMARKET':'niftytotalmkt',
+        'NIFTY IT':'niftyit','NIFTY AUTO':'niftyauto',
         'NIFTY FMCG':'niftyfmcg','NIFTY PHARMA':'niftypharma','NIFTY REALTY':'niftyrealty',
-        'NIFTY METAL':'niftymetal','NIFTY INFRA':'niftyinfra','NIFTY ENERGY':'niftyenergy',
-        'NIFTY FINANCIAL SERVICES':'niftyfinservice','NIFTY MEDIA':'niftymedia',
-        'NIFTY PSU BANK':'niftypsubank','NIFTY PRIVATE BANK':'niftypvtbank',
-        'NIFTY CONSUMER DURABLES':'niftyconsumer','NIFTY MNC':'niftymnc',
-        'BANKEX':'bankex','NIFTY500 MULTICAP 50:25:25':'nifty500',
+        'NIFTY METAL':'niftymetal','NIFTY INFRA':'niftyinfra',
+        'NIFTY INFRASTRUCTURE':'niftyinfra','NIFTY ENERGY':'niftyenergy',
+        'NIFTY FINANCIAL SERVICES':'niftyfinservice','NIFTY FIN SERVICE':'niftyfinservice',
+        'NIFTY MEDIA':'niftymedia','NIFTY PSU BANK':'niftypsubank',
+        'NIFTY PRIVATE BANK':'niftypvtbank','NIFTY PVTBANK':'niftypvtbank',
+        'NIFTY CONSUMER DURABLES':'niftyconsumer','NIFTY CONSR DURBL':'niftyconsumer',
+        'NIFTY MNC':'niftymnc','BANKEX':'bankex',
+        'NIFTY500 MULTICAP 50:25:25':'nifty500','NIFTY LARGEMIDCAP 250':'niftylargemid',
+        'SENSEX':'sensex','S&P BSE SENSEX':'sensex',
       };
+
+      // Debug — so we can see all index names NSE returns
+      result._nseIndexNames = allData.map(r => r.index);
 
       for (const row of allData) {
         const key = IDX_MAP[row.index];
