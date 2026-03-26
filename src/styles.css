@@ -2700,3 +2700,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   display: flex;
   flex-direction: column;
 }
+
+/* ── FiiDii on sentiment page ────────────────────────────────────────────── */
+.sentiment-fiidii-wrap { border-top: 1px solid var(--border); }
+.sentiment-fiidii-hdr  {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
+  font-weight: 700; color: var(--text3);
+  padding: 16px 20px 10px; border-bottom: 1px solid var(--border);
+}
+
+/* FiiDii legend inline */
+.fiidii-legend-inline {
+  display: flex; gap: 14px; font-family: var(--mono); font-size: 10px; color: var(--text3);
+}
+.fiidii-legend-inline span { display: flex; align-items: center; gap: 4px; }
