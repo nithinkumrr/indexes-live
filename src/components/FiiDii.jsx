@@ -164,7 +164,7 @@ export default function FiiDii() {
 
   return (
     <div className="fiidii-wrap">
-      <div className="fiidii-segment-label">NSE · CASH MARKET (EQUITY)</div>
+      <div className="fiidii-segment-label">🇮🇳 FII / DII Flow</div>
 
       {history.length > 0 && (
         <div className="fiidii-chart-col">
