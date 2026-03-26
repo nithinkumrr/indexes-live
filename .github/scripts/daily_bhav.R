@@ -1,6 +1,6 @@
-if (!requireNamespace("nser", quietly = TRUE)) install.packages("nser", repos = "https://cran.r-project.org")
-if (!requireNamespace("httr", quietly = TRUE)) install.packages("httr", repos = "https://cran.r-project.org")
-if (!requireNamespace("jsonlite", quietly = TRUE)) install.packages("jsonlite", repos = "https://cran.r-project.org")
+install.packages("nser", repos = "https://cran.r-project.org", quiet = TRUE)
+install.packages("httr", repos = "https://cran.r-project.org", quiet = TRUE)
+install.packages("jsonlite", repos = "https://cran.r-project.org", quiet = TRUE)
 
 library(nser)
 library(httr)
