@@ -2802,3 +2802,23 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .fno-tab-btn  { padding: 10px 12px; font-size: 11px; }
   .fno-estrip-meta { display: none; }
 }
+
+/* ── VIX Zone Card (Overview inline playbook) ────────────────────────────── */
+.fno-vix-zone-card {
+  margin: 0; padding: 16px 20px;
+  border-left: 4px solid; border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+.fno-vzc-header  { display: flex; align-items: flex-start; gap: 24px; margin-bottom: 10px; flex-wrap: wrap; }
+.fno-vzc-left    { min-width: 220px; }
+.fno-vzc-right   { flex: 1; }
+.fno-vzc-label   { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text3); }
+.fno-vzc-zone    { font-family: var(--mono); font-size: 22px; font-weight: 700; line-height: 1.2; margin: 4px 0; }
+.fno-vzc-bias    { font-family: var(--mono); font-size: 11px; color: var(--text2); }
+.fno-vzc-strats  { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.fno-vzc-strat   { font-family: var(--mono); font-size: 11px; font-weight: 600; border: 1px solid; padding: 3px 10px; border-radius: 4px; }
+.fno-vzc-avoid   { font-family: var(--mono); font-size: 10px; color: var(--text3); font-style: italic; }
+.fno-vzc-pattern { font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
+.fno-vzc-more    { font-family: var(--mono); font-size: 11px; font-weight: 600; background: transparent; border: 1px solid; padding: 5px 14px; border-radius: 4px; cursor: pointer; transition: all .15s; margin-right: 12px; }
+.fno-vzc-more:hover { opacity: 0.8; }
+.fno-vzc-disclaimer { display: inline; font-family: var(--mono); font-size: 9px; color: var(--text3); opacity: 0.6; }

@@ -1333,6 +1333,71 @@ function VixSeasonality() {
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// VIX ZONE CARD — inline playbook reference for Overview tab
+// ─────────────────────────────────────────────────────────────────────────────
+function VixZoneCard({ vixLevel, onStrategyClick }) {
+  const ZONES = [
+    {
+      max: 15, label: 'LOW VOL', color: '#00C896',
+      bias: 'Historically favours option buyers',
+      strategies: ['Long Straddle', 'Long Strangle', 'Debit Spreads'],
+      pattern: 'Low VIX periods have historically preceded sharp moves. Premium is cheap — buyers have an edge.',
+      avoid: 'Selling naked options — premium too thin to justify risk',
+    },
+    {
+      max: 20, label: 'NORMAL', color: '#4A9EFF',
+      bias: 'Balanced — both buyers and sellers viable',
+      strategies: ['Iron Condor', 'Vertical Spreads', 'Covered Calls'],
+      pattern: 'Neither buyers nor sellers have a structural edge. Textbook strategies tend to play out as designed.',
+      avoid: null,
+    },
+    {
+      max: 30, label: 'ELEVATED', color: '#F59E0B',
+      bias: 'Historically favours premium sellers',
+      strategies: ['Short Straddle', 'Short Strangle', 'Credit Spreads'],
+      pattern: 'Elevated VIX has historically mean-reverted. Markets that stay range-bound after a fear spike reward sellers.',
+      avoid: 'Unhedged long options — overpaying for vol',
+    },
+    {
+      max: 99, label: 'HIGH FEAR', color: '#FF4455',
+      bias: 'Reduce size · hedge aggressively',
+      strategies: ['Far OTM Credit Spreads', 'Ratio Spreads', 'Wait & Observe'],
+      pattern: 'Highest risk and highest potential reward simultaneously. Gaps and overnight reversals are common.',
+      avoid: 'Large directional bets — tails are fat',
+    },
+  ];
+
+  const zone = ZONES.find(z => vixLevel <= z.max) || ZONES[3];
+
+  return (
+    <div className="fno-vix-zone-card" style={{ borderLeftColor: zone.color }}>
+      <div className="fno-vzc-header">
+        <div className="fno-vzc-left">
+          <span className="fno-vzc-label">CURRENT VIX REGIME</span>
+          <div className="fno-vzc-zone" style={{ color: zone.color }}>
+            {vixLevel.toFixed(2)} — <span>{zone.label}</span>
+          </div>
+          <div className="fno-vzc-bias">{zone.bias}</div>
+        </div>
+        <div className="fno-vzc-right">
+          <div className="fno-vzc-strats">
+            {zone.strategies.map(s => (
+              <span key={s} className="fno-vzc-strat" style={{ borderColor: `${zone.color}40`, color: zone.color }}>{s}</span>
+            ))}
+          </div>
+          {zone.avoid && <div className="fno-vzc-avoid">Historically avoid: {zone.avoid}</div>}
+        </div>
+      </div>
+      <div className="fno-vzc-pattern">{zone.pattern}</div>
+      <button className="fno-vzc-more" onClick={onStrategyClick} style={{ color: zone.color, borderColor: `${zone.color}40` }}>
+        Full strategy playbook →
+      </button>
+      <div className="fno-vzc-disclaimer">Historical patterns only · not investment advice</div>
+    </div>
+  );
+}
+
 export default function FnOPage({ data = {} }) {
   const FALLBACK_HOLIDAYS = ['2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31','2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25'];
   const FALLBACK_NAMES    = {'2026-01-26':'Republic Day','2026-02-17':'Mahashivratri','2026-03-03':'Holi','2026-03-26':'Ram Navami','2026-03-31':'Mahavir Jayanti','2026-04-03':'Good Friday','2026-04-14':'Ambedkar Jayanti','2026-05-01':'Maharashtra Day','2026-05-28':'Bakri Id','2026-06-26':'Muharram','2026-09-14':'Ganesh Chaturthi','2026-10-02':'Gandhi Jayanti','2026-10-20':'Dussehra','2026-11-10':'Diwali Balipratipada','2026-11-24':'Guru Nanak Jayanti','2026-12-25':'Christmas'};
@@ -1393,6 +1458,8 @@ export default function FnOPage({ data = {} }) {
             <div className="fnos-pulse-em"><ExpectedMove data={data} expiries={expiries} /></div>
             <div className="fnos-pulse-roll"><RolloverMeter expiries={expiries} /></div>
           </div>
+          {/* Current VIX zone — inline playbook reference */}
+          {liveVix != null && <VixZoneCard vixLevel={liveVix} onStrategyClick={() => setTab('strategy')} />}
           <div className="fnos-full-section">
             <PivotPoints data={data} />
           </div>
