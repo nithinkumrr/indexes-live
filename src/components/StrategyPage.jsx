@@ -150,7 +150,7 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol, tSpot, setTSpot, tDte
   const sig = (vix || 15) / 100;
   const spotStep = spot > 10000 ? 50 : 25;
 
-  const { range, expPnls, nowPnls, bes, maxP, minP, maxExpP, minExpP } = useMemo(() => {
+  const { range, expPnls, nowPnls, bes, maxP, minP, maxExpP, minExpP, pU, lU } = useMemo(() => {
     const st = spot > 10000 ? 50 : 25;
     const ks = legs.map(l => l.k);
     if (!ks.length) return { range:[spot], expPnls:[0], nowPnls:[0], bes:[], maxP:0, minP:0, maxExpP:0, minExpP:0 };
