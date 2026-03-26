@@ -127,15 +127,11 @@ function parseShareUrl() {
 
 // ── PAYOFF CHART ──────────────────────────────────────────────────────────────
 // ── PAYOFF CHART ──────────────────────────────────────────────────────────────
-function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
+function PayoffChart({ legs, spot, vix, dte, lots, symbol, tSpot, setTSpot, tDte, setTDte }) {
   const LOT = getLot(symbol);
-  const [tSpot,     setTSpot]     = useState(spot);
-  const [tDte,      setTDte]      = useState(dte);
   const [hx,        setHx]        = useState(null);
   const [showToday, setShowToday] = useState(true);
   const [showExp,   setShowExp]   = useState(true);
-  useEffect(() => setTSpot(spot), [spot]);
-  useEffect(() => setTDte(dte),  [dte]);
 
   const sig = (vix || 15) / 100;
   const spotStep = spot > 10000 ? 50 : 25;
@@ -596,6 +592,11 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
   const [saved,           setSaved]           = useState(false);
   const [copied,          setCopied]          = useState(false);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
+  const [tSpot,           setTSpot]           = useState(spot);
+  const [tDte,            setTDte]            = useState(dte);
+
+  useEffect(() => setTSpot(spot), [spot]);
+  useEffect(() => setTDte(dte),  [dte]);
 
   useEffect(() => {
     if (sharedFrom?.stratId === strat.id && sharedFrom?.legs) { setLegs(sharedFrom.legs); return; }
@@ -811,13 +812,14 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
 
           {hasPremiums ? (
             <>
-              <PayoffChart legs={legs} spot={spot} vix={vix} dte={dte} lots={lots} symbol={symbol}/>
+              <PayoffChart legs={legs} spot={spot} vix={vix} dte={dte} lots={lots} symbol={symbol}
+                tSpot={tSpot} setTSpot={setTSpot} tDte={tDte} setTDte={setTDte}/>
 
               <div className="spc-col-title" style={{marginTop:16}}>
                 <span>GREEKS</span>
-                <span className="spc-col-title-sub">per {lots} lot{lots>1?'s':''} · live estimates</span>
+                <span className="spc-col-title-sub">per {lots} lot{lots>1?'s':''} · at {tSpot.toLocaleString('en-IN')} · {tDte}d left</span>
               </div>
-              <Greeks legs={legs} spot={spot} vix={vix} dte={dte} lots={lots} symbol={symbol}/>
+              <Greeks legs={legs} spot={tSpot} vix={vix} dte={tDte} lots={lots} symbol={symbol}/>
             </>
           ) : (
             <div className="spc-no-prem">
