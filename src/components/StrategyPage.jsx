@@ -429,7 +429,7 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
       {/* Stats */}
       <div className="spc-dstats">
         {[
-          ['Net '+(isC?'Income':'Cost'), fmt(Math.abs(net*lots*LOT)), isC?'#00C896':'#FF4455'],
+          ['Net '+(isC?'Collected':'Cost'), fmt(Math.abs(net*lots*LOT)), isC?'#00C896':'#FF4455'],
           ['Max Profit', iu(maxP)?'Unlimited':fmt(maxP), '#00C896'],
           ['Max Loss',   iu(maxL)?'Unlimited':fmt(Math.abs(maxL)), '#FF4455'],
         ].map(([l,v,c]) => (
@@ -510,7 +510,7 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
         </>
       ) : (
         <div className="spc-prem-prompt">
-          Enter premium from your broker above to see the payoff diagram and greeks
+          Enter the premium above to view the payoff diagram and greeks
         </div>
       )}
 
@@ -597,7 +597,7 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
   const FILTERS = [
     {id:'all',label:'All'},{id:'bullish',label:'Bullish'},{id:'bearish',label:'Bearish'},
     {id:'neutral',label:'Neutral'},{id:'volatile',label:'Volatile'},
-    {id:'income',label:'Premium Intake'},{id:'buying',label:'Buying'},
+    {id:'income',label:'Collect Premium (Selling)'},{id:'buying',label:'Pay Premium (Buying)'},
   ];
 
   const scores = useMemo(() => {
@@ -648,7 +648,7 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
         </div>
         {top.length > 0 && (
           <div className="spc-best">
-            <span className="spc-best-l">TODAY'S BEST SETUPS</span>
+            <span className="spc-best-l">SETUPS IDENTIFIED · NOT A RECOMMENDATION</span>
             {top.map(s => (
               <button key={s.id} className="spc-best-btn" onClick={() => setSelId(s.id)}>
                 {s.label} <span style={{color:'#00C896',fontWeight:700}}>{scores[s.id]}/10</span>
@@ -688,7 +688,7 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
                       </div>
                       <div className="spc-item-r2">
                         <span style={{color:g.color,fontSize:10}}>{g.label.toLowerCase()}</span>
-                        <span style={{color:s.credit?'#00C896':'#FF4455',fontSize:10}}>{s.credit?'intake':'buying'}</span>
+                        <span style={{color:s.credit?'#00C896':'#FF4455',fontSize:10}}>{s.credit?'collect':'pay'}</span>
                         <span style={{color:'var(--text3)',fontSize:9,letterSpacing:2}}>{'●'.repeat(s.complexity)}</span>
                       </div>
                     </div>
