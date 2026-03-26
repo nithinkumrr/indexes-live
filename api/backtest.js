@@ -166,6 +166,111 @@ function getNextExpiry(date, index, expiry) {
 }
 
 // ── Strategy P&L calculator ──────────────────────────────────────────────────
+// ── V2 P&L calculator with separate entry/exit spots ────────────────────────
+function calcPnlV2(strategy, entrySpot, exitSpot, vix, dte, lots, lotSize, strikePct, width, slPct, tpPct) {
+  // Entry: options priced at entrySpot with DTE remaining
+  // Exit: options valued at expiry (intrinsic only if DTE=0, else BS with remaining time)
+  const entryDteY = Math.max(0.001, dte / 365);
+  const exitDteY  = 0.0001; // essentially at expiry
+
+  const step    = lotSize === 65 ? 50 : lotSize === 30 ? 100 : 50; // crude but works
+  const atm     = Math.round(entrySpot / step) * step;
+  const otm1K   = step * (strikePct + 1);
+  const otm2K   = step * (strikePct + width + 1);
+
+  // Entry premiums (priced at entry time)
+  const eAtmC  = getPremium(entrySpot, atm,          entryDteY, vix, 'call');
+  const eAtmP  = getPremium(entrySpot, atm,          entryDteY, vix, 'put');
+  const eOtm1C = getPremium(entrySpot, atm + otm1K,  entryDteY, vix, 'call');
+  const eOtm1P = getPremium(entrySpot, atm - otm1K,  entryDteY, vix, 'put');
+  const eOtm2C = getPremium(entrySpot, atm + otm2K,  entryDteY, vix, 'call');
+  const eOtm2P = getPremium(entrySpot, atm - otm2K,  entryDteY, vix, 'put');
+
+  // Exit values (intrinsic at expiry based on exitSpot vs strike)
+  const xAtmC  = Math.max(0, exitSpot - atm);
+  const xAtmP  = Math.max(0, atm - exitSpot);
+  const xOtm1C = Math.max(0, exitSpot - (atm + otm1K));
+  const xOtm1P = Math.max(0, (atm - otm1K) - exitSpot);
+  const xOtm2C = Math.max(0, exitSpot - (atm + otm2K));
+  const xOtm2P = Math.max(0, (atm - otm2K) - exitSpot);
+
+  let entryPremium = 0, exitValue = 0;
+
+  switch (strategy) {
+    // ── Single leg ──
+    case 'long_call':  entryPremium = eAtmC;  exitValue = xAtmC;  break;
+    case 'long_put':   entryPremium = eAtmP;  exitValue = xAtmP;  break;
+    case 'short_call': entryPremium = eAtmC;  exitValue = xAtmC;  break;
+    case 'short_put':  entryPremium = eAtmP;  exitValue = xAtmP;  break;
+
+    // ── Volatility ──
+    case 'long_straddle':  entryPremium = eAtmC + eAtmP;   exitValue = xAtmC + xAtmP;   break;
+    case 'short_straddle': entryPremium = eAtmC + eAtmP;   exitValue = xAtmC + xAtmP;   break;
+    case 'long_strangle':  entryPremium = eOtm1C + eOtm1P; exitValue = xOtm1C + xOtm1P; break;
+    case 'short_strangle': entryPremium = eOtm1C + eOtm1P; exitValue = xOtm1C + xOtm1P; break;
+    case 'long_guts':      entryPremium = eAtmC + eAtmP + eOtm1C + eOtm1P; exitValue = xAtmC + xAtmP + xOtm1C + xOtm1P; break;
+    case 'short_guts':     entryPremium = eAtmC + eAtmP + eOtm1C + eOtm1P; exitValue = xAtmC + xAtmP + xOtm1C + xOtm1P; break;
+
+    // ── Vertical spreads ──
+    case 'bull_call_spread': entryPremium = eAtmC - eOtm1C; exitValue = xAtmC - xOtm1C; break;
+    case 'bear_call_spread': entryPremium = eOtm1C - eAtmC; exitValue = xOtm1C - xAtmC; break;
+    case 'bull_put_spread':  entryPremium = eOtm1P - eAtmP; exitValue = xOtm1P - xAtmP; break;
+    case 'bear_put_spread':  entryPremium = eAtmP - eOtm1P; exitValue = xAtmP - xOtm1P; break;
+
+    // ── Iron strats ──
+    case 'short_iron_condor':
+      entryPremium = (eOtm1C - eOtm2C) + (eOtm1P - eOtm2P);
+      exitValue    = (xOtm1C - xOtm2C) + (xOtm1P - xOtm2P);
+      break;
+    case 'long_iron_condor':
+      entryPremium = (eOtm2C - eOtm1C) + (eOtm2P - eOtm1P);
+      exitValue    = (xOtm2C - xOtm1C) + (xOtm2P - xOtm1P);
+      break;
+    case 'short_iron_butterfly':
+      entryPremium = eAtmC + eAtmP - eOtm1C - eOtm1P;
+      exitValue    = xAtmC + xAtmP - xOtm1C - xOtm1P;
+      break;
+    case 'long_iron_butterfly':
+      entryPremium = eOtm1C + eOtm1P - eAtmC - eAtmP;
+      exitValue    = xOtm1C + xOtm1P - xAtmC - xAtmP;
+      break;
+
+    // ── Butterfly ──
+    case 'long_call_butterfly':  entryPremium = eAtmC - 2*eOtm1C + eOtm2C; exitValue = xAtmC - 2*xOtm1C + xOtm2C; break;
+    case 'short_call_butterfly': entryPremium = 2*eOtm1C - eAtmC - eOtm2C; exitValue = 2*xOtm1C - xAtmC - xOtm2C; break;
+    case 'long_put_butterfly':   entryPremium = eAtmP - 2*eOtm1P + eOtm2P; exitValue = xAtmP - 2*xOtm1P + xOtm2P; break;
+    case 'short_put_butterfly':  entryPremium = 2*eOtm1P - eAtmP - eOtm2P; exitValue = 2*xOtm1P - xAtmP - xOtm2P; break;
+
+    // ── Condor ──
+    case 'long_call_condor':  entryPremium = eAtmC - eOtm1C - eOtm2C + getPremium(entrySpot,atm+step*3,entryDteY,vix,'call'); exitValue = xAtmC - xOtm1C - xOtm2C + Math.max(0,exitSpot-(atm+step*3)); break;
+    case 'short_call_condor': entryPremium = eOtm1C + eOtm2C - eAtmC - getPremium(entrySpot,atm+step*3,entryDteY,vix,'call'); exitValue = xOtm1C + xOtm2C - xAtmC - Math.max(0,exitSpot-(atm+step*3)); break;
+    case 'long_put_condor':   entryPremium = eAtmP - eOtm1P - eOtm2P + getPremium(entrySpot,atm-step*3,entryDteY,vix,'put'); exitValue = xAtmP - xOtm1P - xOtm2P + Math.max(0,(atm-step*3)-exitSpot); break;
+    case 'short_put_condor':  entryPremium = eOtm1P + eOtm2P - eAtmP - getPremium(entrySpot,atm-step*3,entryDteY,vix,'put'); exitValue = xOtm1P + xOtm2P - xAtmP - Math.max(0,(atm-step*3)-exitSpot); break;
+
+    // ── Synthetic ──
+    case 'synthetic_long':  entryPremium = eAtmC - eAtmP; exitValue = exitSpot - atm; break;
+    case 'synthetic_short': entryPremium = eAtmP - eAtmC; exitValue = atm - exitSpot; break;
+
+    default: entryPremium = eAtmC; exitValue = xAtmC;
+  }
+
+  // Credit strategies: profit = premium received - cost to close
+  const isCredit = ['short_call','short_put','short_straddle','short_strangle','short_guts',
+    'bear_call_spread','bull_put_spread','short_iron_condor','short_iron_butterfly',
+    'short_call_butterfly','short_put_butterfly','short_call_condor','short_put_condor','synthetic_short'].includes(strategy);
+
+  const pnlPerUnit = isCredit ? (entryPremium - exitValue) : (exitValue - entryPremium);
+  let pnl = pnlPerUnit * lots * lotSize;
+
+  // Apply SL/TP
+  const maxLoss   = slPct ? -Math.abs(entryPremium * lots * lotSize * slPct / 100) : null;
+  const maxProfit = tpPct ?  Math.abs(entryPremium * lots * lotSize * tpPct / 100) : null;
+  if (maxLoss   && pnl < maxLoss)   pnl = maxLoss;
+  if (maxProfit && pnl > maxProfit) pnl = maxProfit;
+
+  return { pnl, entryPremium, exitPremium: exitValue };
+}
+
 function calcPnl(strategy, spot, vix, dte, lots, lotSize, strikePct, width, slPct, tpPct) {
   const dteY    = Math.max(0.001, dte / 365);
   const exitDteY = 0.001; // exits at expiry = 0 DTE essentially
@@ -279,7 +384,7 @@ export default async function handler(req, res) {
 
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:result:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v2:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) {
@@ -321,16 +426,18 @@ export default async function handler(req, res) {
       const targetDow = (expiryDow - dte + 7) % 7 || expiryDow;
       if (dow !== (dte === 0 ? expiryDow : targetDow)) continue;
 
-      const spot    = day.close;
-      const vix     = vixData[day.date] || 15;
-      const dteUsed = Math.max(0, dte);
-      const dteY    = Math.max(0.001, dteUsed / 365);
+      // Entry: use open price (approximated as prev close for simplicity)
+      // Exit: use close price (end of day)
+      const entrySpot = day.open || day.close;
+      const exitSpot  = day.close;
+      const vix       = vixData[day.date] || 15;
+      const dteUsed   = Math.max(0, dte);
 
-      const { pnl, entryPremium, exitPremium } = calcPnl(
-        strategy, spot, vix, dteUsed, lots, lotSize, strikePct, width, slPct, tpPct
+      const { pnl, entryPremium, exitPremium } = calcPnlV2(
+        strategy, entrySpot, exitSpot, vix, dteUsed, lots, lotSize, strikePct, width, slPct, tpPct
       );
 
-      daily.push({ date: day.date, pnl, entryPremium, exitPremium, spot, vix, dte: dteUsed });
+      daily.push({ date: day.date, pnl, entryPremium, exitPremium, spot: entrySpot, exitSpot, vix, dte: dteUsed });
     }
 
     if (daily.length === 0) return res.status(400).json({ error: 'No trades found for this period' });
