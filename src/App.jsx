@@ -88,7 +88,7 @@ export default function App() {
             <div className="sentiment-bubble-row">
               <div className="sentiment-bubble-main"><BubbleView data={data} /></div>
               <div className="sentiment-fiidii-panel">
-                <div className="sentiment-fiidii-hdr">FII / DII FLOW</div>
+                <div className="sentiment-fiidii-hdr">🇮🇳 FII / DII Flow</div>
                 <FiiDii />
               </div>
             </div>

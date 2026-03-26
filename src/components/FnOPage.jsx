@@ -1,6 +1,5 @@
 // src/components/FnOPage.jsx — Full F&O dashboard
 import { useState, useEffect, useMemo } from 'react';
-import FiiDii from './FiiDii';
 import Ticker from './Ticker';
 import { getNiftyExpiries } from '../utils/timezone';
 import { formatPrice } from '../utils/format';
@@ -1453,14 +1452,6 @@ export default function FnOPage({ data = {} }) {
         <ThetaDecayCurve />
         <ExpiryCalendar holidays={holidays} holidayNames={holidayNames} />
         <LotSizes />
-      </div>
-
-      {/* ══ FII / DII ════════════════════════════════════════════════ */}
-      <div className="fnos-section-hdr">
-        <span>FII / DII FLOW</span>
-      </div>
-      <div className="fnos-full-section">
-        <FiiDii />
       </div>
 
     </div>

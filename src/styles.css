@@ -627,17 +627,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .ad-unch { font-size: 8px; }
 
   /* ── Compact FII/DII ────────────────────────────── */
-  .fiidii-main-layout { grid-template-columns: 1fr !important; }
-  .fiidii-chart-wrap { display: none; }
-  .fiidii-summary { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-  .fiidii-card { padding: 8px 10px; }
-  .fiidii-card-value { font-size: 18px; }
-  .fiidii-card-label { font-size: 8px; }
-  .fiidii-card-tag { font-size: 9px; }
-  .fiidii-card-sub { font-size: 8px; }
-  .fiidii-bar-date { font-size: 7px; }
-  .fiidii-cards-col { flex-direction: row; flex-wrap: wrap; gap: 6px; }
-  .fiidii-card-side { min-width: 0; flex: 1; }
 
   /* ── Section padding ────────────────────────────── */
   .fno-section { padding: 14px 14px 0; }
@@ -705,45 +694,15 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-holiday-fb    { color: var(--text3); }
 
 /* ─── FII / DII ─────────────────────────────────────────────────────── */
-.fiidii-wrap     { min-width: 0; overflow: hidden; }
-.fiidii-summary  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-.fiidii-card     { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px; min-width: 0; }
-.fiidii-card-label { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 8px; }
-.fiidii-card-value { font-family: var(--mono); font-size: 28px; font-weight: 700; letter-spacing: -1px; margin-bottom: 4px; }
-.fiidii-card-tag  { font-family: var(--mono); font-size: 11px; font-weight: 600; margin-bottom: 8px; }
-.fiidii-card-sub  { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 .fii-buy  { color: #00C896; } .fii-sell { color: #FF4455; }
 .dii-buy  { color: #4A9EFF; } .dii-sell { color: #F59E0B; }
 
-.fiidii-mood     { font-family: var(--mono); font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-.fiidii-mood-sub { font-family: var(--mono); font-size: 11px; margin-bottom: 8px; }
-.fiidii-bullish  { color: #00C896; }
-.fiidii-bearish  { color: #FF4455; }
-.fiidii-mixed    { color: #F59E0B; }
 
 /* Bar chart */
-.fiidii-chart    { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px 12px; margin-bottom: 10px; }
-.fiidii-bar-col  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.fiidii-chart    { display: flex; flex-direction: column; }
-.fiidii-chart > .fiidii-bar-col { /* handled below */ }
-.fiidii-chart    { display: flex; flex-direction: row; align-items: flex-end; gap: 6px; padding-bottom: 28px; position: relative; min-height: 120px; }
-.fiidii-bar-col  { flex: 1; display: flex; flex-direction: column; align-items: center; }
-.fiidii-bar-pair { display: flex; gap: 2px; align-items: flex-end; height: 80px; width: 100%; justify-content: center; }
-.fiidii-bar-wrap { flex: 1; display: flex; align-items: flex-end; height: 100%; }
-.fiidii-bar      { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.4s ease; min-height: 2px; }
-.fiidii-bar-date { font-family: var(--mono); font-size: 8px; color: var(--text3); text-align: center; margin-top: 4px; white-space: nowrap; }
-.fiidii-legend   { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: var(--text3); position: absolute; bottom: 8px; left: 20px; }
-.fiidii-dot      { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; }
 
-.fiidii-note     { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 6px; }
-.fiidii-unavail  { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px; }
-.fiidii-unavail-msg { font-family: var(--mono); font-size: 13px; color: var(--text2); margin-bottom: 6px; }
-.fiidii-unavail-sub { font-family: var(--mono); font-size: 11px; color: var(--text3); }
 
 @media (max-width: 640px) {
-  .fiidii-summary { grid-template-columns: 1fr; }
 }
-.fiidii-bs { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 4px; }
 
 /* ─── KITE CONNECT ──────────────────────────────────────────────────── */
 .kite-login-wrap  { padding: 4px 0 16px; }
@@ -836,15 +795,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── FII/DII Flow Chart ─────────────────────────────────────────────── */
 .fc-root        { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px 20px 16px; margin-top: 6px; }
-.fiidii-segment-label { font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; color: var(--text3); text-align: center; padding: 12px 0 8px; margin-bottom: 0; }
-.fiidii-tabs       { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
-.fiidii-tab        { font-family: var(--mono); font-size: 11px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg2); color: var(--text3); cursor: pointer; transition: all 0.15s; }
-.fiidii-tab:hover  { border-color: var(--border2); color: var(--text); }
-.fiidii-tab-active { border-color: #4A9EFF; color: #4A9EFF; background: rgba(74,158,255,0.08); }
-.fiidii-chart-wrap   { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px 12px; margin-top: 12px; min-width: 0; overflow: hidden; width: 100%; box-sizing: border-box; }
-.fiidii-chart-header { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
-.fiidii-chart-title  { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text2); }
-.fiidii-chart-legend { display: flex; gap: 12px; font-family: var(--mono); font-size: 10px; color: var(--text3); align-items: center; }
 .fc-header      { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
 .fc-title       { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text); }
 .fc-legend      { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -1288,24 +1238,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 }
 
 /* ── FII/DII new layout: chart left, cards right ─────────────────── */
-.fiidii-main-layout  { display: grid; grid-template-columns: 1fr 240px; gap: 16px; align-items: start; }
-.fiidii-chart-col    { min-width: 0; display: flex; flex-direction: column; }
-.fiidii-cards-col    { display: flex; flex-direction: column; gap: 10px; }
-.fiidii-card-side    { }
-.fiidii-card-mood    { }
-.fiidii-totals-row   { display: flex; align-items: center; justify-content: center; gap: 0; margin-top: 10px; padding: 10px 0 4px; border-top: 1px solid var(--border); }
-.fiidii-total-item   { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; padding: 0 20px; flex: 1; }
-.fiidii-total-item:first-child { padding-left: 20px; }
-.fiidii-total-sep    { width: 1px; height: 36px; background: var(--border); }
-.fiidii-total-lbl    { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text3); }
-.fiidii-total-val    { font-family: var(--mono); font-size: 15px; font-weight: 700; }
-.fiidii-total-days   { font-family: var(--mono); font-size: 10px; color: var(--text3); }
-.fiidii-no-history   { font-family: var(--mono); font-size: 12px; color: var(--text3); padding: 40px 0; text-align: center; }
 
 @media (max-width: 768px) {
-  .fiidii-main-layout { grid-template-columns: 1fr; }
-  .fiidii-cards-col   { flex-direction: row; flex-wrap: wrap; }
-  .fiidii-card-side   { min-width: 140px; flex: 1; }
 }
 
 /* ── Fear & Greed Meter ─────────────────────────────────────────────── */
@@ -1977,7 +1911,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .t-straddle-note   { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 10px; }
 
 /* FII/DII wrapper */
-.t-fiidii-card { flex: 1; }
 
 @media (max-width: 1200px) {
   .t-row-4   { grid-template-columns: repeat(2, 1fr); }
@@ -2479,7 +2412,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fnos-ref-grid > .fno-widget:last-child { border-right: none; }
 
 /* ── FII/DII wrapper ─────────────────────────────────────────────────────── */
-.fnos-full-section .fno-fiidii,
 .fnos-full-section > div { min-width: 0; }
 
 /* ═══ RESPONSIVE ═══════════════════════════════════════════════════════════ */
@@ -2588,12 +2520,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   border-right: 1px solid var(--border);
   overflow: hidden;
 }
-.sentiment-fiidii-panel {
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
-.sentiment-fiidii-hdr {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 2px;
@@ -2603,7 +2533,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.sentiment-fiidii-panel > div:last-child {
   flex: 1;
   overflow-y: auto;
   padding: 0 4px;
@@ -2620,25 +2549,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   }
 }
 
-/* ── FiiDii v2 cards row ─────────────────────────────────────────────────── */
-.fiidii-chart-col   { padding: 0 0 4px; }
-.fiidii-cards-row   {
   display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 0; border-top: 1px solid var(--border);
 }
-.fiidii-card-v2     {
   padding: 14px 16px; border-right: 1px solid var(--border);
   display: flex; flex-direction: column; align-items: center;
   text-align: center; gap: 3px;
 }
-.fiidii-card-v2:last-child { border-right: none; }
-.fiidii-cv2-label   { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text3); margin-bottom: 2px; }
-.fiidii-cv2-value   { font-family: var(--mono); font-size: 28px; font-weight: 700; letter-spacing: -1px; line-height: 1; margin-bottom: 2px; }
-.fiidii-cv2-tag     { font-family: var(--mono); font-size: 11px; font-weight: 600; margin-bottom: 6px; }
-.fiidii-cv2-bs      { display: flex; flex-direction: column; gap: 2px; font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 4px; }
-.fiidii-cv2-bs strong { color: var(--text2); font-weight: 600; }
-.fiidii-cv2-sub     { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: auto; padding-top: 6px; }
-.fiidii-cv2-mood .fiidii-mood { font-size: 22px; }
 
 /* colour helpers */
 .fii-buy  { color: #00C896; }
@@ -2647,74 +2564,53 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .dii-sell { color: #F59E0B; }
 
 @media (max-width: 600px) {
-  .fiidii-cards-row { grid-template-columns: 1fr; }
-  .fiidii-card-v2   { border-right: none; border-bottom: 1px solid var(--border); }
-  .fiidii-card-v2:last-child { border-bottom: none; }
 }
 
-/* ── FiiDii stacked (cards-only, 30% panel) ─────────────────────────────── */
-.fiidii-cards-stacked {
   grid-template-columns: 1fr !important;
   border-top: none !important;
   height: 100%;
 }
-.fiidii-cards-stacked .fiidii-card-v2 {
   border-right: none !important;
   border-bottom: 1px solid var(--border);
   padding: 14px 16px;
   flex: 1;
 }
-.fiidii-cards-stacked .fiidii-card-v2:last-child {
   border-bottom: none;
 }
-.fiidii-cards-stacked .fiidii-cv2-value {
   font-size: 22px;
 }
-.fiidii-cards-stacked .fiidii-cv2-label {
   font-size: 9px;
   margin-bottom: 4px;
 }
-.fiidii-cards-stacked .fiidii-cv2-tag {
   font-size: 10px;
   margin-bottom: 4px;
 }
-.fiidii-cards-stacked .fiidii-cv2-bs {
   flex-direction: row;
   gap: 8px;
 }
-.fiidii-cards-stacked .fiidii-cv2-mood .fiidii-mood {
   font-size: 18px;
 }
 
 /* Panel itself fills height */
-.sentiment-fiidii-panel {
   display: flex;
   flex-direction: column;
 }
-.sentiment-fiidii-panel .fiidii-wrap {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
-.sentiment-fiidii-panel .fiidii-cards-stacked {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-/* ── FiiDii on sentiment page ────────────────────────────────────────────── */
-.sentiment-fiidii-wrap { border-top: 1px solid var(--border); }
-.sentiment-fiidii-hdr  {
   font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
   font-weight: 700; color: var(--text3);
   padding: 16px 20px 10px; border-bottom: 1px solid var(--border);
 }
 
-/* FiiDii legend inline */
-.fiidii-legend-inline {
   display: flex; gap: 14px; font-family: var(--mono); font-size: 10px; color: var(--text3);
 }
-.fiidii-legend-inline span { display: flex; align-items: center; gap: 4px; }
 
 /* ── Sentiment page: 60% bubble + 40% FII/DII ───────────────────────────── */
 .sentiment-bubble-row {
@@ -2722,6 +2618,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   grid-template-columns: 60% 40%;
   border-bottom: 1px solid var(--border);
   min-height: 480px;
+  align-items: start;
 }
 .sentiment-bubble-main {
   border-right: 1px solid var(--border);
@@ -2744,12 +2641,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   flex-shrink: 0;
 }
 .sentiment-fiidii-panel .fiidii-wrap {
-  flex: 1;
   overflow-y: auto;
-  padding: 12px 16px;
+  padding: 0;
   min-width: 0;
 }
-.sentiment-fiidii-panel .fiidii-segment-label { display: none; }
 
 @media (max-width: 900px) {
   .sentiment-bubble-row {
@@ -2762,51 +2657,104 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   }
 }
 
-/* ── FiiDii UI fixes ─────────────────────────────────────────────────────── */
 /* Header with India flag */
-.fiidii-segment-label {
   font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
   color: var(--text3); padding: 12px 0 8px;
   text-align: center;
 }
 
 /* Chart header centered */
-.fiidii-chart-header {
   display: flex; align-items: center; justify-content: center;
   gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
 }
-.fiidii-chart-title { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text2); }
 
 /* Totals row centered */
-.fiidii-totals-row {
   display: flex; align-items: center; justify-content: center;
   gap: 0; margin-top: 10px; padding: 10px 0 4px;
   border-top: 1px solid var(--border);
 }
-.fiidii-total-item {
   display: flex; flex-direction: column; align-items: center;
   gap: 3px; padding: 0 20px; flex: 1; text-align: center;
 }
-.fiidii-total-item:first-child { padding-left: 20px; }
 
 /* Cards row centered, compact */
-.fiidii-cards-row {
   display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 0; border-top: 1px solid var(--border);
   margin-top: 0;
 }
-.fiidii-card-v2 {
   padding: 14px 16px; border-right: 1px solid var(--border);
   display: flex; flex-direction: column; align-items: center;
   text-align: center; gap: 3px;
 }
-.fiidii-card-v2:last-child { border-right: none; }
-.fiidii-cv2-label  { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text3); margin-bottom: 2px; }
-.fiidii-cv2-value  { font-family: var(--mono); font-size: 24px; font-weight: 700; letter-spacing: -1px; line-height: 1; margin-bottom: 2px; }
-.fiidii-cv2-tag    { font-family: var(--mono); font-size: 11px; font-weight: 600; margin-bottom: 4px; }
-.fiidii-cv2-bs     { display: flex; flex-direction: column; align-items: center; gap: 1px; font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 3px; }
-.fiidii-cv2-bs strong { color: var(--text2); font-weight: 600; }
-.fiidii-cv2-sub    { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: auto; padding-top: 4px; }
 
 /* Wrap — remove extra bottom space */
-.fiidii-wrap { padding-bottom: 0; }
+
+/* ════════════════════════════════════════════════════════
+   FII / DII — single source of truth, no overrides
+   ════════════════════════════════════════════════════════ */
+.fiidii-wrap            { min-width: 0; overflow: hidden; padding-bottom: 0; margin-bottom: 0; }
+.fiidii-unavail         { padding: 20px; }
+.fiidii-unavail-msg     { font-family: var(--mono); font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+.fiidii-unavail-sub     { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+
+/* Heading */
+.fiidii-segment-label   { font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px;
+                          color: var(--text3); text-align: center; padding: 12px 0 8px; }
+
+/* Chart area */
+.fiidii-chart-col       { padding: 0 16px; }
+.fiidii-chart-header    { display: flex; align-items: center; justify-content: center;
+                          gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.fiidii-chart-title     { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text2); }
+.fiidii-legend-inline   { display: flex; gap: 12px; font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.fiidii-legend-inline span { display: flex; align-items: center; gap: 4px; }
+.fiidii-dot             { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+
+/* Totals row — centered */
+.fiidii-totals-row      { display: flex; align-items: center; justify-content: center;
+                          margin-top: 10px; padding: 10px 0 4px;
+                          border-top: 1px solid var(--border); }
+.fiidii-total-item      { display: flex; flex-direction: column; align-items: center;
+                          text-align: center; gap: 3px; padding: 0 20px; flex: 1; }
+.fiidii-total-sep       { width: 1px; height: 36px; background: var(--border); flex-shrink: 0; }
+.fiidii-total-lbl       { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text3); }
+.fiidii-total-val       { font-family: var(--mono); font-size: 15px; font-weight: 700; }
+.fiidii-total-days      { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+/* Cards row — centered */
+.fiidii-cards-row       { display: grid; grid-template-columns: repeat(3, 1fr);
+                          border-top: 1px solid var(--border); align-items: start; }
+.fiidii-card-v2         { padding: 14px 16px; border-right: 1px solid var(--border);
+                          display: flex; flex-direction: column;
+                          align-items: center; text-align: center; gap: 3px; }
+.fiidii-card-v2:last-child { border-right: none; }
+.fiidii-cv2-label       { font-family: var(--mono); font-size: 9px; letter-spacing: 2px;
+                          color: var(--text3); margin-bottom: 2px; }
+.fiidii-cv2-value       { font-family: var(--mono); font-size: 24px; font-weight: 700;
+                          letter-spacing: -1px; line-height: 1; margin-bottom: 2px; }
+.fiidii-cv2-tag         { font-family: var(--mono); font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+.fiidii-cv2-bs          { display: flex; flex-direction: column; align-items: center;
+                          gap: 1px; font-family: var(--mono); font-size: 10px;
+                          color: var(--text3); margin-bottom: 3px; }
+.fiidii-cv2-bs strong   { color: var(--text2); font-weight: 600; }
+.fiidii-cv2-sub         { font-family: var(--mono); font-size: 9px; color: var(--text3); padding-top: 4px; }
+.fiidii-mood            { font-family: var(--mono); font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.fiidii-mood-sub        { font-family: var(--mono); font-size: 11px; margin-bottom: 4px; }
+.fiidii-bullish         { color: #00C896; }
+.fiidii-bearish         { color: #FF4455; }
+.fiidii-mixed           { color: #F59E0B; }
+.fii-buy                { color: #00C896; }
+.fii-sell               { color: #FF4455; }
+.dii-buy                { color: #4A9EFF; }
+.dii-sell               { color: #F59E0B; }
+
+/* Sentiment panel overrides */
+.sentiment-fiidii-panel .fiidii-segment-label { display: none; }
+.sentiment-fiidii-panel .fiidii-chart-col     { padding: 0 12px; }
+
+/* Mobile */
+@media (max-width: 600px) {
+  .fiidii-cards-row     { grid-template-columns: 1fr; }
+  .fiidii-card-v2       { border-right: none; border-bottom: 1px solid var(--border); }
+  .fiidii-card-v2:last-child { border-bottom: none; }
+}
