@@ -1,6 +1,7 @@
 // src/components/FnOPage.jsx · Full F&O dashboard
 import React, { useState, useEffect, useMemo } from 'react';
 import Backtest from './Backtest';
+import StrategyPage from './StrategyPage';
 import Ticker from './Ticker';
 import { getNiftyExpiries } from '../utils/timezone';
 import { formatPrice } from '../utils/format';
@@ -1801,11 +1802,8 @@ export default function FnOPage({ data = {} }) {
 
       {/* ══ TAB: STRATEGY ════════════════════════════════════════════════ */}
       {tab === 'strategy' && (
-        <div className="fno-tab-content">
-          <div className="fnos-playbook-wrap">
-            <StrategySheet vixLevel={liveVix} />
-          </div>
-          <PayoffBuilder data={data} />
+        <div className="fno-tab-content" style={{ padding: 0 }}>
+          <StrategyPage data={data} />
         </div>
       )}
 
