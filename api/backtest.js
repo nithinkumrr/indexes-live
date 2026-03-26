@@ -179,6 +179,35 @@ async function getVIXHistory(fromYear, toYear) {
   return vixMap;
 }
 
+
+// ── Lookup real premium from bhav copy ───────────────────────────────────────
+async function getRealPremium(index, dateStr, strike, optType) {
+  try {
+    const data = await kv.get(`bhav:${index}:${dateStr}`);
+    if (!data) return null;
+    const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+    const key = `${strike}${optType}`;
+    return parsed[key]?.close || parsed[key] || null;
+  } catch (_) { return null; }
+}
+
+async function getBhavPremiums(index, dateStr, atm, step, strikePct) {
+  // Try to get real premiums from bhav copy
+  const keys = [
+    [atm,                     'CE'], [atm,                     'PE'],
+    [atm + step*(strikePct+1), 'CE'], [atm - step*(strikePct+1), 'PE'],
+    [atm + step*(strikePct+2), 'CE'], [atm - step*(strikePct+2), 'PE'],
+  ];
+  const results = await Promise.all(keys.map(([k, t]) => getRealPremium(index, dateStr, k, t)));
+  if (results.every(r => r === null)) return null; // no bhav data for this date
+  return {
+    atmC:  results[0], atmP:  results[1],
+    otm1C: results[2], otm1P: results[3],
+    otm2C: results[4], otm2P: results[5],
+    source: 'bhav',
+  };
+}
+
 // ── Expiry logic ─────────────────────────────────────────────────────────────
 function getNextExpiry(date, index, expiry) {
   const d = new Date(date);
@@ -211,7 +240,7 @@ function getNextExpiry(date, index, expiry) {
 
 // ── Strategy P&L calculator ──────────────────────────────────────────────────
 // ── V2 P&L calculator with separate entry/exit spots ────────────────────────
-function calcPnlV2(strategy, entrySpot, exitSpot, vix, dte, lots, lotSize, strikePct, width, slPct, tpPct) {
+function calcPnlV2(strategy, entrySpot, exitSpot, vix, dte, lots, lotSize, strikePct, width, slPct, tpPct, realPremiums = null) {
   // Entry: options priced at entrySpot with DTE remaining
   // Exit: options valued at expiry (intrinsic only if DTE=0, else BS with remaining time)
   const entryDteY = dte === 0 ? (6.25 / (365 * 24)) : (dte / 365); // 6.25 hrs for 0 DTE entry at 9:20
@@ -222,13 +251,14 @@ function calcPnlV2(strategy, entrySpot, exitSpot, vix, dte, lots, lotSize, strik
   const otm1K   = step * (strikePct + 1);
   const otm2K   = step * (strikePct + width + 1);
 
-  // Entry premiums (priced at entry time)
-  const eAtmC  = getPremium(entrySpot, atm,          entryDteY, vix, 'call');
-  const eAtmP  = getPremium(entrySpot, atm,          entryDteY, vix, 'put');
-  const eOtm1C = getPremium(entrySpot, atm + otm1K,  entryDteY, vix, 'call');
-  const eOtm1P = getPremium(entrySpot, atm - otm1K,  entryDteY, vix, 'put');
-  const eOtm2C = getPremium(entrySpot, atm + otm2K,  entryDteY, vix, 'call');
-  const eOtm2P = getPremium(entrySpot, atm - otm2K,  entryDteY, vix, 'put');
+  // Entry premiums: use real bhav data if available, else Black-Scholes
+  const rp = realPremiums;
+  const eAtmC  = (rp?.atmC  != null) ? rp.atmC  : getPremium(entrySpot, atm,          entryDteY, vix, 'call');
+  const eAtmP  = (rp?.atmP  != null) ? rp.atmP  : getPremium(entrySpot, atm,          entryDteY, vix, 'put');
+  const eOtm1C = (rp?.otm1C != null) ? rp.otm1C : getPremium(entrySpot, atm + otm1K,  entryDteY, vix, 'call');
+  const eOtm1P = (rp?.otm1P != null) ? rp.otm1P : getPremium(entrySpot, atm - otm1K,  entryDteY, vix, 'put');
+  const eOtm2C = (rp?.otm2C != null) ? rp.otm2C : getPremium(entrySpot, atm + otm2K,  entryDteY, vix, 'call');
+  const eOtm2P = (rp?.otm2P != null) ? rp.otm2P : getPremium(entrySpot, atm - otm2K,  entryDteY, vix, 'put');
 
   // Exit values (intrinsic at expiry based on exitSpot vs strike)
   const xAtmC  = Math.max(0, exitSpot - atm);
@@ -428,7 +458,7 @@ export default async function handler(req, res) {
 
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:v3:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v5:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) {
@@ -460,28 +490,36 @@ export default async function handler(req, res) {
     };
     const expiryDow = EXPIRY_DAYS[`${index}_${expiry}`]?.[0] ?? 4;
 
-    for (const day of priceData) {
-      const d   = new Date(day.date);
-      const dow = d.getDay();
+    // Build a date->price lookup for fast access
+    const priceByDate = {};
+    for (const d of priceData) priceByDate[d.date] = d;
 
-      // Entry on expiry day minus DTE (simplified: enter on the day)
-      // For DTE=0: enter and exit same day (expiry day)
-      // For DTE=1: enter day before expiry
-      const targetDow = (expiryDow - dte + 7) % 7 || expiryDow;
-      if (dow !== (dte === 0 ? expiryDow : targetDow)) continue;
+    // Find all expiry days first
+    const expiryDays = priceData.filter(d => new Date(d.date).getDay() === expiryDow);
 
-      // Entry: use open price (approximated as prev close for simplicity)
-      // Exit: use close price (end of day)
-      const entrySpot = day.open || day.close;
-      const exitSpot  = day.close;
-      const vix       = vixData[day.date] || 15;
-      const dteUsed   = Math.max(0, dte);
+    for (const expiryDay of expiryDays) {
+      // Find entry day: go back DTE trading days from expiry
+      const expiryIdx = priceData.indexOf(expiryDay);
+      if (expiryIdx < dte) continue;
+      const entryDay = priceData[expiryIdx - dte];
+      if (!entryDay) continue;
+
+      const entrySpot = entryDay.open || entryDay.close;
+      const exitSpot  = expiryDay.close;
+      const vix       = vixData[entryDay.date] || 15;
+      const dteUsed   = dte;
+
+      if (!entrySpot || !exitSpot) continue;
+
+      // Try real bhav premiums for entry day
+      const atmStrike = Math.round(entrySpot / step) * step;
+      const realPremiums = await getBhavPremiums(index, entryDay.date, atmStrike, step, strikePct);
 
       const { pnl, entryPremium, exitPremium } = calcPnlV2(
-        strategy, entrySpot, exitSpot, vix, dteUsed, lots, lotSize, strikePct, width, slPct, tpPct
+        strategy, entrySpot, exitSpot, vix, dteUsed, lots, lotSize, strikePct, width, slPct, tpPct, realPremiums
       );
 
-      daily.push({ date: day.date, pnl, entryPremium, exitPremium, spot: entrySpot, exitSpot, vix, dte: dteUsed });
+      daily.push({ date: entryDay.date, expiryDate: expiryDay.date, pnl, entryPremium, exitPremium, spot: entrySpot, exitSpot, vix, dte: dteUsed, source: realPremiums?.source || 'bs' });
     }
 
     if (daily.length === 0) return res.status(400).json({ error: 'No trades found for this period' });
@@ -521,8 +559,11 @@ export default async function handler(req, res) {
     const stdDev = Math.sqrt(variance);
     const sharpe = stdDev > 0 ? (mean / stdDev) * Math.sqrt(52) : 0;
 
+    const bhavDays = daily.filter(d => d.source === 'bhav').length;
     const result = {
       daily,
+      dataSource: bhavDays > daily.length * 0.5 ? 'nse_bhav' : 'black_scholes',
+      bhavCoverage: Math.round(bhavDays / daily.length * 100),
       stats: {
         totalPnl, avgPnl, winRate,
         totalTrades: pnls.length,

@@ -498,8 +498,19 @@ export default function Backtest({ data }) {
                 <span style={{ color: strategy?.groupColor }}>{strategy?.label}</span>
                 <span className="bt-results-meta">{params.index} · {params.expiry} · {params.fromYear}-{params.toYear}</span>
               </div>
-              <div className="bt-results-pnl" style={{ color: results.stats.totalPnl >= 0 ? 'var(--gain)' : 'var(--loss)' }}>
-                {fmtCr(results.stats.totalPnl)}
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                {results.dataSource && (
+                  <span style={{ fontFamily:'var(--mono)', fontSize:9, padding:'2px 8px', borderRadius:3,
+                    background: results.dataSource === 'nse_bhav' ? 'rgba(0,200,150,0.15)' : 'rgba(245,158,11,0.15)',
+                    color: results.dataSource === 'nse_bhav' ? '#00C896' : '#F59E0B',
+                    border: `1px solid ${results.dataSource === 'nse_bhav' ? 'rgba(0,200,150,0.3)' : 'rgba(245,158,11,0.3)'}`,
+                  }}>
+                    {results.dataSource === 'nse_bhav' ? `✓ NSE Real Data (${results.bhavCoverage}%)` : '⚠ Estimated (Black-Scholes)'}
+                  </span>
+                )}
+                <div className="bt-results-pnl" style={{ color: results.stats.totalPnl >= 0 ? 'var(--gain)' : 'var(--loss)' }}>
+                  {fmtCr(results.stats.totalPnl)}
+                </div>
               </div>
             </div>
 
