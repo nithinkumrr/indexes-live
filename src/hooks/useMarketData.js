@@ -84,7 +84,7 @@ export function useMarketData() {
       }
       // Then dedicated giftnifty API
       try {
-        const res  = await fetch('/api/giftnifty');
+        const res  = await fetch('/api/quote?symbol=GIFTNIFTY');
         const json = await res.json();
         if (json.price && !isNaN(json.price)) {
           return {
