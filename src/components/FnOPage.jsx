@@ -271,7 +271,7 @@ function BreadthCard() {
 // ─────────────────────────────────────────────────────────────────────────────
 // OPTIONS STRATEGY CHEATSHEET
 // ─────────────────────────────────────────────────────────────────────────────
-function StrategySheet({ vixLevel }) {
+function StrategySheet({ vixLevel, compact = false }) {
   const STRATEGIES = [
     {
       zone: 'VIX < 15 — Complacency',
@@ -320,17 +320,17 @@ function StrategySheet({ vixLevel }) {
   ];
 
   return (
-    <div className="fno-widget fno-strategy-widget">
-      <div className="fno-widget-title">OPTIONS PLAYBOOK <span className="fno-widget-formula">based on live VIX · for educational reference only</span></div>
-      <div className="fno-strategy-disclaimer">Historical patterns only · Not investment advice · Options trading involves substantial risk of loss</div>
-      <div className="fno-strategy-grid">
+    <div className={compact ? 'fno-strategy-compact' : 'fno-widget fno-strategy-widget'}>
+      {!compact && <div className="fno-widget-title">OPTIONS PLAYBOOK <span className="fno-widget-formula">based on live VIX · for educational reference only</span></div>}
+      <div className="fno-strategy-disclaimer">Historical patterns · not investment advice · options trading involves substantial risk</div>
+      <div className={compact ? 'fno-strategy-grid-compact' : 'fno-strategy-grid'}>
         {STRATEGIES.map(s => (
           <div key={s.zone} className={`fno-strategy-zone ${s.active ? 'fno-strategy-active' : ''}`}
                style={s.active ? { borderColor: s.color, background: `${s.color}08` } : {}}>
             <div className="fno-strategy-zone-label" style={s.active ? { color: s.color } : {}}>
               {s.active && <span className="fno-strategy-dot" style={{ background: s.color }} />}
               {s.zone}
-              {s.active && <span className="fno-strategy-current" style={{ color: s.color }}>← NOW</span>}
+              {s.active && <span className="fno-strategy-current" style={{ color: s.color, fontWeight: 700, fontSize: 10 }}>● NOW</span>}
             </div>
             <div className="fno-strategy-list">
               {s.strategies.map(st => (
@@ -1513,10 +1513,7 @@ export default function FnOPage({ data = {} }) {
               <VIXCard onVix={setLiveVix} />
             </div>
             <div className="fno-overview-cheatcode">
-              {liveVix != null
-                ? <VixZoneCard vixLevel={liveVix} onStrategyClick={() => setTab('strategy')} />
-                : <div className="fno-loading" style={{padding:20}}>Loading VIX...</div>
-              }
+              <StrategySheet vixLevel={liveVix} compact />
             </div>
           </div>
 
