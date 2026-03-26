@@ -168,61 +168,6 @@ export default function GoldPage() {
         </div>
       )}
 
-      {/* Silver Section */}
-      {metal === 'silver' && (apiData?.base?.silver || mcx?.silverKg) && (() => {
-        const silverKg  = apiData?.base?.silver || mcx?.silverKg;
-        const baseRate  = Math.round(silverKg / 1.03);
-        const gst1kg    = silverKg - baseRate;
-        const per1g     = Math.round(silverKg / 1000);
-        const per100g   = Math.round(silverKg / 10);
-        const src       = 'IBJA';
-        return (
-        <div className="silver-breakdown">
-          <div className="silver-bd-header">
-            <div className="silver-bd-title">🥈 Silver Rates</div>
-            <div className="silver-bd-src">{src} · Pan-India uniform rate</div>
-          </div>
-
-          {/* Price table */}
-          <div className="silver-price-table">
-            <div className="silver-pt-row silver-pt-header">
-              <span>Quantity</span>
-              <span>Base (ex-GST)</span>
-              <span>GST 3%</span>
-              <span>Total (incl. GST)</span>
-            </div>
-            <div className="silver-pt-row">
-              <span className="silver-pt-qty">1 gram</span>
-              <span>₹{Math.round(baseRate/1000).toLocaleString('en-IN')}</span>
-              <span>₹{Math.round(gst1kg/1000)}</span>
-              <span className="silver-pt-total">₹{per1g.toLocaleString('en-IN')}</span>
-            </div>
-            <div className="silver-pt-row">
-              <span className="silver-pt-qty">100 grams</span>
-              <span>₹{Math.round(baseRate/10).toLocaleString('en-IN')}</span>
-              <span>₹{Math.round(gst1kg/10).toLocaleString('en-IN')}</span>
-              <span className="silver-pt-total">₹{per100g.toLocaleString('en-IN')}</span>
-            </div>
-            <div className="silver-pt-row silver-pt-highlight">
-              <span className="silver-pt-qty">1 kg</span>
-              <span>₹{baseRate.toLocaleString('en-IN')}</span>
-              <span>₹{gst1kg.toLocaleString('en-IN')}</span>
-              <span className="silver-pt-total">₹{silverKg.toLocaleString('en-IN')}</span>
-            </div>
-          </div>
-
-          <div className="silver-bd-explain">
-            <div className="silver-explain-title">About Silver Pricing in India</div>
-            <div className="silver-explain-text">
-              Unlike gold, silver is priced uniformly across all cities in India — there is no regional premium. The rate is set daily by IBJA (India Bullion and Jewellers Association) based on MCX and international spot prices, inclusive of import duties and levies. The prices above reflect the standard market rate before jeweller margins.
-              <br/><br/>
-              For silver ornaments and jewellery, jewellers charge an additional making fee of ₹20–₹100 per gram depending on design complexity. For silver coins and bars, you typically pay market rate + 3% GST only.
-            </div>
-          </div>
-        </div>
-        );
-      })()}
-
       {/* Header */}
       <div className="gold-header">
         <div>
@@ -248,6 +193,59 @@ export default function GoldPage() {
       </div>
 
       {loading && <div className="fno-loading">Fetching city-wise gold prices...</div>}
+
+      {/* Silver Section — below header so tabs never move */}
+      {metal === 'silver' && (apiData?.base?.silver) && (() => {
+        const silverKg = apiData.base.silver;
+        const base1kg  = Math.round(silverKg / 1.03);
+        const gst1kg   = silverKg - base1kg;
+        // Helper: compute for any gram multiplier
+        const row = (label, grams, highlight) => {
+          const base  = Math.round(base1kg * grams / 1000);
+          const gst   = Math.round(gst1kg  * grams / 1000);
+          const total = base + gst;
+          return (
+            <div key={label} className={`silver-pt-row${highlight?' silver-pt-highlight':''}`}>
+              <span className="silver-pt-qty">{label}</span>
+              <span>₹{base.toLocaleString('en-IN')}</span>
+              <span>₹{gst.toLocaleString('en-IN')}</span>
+              <span className="silver-pt-total">₹{total.toLocaleString('en-IN')}</span>
+            </div>
+          );
+        };
+        return (
+          <div className="silver-breakdown">
+            <div className="silver-bd-header">
+              <div className="silver-bd-title">🥈 Silver Rates</div>
+              <div className="silver-bd-src">IBJA · Pan-India uniform rate</div>
+            </div>
+            <div className="silver-price-table">
+              <div className="silver-pt-row silver-pt-header">
+                <span>Quantity</span>
+                <span>Base (ex-GST)</span>
+                <span>GST 3%</span>
+                <span>Total (incl. GST)</span>
+              </div>
+              {row('1 gram',       1)}
+              {row('10 grams',    10)}
+              {row('100 grams',  100)}
+              {row('500 grams',  500)}
+              {row('1 kg',      1000, true)}
+              {row('5 kg',      5000)}
+              {row('10 kg',    10000)}
+              {row('100 kg',  100000)}
+            </div>
+            <div className="silver-bd-explain">
+              <div className="silver-explain-title">About Silver Pricing in India</div>
+              <div className="silver-explain-text">
+                Unlike gold, silver is priced uniformly across all cities in India — there is no regional premium. The rate is set daily by IBJA (India Bullion and Jewellers Association) based on MCX and international spot prices, inclusive of import duties and levies. The prices above reflect the standard market rate before jeweller margins.
+                <br/><br/>
+                For silver ornaments and jewellery, jewellers charge an additional making fee of ₹20–₹100 per gram depending on design complexity. For silver coins and bars, you typically pay market rate + 3% GST only.
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       {error   && <div className="fiidii-unavail"><div className="fiidii-unavail-msg">Could not fetch gold prices</div></div>}
 
       {!loading && !error && data.length > 0 && metal !== 'silver' && (

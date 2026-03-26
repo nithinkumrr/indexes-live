@@ -17,6 +17,20 @@ function bsTheta(S,K,T,sig,tp){if(T<=0.001)return 0;const d1=(Math.log(S/K)+(R+s
 function bsGamma(S,K,T,sig){if(T<=0)return 0;const d1=(Math.log(S/K)+(R+sig*sig/2)*T)/(sig*Math.sqrt(T));return 0.3989423*Math.exp(-d1*d1/2)/(S*sig*Math.sqrt(T));}
 function bsVega(S,K,T,sig){if(T<=0)return 0;const d1=(Math.log(S/K)+(R+sig*sig/2)*T)/(sig*Math.sqrt(T));return S*0.3989423*Math.exp(-d1*d1/2)*Math.sqrt(T)/100;}
 
+// ── ANALYTICAL PAYOFF ANALYSIS ───────────────────────────────────────────────
+// Determines true boundedness WITHOUT relying on scan range.
+// Rule: at S→∞, only CE legs matter (PE expires worthless).
+//       netCeQty > 0 → profit grows unboundedly (more longs than shorts)
+//       netCeQty < 0 → loss grows unboundedly (more shorts than longs)
+// At S→0: put intrinsic = K (finite), so downside is always bounded.
+function analyzePayoff(legs) {
+  const netCe = legs.filter(l => l.t === 'CE').reduce((s, l) => s + l.q, 0);
+  return {
+    profitUnlimited: netCe > 0,   // profit goes to +∞ as S→∞
+    lossUnlimited:   netCe < 0,   // loss goes to -∞ as S→∞
+  };
+}
+
 // ── LOT SIZES (NSE/BSE — effective 2024) ─────────────────────────────────────
 const LOT_SIZES = {
   NIFTY:65, BANKNIFTY:30, FINNIFTY:60, MIDCPNIFTY:120, NIFTYNXT50:25,
@@ -154,17 +168,26 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol, tSpot, setTSpot, tDte
         bes.push(Math.round(range[i] + f*(range[i+1]-range[i])));
       }
     }
+    // Analytical boundedness for correct chart display
+    const { profitUnlimited: pU, lossUnlimited: lU } = analyzePayoff(legs);
     const all = [...expPnls, ...nowPnls];
     return { range, expPnls, nowPnls, bes,
-      maxP: Math.max(...all, 0), minP: Math.min(...all, 0),
-      maxExpP: Math.max(...expPnls), minExpP: Math.min(...expPnls) };
+      maxP: pU ? Infinity : Math.max(...all, 0),
+      minP: lU ? -Infinity : Math.min(...all, 0),
+      maxExpP: pU ? Infinity : Math.max(...expPnls),
+      minExpP: lU ? -Infinity : Math.min(...expPnls),
+      pU, lU,
+    };
   }, [legs, spot, vix, dte, lots, tDte, sig]);
 
   const W=700, H=240, PAD={t:36,r:22,b:48,l:68};
   const CW=W-PAD.l-PAD.r, CH=H-PAD.t-PAD.b;
-  const span = Math.max(maxP-minP, 1);
+  // For chart scaling, cap infinite values to visible scan range max/min
+  const chartMaxP = isFinite(maxP) ? maxP : Math.max(...expPnls, ...nowPnls, 0);
+  const chartMinP = isFinite(minP) ? minP : Math.min(...expPnls, ...nowPnls, 0);
+  const span = Math.max(chartMaxP - chartMinP, 1);
   const tx = s => PAD.l + ((s-range[0])/(range[range.length-1]-range[0]))*CW;
-  const ty = p => PAD.t + CH - ((p-minP)/span)*CH;
+  const ty = p => PAD.t + CH - ((p-chartMinP)/span)*CH;
   const zy = ty(0), sx = tx(spot), tsx = tx(tSpot);
 
   const mkSmooth = arr => {
@@ -213,6 +236,7 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol, tSpot, setTSpot, tDte
   }, [hx, legs, vix, dte, lots, tDte, sig, range]);
 
   const fmt = n => {
+    if (!isFinite(n)) return n > 0 ? '+∞' : '-∞';
     const a=Math.abs(n);
     if(a>9999999) return n>0?'+∞':'-∞';
     if(a>=100000) return `${n>=0?'+':'-'}₹${(a/100000).toFixed(1)}L`;
@@ -298,7 +322,7 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol, tSpot, setTSpot, tDte
           })}
 
           {/* Y-axis grid */}
-          {[[maxP,'#00C896',0.35],[0,'rgba(255,255,255,1)',0.2],[minP,'#FF4455',0.35]].map(([v,c,op])=>{
+          {[[chartMaxP,'#00C896',0.35],[0,'rgba(255,255,255,1)',0.2],[chartMinP,'#FF4455',0.35]].map(([v,c,op])=>{
             const y=ty(v);
             if(y<PAD.t||y>PAD.t+CH) return null;
             return <g key={v}>
@@ -362,18 +386,24 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol, tSpot, setTSpot, tDte
           })}
 
           {/* Max profit annotation */}
-          {Math.abs(maxExpP)<5000000&&maxExpP>0&&maxExpX!==null&&maxExpX>=PAD.l&&maxExpX<=PAD.l+CW&&(()=>{
+          {isFinite(maxExpP)&&maxExpP>0&&maxExpX!==null&&maxExpX>=PAD.l&&maxExpX<=PAD.l+CW&&(()=>{
             const y=Math.max(PAD.t+4,ty(maxExpP)-5);
             return <text x={maxExpX} y={y} textAnchor="middle"
               fill="#00C896" fontSize="9" fontFamily="monospace" fontWeight="700">{fmt(maxExpP)}</text>;
           })()}
+          {pU&&<g>
+            <text x={PAD.l+CW-4} y={PAD.t+10} textAnchor="end" fill="#00C896" fontSize="9" fontFamily="monospace" fontWeight="800">↗ Unlimited profit</text>
+          </g>}
 
           {/* Max loss annotation */}
-          {Math.abs(minExpP)<5000000&&minExpP<0&&minExpX!==null&&minExpX>=PAD.l&&minExpX<=PAD.l+CW&&(()=>{
+          {isFinite(minExpP)&&minExpP<0&&minExpX!==null&&minExpX>=PAD.l&&minExpX<=PAD.l+CW&&(()=>{
             const y=Math.min(PAD.t+CH-4,ty(minExpP)+12);
             return <text x={minExpX} y={y} textAnchor="middle"
               fill="#FF4455" fontSize="9" fontFamily="monospace" fontWeight="700">{fmt(minExpP)}</text>;
           })()}
+          {lU&&<g>
+            <text x={PAD.l+CW-4} y={PAD.t+CH-4} textAnchor="end" fill="#FF4455" fontSize="9" fontFamily="monospace" fontWeight="800">↗ Unlimited loss</text>
+          </g>}
 
           {/* SPOT line */}
           {sx>=PAD.l&&sx<=PAD.l+CW&&<g>
@@ -624,21 +654,36 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
   const sc      = calcScore(strat, vix, dte);
   const scoreC  = sc>=8?'#00C896':sc>=6?'#F59E0B':'#FF4455';
   const scoreLbl= sc>=8?'STRONG FIT':sc>=6?'DECENT FIT':'WEAK FIT';
-  const fmt     = n => { const a=Math.abs(n); return a>=100000?`₹${(a/100000).toFixed(1)}L`:a>=1000?`₹${(a/1000).toFixed(1)}k`:`₹${Math.round(a).toLocaleString('en-IN')}`; };
+  const fmt     = n => { if(!isFinite(n)) return n>0?'∞':'∞'; const a=Math.abs(n); return a>=100000?`₹${(a/100000).toFixed(1)}L`:a>=1000?`₹${(a/1000).toFixed(1)}k`:`₹${Math.round(a).toLocaleString('en-IN')}`; };
 
-  const { maxP, maxL } = useMemo(() => {
-    const s2 = spot>10000?50:25, ks=legs.map(l=>l.k), ps=[];
-    if(!ks.length) return {maxP:0,maxL:0};
-    for(let s=Math.min(...ks)-s2*15; s<=Math.max(...ks)+s2*15; s+=s2){
-      let t=0; legs.forEach(l=>{t+=l.q*(Math.max(0,l.t==='CE'?s-l.k:l.k-s)-l.p)*lots*LOT;}); ps.push(t);
+  const { maxP, maxL, profitUnlimited, lossUnlimited } = useMemo(() => {
+    const { profitUnlimited, lossUnlimited } = analyzePayoff(legs);
+    const s2 = spot > 10000 ? 50 : 25;
+    const ks = legs.map(l => l.k);
+    if (!ks.length) return { maxP:0, maxL:0, profitUnlimited:false, lossUnlimited:false };
+
+    // Wide scan: ±50% of ATM or ±3 SD, whichever is larger — ensures bounded strategies show true max/min
+    const sd3 = Math.round(spot * (vix/100) * Math.sqrt(Math.max(dte,1)/365) * 3);
+    const margin = Math.max(sd3, Math.round(spot * 0.5));
+    const lo = Math.max(s2, Math.min(...ks, spot) - margin);
+    const hi = Math.max(...ks, spot) + margin;
+    const ps = [];
+    for (let s = lo; s <= hi; s += s2) {
+      let t = 0;
+      legs.forEach(l => { t += l.q * (Math.max(0, l.t==='CE'?s-l.k:l.k-s) - l.p) * lots * LOT; });
+      ps.push(t);
     }
-    return {maxP:Math.max(...ps), maxL:Math.min(...ps)};
-  }, [legs, lots]);
+    return {
+      maxP: profitUnlimited ? Infinity : Math.max(...ps),
+      maxL: lossUnlimited   ? -Infinity : Math.min(...ps),
+      profitUnlimited, lossUnlimited,
+    };
+  }, [legs, lots, spot, vix, dte]);
 
-  const iu = v => Math.abs(v) > 5000000;
+  const iu = v => !isFinite(v);
 
   const rr = useMemo(() => {
-    if(iu(maxP)||iu(maxL)||maxL===0||maxP<=0) return null;
+    if (iu(maxP) || iu(maxL) || maxL === 0 || maxP <= 0) return null;
     return (maxP / Math.abs(maxL)).toFixed(1);
   }, [maxP, maxL]);
 
