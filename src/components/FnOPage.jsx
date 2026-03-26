@@ -1977,7 +1977,10 @@ function ExpiryStrip({ expiries, holidayLive, holidayNames = {} }) {
 
   return (
     <div className="fno-expiry-strip-v2">
-      <div className="fno-esv2-label">EXPIRY COUNTDOWN</div>
+      <div className="fno-esv2-label">
+        <span className="fno-esv2-label-top">EXPIRY</span>
+        <span className="fno-esv2-label-bot">COUNTDOWN</span>
+      </div>
       {CONTRACTS.map(({ key, label, rule, color, exp }) => (
         <React.Fragment key={key}>
           <div className="fno-esv2-sep" />

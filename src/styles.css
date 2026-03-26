@@ -3229,10 +3229,18 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   overflow-x: auto; scrollbar-width: none; gap: 0;
 }
 .fno-esv2-label {
-  font-family: var(--mono); font-size: 8px; font-weight: 800;
-  letter-spacing: 2.5px; color: var(--text3); flex-shrink: 0; padding-right: 14px;
-  text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg);
-  line-height: 1;
+  font-family: var(--mono); font-weight: 800; flex-shrink: 0;
+  padding: 0 18px 0 4px; text-transform: uppercase;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  border-right: 1px solid rgba(255,255,255,.07);
+}
+.fno-esv2-label-top {
+  font-size: 11px; letter-spacing: 2px;
+  color: #fff; line-height: 1;
+}
+.fno-esv2-label-bot {
+  font-size: 9px; letter-spacing: 2.5px;
+  color: rgba(74,158,255,.7); line-height: 1;
 }
 .fno-esv2-sep   { width: 1px; height: 36px; background: rgba(255,255,255,.07); flex-shrink: 0; }
 .fno-esv2-item  {
