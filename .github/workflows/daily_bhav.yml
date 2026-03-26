@@ -3,7 +3,7 @@ name: Daily Bhav Download
 on:
   schedule:
     - cron: '30 13 * * 1-5'
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   download-bhav:
