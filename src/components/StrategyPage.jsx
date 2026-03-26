@@ -302,6 +302,7 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
 function Greeks({ legs, spot, vix, dte, lots }) {
   const sig=(vix||15)/100, T=Math.max(dte,0.25)/365;
   const g = useMemo(() => {
+    if (!legs?.length) return { d:0, th:0, ga:0, v:0 };
     let d=0, th=0, ga=0, v=0;
     legs.forEach(l => {
       d  += l.q * bsDelta(spot, l.k, T, sig, l.t) * lots * LOT;
@@ -312,19 +313,62 @@ function Greeks({ legs, spot, vix, dte, lots }) {
     return { d: Math.round(d*100)/100, th: Math.round(th*100)/100, ga: Math.round(ga*10000)/10000, v: Math.round(v*100)/100 };
   }, [legs, spot, vix, dte, lots]);
 
-  const rows = [
-    ['Delta', g.d.toFixed(2), '', `₹${Math.abs(g.d*1).toFixed(0)} P&L per 1pt Nifty move`, g.d>0?'#00C896':g.d<0?'#FF4455':'var(--text2)'],
-    ['Theta', g.th.toFixed(0), '/day', `Loses ₹${Math.abs(g.th).toFixed(0)} per day from time decay`, g.th>0?'#00C896':'#FF4455'],
-    ['Gamma', g.ga.toFixed(4), '', `Delta changes by ${Math.abs(g.ga).toFixed(4)} per 1pt move`, 'var(--text2)'],
-    ['Vega',  g.v.toFixed(0),  '/1%IV', `₹${Math.abs(g.v).toFixed(0)} P&L per 1% IV change`, g.v>0?'#4A9EFF':'#F59E0B'],
+  // Bar width: clamp -100..100 pct for visual
+  const barPct = (val, max) => Math.min(100, Math.abs(val) / max * 100);
+
+  const greeks = [
+    {
+      name:'Delta', symbol:'Δ',
+      val: g.d.toFixed(2), unit:'',
+      color: g.d>0?'#00C896':g.d<0?'#FF4455':'#666',
+      bar: barPct(g.d, 300), barDir: g.d >= 0,
+      plain: `Position makes ₹${Math.abs(g.d).toFixed(0)} for every 1pt ${g.d>=0?'rise':'fall'} in ${spot>10000?'Nifty':'the index'}.`,
+      adv: `Net directional exposure. ${Math.abs(g.d)>100?'High delta — acts like a leveraged directional bet.':Math.abs(g.d)<20?'Near-zero delta — market direction matters less than volatility.':'Moderate exposure.'}`,
+    },
+    {
+      name:'Theta', symbol:'Θ',
+      val: g.th.toFixed(0), unit:'/day',
+      color: g.th>0?'#00C896':'#FF4455',
+      bar: barPct(g.th, 5000), barDir: g.th >= 0,
+      plain: g.th>=0
+        ? `Time is your friend — earns ₹${Math.abs(g.th).toFixed(0)} every day as expiry approaches.`
+        : `Time decay hurts — costs ₹${Math.abs(g.th).toFixed(0)} every day even if market doesn't move.`,
+      adv: `${g.th>=0?'Positive theta = premium seller. Strategy profits from time passing.':'Negative theta = premium buyer. Needs a big move before time kills the trade.'}`,
+    },
+    {
+      name:'Gamma', symbol:'Γ',
+      val: g.ga.toFixed(4), unit:'',
+      color: g.ga>0?'#4A9EFF':'#F59E0B',
+      bar: barPct(g.ga, 1), barDir: g.ga >= 0,
+      plain: `Delta shifts by ${Math.abs(g.ga).toFixed(4)} for each 1pt move. ${Math.abs(g.ga)>0.05?'High — position accelerates on moves.':'Low — delta stays stable.'}`,
+      adv: `${g.ga>0?'Long gamma: profits accelerate on big moves in either direction.':'Short gamma: profits erode quickly if market moves sharply. Needs active management.'}`,
+    },
+    {
+      name:'Vega', symbol:'ν',
+      val: g.v.toFixed(0), unit:'/1%IV',
+      color: g.v>0?'#A78BFA':'#F59E0B',
+      bar: barPct(g.v, 8000), barDir: g.v >= 0,
+      plain: `IV changes by 1% → P&L changes by ₹${Math.abs(g.v).toFixed(0)}. ${g.v>0?'Rising VIX helps.':'Rising VIX hurts.'}`,
+      adv: `${g.v>0?'Long vega: enter when VIX is low, expecting a spike.':'Short vega: enter when VIX is elevated, expecting it to fall back.'}`,
+    },
   ];
 
   return (
-    <div className="spc-greeks">
-      {rows.map(([n,val,unit,desc,c]) => (
-        <div key={n} className="spc-greek">
-          <div className="spc-greek-top"><span className="spc-greek-name">{n}</span><span className="spc-greek-val" style={{color:c}}>{val}{unit}</span></div>
-          <div className="spc-greek-desc">{desc}</div>
+    <div className="spc-greeks-v2">
+      {greeks.map(gk => (
+        <div key={gk.name} className="spc-greek-v2">
+          <div className="spc-greek-v2-top">
+            <span className="spc-greek-v2-sym" style={{color:gk.color}}>{gk.symbol}</span>
+            <span className="spc-greek-v2-name">{gk.name}</span>
+            <span className="spc-greek-v2-val" style={{color:gk.color}}>{gk.val}{gk.unit}</span>
+          </div>
+          <div className="spc-greek-v2-bar-track">
+            <div className="spc-greek-v2-bar-fill"
+              style={{width:`${gk.bar}%`, background:gk.color, opacity:.7,
+                marginLeft: gk.barDir?0:'auto', marginRight: gk.barDir?'auto':0}}/>
+          </div>
+          <div className="spc-greek-v2-plain">{gk.plain}</div>
+          <div className="spc-greek-v2-adv">{gk.adv}</div>
         </div>
       ))}
     </div>
@@ -337,7 +381,6 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
   const atm  = Math.round(spot / step) * step;
   const w    = step * 2;
 
-  // Init legs — check URL share, then localStorage, then default
   const [legs, setLegs] = useState(() => {
     if (sharedFrom?.stratId === strat.id && sharedFrom?.legs) return sharedFrom.legs;
     const saved = loadSession(strat.id);
@@ -345,21 +388,16 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
     return strat.legs(atm, w);
   });
 
-  const [saved, setSaved] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [saved,           setSaved]           = useState(false);
+  const [copied,          setCopied]          = useState(false);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
 
-  // Reset when strategy changes
   useEffect(() => {
-    if (sharedFrom?.stratId === strat.id && sharedFrom?.legs) {
-      setLegs(sharedFrom.legs);
-      return;
-    }
+    if (sharedFrom?.stratId === strat.id && sharedFrom?.legs) { setLegs(sharedFrom.legs); return; }
     const s = loadSession(strat.id);
     setLegs(s || strat.legs(atm, w));
   }, [strat.id]);
 
-  // Auto-save when legs change
   useEffect(() => {
     saveSession(strat.id, legs);
     setSaved(true);
@@ -369,168 +407,275 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
 
   const updK = (i, val) => setLegs(p => p.map((l,j) => j===i ? {...l, k: Math.round(+val/step)*step} : l));
   const updP = (i, val) => setLegs(p => p.map((l,j) => j===i ? {...l, p: Math.max(0, +val)} : l));
-  const resetLegs = () => setLegs(strat.legs(atm, w));
+  const resetLegs     = () => setLegs(strat.legs(atm, w));
   const resetPremiums = () => {
     const sig = (vix||15)/100, T = Math.max(dte,0.25)/365;
     setLegs(p => p.map(l => ({ ...l, p: Math.round(bsP(spot, l.k, T, sig, l.t)) })));
   };
 
-  const net = legs.reduce((s,l) => s + l.q * l.p, 0);
-  const isC = net < 0;
-  const sc = calcScore(strat, vix, dte);
-  const scoreC = sc>=8?'#00C896':sc>=6?'#F59E0B':'#FF4455';
-  const fmt = n => { const a=Math.abs(n); return a>=100000?`₹${(a/100000).toFixed(1)}L`:a>=1000?`₹${(a/1000).toFixed(1)}k`:`₹${Math.round(a).toLocaleString('en-IN')}`; };
+  const net     = legs.reduce((s,l) => s + l.q * l.p, 0);
+  const isC     = net < 0;
+  const sc      = calcScore(strat, vix, dte);
+  const scoreC  = sc>=8?'#00C896':sc>=6?'#F59E0B':'#FF4455';
+  const scoreLbl= sc>=8?'STRONG FIT':sc>=6?'DECENT FIT':'WEAK FIT';
+  const fmt     = n => { const a=Math.abs(n); return a>=100000?`₹${(a/100000).toFixed(1)}L`:a>=1000?`₹${(a/1000).toFixed(1)}k`:`₹${Math.round(a).toLocaleString('en-IN')}`; };
 
   const { maxP, maxL } = useMemo(() => {
-    const s2 = spot > 10000 ? 50 : 25, ks = legs.map(l=>l.k), ps = [];
-    for (let s = Math.min(...ks)-s2*15; s <= Math.max(...ks)+s2*15; s += s2) {
-      let t = 0; legs.forEach(l => { t += l.q * (Math.max(0,l.t==='CE'?s-l.k:l.k-s) - l.p) * lots * LOT; }); ps.push(t);
+    const s2 = spot>10000?50:25, ks=legs.map(l=>l.k), ps=[];
+    if(!ks.length) return {maxP:0,maxL:0};
+    for(let s=Math.min(...ks)-s2*15; s<=Math.max(...ks)+s2*15; s+=s2){
+      let t=0; legs.forEach(l=>{t+=l.q*(Math.max(0,l.t==='CE'?s-l.k:l.k-s)-l.p)*lots*LOT;}); ps.push(t);
     }
-    return { maxP: Math.max(...ps), maxL: Math.min(...ps) };
+    return {maxP:Math.max(...ps), maxL:Math.min(...ps)};
   }, [legs, lots]);
 
   const iu = v => Math.abs(v) > 5000000;
 
+  const rr = useMemo(() => {
+    if(iu(maxP)||iu(maxL)||maxL===0||maxP<=0) return null;
+    return (maxP / Math.abs(maxL)).toFixed(1);
+  }, [maxP, maxL]);
+
   const handleShare = () => {
     const url = buildShareUrl(strat.id, legs, lots, spot, expiry);
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-    if (onShare) onShare();
+    navigator.clipboard.writeText(url).then(() => { setCopied(true); setTimeout(()=>setCopied(false),2000); });
+    if(onShare) onShare();
   };
 
-  const lastSession = loadSession(strat.id);
-  const hasLastSession = lastSession && lastSession.some(l => l.p > 0);
+  const hasLastSession = loadSession(strat.id)?.some(l=>l.p>0);
+  const hasPremiums    = legs.some(l => l.p > 0);
+
+  const vixCtx = vix < 15 ? {label:'VIX LOW',    color:'#4A9EFF', tip:'Options are cheap — good for buying strategies'}
+               : vix < 20 ? {label:'VIX NORMAL',  color:'#00C896', tip:'Balanced conditions for most strategies'}
+               : vix < 25 ? {label:'VIX ELEVATED',color:'#F59E0B', tip:'Elevated premiums — ideal for sellers'}
+               :             {label:'VIX HIGH',    color:'#FF4455', tip:'High fear — premium selling richly priced but risky'};
+
+  const compLbl = ['','BEGINNER','EASY','INTERMEDIATE','ADVANCED','EXPERT'][strat.complexity] || '';
 
   return (
     <div className="spc-detail">
-      {/* Banners */}
-      {hasLastSession && (
-        <div className="spc-session-banner">
-          <span>📋 Restored your last session</span>
-          <button onClick={resetLegs} className="spc-session-reset">Reset</button>
-        </div>
-      )}
-      {sharedFrom?.stratId === strat.id && (
-        <div className="spc-share-banner"><span>🔗 Someone shared this setup with you</span></div>
-      )}
 
-      {/* Header row */}
-      <div className="spc-dhead">
-        <div>
-          <div className="spc-dname">{strat.label}</div>
-          <div className="spc-dhook">{strat.hook}</div>
-        </div>
-        <div className="spc-dscore" style={{borderColor:scoreC+'40',background:scoreC+'0D'}}>
-          <div className="spc-dscore-num" style={{color:scoreC}}>{sc}/10</div>
-          <div className="spc-dscore-lbl" style={{color:scoreC}}>{sc>=8?'Strong':sc>=6?'Decent':'Weak'}</div>
-        </div>
-      </div>
-
-      {/* Highlighted key stats */}
-      <div className="spc-hero-stats">
-        <div className="spc-hero-stat spc-hero-net" style={{borderColor:isC?'rgba(0,200,150,.3)':'rgba(255,68,85,.3)',background:isC?'rgba(0,200,150,.06)':'rgba(255,68,85,.06)'}}>
-          <div className="spc-hero-lbl">Net {isC?'Collected':'Cost'}</div>
-          <div className="spc-hero-val" style={{color:isC?'#00C896':'#FF4455'}}>{net===0?'—':fmt(Math.abs(net*lots*LOT))}</div>
-        </div>
-        <div className="spc-hero-stat" style={{borderColor:'rgba(0,200,150,.2)',background:'rgba(0,200,150,.04)'}}>
-          <div className="spc-hero-lbl">Max Profit</div>
-          <div className="spc-hero-val gain">{maxP===0&&net===0?'—':iu(maxP)?'∞':fmt(maxP)}</div>
-        </div>
-        <div className="spc-hero-stat" style={{borderColor:'rgba(255,68,85,.2)',background:'rgba(255,68,85,.04)'}}>
-          <div className="spc-hero-lbl">Max Loss</div>
-          <div className="spc-hero-val loss">{maxL===0&&net===0?'—':iu(maxL)?'∞':fmt(Math.abs(maxL))}</div>
-        </div>
-        <div className="spc-hero-stat">
-          <div className="spc-hero-lbl">Lots</div>
-          <input type="number" value={lots} min={1} step={1} className="spc-lots" onChange={e=>setLots(Math.max(1,+e.target.value))}/>
-        </div>
-      </div>
-
-      {/* TWO COLUMN: inputs left, chart right */}
-      <div className="spc-two-col">
-        {/* LEFT: leg inputs */}
-        <div className="spc-inputs-col">
-          <div className="spc-inputs-hdr">
-            <span className="spc-section-lbl" style={{marginBottom:0}}>LEGS</span>
-            {saved && <span className="spc-autosave">✓ saved</span>}
+      {/* ── HEADER ─────────────────────────────────────────────────────── */}
+      <div className="spc-dh">
+        <div className="spc-dh-left">
+          {hasLastSession && (
+            <div className="spc-banner spc-banner-session">
+              <span>📋 Last session restored</span>
+              <button onClick={resetLegs}>Reset</button>
+            </div>
+          )}
+          {sharedFrom?.stratId===strat.id && (
+            <div className="spc-banner spc-banner-share">🔗 Shared setup loaded</div>
+          )}
+          <div className="spc-dh-name">{strat.label}</div>
+          <div className="spc-dh-hook">{strat.hook}</div>
+          <div className="spc-dh-tags">
+            <span className="spc-tag" style={{color:scoreC,borderColor:scoreC+'40',background:scoreC+'0D'}}>{scoreLbl}</span>
+            <span className="spc-tag" style={{color:'#666',borderColor:'#333'}}>{compLbl}</span>
+            <span className="spc-tag" style={{color:strat.credit?'#00C896':'#FF4455',borderColor:strat.credit?'#00C89630':'#FF445530'}}>
+              {strat.credit?'PREMIUM SELLER':'PREMIUM BUYER'}
+            </span>
+            <span className="spc-tag" style={{color:vixCtx.color,borderColor:vixCtx.color+'40',background:vixCtx.color+'0D'}} title={vixCtx.tip}>
+              {vixCtx.label}
+            </span>
           </div>
-          <div className="spc-dlegs-v">
+        </div>
+        <div className="spc-dh-right">
+          <div className="spc-score-big" style={{color:scoreC,borderColor:scoreC+'50',background:scoreC+'0A'}}>
+            <div className="spc-score-num">{sc}</div>
+            <div className="spc-score-denom">/10</div>
+          </div>
+          <div className="spc-dh-actions">
+            <button className="spc-btn-share" onClick={handleShare}>{copied?'✓ Copied':'🔗 Share'}</button>
+            <button className="spc-btn-bt" onClick={()=>onBT&&onBT(strat.id)}>Backtest →</button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── STATS BAR ───────────────────────────────────────────────────── */}
+      <div className="spc-stats-bar">
+        <div className="spc-stat-cell" style={{borderColor:isC?'#00C89640':'#FF445530',background:isC?'#00C8960A':'#FF44550A'}}>
+          <div className="spc-stat-lbl">NET {isC?'COLLECTED':'COST'}</div>
+          <div className="spc-stat-val" style={{color:isC?'#00C896':'#FF4455'}}>
+            {net===0?<span style={{color:'#444'}}>—</span>:fmt(Math.abs(net*lots*LOT))}
+          </div>
+          {net!==0&&<div className="spc-stat-sub">{isC?'you receive upfront':'you pay upfront'}</div>}
+        </div>
+        <div className="spc-stat-cell" style={{borderColor:'#00C89630',background:'#00C8960A'}}>
+          <div className="spc-stat-lbl">MAX PROFIT</div>
+          <div className="spc-stat-val gain">
+            {maxP===0&&net===0?<span style={{color:'#444'}}>—</span>:iu(maxP)?<span style={{fontSize:26}}>∞</span>:fmt(maxP)}
+          </div>
+          {!iu(maxP)&&maxP>0&&rr&&<div className="spc-stat-sub" style={{color:'#00C896'}}>{rr}:1 risk:reward</div>}
+        </div>
+        <div className="spc-stat-cell" style={{borderColor:'#FF445530',background:'#FF44550A'}}>
+          <div className="spc-stat-lbl">MAX LOSS</div>
+          <div className="spc-stat-val loss">
+            {maxL===0&&net===0?<span style={{color:'#444'}}>—</span>:iu(maxL)?<span style={{fontSize:26}}>∞</span>:fmt(Math.abs(maxL))}
+          </div>
+          {iu(maxL)&&<div className="spc-stat-sub" style={{color:'#FF4455'}}>use stop loss</div>}
+        </div>
+        <div className="spc-stat-cell" style={{borderColor:'#4A9EFF30'}}>
+          <div className="spc-stat-lbl">LOTS</div>
+          <input type="number" value={lots} min={1} step={1} className="spc-lots-input"
+            onChange={e=>setLots(Math.max(1,+e.target.value))}/>
+          <div className="spc-stat-sub">{lots*LOT} units</div>
+        </div>
+        <div className="spc-stat-cell" style={{borderColor:'#F59E0B30',background:'#F59E0B06'}}>
+          <div className="spc-stat-lbl">DTE</div>
+          <div className="spc-stat-val" style={{color:'#F59E0B'}}>{dte}d</div>
+          <div className="spc-stat-sub">days to expiry</div>
+        </div>
+      </div>
+
+      {/* ── THREE-COLUMN BODY ───────────────────────────────────────────── */}
+      <div className="spc-3col">
+
+        {/* COL 1: LEGS */}
+        <div className="spc-col-legs">
+          <div className="spc-col-title">
+            <span>LEGS</span>
+            {saved&&<span className="spc-autosave-dot">● saved</span>}
+          </div>
+
+          <div className="spc-legs-list">
             {legs.map((l,i) => (
-              <div key={i} className="spc-dleg-v">
-                <div className="spc-dleg-top">
-                  <span className="spc-leg-act" style={{color:l.q>0?'#4A9EFF':'#F59E0B'}}>{l.q>0?'BUY':'SELL'}{Math.abs(l.q)>1?` ${Math.abs(l.q)}×`:''}</span>
-                  <span className="spc-leg-tp" style={{color:l.t==='CE'?'#FF8090':'#80FFD0'}}>{l.t==='CE'?'CALL':'PUT'}</span>
-                  {l.p>0&&<span className="spc-leg-net" style={{color:l.q>0?'#FF4455':'#00C896'}}>{l.q>0?'-':'+'}₹{fmt(Math.abs(l.q*l.p*lots*LOT))}</span>}
+              <div key={i} className={`spc-leg-card ${l.q>0?'spc-leg-buy':'spc-leg-sell'}`}>
+                <div className="spc-leg-card-header">
+                  <span className="spc-leg-dir" style={{color:l.q>0?'#4A9EFF':'#F59E0B',background:l.q>0?'rgba(74,158,255,.12)':'rgba(245,158,11,.12)'}}>
+                    {l.q>0?'▲ BUY':'▼ SELL'}{Math.abs(l.q)>1?` ${Math.abs(l.q)}×`:''}
+                  </span>
+                  <span className="spc-leg-type" style={{color:l.t==='CE'?'#FF8090':'#6EE7B7',background:l.t==='CE'?'rgba(255,64,80,.12)':'rgba(0,200,150,.1)'}}>
+                    {l.t==='CE'?'CALL':'PUT'}
+                  </span>
+                  {l.p>0&&(
+                    <span className="spc-leg-pnl" style={{color:l.q>0?'#FF4455':'#00C896'}}>
+                      {l.q>0?'−':'+'}₹{Math.abs(l.q*l.p*lots*LOT).toLocaleString('en-IN')}
+                    </span>
+                  )}
                 </div>
-                <div className="spc-dleg-inputs">
-                  <div className="spc-dleg-field">
-                    <span className="spc-strike-lbl">Strike</span>
-                    <input type="number" value={l.k} step={step} className="spc-strike-input-v" onChange={e=>updK(i,e.target.value)}/>
+                <div className="spc-leg-fields">
+                  <div className="spc-leg-field">
+                    <label className="spc-leg-flbl">Strike</label>
+                    <input type="number" value={l.k} step={step} className="spc-leg-finput"
+                      onChange={e=>updK(i,e.target.value)}/>
                   </div>
-                  <div className="spc-dleg-field">
-                    <span className="spc-strike-lbl">Premium ₹</span>
-                    <input type="number" value={l.p||''} step={0.5} min={0} placeholder="enter"
-                      className={`spc-prem-input-v ${l.p>0?'spc-prem-filled':''}`}
+                  <div className="spc-leg-field">
+                    <label className="spc-leg-flbl">Premium ₹</label>
+                    <input type="number" value={l.p||''} step={0.5} min={0} placeholder="0"
+                      className={`spc-leg-finput spc-leg-prem${l.p>0?' filled':''}`}
                       onChange={e=>updP(i,e.target.value)}/>
                   </div>
+                </div>
+                <div className="spc-leg-atm">
+                  {l.k===atm?<span className="spc-leg-atm-badge">ATM</span>
+                  :l.k>atm?<span className="spc-leg-atm-otm">+{l.k-atm} OTM</span>
+                  :<span className="spc-leg-atm-itm">{atm-l.k} ITM</span>}
                 </div>
               </div>
             ))}
           </div>
-          <div className="spc-inputs-actions">
-            <button className="spc-prem-hint-btn" onClick={() => setShowPremiumHint(v=>!v)}>How to get premium?</button>
-            <button className="spc-reset-btn" onClick={resetPremiums}>↺ Estimate</button>
-            <button className="spc-reset-btn" onClick={resetLegs}>↺ ATM</button>
+
+          <div className="spc-leg-btns">
+            <button className="spc-legbtn spc-legbtn-primary" onClick={resetPremiums}>↺ Auto-fill premiums</button>
+            <button className="spc-legbtn" onClick={resetLegs}>Reset to ATM</button>
           </div>
+          <button className="spc-legbtn spc-legbtn-hint" onClick={()=>setShowPremiumHint(v=>!v)}>
+            {showPremiumHint?'✕ Hide guide':'? How to get real premiums'}
+          </button>
+
           {showPremiumHint && (
             <div className="spc-hint-box">
-              <strong>How to get premiums:</strong>
+              <div className="spc-hint-title">📲 Getting real premiums from Kite</div>
               <ol>
-                <li>Open Kite → Option Chain</li>
-                <li>Select the same expiry</li>
-                <li>Note the LTP for your strike</li>
-                <li>Type it in Premium above</li>
+                <li>Open <strong>Kite</strong> → go to Option Chain</li>
+                <li>Select the expiry you want to trade</li>
+                <li>Find your strike row, copy the <strong>LTP</strong></li>
+                <li>Paste it in the Premium field above</li>
               </ol>
-              <p>Or click <strong>↺ Estimate</strong> for Black-Scholes estimate.</p>
+              <div className="spc-hint-note">💡 Or use <strong>Auto-fill</strong> for a quick Black-Scholes estimate based on current VIX {vix.toFixed(1)}.</div>
             </div>
           )}
-          {/* Education */}
-          <div className="spc-edu" style={{marginTop:'auto',paddingTop:10}}>
-            <div className="spc-edu-block">
-              <div className="spc-edu-h">WHY IT WORKS</div>
-              <div className="spc-edu-t">{strat.why}</div>
-            </div>
-            <div className="spc-edu-block spc-edu-danger">
-              <div className="spc-edu-h">WHAT KILLS IT</div>
-              <div className="spc-edu-t">{strat.kill}</div>
-            </div>
-          </div>
-          <div className="spc-actions" style={{marginTop:8}}>
-            <button className="spc-share-btn" onClick={handleShare}>{copied?'✓ Copied!':'🔗 Share'}</button>
-            <button className="spc-bt-btn" onClick={() => onBT && onBT(strat.id)}>Backtest →</button>
-          </div>
         </div>
 
-        {/* RIGHT: chart + greeks */}
-        <div className="spc-chart-col">
-          {legs.some(l => l.p > 0) ? (
+        {/* COL 2: CHART */}
+        <div className="spc-col-chart">
+          <div className="spc-col-title">
+            <span>PAYOFF DIAGRAM</span>
+            <span className="spc-col-title-sub">Black-Scholes · {symbol||'NIFTY'} · Lot={LOT}</span>
+          </div>
+
+          {hasPremiums ? (
             <>
               <PayoffChart legs={legs} spot={spot} vix={vix} dte={dte} lots={lots} symbol={symbol}/>
-              <div className="spc-section-lbl" style={{marginTop:10}}>GREEKS · per {lots} lot{lots>1?'s':''}</div>
+
+              <div className="spc-col-title" style={{marginTop:16}}>
+                <span>GREEKS</span>
+                <span className="spc-col-title-sub">per {lots} lot{lots>1?'s':''} · live estimates</span>
+              </div>
               <Greeks legs={legs} spot={spot} vix={vix} dte={dte} lots={lots}/>
             </>
           ) : (
-            <div className="spc-prem-prompt">
-              ↑ Enter premium on the left to see payoff diagram and greeks
+            <div className="spc-no-prem">
+              <div className="spc-no-prem-icon">📊</div>
+              <div className="spc-no-prem-title">Enter premiums to see payoff</div>
+              <div className="spc-no-prem-sub">Type real premiums from Kite option chain, or auto-fill from Black-Scholes</div>
+              <button className="spc-legbtn spc-legbtn-primary" style={{marginTop:14,width:'auto',alignSelf:'center'}} onClick={resetPremiums}>
+                ↺ Auto-fill with Black-Scholes estimate
+              </button>
             </div>
           )}
         </div>
+
+        {/* COL 3: INTEL */}
+        <div className="spc-col-intel">
+          <div className="spc-col-title">STRATEGY INTEL</div>
+
+          <div className="spc-intel-card spc-intel-green">
+            <div className="spc-intel-hdr"><span className="spc-intel-icon">✓</span> WHY IT WORKS</div>
+            <div className="spc-intel-body">{strat.why}</div>
+          </div>
+
+          <div className="spc-intel-card spc-intel-red">
+            <div className="spc-intel-hdr"><span className="spc-intel-icon">⚠</span> WHAT KILLS IT</div>
+            <div className="spc-intel-body">{strat.kill}</div>
+          </div>
+
+          <div className="spc-intel-card" style={{borderColor:vixCtx.color+'40',background:vixCtx.color+'08'}}>
+            <div className="spc-intel-hdr" style={{color:vixCtx.color}}>
+              <span className="spc-intel-icon">◎</span> MARKET NOW
+            </div>
+            <div className="spc-intel-body">
+              <strong style={{color:vixCtx.color}}>VIX {vix.toFixed(1)} — {vixCtx.label}</strong><br/>
+              {vixCtx.tip}
+            </div>
+          </div>
+
+          <div className="spc-checklist">
+            <div className="spc-checklist-title">BEFORE YOU TRADE</div>
+            {[
+              ['Pick expiry',         'Match DTE to your strategy'],
+              ['Enter real premiums', 'Use Kite option chain LTP'],
+              ['Set your stop loss',  'Know exit before you enter'],
+              ['Check VIX regime',    'Confirms strategy fit today'],
+              [strat.credit?'Check SPAN margin':'Arrange capital', strat.credit?'SPAN margin needed in Kite':'Full debit must be available'],
+            ].map(([s, n]) => (
+              <label key={s} className="spc-checklist-row">
+                <input type="checkbox" className="spc-check"/>
+                <div>
+                  <div className="spc-check-step">{s}</div>
+                  <div className="spc-check-note">{n}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );
 }
+
 
 // ── MAIN ──────────────────────────────────────────────────────────────────────
 export default function StrategyPage({ data, onSwitchToBacktest }) {
