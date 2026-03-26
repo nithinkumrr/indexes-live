@@ -1745,11 +1745,11 @@ export default function FnOPage({ data = {} }) {
   }, [holidays, holidayNames]);
 
   const TABS = [
-    { id: 'overview',   label: 'Overview'   },
-    { id: 'strategy',   label: 'Strategy'   },
-    { id: 'backtest',   label: 'Backtest'   },
-    { id: 'calculator', label: 'Calculator' },
-    { id: 'reference',  label: 'Reference'  },
+    { id: 'overview',   label: 'Overview',   sub: 'VIX · expiry · pivots',    icon: '◎' },
+    { id: 'strategy',   label: 'Strategy',   sub: '30+ option strategies',     icon: '⚡' },
+    { id: 'backtest',   label: 'Backtest',   sub: 'test before you trade',     icon: '↺' },
+    { id: 'calculator', label: 'Calculator', sub: 'Black-Scholes · sizing',    icon: '∑' },
+    { id: 'reference',  label: 'Reference',  sub: 'events · seasonality',      icon: '☰' },
   ];
 
   return (
@@ -1767,7 +1767,11 @@ export default function FnOPage({ data = {} }) {
           <button key={t.id}
             className={`fno-tab-btn ${tab === t.id ? 'fno-tab-active' : ''}`}
             onClick={() => setTab(t.id)}>
-            {t.label}
+            <span className="fno-tab-icon">{t.icon}</span>
+            <span className="fno-tab-text">
+              <span className="fno-tab-label">{t.label}</span>
+              <span className="fno-tab-sub">{t.sub}</span>
+            </span>
           </button>
         ))}
       </div>

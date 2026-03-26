@@ -14,60 +14,88 @@ function fmtPrice(n) {
 }
 
 
-// Live MCX spot — fetches every 60s during market hours
-function MexSpot() {
-  const [spot, setSpot] = useState(null);
+// MCX Futures: GOLD (1 kg) + SILVER (1 kg)
+// Refreshes every 2 hours during MCX market hours (9 AM - 11:30 PM IST)
+// Uses Kite quote API; falls back to IBJA estimate if token unavailable
+
+function isMcxOpen() {
+  const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  if (ist.getDay() === 0) return false;
+  const mins = ist.getHours() * 60 + ist.getMinutes();
+  return mins >= 9*60 && mins <= 23*60+30;
+}
+
+function McxFutures({ ibjaGold24, ibjaSilver }) {
+  const [gold,   setGold]   = useState(null);
+  const [silver, setSilver] = useState(null);
+
+  const load = () => {
+    const open = isMcxOpen();
+
+    // Try Kite quote for MCX current-month futures
+    Promise.all([
+      fetch('/api/quote?symbol=MCX%3AGOLD25MAYFUT').then(r=>r.json()).catch(()=>null),
+      fetch('/api/quote?symbol=MCX%3ASILVER25MAYFUT').then(r=>r.json()).catch(()=>null),
+    ]).then(([gd, sd]) => {
+      const goldKite   = gd?.data?.['MCX:GOLD25MAYFUT']?.last_price;
+      const silverKite = sd?.data?.['MCX:SILVER25MAYFUT']?.last_price;
+
+      if (goldKite) {
+        // Kite MCX GOLD is per 10g — multiply x100 to get 1 kg
+        const goldKg = Math.round(goldKite * 100);
+        const prev = gd?.data?.['MCX:GOLD25MAYFUT']?.ohlc?.close;
+        const chgPct = prev ? ((goldKg - prev*100)/(prev*100)*100).toFixed(2) : null;
+        setGold({ price: goldKg, chgPct, isOpen: open, source: 'MCX live' });
+      } else if (ibjaGold24) {
+        setGold({ price: Math.round(ibjaGold24 * 1000), chgPct: null, isOpen: open, source: 'IBJA est.' });
+      }
+
+      if (silverKite) {
+        // Kite MCX SILVER is per kg
+        const silverKg = Math.round(silverKite);
+        const prev = sd?.data?.['MCX:SILVER25MAYFUT']?.ohlc?.close;
+        const chgPct = prev ? ((silverKg - prev)/prev*100).toFixed(2) : null;
+        setSilver({ price: silverKg, chgPct, isOpen: open, source: 'MCX live' });
+      } else if (ibjaSilver) {
+        setSilver({ price: ibjaSilver, chgPct: null, isOpen: open, source: 'IBJA est.' });
+      }
+    });
+  };
 
   useEffect(() => {
-    const load = () => {
-      // MCX gold trades 9 AM – 11:30 PM IST
-      const ist  = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-      const mins = ist.getHours() * 60 + ist.getMinutes();
-      const isOpen = mins >= 9*60 && mins <= 23*60+30;
-
-      fetch('/api/quote?symbol=GC%3DF')
-        .then(r => r.json())
-        .then(d => {
-          // GC=F is COMEX gold USD/oz — need USD/INR to convert
-          const usdPrice = d?.chart?.result?.[0]?.meta?.regularMarketPrice;
-          const prevUsd  = d?.chart?.result?.[0]?.meta?.chartPreviousClose;
-          if (usdPrice) {
-            // Fetch USD/INR separately for conversion
-            fetch('/api/quote?symbol=USDINR%3DX')
-              .then(r => r.json())
-              .then(fx => {
-                const usdInr = fx?.chart?.result?.[0]?.meta?.regularMarketPrice || 84;
-                // Convert: USD/oz → INR/gram → INR/1kg
-                const inrPerKg  = Math.round((usdPrice * usdInr) / 31.1035 * 1000);
-                const prevInr   = prevUsd ? Math.round((prevUsd * usdInr) / 31.1035 * 1000) : null;
-                const chg       = prevInr ? inrPerKg - prevInr : null;
-                const chgPct    = prevInr ? ((chg / prevInr) * 100).toFixed(2) : null;
-                setSpot({ price: inrPerKg, chg, chgPct, isOpen });
-              }).catch(() => {});
-          }
-        }).catch(() => {});
-    };
     load();
-    const id = setInterval(load, 60000);
+    // Every 2 hours — MCX prices don't need frequent updates
+    const id = setInterval(load, 2 * 60 * 60 * 1000);
     return () => clearInterval(id);
-  }, []);
-
-  if (!spot) return null;
+  }, [ibjaGold24, ibjaSilver]);
 
   return (
-    <div className="gold-mcx-item gold-mcx-live">
-      <span className="gold-mcx-name">
-        ⚡ MCX Gold (1 kg)
-        {spot.isOpen && <span className="gold-live-dot"/>}
-      </span>
-      <span className="gold-mcx-price">₹{spot.price?.toLocaleString('en-IN')}</span>
-      {spot.chgPct && (
-        <span className={`gold-mcx-sub ${parseFloat(spot.chgPct) >= 0 ? 'gain' : 'loss'}`}>
-          {parseFloat(spot.chgPct) >= 0 ? '▲' : '▼'} {Math.abs(spot.chgPct)}%
-          {spot.isOpen ? ' · Live' : ' · Prev close'}
-        </span>
+    <>
+      {gold && (
+        <div className="gold-mcx-item gold-mcx-live">
+          <span className="gold-mcx-name">
+            ⚡ MCX Gold (1 kg)
+            {gold.isOpen && <span className="gold-live-dot"/>}
+          </span>
+          <span className="gold-mcx-price">&#x20B9;{gold.price?.toLocaleString('en-IN')}</span>
+          <span className={`gold-mcx-sub ${gold.chgPct ? (parseFloat(gold.chgPct)>=0?'gain':'loss') : ''}`}>
+            {gold.chgPct ? `${parseFloat(gold.chgPct)>=0?'▲':'▼'} ${Math.abs(gold.chgPct)}% · ` : ''}{gold.source}
+          </span>
+        </div>
       )}
-    </div>
+      {silver && (
+        <div className="gold-mcx-item gold-mcx-live">
+          <span className="gold-mcx-name" style={{color:'#A8B8CC'}}>
+            ⚡ MCX Silver (1 kg)
+            {silver.isOpen && <span className="gold-live-dot" style={{background:'#8899cc'}}/>}
+          </span>
+          <span className="gold-mcx-price" style={{color:'#A8B8CC'}}>&#x20B9;{silver.price?.toLocaleString('en-IN')}</span>
+          <span className={`gold-mcx-sub ${silver.chgPct ? (parseFloat(silver.chgPct)>=0?'gain':'loss') : ''}`}>
+            {silver.chgPct ? `${parseFloat(silver.chgPct)>=0?'▲':'▼'} ${Math.abs(silver.chgPct)}% · ` : ''}{silver.source}
+          </span>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -129,8 +157,11 @@ export default function GoldPage() {
               </div>
             )}
 
-            {/* MCX Live Spot */}
-            <MexSpot />
+            {/* MCX Live: Gold + Silver 1 kg futures */}
+            <McxFutures
+              ibjaGold24={apiData?.base?.gold24}
+              ibjaSilver={apiData?.base?.silver}
+            />
 
           </div>
           <div className="gold-mcx-note">IBJA rate incl. 3% GST · City prices below are higher due to regional demand premium · MCX spot updates live 9 AM – 11:30 PM IST · All prices excl. jeweller making charges</div>
