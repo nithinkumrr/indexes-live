@@ -107,7 +107,6 @@ function buildShareUrl(stratId, legs, lots, spot, expiry) {
 
 function parseShareUrl() {
   try {
-    if (typeof window === 'undefined') return null;
     const p = new URLSearchParams(window.location.search);
     if (!p.get('s')) return null;
     return {
@@ -129,18 +128,17 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
   useEffect(() => setTDte(dte), [dte]);
 
   const sig = (vix || 15) / 100;
-  const spotStep = spot > 10000 ? 50 : 10;
 
   const { range, expPnls, nowPnls, bes, maxP, minP } = useMemo(() => {
     const st = spot > 10000 ? 50 : 25;
     const ks = legs.map(l => l.k);
-    if (!ks.length) return { range:[spot], expPnls:[0], nowPnls:[0], bes:[], maxP:0, minP:0 };
     const pad = Math.max(...ks) - Math.min(...ks) + st * 14;
-    const fr = Math.min(...ks, spot) - pad / 2;
-    const to = Math.max(...ks, spot) + pad / 2;
+    const fr = Math.min(...ks, spot) - pad / 2, to = Math.max(...ks, spot) + pad / 2;
     const range = []; for (let s = fr; s <= to; s += st) range.push(Math.round(s));
+
     const T0 = Math.max(dte, 0.25) / 365;
     const T1 = Math.max(tDte, 0.01) / 365;
+
     const expPnls = range.map(s => {
       let t = 0;
       legs.forEach(l => { t += l.q * (Math.max(0, l.t==='CE'?s-l.k:l.k-s) - l.p) * lots * LOT; });
@@ -151,6 +149,7 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
       legs.forEach(l => { t += l.q * (bsP(s, l.k, T1, sig, l.t) - l.p) * lots * LOT; });
       return Math.round(t);
     });
+
     const bes = [];
     for (let i = 0; i < expPnls.length - 1; i++) {
       if ((expPnls[i] < 0 && expPnls[i+1] >= 0) || (expPnls[i] >= 0 && expPnls[i+1] < 0)) {
@@ -159,84 +158,48 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
       }
     }
     const all = [...expPnls, ...nowPnls];
-    return { range, expPnls, nowPnls, bes, maxP: Math.max(...all, 0), minP: Math.min(...all, 0) };
+    return { range, expPnls, nowPnls, bes, maxP: Math.max(...all), minP: Math.min(...all) };
   }, [legs, spot, vix, dte, lots, tDte, sig]);
 
-  const W = 660, H = 200, PAD = { t: 28, r: 20, b: 38, l: 64 };
-  const CW = W - PAD.l - PAD.r, CH = H - PAD.t - PAD.b;
-  const span = Math.max(maxP - minP, 1);
-  const toX = s => PAD.l + ((s - range[0]) / (range[range.length-1] - range[0])) * CW;
-  const toY = p => PAD.t + CH - ((p - minP) / span) * CH;
-  const zy = toY(0), sx = toX(spot), tsx = toX(tSpot);
+  const W=680, H=200, PAD={t:20,r:16,b:36,l:60};
+  const CW=W-PAD.l-PAD.r, CH=H-PAD.t-PAD.b, span=Math.max(maxP-minP,1);
+  const tx=s=>PAD.l+((s-range[0])/(range[range.length-1]-range[0]))*CW;
+  const ty=p=>PAD.t+CH-((p-minP)/span)*CH;
+  const zy=ty(0), sx=tx(spot), tsx=tx(tSpot);
+  const mkPath=arr=>arr.map((v,i)=>`${i===0?'M':'L'}${tx(range[i]).toFixed(1)},${ty(v).toFixed(1)}`).join(' ');
 
-  // Smooth bezier path
-  const mkSmooth = arr => {
-    const pts = range.map((s,i) => [toX(s), toY(arr[i])]);
-    if (pts.length < 2) return '';
-    let d = `M${pts[0][0]},${pts[0][1]}`;
-    for (let i = 1; i < pts.length; i++) {
-      const cp1x = (pts[i-1][0] + pts[i][0]) / 2;
-      d += ` C${cp1x},${pts[i-1][1]} ${cp1x},${pts[i][1]} ${pts[i][0]},${pts[i][1]}`;
-    }
+  const fillPath=(arr,pos)=>{
+    let d='',open=false;
+    arr.forEach((p,i)=>{
+      const x=tx(range[i]),y=ty(p),base=pos?Math.min(zy,PAD.t+CH):Math.max(zy,PAD.t);
+      if((pos?p>=0:p<0)&&!open){open=true;d+=`M${x},${base} L${x},${y}`;}
+      else if(pos?p>=0:p<0)d+=` L${x},${y}`;
+      else if(open){open=false;d+=` L${tx(range[i-1])},${base} Z`;}
+    });
+    if(open)d+=` L${tx(range[arr.length-1])},${pos?Math.min(zy,PAD.t+CH):Math.max(zy,PAD.t)} Z`;
     return d;
   };
 
-  const fillSmooth = (arr, pos) => {
-    const pts = range.map((s,i) => [toX(s), toY(arr[i])]);
-    const base = pos ? Math.min(zy, PAD.t+CH) : Math.max(zy, PAD.t);
-    let inside = false, d = '';
-    const segs = [];
-    let cur = [];
-    pts.forEach(([x,y], i) => {
-      const p = arr[i];
-      if ((pos ? p >= 0 : p < 0)) { if (!inside) { inside=true; cur=[]; } cur.push([x,y]); }
-      else if (inside) { inside=false; segs.push(cur); cur=[]; }
-    });
-    if (inside && cur.length) segs.push(cur);
-    segs.forEach(seg => {
-      if (seg.length < 1) return;
-      d += `M${seg[0][0]},${base}`;
-      seg.forEach(([x,y]) => { d += ` L${x},${y}`; });
-      d += ` L${seg[seg.length-1][0]},${base} Z`;
-    });
-    return d;
-  };
+  const fmt=n=>{const a=Math.abs(n);if(a>9999999)return n>0?'+∞':'-∞';if(a>=100000)return`${n>0?'+':'-'}₹${(a/100000).toFixed(1)}L`;if(a>=1000)return`${n>0?'+':'-'}₹${(a/1000).toFixed(1)}k`;return`${n>0?'+':'-'}₹${a}`;};
 
-  const sd1 = Math.round(spot * (vix/100) * Math.sqrt(Math.max(dte,1)/365));
-
-  // Hover P&L
   const hvPnl = useMemo(() => {
     if (hx === null) return null;
     const s = range[0] + (hx - PAD.l) / CW * (range[range.length-1] - range[0]);
-    const T1 = Math.max(tDte, 0.01) / 365;
     let ex = 0, nw = 0;
+    const T1 = Math.max(tDte, 0.01) / 365;
     legs.forEach(l => {
       ex += l.q * (Math.max(0, l.t==='CE'?s-l.k:l.k-s) - l.p) * lots * LOT;
       nw += l.q * (bsP(s, l.k, T1, sig, l.t) - l.p) * lots * LOT;
     });
     return { s: Math.round(s), ex: Math.round(ex), nw: Math.round(nw) };
-  }, [hx, legs, spot, vix, dte, lots, tDte, sig, range]);
+  }, [hx, legs, vix, dte, lots, tDte, sig, range]);
 
-  const nowIdx = range.reduce((b,s,i) => Math.abs(s-tSpot)<Math.abs(range[b]-tSpot)?i:b, 0);
+  const sd1 = Math.round(spot * (vix / 100) * Math.sqrt(Math.max(dte, 0.5) / 365));
+  const nowIdx = range.reduce((b,s,i)=>Math.abs(s-tSpot)<Math.abs(range[b]-tSpot)?i:b, 0);
   const nowPnl = nowPnls[nowIdx] || 0;
-  const spotPnl = nowPnls[range.reduce((b,s,i) => Math.abs(s-spot)<Math.abs(range[b]-spot)?i:b, 0)] || 0;
-  const pctChange = spot > 0 ? ((tSpot - spot) / spot * 100).toFixed(1) : '0.0';
-  const totalCost = legs.reduce((s,l) => s + Math.abs(l.q * l.p * lots * LOT), 0);
-
-  const fmt = n => {
-    const a = Math.abs(n);
-    if (a > 9999999) return n > 0 ? '+∞' : '-∞';
-    if (a >= 100000) return `${n>=0?'+':'-'}₹${(a/100000).toFixed(1)}L`;
-    if (a >= 1000)   return `${n>=0?'+':'-'}₹${(a/1000).toFixed(1)}k`;
-    return `${n>=0?'+':'-'}₹${Math.round(a)}`;
-  };
-
-  const expPath = mkSmooth(expPnls);
-  const nowPath = mkSmooth(nowPnls);
 
   return (
     <div className="spc-chart-outer">
-      {/* Chart */}
       <div className="spc-chart" onMouseLeave={() => setHx(null)}>
         <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', cursor:'crosshair' }}
           onMouseMove={e => {
@@ -245,158 +208,87 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
             if (x >= PAD.l && x <= PAD.l+CW) setHx(x);
           }}>
           <defs>
-            <clipPath id="pc3cl"><rect x={PAD.l} y={PAD.t} width={CW} height={CH}/></clipPath>
-            <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#00C896" stopOpacity="0.25"/>
-              <stop offset="100%" stopColor="#00C896" stopOpacity="0.05"/>
-            </linearGradient>
-            <linearGradient id="redGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#FF4455" stopOpacity="0.05"/>
-              <stop offset="100%" stopColor="#FF4455" stopOpacity="0.2"/>
-            </linearGradient>
+            <clipPath id="spc3cl"><rect x={PAD.l} y={PAD.t} width={CW} height={CH}/></clipPath>
+            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
           </defs>
-
           {/* SD zones */}
           {[sd1, sd1*2].map((sd,i) => {
-            const x1=toX(spot-sd), x2=toX(spot+sd);
-            return <rect key={i} x={Math.max(PAD.l,x1)} y={PAD.t} width={Math.min(PAD.l+CW,x2)-Math.max(PAD.l,x1)} height={CH} fill={`rgba(255,255,255,${0.02-i*0.007})`}/>;
+            const x1=tx(spot-sd), x2=tx(spot+sd);
+            return <rect key={i} x={Math.max(PAD.l,x1)} y={PAD.t} width={Math.min(PAD.l+CW,x2)-Math.max(PAD.l,x1)} height={CH} fill={`rgba(255,255,255,${0.025-i*0.01})`}/>;
           })}
-
-          {/* SD labels */}
-          {['-2SD','-1SD','+1SD','+2SD'].map((lbl,i) => {
-            const sds = [-sd1*2,-sd1,sd1,sd1*2];
-            const x = toX(spot+sds[i]);
-            return x>=PAD.l&&x<=PAD.l+CW ? <text key={i} x={x} y={PAD.t-8} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize="9" fontFamily="monospace">{lbl}</text> : null;
+          {[-sd1*2,-sd1,sd1,sd1*2].map((sd,i) => {
+            const x=tx(spot+sd), lbl=`${i<2?'-':'+'}{${i<2?2-i:i-1}}SD`.replace('{','').replace('}','');
+            const lb2 = i===0?'-2SD':i===1?'-1SD':i===2?'+1SD':'+2SD';
+            return x>=PAD.l&&x<=PAD.l+CW?<text key={i} x={x} y={PAD.t+9} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="monospace">{lb2}</text>:null;
           })}
-
           {/* Zero line */}
-          {zy>=PAD.t&&zy<=PAD.t+CH&&<line x1={PAD.l} y1={zy} x2={PAD.l+CW} y2={zy} stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>}
-
-          {/* Green fill above zero */}
-          <path d={fillSmooth(expPnls,true)} fill="url(#greenGrad)" clipPath="url(#pc3cl)"/>
-          {/* Red fill below zero */}
-          <path d={fillSmooth(expPnls,false)} fill="url(#redGrad)" clipPath="url(#pc3cl)"/>
-
+          {zy>=PAD.t&&zy<=PAD.t+CH&&<line x1={PAD.l} y1={zy} x2={PAD.l+CW} y2={zy} stroke="rgba(255,255,255,0.18)" strokeWidth="1" strokeDasharray="4,3"/>}
+          {/* Fills */}
+          <path d={fillPath(expPnls,true)} fill="rgba(0,200,150,0.08)" clipPath="url(#spc3cl)"/>
+          <path d={fillPath(expPnls,false)} fill="rgba(255,68,85,0.1)" clipPath="url(#spc3cl)"/>
           {/* Strike lines */}
           {[...new Set(legs.map(l=>l.k))].map(k => {
-            const kx=toX(k);
-            return kx>=PAD.l&&kx<=PAD.l+CW?<line key={k} x1={kx} y1={PAD.t} x2={kx} y2={PAD.t+CH} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="3,3"/>:null;
+            const kx=tx(k);
+            return kx>=PAD.l&&kx<=PAD.l+CW?<line key={k} x1={kx} y1={PAD.t} x2={kx} y2={PAD.t+CH} stroke="rgba(255,255,255,0.07)" strokeWidth="1" strokeDasharray="2,3"/>:null;
           })}
-
-          {/* Today line (blue) */}
-          <path d={nowPath} fill="none" stroke="#4A9EFF" strokeWidth="2" strokeLinejoin="round" clipPath="url(#pc3cl)"/>
-
-          {/* Expiry line (green) */}
-          <path d={expPath} fill="none" stroke="#00C896" strokeWidth="2.5" strokeLinejoin="round" clipPath="url(#pc3cl)"/>
-
           {/* Breakevens */}
           {bes.map((be,i) => {
-            const bx=toX(be);
-            return bx>=PAD.l&&bx<=PAD.l+CW?<g key={i}>
-              <circle cx={bx} cy={zy} r="5" fill="#F59E0B" stroke="#0A0A0F" strokeWidth="2"/>
-              <text x={bx} y={PAD.t+CH+14} textAnchor="middle" fill="#F59E0B" fontSize="9" fontFamily="monospace">{be.toLocaleString('en-IN')}</text>
-            </g>:null;
+            const bx=tx(be);
+            return bx>=PAD.l&&bx<=PAD.l+CW?<g key={i}><circle cx={bx} cy={zy} r="4" fill="#F59E0B" stroke="#08080A" strokeWidth="1.5"/><text x={bx} y={PAD.t+CH+14} textAnchor="middle" fill="#F59E0B" fontSize="8" fontFamily="monospace">{be.toLocaleString('en-IN')}</text></g>:null;
           })}
-
-          {/* Spot line */}
-          {sx>=PAD.l&&sx<=PAD.l+CW&&<g>
-            <line x1={sx} y1={PAD.t} x2={sx} y2={PAD.t+CH} stroke="rgba(255,255,255,0.3)" strokeWidth="1.5"/>
-            <text x={sx} y={PAD.t-8} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="9" fontFamily="monospace">SPOT</text>
-          </g>}
-
-          {/* Target line */}
-          {tsx>=PAD.l&&tsx<=PAD.l+CW&&Math.abs(tsx-sx)>3&&<g>
-            <line x1={tsx} y1={PAD.t} x2={tsx} y2={PAD.t+CH} stroke="rgba(74,158,255,0.5)" strokeWidth="1.5" strokeDasharray="4,3"/>
-          </g>}
-
-          {/* Y-axis */}
-          {[[maxP,'#00C896'],[0,'rgba(255,255,255,0.2)'],[minP,'#FF4455']].map(([v,col]) => {
-            const y = toY(v);
-            return y>=PAD.t&&y<=PAD.t+CH ? <g key={v}>
-              <line x1={PAD.l-3} y1={y} x2={PAD.l} y2={y} stroke={col} strokeWidth="1"/>
-              <text x={PAD.l-6} y={y+4} textAnchor="end" fill={col} fontSize="9" fontFamily="monospace">
-                {v===0?'0':fmt(v).replace('+','').replace('-','')}
-              </text>
-            </g>:null;
+          {/* Today path dashed */}
+          <path d={mkPath(nowPnls)} fill="none" stroke="#4A9EFF" strokeWidth="1.5" strokeDasharray="4,3" opacity="0.7" strokeLinejoin="round" clipPath="url(#spc3cl)"/>
+          {/* Expiry path solid */}
+          <path d={mkPath(expPnls)} fill="none" stroke="#FFFFFF" strokeWidth="2.5" filter="url(#glow)" strokeLinejoin="round" clipPath="url(#spc3cl)"/>
+          {/* Spot */}
+          {sx>=PAD.l&&sx<=PAD.l+CW&&<g><line x1={sx} y1={PAD.t} x2={sx} y2={PAD.t+CH} stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" strokeDasharray="3,3"/><text x={sx} y={PAD.t-3} textAnchor="middle" fill="#F59E0B" fontSize="8" fontFamily="monospace">SPOT</text></g>}
+          {/* Target */}
+          {tsx>=PAD.l&&tsx<=PAD.l+CW&&Math.abs(tsx-sx)>2&&<g><line x1={tsx} y1={PAD.t} x2={tsx} y2={PAD.t+CH} stroke="rgba(74,158,255,0.5)" strokeWidth="1.5" strokeDasharray="4,2"/><text x={tsx} y={PAD.t-3} textAnchor="middle" fill="#4A9EFF" fontSize="8" fontFamily="monospace">TARGET</text></g>}
+          {/* Y labels */}
+          {[[maxP,'#00C896'],[0,'rgba(255,255,255,0.2)'],[minP,'#FF4455']].map(([v,c]) => {
+            const y=ty(v);
+            return y>=PAD.t&&y<=PAD.t+CH?<text key={v} x={PAD.l-6} y={y+4} textAnchor="end" fill={c} fontSize="9" fontFamily="monospace">{v===0?'0':fmt(v)}</text>:null;
           })}
-
           {/* Legend */}
-          <line x1={PAD.l+2} y1={12} x2={PAD.l+18} y2={12} stroke="#00C896" strokeWidth="2.5"/>
-          <text x={PAD.l+21} y={16} fill="rgba(255,255,255,0.4)" fontSize="8" fontFamily="monospace">At expiry</text>
-          <line x1={PAD.l+72} y1={12} x2={PAD.l+88} y2={12} stroke="#4A9EFF" strokeWidth="2"/>
-          <text x={PAD.l+91} y={16} fill="rgba(74,158,255,0.6)" fontSize="8" fontFamily="monospace">Today ({tDte}d left)</text>
-
+          <line x1={PAD.l+2} y1={PAD.t+8} x2={PAD.l+16} y2={PAD.t+8} stroke="rgba(255,255,255,0.75)" strokeWidth="2"/>
+          <text x={PAD.l+19} y={PAD.t+12} fill="rgba(255,255,255,0.4)" fontSize="8" fontFamily="monospace">At expiry</text>
+          <line x1={PAD.l+62} y1={PAD.t+8} x2={PAD.l+76} y2={PAD.t+8} stroke="#4A9EFF" strokeWidth="2" strokeDasharray="4,2"/>
+          <text x={PAD.l+79} y={PAD.t+12} fill="rgba(74,158,255,0.6)" fontSize="8" fontFamily="monospace">Today ({tDte}d left)</text>
           {/* Hover */}
           {hx&&hvPnl&&hx>=PAD.l&&hx<=PAD.l+CW&&<g>
-            <line x1={hx} y1={PAD.t} x2={hx} y2={PAD.t+CH} stroke="rgba(255,255,255,0.2)" strokeWidth="1"/>
-            <circle cx={hx} cy={Math.min(Math.max(toY(hvPnl.ex),PAD.t),PAD.t+CH)} r="4" fill="#00C896" stroke="#0A0A0F" strokeWidth="2"/>
-            {(() => {
-              const tx2 = hx > PAD.l+CW*0.6 ? hx-148 : hx+10;
-              const pct = spot > 0 ? ((hvPnl.s-spot)/spot*100).toFixed(1) : '0';
+            <line x1={hx} y1={PAD.t} x2={hx} y2={PAD.t+CH} stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
+            {(()=>{
+              const tx2=hx>PAD.l+CW*0.65?hx-118:hx+8;
               return <g>
-                <rect x={tx2} y={PAD.t+4} width={138} height={54} rx="6" fill="#13131F" stroke="rgba(255,255,255,0.12)" strokeWidth="1"/>
-                <text x={tx2+8} y={PAD.t+18} fill="rgba(255,255,255,0.4)" fontSize="8" fontFamily="monospace">{hvPnl.s.toLocaleString('en-IN')} ({pct}%)</text>
-                <text x={tx2+8} y={PAD.t+34} fill="rgba(255,255,255,0.5)" fontSize="9" fontFamily="monospace">At expiry:</text>
-                <text x={tx2+130} y={PAD.t+34} textAnchor="end" fontSize="11" fontWeight="700" fill={hvPnl.ex>=0?'#00C896':'#FF4455'} fontFamily="monospace">{fmt(hvPnl.ex)}</text>
-                <text x={tx2+8} y={PAD.t+49} fill="rgba(74,158,255,0.5)" fontSize="9" fontFamily="monospace">Today:</text>
-                <text x={tx2+130} y={PAD.t+49} textAnchor="end" fontSize="11" fontWeight="700" fill={hvPnl.nw>=0?'#4A9EFF':'#FF8080'} fontFamily="monospace">{fmt(hvPnl.nw)}</text>
-              </g>;
-            })()}
-          </g>}
-
-          {/* Projected P&L pill at target */}
-          {tsx>=PAD.l&&tsx<=PAD.l+CW&&nowPnl!==0&&<g>
-            {(() => {
-              const py = Math.min(Math.max(toY(nowPnl)-20, PAD.t), PAD.t+CH-30);
-              const pct2 = totalCost > 0 ? ((nowPnl/totalCost)*100).toFixed(1)+'%' : '';
-              const lbl = `${nowPnl>=0?'Profit':'Loss'}: ${fmt(nowPnl)}${pct2?' ('+pct2+')':''}`;
-              const pw = Math.min(lbl.length * 6.5 + 16, 200);
-              return <g>
-                <rect x={tsx-pw/2} y={py} width={pw} height={20} rx="10"
-                  fill={nowPnl>=0?'rgba(0,200,150,.85)':'rgba(255,68,85,.85)'} stroke="none"/>
-                <text x={tsx} y={py+13} textAnchor="middle" fill="#fff" fontSize="9" fontWeight="700" fontFamily="monospace">{lbl}</text>
+                <rect x={tx2} y={16} width={120} height={58} rx="6" fill="#13131A" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
+                <text x={tx2+55} y={33} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="8" fontFamily="monospace">{Math.round(hvPnl.s).toLocaleString('en-IN')}</text>
+                <text x={tx2+8} y={47} fill="rgba(255,255,255,0.35)" fontSize="8" fontFamily="monospace">Expiry:</text>
+                <text x={tx2+102} y={47} textAnchor="end" fontSize="11" fontWeight="700" fill={hvPnl.ex>=0?'#00C896':'#FF4455'} fontFamily="monospace">{fmt(hvPnl.ex)}</text>
+                <text x={tx2+8} y={60} fill="rgba(74,158,255,0.5)" fontSize="8" fontFamily="monospace">Today:</text>
+                <text x={tx2+102} y={60} textAnchor="end" fontSize="11" fontWeight="700" fill={hvPnl.nw>=0?'#4A9EFF':'#FF8888'} fontFamily="monospace">{fmt(hvPnl.nw)}</text>
               </g>;
             })()}
           </g>}
         </svg>
       </div>
-
-      {/* Sensibull-style sliders */}
-      <div className="spc-sliders-modern">
-        <div className="spc-slider-group">
-          <div className="spc-slider-top">
-            <span className="spc-sl-title">{symbol || 'NIFTY'} Target</span>
-            <span className="spc-sl-pct" style={{color:tSpot>=spot?'#00C896':'#FF4455'}}>{tSpot>=spot?'+':''}{pctChange}%</span>
-            <button className="spc-sl-step" onClick={()=>setTSpot(v=>Math.max(range[0],v-spotStep))}>−</button>
-            <input type="number" value={tSpot} step={spotStep}
-              className="spc-sl-num"
-              onChange={e=>setTSpot(Math.max(range[0],Math.min(range[range.length-1],+e.target.value)))}/>
-            <button className="spc-sl-step" onClick={()=>setTSpot(v=>Math.min(range[range.length-1],v+spotStep))}>+</button>
-            <button className="spc-sl-reset-sm" onClick={()=>setTSpot(spot)}>Reset</button>
-          </div>
-          <input type="range" min={range[0]} max={range[range.length-1]} step={spotStep}
-            value={tSpot} onChange={e=>setTSpot(+e.target.value)} className="spc-slider-full"/>
+      {/* Sliders */}
+      <div className="spc-sliders">
+        <div className="spc-slider-row">
+          <span className="spc-sl-lbl">Target Price</span>
+          <input type="range" min={Math.round(spot*.85)} max={Math.round(spot*1.15)} step={spot>10000?50:25} value={tSpot} onChange={e=>setTSpot(+e.target.value)} className="spc-slider"/>
+          <span className="spc-sl-val">{tSpot.toLocaleString('en-IN')}</span>
+          <button className="spc-sl-reset" onClick={()=>setTSpot(spot)}>↺</button>
         </div>
-
-        <div className="spc-slider-group">
-          <div className="spc-slider-top">
-            <span className="spc-sl-title">Date: {tDte}D to expiry</span>
-            <button className="spc-sl-step" onClick={()=>setTDte(v=>Math.max(0,v-1))}>‹</button>
-            <span className="spc-sl-datestr" style={{color:'var(--text2)',fontSize:11,fontFamily:'monospace',minWidth:60}}>
-              {tDte === dte ? 'Today' : tDte === 0 ? 'Expiry' : `${tDte}d left`}
-            </span>
-            <button className="spc-sl-step" onClick={()=>setTDte(v=>Math.min(dte,v+1))}>›</button>
-            <button className="spc-sl-reset-sm" onClick={()=>setTDte(dte)}>Reset</button>
-          </div>
-          <input type="range" min={0} max={dte} step={1}
-            value={tDte} onChange={e=>setTDte(+e.target.value)} className="spc-slider-full"/>
-          <div className="spc-slider-dates">
-            <span>Today</span><span>Expiry</span>
-          </div>
+        <div className="spc-slider-row">
+          <span className="spc-sl-lbl">Days to Expiry</span>
+          <input type="range" min={0} max={dte} step={1} value={tDte} onChange={e=>setTDte(+e.target.value)} className="spc-slider"/>
+          <span className="spc-sl-val">{tDte}d left</span>
+          <button className="spc-sl-reset" onClick={()=>setTDte(dte)}>↺</button>
         </div>
       </div>
-
-      {/* P&L summary bar */}
       <div className="spc-pnl-bar">
         <span className="spc-pnl-lbl">At {tSpot.toLocaleString('en-IN')} · {tDte}d left:</span>
         <span className="spc-pnl-val" style={{color:nowPnl>=0?'#00C896':'#FF4455'}}>{fmt(nowPnl)}</span>
@@ -410,7 +302,6 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
 function Greeks({ legs, spot, vix, dte, lots }) {
   const sig=(vix||15)/100, T=Math.max(dte,0.25)/365;
   const g = useMemo(() => {
-    if (!legs?.length) return { d:0, th:0, ga:0, v:0 };
     let d=0, th=0, ga=0, v=0;
     legs.forEach(l => {
       d  += l.q * bsDelta(spot, l.k, T, sig, l.t) * lots * LOT;
@@ -441,7 +332,7 @@ function Greeks({ legs, spot, vix, dte, lots }) {
 }
 
 // ── DETAIL PANEL ──────────────────────────────────────────────────────────────
-function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, sharedFrom }) {
+function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, sharedFrom, symbol }) {
   const step = spot > 10000 ? 100 : 50;
   const atm  = Math.round(spot / step) * step;
   const w    = step * 2;
@@ -488,12 +379,10 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
   const isC = net < 0;
   const sc = calcScore(strat, vix, dte);
   const scoreC = sc>=8?'#00C896':sc>=6?'#F59E0B':'#FF4455';
-  const fmt = n => { const a=Math.abs(n); return a>=100000?`${(a/100000).toFixed(1)}L`:a>=1000?`${(a/1000).toFixed(1)}k`:`${Math.round(a).toLocaleString('en-IN')}`; };
-  const fmtRs = n => `₹${fmt(n)}`;
+  const fmt = n => { const a=Math.abs(n); return a>=100000?`₹${(a/100000).toFixed(1)}L`:a>=1000?`₹${(a/1000).toFixed(1)}k`:`₹${Math.round(a).toLocaleString('en-IN')}`; };
 
   const { maxP, maxL } = useMemo(() => {
     const s2 = spot > 10000 ? 50 : 25, ks = legs.map(l=>l.k), ps = [];
-    if (!ks.length) return { maxP: 0, maxL: 0 };
     for (let s = Math.min(...ks)-s2*15; s <= Math.max(...ks)+s2*15; s += s2) {
       let t = 0; legs.forEach(l => { t += l.q * (Math.max(0,l.t==='CE'?s-l.k:l.k-s) - l.p) * lots * LOT; }); ps.push(t);
     }
@@ -543,17 +432,20 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
       <div className="spc-hero-stats">
         <div className="spc-hero-stat spc-hero-net" style={{borderColor:isC?'rgba(0,200,150,.3)':'rgba(255,68,85,.3)',background:isC?'rgba(0,200,150,.06)':'rgba(255,68,85,.06)'}}>
           <div className="spc-hero-lbl">Net {isC?'Collected':'Cost'}</div>
-          <div className="spc-hero-val" style={{color:isC?'#00C896':'#FF4455'}}>{net===0?'—':fmtRs(Math.abs(net*lots*LOT))}</div>
+          <div className="spc-hero-val" style={{color:isC?'#00C896':'#FF4455'}}>{net===0?'—':fmt(Math.abs(net*lots*LOT))}</div>
         </div>
         <div className="spc-hero-stat" style={{borderColor:'rgba(0,200,150,.2)',background:'rgba(0,200,150,.04)'}}>
           <div className="spc-hero-lbl">Max Profit</div>
-          <div className="spc-hero-val gain">{maxP===0&&net===0?'—':iu(maxP)?'∞':fmtRs(maxP)}</div>
+          <div className="spc-hero-val gain">{maxP===0&&net===0?'—':iu(maxP)?'∞':fmt(maxP)}</div>
         </div>
         <div className="spc-hero-stat" style={{borderColor:'rgba(255,68,85,.2)',background:'rgba(255,68,85,.04)'}}>
           <div className="spc-hero-lbl">Max Loss</div>
-          <div className="spc-hero-val loss">{maxL===0&&net===0?'—':iu(maxL)?'∞':fmtRs(Math.abs(maxL))}</div>
+          <div className="spc-hero-val loss">{maxL===0&&net===0?'—':iu(maxL)?'∞':fmt(Math.abs(maxL))}</div>
         </div>
-
+        <div className="spc-hero-stat">
+          <div className="spc-hero-lbl">Lots</div>
+          <input type="number" value={lots} min={1} step={1} className="spc-lots" onChange={e=>setLots(Math.max(1,+e.target.value))}/>
+        </div>
       </div>
 
       {/* TWO COLUMN: inputs left, chart right */}
@@ -562,11 +454,7 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
         <div className="spc-inputs-col">
           <div className="spc-inputs-hdr">
             <span className="spc-section-lbl" style={{marginBottom:0}}>LEGS</span>
-            <div style={{display:'flex',alignItems:'center',gap:6}}>
-              {saved && <span className="spc-autosave">✓ saved</span>}
-              <span style={{fontSize:10,color:'var(--text3)'}}>Lots</span>
-              <input type="number" value={lots} min={1} step={1} className="spc-lots" onChange={e=>setLots(Math.max(1,+e.target.value))}/>
-            </div>
+            {saved && <span className="spc-autosave">✓ saved</span>}
           </div>
           <div className="spc-dlegs-v">
             {legs.map((l,i) => (
@@ -574,7 +462,7 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
                 <div className="spc-dleg-top">
                   <span className="spc-leg-act" style={{color:l.q>0?'#4A9EFF':'#F59E0B'}}>{l.q>0?'BUY':'SELL'}{Math.abs(l.q)>1?` ${Math.abs(l.q)}×`:''}</span>
                   <span className="spc-leg-tp" style={{color:l.t==='CE'?'#FF8090':'#80FFD0'}}>{l.t==='CE'?'CALL':'PUT'}</span>
-                  {l.p>0&&<span className="spc-leg-net" style={{color:l.q>0?'#FF4455':'#00C896'}}><span style={{fontSize:8,opacity:.6}}>{l.q>0?'you pay':'you receive'}</span> {l.q>0?'-':'+'}₹{fmt(Math.abs(l.q*l.p*lots*LOT))}</span>}
+                  {l.p>0&&<span className="spc-leg-net" style={{color:l.q>0?'#FF4455':'#00C896'}}>{l.q>0?'-':'+'}₹{fmt(Math.abs(l.q*l.p*lots*LOT))}</span>}
                 </div>
                 <div className="spc-dleg-inputs">
                   <div className="spc-dleg-field">
@@ -672,7 +560,8 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
 
   // Fetch expiries from Kite (30min cache in option-chain API)
   useEffect(() => {
-    const weekday = symbol === 'SENSEX' ? 4 : symbol === 'BANKNIFTY' ? 3 : 2;
+    const weekday = symbol === 'SENSEX' ? 5 : symbol === 'BANKNIFTY' ? 3 : 4; // Thu=4, Wed=3, Fri=5
+    setExpIdx(0);
     fetch(`/api/option-chain?action=expiries&symbol=${symbol}`)
       .then(r => r.json())
       .then(d => {
@@ -686,6 +575,7 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
         }
       })
       .catch(() => {
+        // Fallback: compute expiry weekdays
         const now = new Date(), opts = [];
         for (let w = 0; w < 13; w++) {
           const d = new Date(now);
@@ -732,8 +622,17 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
       {/* Top bar */}
       <div className="spc-topbar">
         <div className="spc-pills">
+          {/* Symbol selector */}
+          <div className="spc-pill spc-symbol-pill">
+            <span className="spc-pill-l">SYMBOL</span>
+            <select className="spc-expiry-sel" value={symbol} onChange={e => setSymbol(e.target.value)}>
+              {['NIFTY','BANKNIFTY','SENSEX','FINNIFTY','MIDCPNIFTY'].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
           {[
-            ['NIFTY', spot.toLocaleString('en-IN'), null],
+            [symbol, spot.toLocaleString('en-IN'), null],
             ['VIX',   vix.toFixed(1), vix>25?'#FF4455':vix>18?'#F59E0B':'#00C896'],
             ['REGIME', vix<15?'LOW · buy options':vix<20?'NORMAL':vix<25?'ELEVATED · sell premium':'HIGH · sell premium', '#F59E0B'],
           ].map(([l,v,c]) => (
@@ -819,18 +718,18 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
         <div className="spc-right">
           {!compare ? (
             <Detail strat={sel} spot={spot} vix={vix} dte={dte} expiry={curExp?.raw}
-              lots={lots} setLots={setLots}
+              lots={lots} setLots={setLots} symbol={symbol}
               onBT={id => onSwitchToBacktest && onSwitchToBacktest(id)}
               sharedFrom={sharedFrom}/>
           ) : (
             <div className="spc-cmp-grid">
               <Detail strat={sel} spot={spot} vix={vix} dte={dte} expiry={curExp?.raw}
-                lots={lots} setLots={setLots}
+                lots={lots} setLots={setLots} symbol={symbol}
                 onBT={id => onSwitchToBacktest && onSwitchToBacktest(id)}
                 sharedFrom={sharedFrom}/>
               <div className="spc-cmp-div"/>
               <Detail strat={cmp} spot={spot} vix={vix} dte={dte} expiry={curExp?.raw}
-                lots={lots} setLots={setLots}
+                lots={lots} setLots={setLots} symbol={symbol}
                 onBT={id => onSwitchToBacktest && onSwitchToBacktest(id)}
                 sharedFrom={null}/>
             </div>

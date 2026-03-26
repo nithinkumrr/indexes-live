@@ -1,432 +1,588 @@
 // api/backtest.js
-// Backtest engine — uses real NSE bhav data from Supabase when available,
-// falls back to Black-Scholes for dates not yet downloaded.
+// Options strategy backtester using NSE historical data + Black-Scholes
+// Supports 28 strategies across Nifty, Bank Nifty, Sensex
 
-import { createClient } from "@supabase/supabase-js";
-import { kv } from "@vercel/kv";
+import { kv } from '@vercel/kv';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://axobtyzujcbckkbsakpb.supabase.co";
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
-
-// ── BLACK-SCHOLES FALLBACK ─────────────────────────────────────────────────
-
-function norm(x) {
+// ── Black-Scholes ─────────────────────────────────────────────────────────────
+function normCDF(x) {
   const t = 1 / (1 + 0.2316419 * Math.abs(x));
-  const d = 0.3989423 * Math.exp(-x * x / 2);
+  const d = 0.3989422820 * Math.exp(-x * x / 2);
   const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.7814779 + t * (-1.8212560 + t * 1.3302744))));
-  return x >= 0 ? 1 - p : p;
+  return x > 0 ? 1 - p : p;
 }
 
-function bs(S, K, T, r, sigma, type) {
-  if (T <= 0) return Math.max(0, type === "CE" ? S - K : K - S);
+function blackScholes(S, K, T, r, sigma, type) {
+  if (T <= 0) return type === 'call' ? Math.max(0, S - K) : Math.max(0, K - S);
   const d1 = (Math.log(S / K) + (r + sigma * sigma / 2) * T) / (sigma * Math.sqrt(T));
   const d2 = d1 - sigma * Math.sqrt(T);
-  if (type === "CE") return S * norm(d1) - K * Math.exp(-r * T) * norm(d2);
-  return K * Math.exp(-r * T) * norm(-d2) - S * norm(-d1);
+  if (type === 'call') return S * normCDF(d1) - K * Math.exp(-r * T) * normCDF(d2);
+  return K * Math.exp(-r * T) * normCDF(-d2) - S * normCDF(-d1);
 }
 
-// ── LOT SIZES ─────────────────────────────────────────────────────────────
+function getPremium(spot, strike, dteYears, vix, type) {
+  const sigma = vix / 100;
+  const r = 0.065; // Indian risk-free rate ~6.5%
+  return Math.max(0.05, blackScholes(spot, strike, dteYears, r, sigma, type));
+}
 
-const LOT_SIZES = {
-  NIFTY:      65,
-  BANKNIFTY:  30,
-  FINNIFTY:   60,
-  MIDCPNIFTY: 120,
-  SENSEX:     20,
-  BANKEX:     30,
-};
-
+// ── Strike step sizes ────────────────────────────────────────────────────────
 const STRIKE_STEPS = {
   NIFTY:      50,
   BANKNIFTY:  100,
   FINNIFTY:   50,
   MIDCPNIFTY: 25,
+  NIFTYNXT50: 50,
   SENSEX:     100,
   BANKEX:     100,
+  SENSEX50:   100,
+};
+const LOT_SIZES = {
+  NIFTY:      65,   // Nifty 50
+  BANKNIFTY:  30,   // Nifty Bank
+  FINNIFTY:   60,   // Nifty Financial Services
+  MIDCPNIFTY: 120,  // Nifty Midcap Select
+  NIFTYNXT50: 25,   // Nifty Next 50
+  SENSEX:     20,   // BSE Sensex
+  BANKEX:     30,   // BSE Bankex
+  SENSEX50:   75,   // BSE Sensex 50
 };
 
-const YAHOO_SYMBOLS = {
-  NIFTY:      "^NSEI",
-  BANKNIFTY:  "^NSEBANK",
-  FINNIFTY:   "NIFTY_FIN_SERVICE.NS",
-  MIDCPNIFTY: "^NSEMDCP50",
-  SENSEX:     "^BSESN",
-  BANKEX:     "^BSEBANKEX",
-};
+function getATMStrike(spot, index) {
+  const step = STRIKE_STEPS[index] || 50;
+  return Math.round(spot / step) * step;
+}
 
-// ── FETCH HISTORICAL OHLC ──────────────────────────────────────────────────
+function getStrike(spot, index, offset, direction = 'up') {
+  const atm  = getATMStrike(spot, index);
+  const step = STRIKE_STEPS[index] || 50;
+  return direction === 'up' ? atm + offset * step : atm - offset * step;
+}
 
-async function fetchHistoricalOHLC(symbol, fromDate, toDate) {
-  const cacheKey = `ohlc:${symbol}:${fromDate}:${toDate}`;
+// ── Fetch historical data — Kite first, Yahoo fallback ───────────────────────
+async function getHistoricalData(index, fromYear, toYear) {
+  const cacheKey = `bt:hist3:${index}:${fromYear}:${toYear}`;
   try {
     const cached = await kv.get(cacheKey);
-    if (cached) return cached;
+    if (cached) return typeof cached === 'string' ? JSON.parse(cached) : cached;
   } catch (_) {}
 
-  const yahooSym = YAHOO_SYMBOLS[symbol] || "^NSEI";
-  const from = Math.floor(new Date(fromDate).getTime() / 1000);
-  const to   = Math.floor(new Date(toDate).getTime() / 1000) + 86400;
-  const url  = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?period1=${from}&period2=${to}&interval=1d`;
+  // Kite instrument tokens for indices
+  const KITE_TOKENS = {
+    NIFTY:      256265,
+    BANKNIFTY:  260105,
+    FINNIFTY:   257801,
+    MIDCPNIFTY: 288009,
+    NIFTYNXT50: 270857,
+    SENSEX:     265,
+    BANKEX:     270601,
+    SENSEX50:   274441,
+  };
 
-  const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
-  const j = await r.json();
-  const result = j?.chart?.result?.[0];
-  if (!result) return [];
+  const apiKey = process.env.KITE_API_KEY;
+  let kiteToken = null;
+  try {
+    kiteToken = await kv.get('kite_token');
+  } catch (_) {}
 
-  const ts = result.timestamp || [];
-  const q  = result.indicators?.quote?.[0] || {};
-  const data = ts.map((t, i) => ({
-    date:  new Date(t * 1000).toISOString().split("T")[0],
-    open:  q.open?.[i]  || q.close?.[i] || 0,
-    high:  q.high?.[i]  || 0,
-    low:   q.low?.[i]   || 0,
-    close: q.close?.[i] || 0,
-  })).filter(d => d.close > 0);
+  const fromStr = `${fromYear}-01-01+09:15:00`;
+  const toStr   = `${toYear}-12-31+15:30:00`;
 
-  try { await kv.set(cacheKey, data, { ex: 86400 * 7 }); } catch (_) {}
+  // Try Kite first
+  if (kiteToken && apiKey && KITE_TOKENS[index]) {
+    try {
+      const token = KITE_TOKENS[index];
+      const r = await fetch(
+        `https://api.kite.trade/instruments/historical/${token}/day?from=${fromStr}&to=${toStr}&oi=0`,
+        { headers: { 'X-Kite-Version': '3', 'Authorization': `token ${apiKey}:${kiteToken}` } }
+      );
+      if (r.ok) {
+        const json = await r.json();
+        const candles = json?.data?.candles || [];
+        if (candles.length > 0) {
+          const data = candles.map(c => ({
+            date:  c[0].slice(0, 10),
+            open:  c[1],
+            high:  c[2],
+            low:   c[3],
+            close: c[4],
+          })).filter(d => d.close);
+          try { await kv.set(cacheKey, JSON.stringify(data), { ex: 7 * 24 * 60 * 60 }); } catch (_) {}
+          return data;
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Fallback: Yahoo Finance
+  const YAHOO_SYMBOLS = {
+    NIFTY:      '%5ENSEI',
+    BANKNIFTY:  '%5ENSEBANK',
+    FINNIFTY:   '%5EFINNNIFTY',
+    MIDCPNIFTY: '%5ENIFMDCP100',
+    NIFTYNXT50: '%5ENIFTYNJR50',
+    SENSEX:     '%5EBSESN',
+    BANKEX:     '%5EBANKEX',
+    SENSEX50:   '%5EBSESEN50',
+  };
+  const sym  = YAHOO_SYMBOLS[index];
+  const from = Math.floor(new Date(`${fromYear}-01-01`).getTime() / 1000);
+  const to   = Math.floor(new Date(`${toYear}-12-31`).getTime() / 1000);
+
+  const r = await fetch(
+    `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?period1=${from}&period2=${to}&interval=1d`,
+    { headers: { 'User-Agent': 'Mozilla/5.0' } }
+  );
+  const json = await r.json();
+  const result = json?.chart?.result?.[0];
+  if (!result) throw new Error('No historical data available');
+
+  const timestamps = result.timestamp || [];
+  const quotes     = result.indicators?.quote?.[0] || {};
+  const data = timestamps.map((ts, i) => ({
+    date:  new Date(ts * 1000).toISOString().slice(0, 10),
+    open:  quotes.open?.[i],
+    close: quotes.close?.[i],
+    high:  quotes.high?.[i],
+    low:   quotes.low?.[i],
+  })).filter(d => d.close && d.open); // only days with both open and close
+
+  try { await kv.set(cacheKey, JSON.stringify(data), { ex: 7 * 24 * 60 * 60 }); } catch (_) {}
   return data;
 }
 
-// ── FETCH REAL BHAV PREMIUMS FROM SUPABASE ────────────────────────────────
-
-async function fetchBhavPremium(supabase, symbol, tradeDate, expiry, strike, optionType) {
-  if (!supabase) return null;
+// ── VIX history (India VIX proxy) ────────────────────────────────────────────
+async function getVIXHistory(fromYear, toYear) {
+  const cacheKey = `bt:vix2:${fromYear}:${toYear}`;
   try {
-    const { data } = await supabase
-      .from("bhav_options")
-      .select("settle, close, open")
-      .eq("symbol", symbol)
-      .eq("date", tradeDate)
-      .eq("expiry", expiry)
-      .eq("strike", strike)
-      .eq("type", optionType)
-      .limit(1);
-
-    if (data && data.length > 0) {
-      const row = data[0];
-      return row.open || row.close || row.settle || null;
-    }
+    const cached = await kv.get(cacheKey);
+    if (cached) return typeof cached === 'string' ? JSON.parse(cached) : cached;
   } catch (_) {}
+
+  const from = Math.floor(new Date(`${fromYear}-01-01`).getTime() / 1000);
+  const to   = Math.floor(new Date(`${toYear}-12-31`).getTime() / 1000);
+  const r = await fetch(
+    `https://query1.finance.yahoo.com/v8/finance/chart/%5EINDIAVIX?period1=${from}&period2=${to}&interval=1d`,
+    { headers: { 'User-Agent': 'Mozilla/5.0' } }
+  );
+  const json = await r.json();
+  const result = json?.chart?.result?.[0];
+  const vixMap = {};
+  if (result) {
+    const ts = result.timestamp || [];
+    const closes = result.indicators?.quote?.[0]?.close || [];
+    ts.forEach((t, i) => {
+      if (closes[i]) vixMap[new Date(t * 1000).toISOString().slice(0, 10)] = closes[i];
+    });
+  }
+  try { await kv.set(cacheKey, JSON.stringify(vixMap), { ex: 7 * 24 * 60 * 60 }); } catch (_) {}
+  return vixMap;
+}
+
+
+// ── Lookup real premium from bhav copy ───────────────────────────────────────
+async function getRealPremium(index, dateStr, strike, optType) {
+  try {
+    const data = await kv.get(`bhav:${index}:${dateStr}`);
+    if (!data) return null;
+    const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+    const key = `${strike}${optType}`;
+    return parsed[key]?.close || parsed[key] || null;
+  } catch (_) { return null; }
+}
+
+async function getBhavPremiums(index, dateStr, atm, step, strikePct) {
+  // Try to get real premiums from bhav copy
+  const keys = [
+    [atm,                     'CE'], [atm,                     'PE'],
+    [atm + step*(strikePct+1), 'CE'], [atm - step*(strikePct+1), 'PE'],
+    [atm + step*(strikePct+2), 'CE'], [atm - step*(strikePct+2), 'PE'],
+  ];
+  const results = await Promise.all(keys.map(([k, t]) => getRealPremium(index, dateStr, k, t)));
+  if (results.every(r => r === null)) return null; // no bhav data for this date
+  return {
+    atmC:  results[0], atmP:  results[1],
+    otm1C: results[2], otm1P: results[3],
+    otm2C: results[4], otm2P: results[5],
+    source: 'bhav',
+  };
+}
+
+// ── Expiry logic ─────────────────────────────────────────────────────────────
+function getNextExpiry(date, index, expiry) {
+  const d = new Date(date);
+  const isWeekly = expiry === 'weekly';
+
+  if (index === 'NIFTY') {
+    // Nifty: Thursday weekly, last Thursday monthly
+    const target = isWeekly ? 4 : -1; // 4=Thu
+    const next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    while (next.getDay() !== 4) next.setDate(next.getDate() + 1);
+    return next.toISOString().slice(0, 10);
+  }
+  if (index === 'BANKNIFTY') {
+    // Bank Nifty: Wednesday weekly
+    const next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    while (next.getDay() !== 3) next.setDate(next.getDate() + 1);
+    return next.toISOString().slice(0, 10);
+  }
+  if (index === 'SENSEX') {
+    // Sensex: Friday weekly
+    const next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    while (next.getDay() !== 5) next.setDate(next.getDate() + 1);
+    return next.toISOString().slice(0, 10);
+  }
   return null;
 }
 
-// Get nearest expiry date for given date + DTE
-function getNearestExpiry(tradeDate, daysToExpiry, weekday = 4) {
-  // weekday: 4 = Thursday (Nifty), 2 = Tuesday (BankNifty monthly)
-  const d = new Date(tradeDate);
-  d.setDate(d.getDate() + daysToExpiry);
-  // Roll to next occurrence of weekday
-  while (d.getDay() !== weekday) d.setDate(d.getDate() + 1);
-  return d.toISOString().split("T")[0];
+// ── Strategy P&L calculator ──────────────────────────────────────────────────
+// ── V2 P&L calculator with separate entry/exit spots ────────────────────────
+function calcPnlV2(strategy, entrySpot, exitSpot, vix, dte, lots, lotSize, strikePct, width, slPct, tpPct, realPremiums = null) {
+  // Entry: options priced at entrySpot with DTE remaining
+  // Exit: options valued at expiry (intrinsic only if DTE=0, else BS with remaining time)
+  const entryDteY = dte === 0 ? (6.25 / (365 * 24)) : (dte / 365); // 6.25 hrs for 0 DTE entry at 9:20
+  const exitDteY  = 0.0001; // essentially at expiry
+
+  const step    = lotSize === 65 ? 50 : lotSize === 30 ? 100 : 50; // crude but works
+  const atm     = Math.round(entrySpot / step) * step;
+  const otm1K   = step * (strikePct + 1);
+  const otm2K   = step * (strikePct + width + 1);
+
+  // Entry premiums: use real bhav data if available, else Black-Scholes
+  const rp = realPremiums;
+  const eAtmC  = (rp?.atmC  != null) ? rp.atmC  : getPremium(entrySpot, atm,          entryDteY, vix, 'call');
+  const eAtmP  = (rp?.atmP  != null) ? rp.atmP  : getPremium(entrySpot, atm,          entryDteY, vix, 'put');
+  const eOtm1C = (rp?.otm1C != null) ? rp.otm1C : getPremium(entrySpot, atm + otm1K,  entryDteY, vix, 'call');
+  const eOtm1P = (rp?.otm1P != null) ? rp.otm1P : getPremium(entrySpot, atm - otm1K,  entryDteY, vix, 'put');
+  const eOtm2C = (rp?.otm2C != null) ? rp.otm2C : getPremium(entrySpot, atm + otm2K,  entryDteY, vix, 'call');
+  const eOtm2P = (rp?.otm2P != null) ? rp.otm2P : getPremium(entrySpot, atm - otm2K,  entryDteY, vix, 'put');
+
+  // Exit values (intrinsic at expiry based on exitSpot vs strike)
+  const xAtmC  = Math.max(0, exitSpot - atm);
+  const xAtmP  = Math.max(0, atm - exitSpot);
+  const xOtm1C = Math.max(0, exitSpot - (atm + otm1K));
+  const xOtm1P = Math.max(0, (atm - otm1K) - exitSpot);
+  const xOtm2C = Math.max(0, exitSpot - (atm + otm2K));
+  const xOtm2P = Math.max(0, (atm - otm2K) - exitSpot);
+
+  let entryPremium = 0, exitValue = 0;
+
+  switch (strategy) {
+    // ── Single leg ──
+    case 'long_call':  entryPremium = eAtmC;  exitValue = xAtmC;  break;
+    case 'long_put':   entryPremium = eAtmP;  exitValue = xAtmP;  break;
+    case 'short_call': entryPremium = eAtmC;  exitValue = xAtmC;  break;
+    case 'short_put':  entryPremium = eAtmP;  exitValue = xAtmP;  break;
+
+    // ── Volatility ──
+    case 'long_straddle':  entryPremium = eAtmC + eAtmP;   exitValue = xAtmC + xAtmP;   break;
+    case 'short_straddle': entryPremium = eAtmC + eAtmP;   exitValue = xAtmC + xAtmP;   break;
+    case 'long_strangle':  entryPremium = eOtm1C + eOtm1P; exitValue = xOtm1C + xOtm1P; break;
+    case 'short_strangle': entryPremium = eOtm1C + eOtm1P; exitValue = xOtm1C + xOtm1P; break;
+    case 'long_guts':      entryPremium = eAtmC + eAtmP + eOtm1C + eOtm1P; exitValue = xAtmC + xAtmP + xOtm1C + xOtm1P; break;
+    case 'short_guts':     entryPremium = eAtmC + eAtmP + eOtm1C + eOtm1P; exitValue = xAtmC + xAtmP + xOtm1C + xOtm1P; break;
+
+    // ── Vertical spreads ──
+    case 'bull_call_spread': entryPremium = eAtmC - eOtm1C; exitValue = xAtmC - xOtm1C; break;
+    case 'bear_call_spread': entryPremium = eOtm1C - eAtmC; exitValue = xOtm1C - xAtmC; break;
+    case 'bull_put_spread':  entryPremium = eOtm1P - eAtmP; exitValue = xOtm1P - xAtmP; break;
+    case 'bear_put_spread':  entryPremium = eAtmP - eOtm1P; exitValue = xAtmP - xOtm1P; break;
+
+    // ── Iron strats ──
+    case 'short_iron_condor':
+      entryPremium = (eOtm1C - eOtm2C) + (eOtm1P - eOtm2P);
+      exitValue    = (xOtm1C - xOtm2C) + (xOtm1P - xOtm2P);
+      break;
+    case 'long_iron_condor':
+      entryPremium = (eOtm2C - eOtm1C) + (eOtm2P - eOtm1P);
+      exitValue    = (xOtm2C - xOtm1C) + (xOtm2P - xOtm1P);
+      break;
+    case 'short_iron_butterfly':
+      entryPremium = eAtmC + eAtmP - eOtm1C - eOtm1P;
+      exitValue    = xAtmC + xAtmP - xOtm1C - xOtm1P;
+      break;
+    case 'long_iron_butterfly':
+      entryPremium = eOtm1C + eOtm1P - eAtmC - eAtmP;
+      exitValue    = xOtm1C + xOtm1P - xAtmC - xAtmP;
+      break;
+
+    // ── Butterfly ──
+    case 'long_call_butterfly':  entryPremium = eAtmC - 2*eOtm1C + eOtm2C; exitValue = xAtmC - 2*xOtm1C + xOtm2C; break;
+    case 'short_call_butterfly': entryPremium = 2*eOtm1C - eAtmC - eOtm2C; exitValue = 2*xOtm1C - xAtmC - xOtm2C; break;
+    case 'long_put_butterfly':   entryPremium = eAtmP - 2*eOtm1P + eOtm2P; exitValue = xAtmP - 2*xOtm1P + xOtm2P; break;
+    case 'short_put_butterfly':  entryPremium = 2*eOtm1P - eAtmP - eOtm2P; exitValue = 2*xOtm1P - xAtmP - xOtm2P; break;
+
+    // ── Condor ──
+    case 'long_call_condor':  entryPremium = eAtmC - eOtm1C - eOtm2C + getPremium(entrySpot,atm+step*3,entryDteY,vix,'call'); exitValue = xAtmC - xOtm1C - xOtm2C + Math.max(0,exitSpot-(atm+step*3)); break;
+    case 'short_call_condor': entryPremium = eOtm1C + eOtm2C - eAtmC - getPremium(entrySpot,atm+step*3,entryDteY,vix,'call'); exitValue = xOtm1C + xOtm2C - xAtmC - Math.max(0,exitSpot-(atm+step*3)); break;
+    case 'long_put_condor':   entryPremium = eAtmP - eOtm1P - eOtm2P + getPremium(entrySpot,atm-step*3,entryDteY,vix,'put'); exitValue = xAtmP - xOtm1P - xOtm2P + Math.max(0,(atm-step*3)-exitSpot); break;
+    case 'short_put_condor':  entryPremium = eOtm1P + eOtm2P - eAtmP - getPremium(entrySpot,atm-step*3,entryDteY,vix,'put'); exitValue = xOtm1P + xOtm2P - xAtmP - Math.max(0,(atm-step*3)-exitSpot); break;
+
+    // ── Synthetic ──
+    case 'synthetic_long':  entryPremium = eAtmC - eAtmP; exitValue = exitSpot - atm; break;
+    case 'synthetic_short': entryPremium = eAtmP - eAtmC; exitValue = atm - exitSpot; break;
+
+    default: entryPremium = eAtmC; exitValue = xAtmC;
+  }
+
+  // Credit strategies: profit = premium received - cost to close
+  const isCredit = ['short_call','short_put','short_straddle','short_strangle','short_guts',
+    'bear_call_spread','bull_put_spread','short_iron_condor','short_iron_butterfly',
+    'short_call_butterfly','short_put_butterfly','short_call_condor','short_put_condor','synthetic_short'].includes(strategy);
+
+  const pnlPerUnit = isCredit ? (entryPremium - exitValue) : (exitValue - entryPremium);
+  let pnl = pnlPerUnit * lots * lotSize;
+
+  // Apply SL/TP
+  const maxLoss   = slPct ? -Math.abs(entryPremium * lots * lotSize * slPct / 100) : null;
+  const maxProfit = tpPct ?  Math.abs(entryPremium * lots * lotSize * tpPct / 100) : null;
+  if (maxLoss   && pnl < maxLoss)   pnl = maxLoss;
+  if (maxProfit && pnl > maxProfit) pnl = maxProfit;
+
+  return { pnl, entryPremium, exitPremium: exitValue };
 }
 
-// Round strike to nearest step
-function roundStrike(spot, step, offset = 0) {
-  return Math.round((spot + offset) / step) * step;
-}
+function calcPnl(strategy, spot, vix, dte, lots, lotSize, strikePct, width, slPct, tpPct) {
+  const dteY    = Math.max(0.001, dte / 365);
+  const exitDteY = 0.001; // exits at expiry = 0 DTE essentially
+  const atm     = getATMStrike(spot, 'NIFTY'); // use spot directly
+  const step    = 50; // generic, overridden by actual index step
 
-// ── STRATEGY LEG BUILDER ──────────────────────────────────────────────────
+  // Premium at entry
+  const atmCall = getPremium(spot, atm, dteY, vix, 'call');
+  const atmPut  = getPremium(spot, atm, dteY, vix, 'put');
+  const otm1C   = getPremium(spot, atm + step * (strikePct + 1), dteY, vix, 'call');
+  const otm1P   = getPremium(spot, atm - step * (strikePct + 1), dteY, vix, 'put');
+  const otm2C   = getPremium(spot, atm + step * (strikePct + width + 1), dteY, vix, 'call');
+  const otm2P   = getPremium(spot, atm - step * (strikePct + width + 1), dteY, vix, 'put');
 
-function buildLegs(strategy, spot, strikeStep, width) {
-  const w = width || strikeStep * 2;
-  const atm = roundStrike(spot, strikeStep);
-  const otmCall = roundStrike(spot, strikeStep, w);
-  const otmPut  = roundStrike(spot, strikeStep, -w);
-  const wingW   = strikeStep * 2;
+  // Simplified: assume exits at expiry for now
+  // Entry and exit premiums per lot (1 unit)
+  let entryPremium = 0, exitPremium = 0;
 
-  const legs = {
-    // Single leg
-    "long_call":   [{ type:"CE", strike: atm, dir: 1 }],
-    "long_put":    [{ type:"PE", strike: atm, dir: 1 }],
-    "short_call":  [{ type:"CE", strike: atm, dir:-1 }],
-    "short_put":   [{ type:"PE", strike: atm, dir:-1 }],
+  switch (strategy) {
+    // Single leg — exit at 0 (intrinsic only)
+    case 'long_call':  entryPremium = atmCall; exitPremium = Math.max(0, spot - atm); break;
+    case 'long_put':   entryPremium = atmPut;  exitPremium = Math.max(0, atm - spot); break;
+    case 'short_call': entryPremium = atmCall; exitPremium = Math.max(0, spot - atm); break;
+    case 'short_put':  entryPremium = atmPut;  exitPremium = Math.max(0, atm - spot); break;
 
     // Volatility
-    "long_straddle":  [{ type:"CE", strike: atm, dir: 1 }, { type:"PE", strike: atm, dir: 1 }],
-    "short_straddle": [{ type:"CE", strike: atm, dir:-1 }, { type:"PE", strike: atm, dir:-1 }],
-    "long_strangle":  [{ type:"CE", strike: otmCall, dir: 1 }, { type:"PE", strike: otmPut, dir: 1 }],
-    "short_strangle": [{ type:"CE", strike: otmCall, dir:-1 }, { type:"PE", strike: otmPut, dir:-1 }],
-    "long_guts":      [{ type:"CE", strike: otmPut,  dir: 1 }, { type:"PE", strike: otmCall, dir: 1 }],
-    "short_guts":     [{ type:"CE", strike: otmPut,  dir:-1 }, { type:"PE", strike: otmCall, dir:-1 }],
+    case 'long_straddle':  entryPremium = atmCall + atmPut; exitPremium = Math.max(0, spot - atm) + Math.max(0, atm - spot); break;
+    case 'short_straddle': entryPremium = atmCall + atmPut; exitPremium = Math.max(0, spot - atm) + Math.max(0, atm - spot); break;
+    case 'long_strangle':  entryPremium = otm1C + otm1P; exitPremium = Math.max(0, spot-(atm+step)) + Math.max(0, (atm-step)-spot); break;
+    case 'short_strangle': entryPremium = otm1C + otm1P; exitPremium = Math.max(0, spot-(atm+step)) + Math.max(0, (atm-step)-spot); break;
+    case 'long_guts':      entryPremium = atmCall + atmPut + otm1C + otm1P; exitPremium = 0; break;
+    case 'short_guts':     entryPremium = atmCall + atmPut + otm1C + otm1P; exitPremium = 0; break;
 
-    // Vertical spreads
-    "bull_call_spread": [{ type:"CE", strike: atm, dir: 1 }, { type:"CE", strike: otmCall, dir:-1 }],
-    "bear_call_spread": [{ type:"CE", strike: atm, dir:-1 }, { type:"CE", strike: otmCall, dir: 1 }],
-    "bull_put_spread":  [{ type:"PE", strike: otmPut, dir:-1 }, { type:"PE", strike: atm, dir: 1 }],
-    "bear_put_spread":  [{ type:"PE", strike: atm, dir:-1 }, { type:"PE", strike: otmPut, dir: 1 }],
+    // Vertical spreads — simplified: capped by width
+    case 'bull_call_spread': entryPremium = atmCall - otm1C; exitPremium = Math.min(step, Math.max(0, spot - atm)) - Math.min(step, Math.max(0, spot-(atm+step))); break;
+    case 'bear_call_spread': entryPremium = otm1C - atmCall; exitPremium = Math.min(step, Math.max(0, spot-(atm+step))) - Math.min(step, Math.max(0, spot-atm)); break;
+    case 'bull_put_spread':  entryPremium = otm1P - atmPut; exitPremium = Math.min(step, Math.max(0, (atm-step)-spot)) - Math.min(step, Math.max(0, atm-spot)); break;
+    case 'bear_put_spread':  entryPremium = atmPut - otm1P; exitPremium = Math.min(step, Math.max(0, atm-spot)) - Math.min(step, Math.max(0, (atm-step)-spot)); break;
 
-    // Iron strats
-    "short_iron_condor": [
-      { type:"PE", strike: roundStrike(spot,strikeStep,-w*2), dir: 1 },
-      { type:"PE", strike: otmPut,  dir:-1 },
-      { type:"CE", strike: otmCall, dir:-1 },
-      { type:"CE", strike: roundStrike(spot,strikeStep, w*2), dir: 1 },
-    ],
-    "long_iron_condor": [
-      { type:"PE", strike: roundStrike(spot,strikeStep,-w*2), dir:-1 },
-      { type:"PE", strike: otmPut,  dir: 1 },
-      { type:"CE", strike: otmCall, dir: 1 },
-      { type:"CE", strike: roundStrike(spot,strikeStep, w*2), dir:-1 },
-    ],
-    "short_iron_butterfly": [
-      { type:"PE", strike: otmPut, dir: 1 },
-      { type:"PE", strike: atm,    dir:-1 },
-      { type:"CE", strike: atm,    dir:-1 },
-      { type:"CE", strike: otmCall,dir: 1 },
-    ],
-    "long_iron_butterfly": [
-      { type:"PE", strike: otmPut, dir:-1 },
-      { type:"PE", strike: atm,    dir: 1 },
-      { type:"CE", strike: atm,    dir: 1 },
-      { type:"CE", strike: otmCall,dir:-1 },
-    ],
+    // Iron condor: sell inner, buy outer
+    case 'short_iron_condor':
+      entryPremium = (otm1C - otm2C) + (otm1P - otm2P);
+      exitPremium  = (Math.max(0,spot-(atm+step)) - Math.max(0,spot-(atm+step*2))) + (Math.max(0,(atm-step)-spot) - Math.max(0,(atm-step*2)-spot));
+      break;
+    case 'long_iron_condor':
+      entryPremium = (otm2C - otm1C) + (otm2P - otm1P);
+      exitPremium  = (Math.max(0,spot-(atm+step*2)) - Math.max(0,spot-(atm+step))) + (Math.max(0,(atm-step*2)-spot) - Math.max(0,(atm-step)-spot));
+      break;
+    case 'short_iron_butterfly':
+      entryPremium = atmCall + atmPut - otm1C - otm1P;
+      exitPremium  = (Math.max(0,spot-atm) + Math.max(0,atm-spot)) - (Math.max(0,spot-(atm+step)) + Math.max(0,(atm-step)-spot));
+      break;
+    case 'long_iron_butterfly':
+      entryPremium = otm1C + otm1P - atmCall - atmPut;
+      exitPremium  = (Math.max(0,spot-(atm+step)) + Math.max(0,(atm-step)-spot)) - (Math.max(0,spot-atm) + Math.max(0,atm-spot));
+      break;
 
     // Butterfly
-    "long_call_butterfly":  [{ type:"CE", strike: atm-wingW, dir: 1 }, { type:"CE", strike: atm, dir:-2 }, { type:"CE", strike: atm+wingW, dir: 1 }],
-    "short_call_butterfly": [{ type:"CE", strike: atm-wingW, dir:-1 }, { type:"CE", strike: atm, dir: 2 }, { type:"CE", strike: atm+wingW, dir:-1 }],
-    "long_put_butterfly":   [{ type:"PE", strike: atm-wingW, dir: 1 }, { type:"PE", strike: atm, dir:-2 }, { type:"PE", strike: atm+wingW, dir: 1 }],
-    "short_put_butterfly":  [{ type:"PE", strike: atm-wingW, dir:-1 }, { type:"PE", strike: atm, dir: 2 }, { type:"PE", strike: atm+wingW, dir:-1 }],
+    case 'long_call_butterfly':  entryPremium = atmCall - 2*otm1C + otm2C; exitPremium = Math.max(0, spot-atm) - 2*Math.max(0,spot-(atm+step)) + Math.max(0,spot-(atm+step*2)); break;
+    case 'short_call_butterfly': entryPremium = -(atmCall - 2*otm1C + otm2C); exitPremium = -(Math.max(0,spot-atm) - 2*Math.max(0,spot-(atm+step)) + Math.max(0,spot-(atm+step*2))); break;
+    case 'long_put_butterfly':   entryPremium = atmPut - 2*otm1P + otm2P; exitPremium = Math.max(0,atm-spot) - 2*Math.max(0,(atm-step)-spot) + Math.max(0,(atm-step*2)-spot); break;
+    case 'short_put_butterfly':  entryPremium = -(atmPut - 2*otm1P + otm2P); exitPremium = -(Math.max(0,atm-spot) - 2*Math.max(0,(atm-step)-spot) + Math.max(0,(atm-step*2)-spot)); break;
 
-    // Condor
-    "long_call_condor":  [{ type:"CE", strike: atm-wingW*2, dir: 1 }, { type:"CE", strike: atm-wingW, dir:-1 }, { type:"CE", strike: atm+wingW, dir:-1 }, { type:"CE", strike: atm+wingW*2, dir: 1 }],
-    "short_call_condor": [{ type:"CE", strike: atm-wingW*2, dir:-1 }, { type:"CE", strike: atm-wingW, dir: 1 }, { type:"CE", strike: atm+wingW, dir: 1 }, { type:"CE", strike: atm+wingW*2, dir:-1 }],
-    "long_put_condor":   [{ type:"PE", strike: atm-wingW*2, dir: 1 }, { type:"PE", strike: atm-wingW, dir:-1 }, { type:"PE", strike: atm+wingW, dir:-1 }, { type:"PE", strike: atm+wingW*2, dir: 1 }],
-    "short_put_condor":  [{ type:"PE", strike: atm-wingW*2, dir:-1 }, { type:"PE", strike: atm-wingW, dir: 1 }, { type:"PE", strike: atm+wingW, dir: 1 }, { type:"PE", strike: atm+wingW*2, dir:-1 }],
+    // Condor (4 legs)
+    case 'long_call_condor':  entryPremium = atmCall - otm1C - otm2C + getPremium(spot,atm+step*3,dteY,vix,'call'); break;
+    case 'short_call_condor': entryPremium = otm1C + otm2C - atmCall - getPremium(spot,atm+step*3,dteY,vix,'call'); break;
+    case 'long_put_condor':   entryPremium = atmPut - otm1P - otm2P + getPremium(spot,atm-step*3,dteY,vix,'put'); break;
+    case 'short_put_condor':  entryPremium = otm1P + otm2P - atmPut - getPremium(spot,atm-step*3,dteY,vix,'put'); break;
 
     // Synthetic
-    "synthetic_long":  [{ type:"CE", strike: atm, dir: 1 }, { type:"PE", strike: atm, dir:-1 }],
-    "synthetic_short": [{ type:"CE", strike: atm, dir:-1 }, { type:"PE", strike: atm, dir: 1 }],
-  };
+    case 'synthetic_long':  entryPremium = atmCall - atmPut; exitPremium = spot - atm; break;
+    case 'synthetic_short': entryPremium = atmPut - atmCall; exitPremium = atm - spot; break;
 
-  return legs[strategy] || legs["short_straddle"];
-}
-
-// ── PRICE A LEG (real data first, BS fallback) ────────────────────────────
-
-async function priceleg(supabase, leg, spot, vix, dte, riskFreeRate, tradeDate, expiryDate) {
-  // Try real Supabase data first
-  if (supabase) {
-    const real = await fetchBhavPremium(supabase, leg.symbol, tradeDate, expiryDate, leg.strike, leg.type);
-    if (real && real > 0) return { price: real, source: "real" };
+    default: entryPremium = atmCall; exitPremium = 0;
   }
 
-  // Fallback to Black-Scholes
-  const sigma = (vix || 15) / 100;
-  const T = Math.max(dte, 0.5) / 365;
-  const price = bs(spot, leg.strike, T, riskFreeRate / 100, sigma, leg.type);
-  return { price: Math.max(price, 0.05), source: "bs" };
+  // Credit strategies: P&L = credit received - cost to close
+  const isCredit = ['short_call','short_put','short_straddle','short_strangle','short_guts',
+    'bear_call_spread','bull_put_spread','short_iron_condor','short_iron_butterfly',
+    'short_call_butterfly','short_put_butterfly','short_call_condor','short_put_condor','synthetic_short'].includes(strategy);
+
+  let pnlPerUnit;
+  if (isCredit) {
+    pnlPerUnit = entryPremium - exitPremium;
+  } else {
+    pnlPerUnit = exitPremium - entryPremium;
+  }
+
+  let pnl = pnlPerUnit * lots * lotSize;
+
+  // Apply SL/TP
+  const maxLoss   = slPct ? -Math.abs(entryPremium * lots * lotSize * slPct / 100) : null;
+  const maxProfit = tpPct ? Math.abs(entryPremium * lots * lotSize * tpPct / 100) : null;
+  if (maxLoss   && pnl < maxLoss)   pnl = maxLoss;
+  if (maxProfit && pnl > maxProfit) pnl = maxProfit;
+
+  return { pnl, entryPremium, exitPremium: isCredit ? exitPremium : exitPremium };
 }
 
-// ── MAIN HANDLER ─────────────────────────────────────────────────────────────
-
+// ── Main handler ─────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  const {
-    strategy = "short_straddle",
-    symbol   = "NIFTY",
-    expiry   = "weekly",
-    entryTime = "09:20",
-    exitTime  = "15:15",
-    dte       = 0,
-    lots      = 1,
-    slPct     = 50,
-    tpPct     = 100,
-    fromYear  = 2020,
-    toYear    = 2025,
-    width,
-  } = req.body;
+  const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  const { strategy, index = 'NIFTY', expiry = 'weekly', dte = 0, lots = 1,
+          strikePct = 0, width = 1, fromYear = 2020, toYear = 2025,
+          slPct = null, tpPct = null } = body;
 
-  const lotSize   = LOT_SIZES[symbol]   || 75;
-  const strikeStep = STRIKE_STEPS[symbol] || 50;
-  const riskFreeRate = 6.5;
+  if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  // Cache key
-  const cacheKey = `bt:${strategy}:${symbol}:${expiry}:${dte}:${slPct}:${tpPct}:${fromYear}:${toYear}:${lots}:${width||"auto"}:v4`;
+  const cacheKey = `bt:v5:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
-    if (cached) return res.json({ ...cached, cached: true });
+    if (cached) {
+      const data = typeof cached === 'string' ? JSON.parse(cached) : cached;
+      return res.json({ ...data, cached: true });
+    }
   } catch (_) {}
 
-  // Init Supabase if key available
-  let supabase = null;
-  if (SUPABASE_KEY) {
-    try { supabase = createClient(SUPABASE_URL, SUPABASE_KEY); } catch (_) {}
-  }
+  try {
+    const [priceData, vixData] = await Promise.all([
+      getHistoricalData(index, fromYear, toYear),
+      getVIXHistory(fromYear, toYear),
+    ]);
 
-  // Fetch historical OHLC + VIX
-  const fromDate = `${fromYear}-01-01`;
-  const toDate   = `${toYear}-12-31`;
-  const [ohlcData, vixData] = await Promise.all([
-    fetchHistoricalOHLC(symbol, fromDate, toDate),
-    fetchHistoricalOHLC("VIX", fromDate, toDate),
-  ]);
+    const lotSize  = LOT_SIZES[index] || 75;
+    const step     = STRIKE_STEPS[index] || 50;
+    const daily    = [];
 
-  if (!ohlcData.length) return res.status(500).json({ error: "No price data" });
+    // Find expiry days — generate entry days based on expiry type
+    // Entry: DTE days before expiry
+    // Simple approach: trade every expiry day minus DTE
+    const EXPIRY_DAYS = {
+      'NIFTY_weekly':     [4],  // Thursday
+      'NIFTY_monthly':    [4],
+      'BANKNIFTY_weekly': [3],  // Wednesday
+      'BANKNIFTY_monthly':[3],
+      'SENSEX_weekly':    [5],  // Friday
+      'SENSEX_monthly':   [5],
+    };
+    const expiryDow = EXPIRY_DAYS[`${index}_${expiry}`]?.[0] ?? 4;
 
-  const vixMap = {};
-  for (const d of vixData) vixMap[d.date] = d.close;
+    // Build a date->price lookup for fast access
+    const priceByDate = {};
+    for (const d of priceData) priceByDate[d.date] = d;
 
-  // ── BUILD TRADE LIST ──────────────────────────────────────────────────────
+    // Find all expiry days first
+    const expiryDays = priceData.filter(d => new Date(d.date).getDay() === expiryDow);
 
-  const trades = [];
-  let realDataCount = 0;
+    for (const expiryDay of expiryDays) {
+      // Find entry day: go back DTE trading days from expiry
+      const expiryIdx = priceData.indexOf(expiryDay);
+      if (expiryIdx < dte) continue;
+      const entryDay = priceData[expiryIdx - dte];
+      if (!entryDay) continue;
 
-  for (let i = 0; i < ohlcData.length - 1; i++) {
-    const day   = ohlcData[i];
-    const dDate = new Date(day.date);
-    const dow   = dDate.getDay();
+      const entrySpot = entryDay.open || entryDay.close;
+      const exitSpot  = expiryDay.close;
+      const vix       = vixData[entryDay.date] || 15;
+      const dteUsed   = dte;
 
-    // Entry filter by expiry type
-    const isWeekly = expiry === "weekly";
-    // Weekly: enter on expiry day (DTE=0) or N days before
-    // Monthly: last Thursday of month
-    let shouldEnter = false;
-    if (isWeekly) {
-      if (dte === 0 && dow === 4) shouldEnter = true;           // Thursday expiry day
-      else if (dte > 0 && dow === (4 - dte + 7) % 7) shouldEnter = true;
-    } else {
-      // Monthly: enter on specific day relative to last Thursday
-      if (dow === 4) shouldEnter = true; // simplified: enter every Thursday for monthly too
+      if (!entrySpot || !exitSpot) continue;
+
+      // Try real bhav premiums for entry day
+      const atmStrike = Math.round(entrySpot / step) * step;
+      const realPremiums = await getBhavPremiums(index, entryDay.date, atmStrike, step, strikePct);
+
+      const { pnl, entryPremium, exitPremium } = calcPnlV2(
+        strategy, entrySpot, exitSpot, vix, dteUsed, lots, lotSize, strikePct, width, slPct, tpPct, realPremiums
+      );
+
+      daily.push({ date: entryDay.date, expiryDate: expiryDay.date, pnl, entryPremium, exitPremium, spot: entrySpot, exitSpot, vix, dte: dteUsed, source: realPremiums?.source || 'bs' });
     }
 
-    if (!shouldEnter) continue;
+    if (daily.length === 0) return res.status(400).json({ error: 'No trades found for this period' });
 
-    const spot   = day.open || day.close;
-    const vix    = vixMap[day.date] || 15;
-    const expiryDate = getNearestExpiry(day.date, dte, 4);
+    // Compute stats
+    const pnls      = daily.map(d => d.pnl);
+    const wins      = daily.filter(d => d.pnl >= 0);
+    const losses    = daily.filter(d => d.pnl < 0);
+    const totalPnl  = pnls.reduce((s, p) => s + p, 0);
+    const avgPnl    = totalPnl / pnls.length;
+    const winRate   = (wins.length / pnls.length) * 100;
 
-    // Build legs with symbol info
-    const legs = buildLegs(strategy, spot, strikeStep, width).map(l => ({ ...l, symbol }));
-
-    // Price entry
-    let entryPremium = 0;
-    let entrySource = "bs";
-    for (const leg of legs) {
-      const { price, source } = await priceleg(supabase, leg, spot, vix, Math.max(dte, 0.5), riskFreeRate, day.date, expiryDate);
-      leg.entryPrice = price;
-      entryPremium += leg.dir * price;
-      if (source === "real") entrySource = "real";
+    // Max drawdown
+    let peak = 0, drawdown = 0, cumPnl = 0;
+    for (const p of pnls) {
+      cumPnl += p;
+      if (cumPnl > peak) peak = cumPnl;
+      if (cumPnl - peak < drawdown) drawdown = cumPnl - peak;
     }
 
-    // Exit day
-    const exitDayIdx = dte === 0 ? i : Math.min(i + dte, ohlcData.length - 1);
-    const exitDay  = ohlcData[exitDayIdx];
-    const exitSpot = exitDay.close || exitDay.open;
-
-    // Price exit
-    let exitPremium = 0;
-    for (const leg of legs) {
-      const { price } = await priceleg(supabase, leg, exitSpot, vixMap[exitDay.date] || 15, 0.01, riskFreeRate, exitDay.date, expiryDate);
-      leg.exitPrice = price;
-      exitPremium += leg.dir * price;
+    // Streaks
+    let ws = 0, ls = 0, maxWs = 0, maxLs = 0, curW = 0, curL = 0;
+    for (const p of pnls) {
+      if (p >= 0) { curW++; curL = 0; if (curW > maxWs) maxWs = curW; }
+      else        { curL++; curW = 0; if (curL > maxLs) maxLs = curL; }
     }
 
-    // Raw PnL per lot
-    const rawPnl = (entryPremium - exitPremium) * lotSize * lots;
+    const avgWin  = wins.length   ? wins.reduce((s,d) => s+d.pnl, 0) / wins.length   : 0;
+    const avgLoss = losses.length ? losses.reduce((s,d) => s+d.pnl, 0) / losses.length : 0;
+    const grossWin  = wins.reduce((s,d) => s+d.pnl, 0);
+    const grossLoss = Math.abs(losses.reduce((s,d) => s+d.pnl, 0));
+    const profitFactor = grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? 99 : 0;
 
-    // Apply SL/TP
-    let finalPnl = rawPnl;
-    const maxLoss   = Math.abs(entryPremium) * lotSize * lots * (slPct / 100);
-    const maxProfit = Math.abs(entryPremium) * lotSize * lots * (tpPct / 100);
-    if (rawPnl < -maxLoss) finalPnl = -maxLoss;
-    if (rawPnl > maxProfit) finalPnl = maxProfit;
+    // Sharpe (annualized, assume 252 trading days)
+    const mean = avgPnl;
+    const variance = pnls.reduce((s, p) => s + (p - mean) ** 2, 0) / pnls.length;
+    const stdDev = Math.sqrt(variance);
+    const sharpe = stdDev > 0 ? (mean / stdDev) * Math.sqrt(52) : 0;
 
-    if (entrySource === "real") realDataCount++;
+    const bhavDays = daily.filter(d => d.source === 'bhav').length;
+    const result = {
+      daily,
+      dataSource: bhavDays > daily.length * 0.5 ? 'nse_bhav' : 'black_scholes',
+      bhavCoverage: Math.round(bhavDays / daily.length * 100),
+      stats: {
+        totalPnl, avgPnl, winRate,
+        totalTrades: pnls.length,
+        wins: wins.length,
+        losses: losses.length,
+        avgWin, avgLoss,
+        bestTrade:  Math.max(...pnls),
+        worstTrade: Math.min(...pnls),
+        maxDrawdown: drawdown,
+        profitFactor, sharpe,
+        winStreak: maxWs, lossStreak: maxLs,
+        expectancy: (winRate/100) * avgWin + (1 - winRate/100) * avgLoss,
+      },
+    };
 
-    trades.push({
-      date:        day.date,
-      spot:        Math.round(spot),
-      vix:         Math.round(vix * 10) / 10,
-      entryPremium: Math.round(entryPremium * 100) / 100,
-      exitPremium:  Math.round(exitPremium  * 100) / 100,
-      pnl:          Math.round(finalPnl),
-      source:       entrySource,
-    });
+    try { await kv.set(cacheKey, JSON.stringify(result), { ex: 12 * 60 * 60 }); } catch (_) {}
+    return res.json(result);
+
+  } catch(e) {
+    return res.status(500).json({ error: e.message });
   }
-
-  // ── STATS ─────────────────────────────────────────────────────────────────
-
-  const wins   = trades.filter(t => t.pnl > 0);
-  const losses = trades.filter(t => t.pnl < 0);
-  const totalPnl   = trades.reduce((s, t) => s + t.pnl, 0);
-  const avgWin     = wins.length   ? wins.reduce((s,t) => s+t.pnl, 0)   / wins.length   : 0;
-  const avgLoss    = losses.length ? losses.reduce((s,t) => s+t.pnl, 0) / losses.length : 0;
-  const winRate    = trades.length ? (wins.length / trades.length) * 100 : 0;
-
-  // Max drawdown
-  let peak = 0, trough = 0, maxDD = 0, running = 0;
-  for (const t of trades) {
-    running += t.pnl;
-    if (running > peak) peak = running;
-    trough = running - peak;
-    if (trough < maxDD) maxDD = trough;
-  }
-
-  // Sharpe ratio (annualised)
-  const pnls = trades.map(t => t.pnl);
-  const mean = pnls.reduce((s,v) => s+v, 0) / (pnls.length || 1);
-  const std  = Math.sqrt(pnls.reduce((s,v) => s+(v-mean)**2, 0) / (pnls.length || 1));
-  const sharpe = std > 0 ? (mean / std) * Math.sqrt(52) : 0;
-
-  // Profit factor
-  const grossWin  = wins.reduce((s,t)  => s+t.pnl, 0);
-  const grossLoss = losses.reduce((s,t) => s+Math.abs(t.pnl), 0);
-  const profitFactor = grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? 999 : 0;
-
-  // Max streak
-  let maxWinStreak = 0, maxLossStreak = 0, curWin = 0, curLoss = 0;
-  for (const t of trades) {
-    if (t.pnl > 0) { curWin++; curLoss = 0; maxWinStreak = Math.max(maxWinStreak, curWin); }
-    else { curLoss++; curWin = 0; maxLossStreak = Math.max(maxLossStreak, curLoss); }
-  }
-
-  // Calendar data (monthly P&L)
-  const calendar = {};
-  for (const t of trades) {
-    const ym = t.date.slice(0, 7);
-    calendar[ym] = (calendar[ym] || 0) + t.pnl;
-  }
-
-  // Day of week breakdown
-  const dowPnl = { Mon:[], Tue:[], Wed:[], Thu:[], Fri:[] };
-  const dowNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  for (const t of trades) {
-    const d = dowNames[new Date(t.date).getDay()];
-    if (dowPnl[d]) dowPnl[d].push(t.pnl);
-  }
-  const dowStats = Object.entries(dowPnl).map(([day, pnls]) => ({
-    day,
-    trades: pnls.length,
-    total:  Math.round(pnls.reduce((s,v) => s+v, 0)),
-    avg:    pnls.length ? Math.round(pnls.reduce((s,v) => s+v, 0) / pnls.length) : 0,
-    winRate: pnls.length ? Math.round(pnls.filter(p => p>0).length / pnls.length * 100) : 0,
-  }));
-
-  const result = {
-    stats: {
-      totalPnl:     Math.round(totalPnl),
-      totalTrades:  trades.length,
-      wins:         wins.length,
-      losses:       losses.length,
-      winRate:      Math.round(winRate * 10) / 10,
-      avgWin:       Math.round(avgWin),
-      avgLoss:      Math.round(avgLoss),
-      maxDD:        Math.round(maxDD),
-      sharpe:       Math.round(sharpe * 100) / 100,
-      profitFactor: Math.round(profitFactor * 100) / 100,
-      maxWinStreak,
-      maxLossStreak,
-      bestTrade:    Math.round(Math.max(...trades.map(t => t.pnl), 0)),
-      worstTrade:   Math.round(Math.min(...trades.map(t => t.pnl), 0)),
-      realDataPct:  trades.length ? Math.round(realDataCount / trades.length * 100) : 0,
-    },
-    trades:   trades.slice(-100),   // last 100 for trade log
-    calendar,
-    dowStats,
-  };
-
-  try { await kv.set(cacheKey, result, { ex: 86400 }); } catch (_) {}
-
-  res.json(result);
 }
