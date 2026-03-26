@@ -106,7 +106,7 @@ function FiiDiiChart({ history }) {
                   `Combined: ${fmtCr((day.fiiNet||0)+(day.diiNet||0))}`,
                 ].filter(l => l !== undefined);
               },
-              label: () => null,  // all info in beforeBody
+              label: () => '',  // all info in beforeBody
             },
           },
         },

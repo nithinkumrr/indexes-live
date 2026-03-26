@@ -1585,6 +1585,14 @@ export default function FnOPage({ data = {} }) {
         <LotSizes />
       </div>
 
+      {/* ══ FII / DII ════════════════════════════════════════════════ */}
+      <div className="fnos-section-hdr">
+        <span>FII / DII FLOW</span>
+      </div>
+      <div className="fnos-full-section">
+        <FiiDii />
+      </div>
+
     </div>
   );
 }
