@@ -126,184 +126,380 @@ function parseShareUrl() {
 }
 
 // ── PAYOFF CHART ──────────────────────────────────────────────────────────────
+// ── PAYOFF CHART ──────────────────────────────────────────────────────────────
 function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
   const LOT = getLot(symbol);
-  const [tSpot, setTSpot] = useState(spot);
-  const [tDte,  setTDte]  = useState(dte);
-  const [hx, setHx] = useState(null);
+  const [tSpot,     setTSpot]     = useState(spot);
+  const [tDte,      setTDte]      = useState(dte);
+  const [hx,        setHx]        = useState(null);
+  const [showToday, setShowToday] = useState(true);
+  const [showExp,   setShowExp]   = useState(true);
   useEffect(() => setTSpot(spot), [spot]);
-  useEffect(() => setTDte(dte), [dte]);
+  useEffect(() => setTDte(dte),  [dte]);
 
   const sig = (vix || 15) / 100;
+  const spotStep = spot > 10000 ? 50 : 25;
 
-  const { range, expPnls, nowPnls, bes, maxP, minP } = useMemo(() => {
+  const { range, expPnls, nowPnls, bes, maxP, minP, maxExpP, minExpP } = useMemo(() => {
     const st = spot > 10000 ? 50 : 25;
     const ks = legs.map(l => l.k);
-    const pad = Math.max(...ks) - Math.min(...ks) + st * 14;
-    const fr = Math.min(...ks, spot) - pad / 2, to = Math.max(...ks, spot) + pad / 2;
+    if (!ks.length) return { range:[spot], expPnls:[0], nowPnls:[0], bes:[], maxP:0, minP:0, maxExpP:0, minExpP:0 };
+    const pad = Math.max(...ks) - Math.min(...ks) + st * 16;
+    const fr = Math.min(...ks, spot) - pad / 2;
+    const to = Math.max(...ks, spot) + pad / 2;
     const range = []; for (let s = fr; s <= to; s += st) range.push(Math.round(s));
-
-    const T0 = Math.max(dte, 0.25) / 365;
     const T1 = Math.max(tDte, 0.01) / 365;
-
-    const expPnls = range.map(s => {
-      let t = 0;
-      legs.forEach(l => { t += l.q * (Math.max(0, l.t==='CE'?s-l.k:l.k-s) - l.p) * lots * LOT; });
-      return Math.round(t);
-    });
-    const nowPnls = range.map(s => {
-      let t = 0;
-      legs.forEach(l => { t += l.q * (bsP(s, l.k, T1, sig, l.t) - l.p) * lots * LOT; });
-      return Math.round(t);
-    });
-
+    const expPnls = range.map(s => { let t=0; legs.forEach(l => { t += l.q*(Math.max(0,l.t==='CE'?s-l.k:l.k-s)-l.p)*lots*LOT; }); return Math.round(t); });
+    const nowPnls = range.map(s => { let t=0; legs.forEach(l => { t += l.q*(bsP(s,l.k,T1,sig,l.t)-l.p)*lots*LOT; }); return Math.round(t); });
     const bes = [];
-    for (let i = 0; i < expPnls.length - 1; i++) {
-      if ((expPnls[i] < 0 && expPnls[i+1] >= 0) || (expPnls[i] >= 0 && expPnls[i+1] < 0)) {
-        const f = -expPnls[i] / (expPnls[i+1] - expPnls[i]);
-        bes.push(Math.round(range[i] + f * (range[i+1] - range[i])));
+    for (let i = 0; i < expPnls.length-1; i++) {
+      if ((expPnls[i]<0&&expPnls[i+1]>=0)||(expPnls[i]>=0&&expPnls[i+1]<0)) {
+        const f = -expPnls[i]/(expPnls[i+1]-expPnls[i]);
+        bes.push(Math.round(range[i] + f*(range[i+1]-range[i])));
       }
     }
     const all = [...expPnls, ...nowPnls];
-    return { range, expPnls, nowPnls, bes, maxP: Math.max(...all), minP: Math.min(...all) };
+    return { range, expPnls, nowPnls, bes,
+      maxP: Math.max(...all, 0), minP: Math.min(...all, 0),
+      maxExpP: Math.max(...expPnls), minExpP: Math.min(...expPnls) };
   }, [legs, spot, vix, dte, lots, tDte, sig]);
 
-  const W=680, H=200, PAD={t:20,r:16,b:36,l:60};
-  const CW=W-PAD.l-PAD.r, CH=H-PAD.t-PAD.b, span=Math.max(maxP-minP,1);
-  const tx=s=>PAD.l+((s-range[0])/(range[range.length-1]-range[0]))*CW;
-  const ty=p=>PAD.t+CH-((p-minP)/span)*CH;
-  const zy=ty(0), sx=tx(spot), tsx=tx(tSpot);
-  const mkPath=arr=>arr.map((v,i)=>`${i===0?'M':'L'}${tx(range[i]).toFixed(1)},${ty(v).toFixed(1)}`).join(' ');
+  const W=700, H=240, PAD={t:36,r:22,b:48,l:68};
+  const CW=W-PAD.l-PAD.r, CH=H-PAD.t-PAD.b;
+  const span = Math.max(maxP-minP, 1);
+  const tx = s => PAD.l + ((s-range[0])/(range[range.length-1]-range[0]))*CW;
+  const ty = p => PAD.t + CH - ((p-minP)/span)*CH;
+  const zy = ty(0), sx = tx(spot), tsx = tx(tSpot);
 
-  const fillPath=(arr,pos)=>{
-    let d='',open=false;
-    arr.forEach((p,i)=>{
-      const x=tx(range[i]),y=ty(p),base=pos?Math.min(zy,PAD.t+CH):Math.max(zy,PAD.t);
-      if((pos?p>=0:p<0)&&!open){open=true;d+=`M${x},${base} L${x},${y}`;}
-      else if(pos?p>=0:p<0)d+=` L${x},${y}`;
-      else if(open){open=false;d+=` L${tx(range[i-1])},${base} Z`;}
-    });
-    if(open)d+=` L${tx(range[arr.length-1])},${pos?Math.min(zy,PAD.t+CH):Math.max(zy,PAD.t)} Z`;
+  const mkSmooth = arr => {
+    const pts = range.map((s,i) => [tx(s), ty(arr[i])]);
+    if (pts.length < 2) return '';
+    let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+    for (let i=1; i<pts.length; i++) {
+      const cp = (pts[i-1][0]+pts[i][0])/2;
+      d += ` C${cp.toFixed(1)},${pts[i-1][1].toFixed(1)} ${cp.toFixed(1)},${pts[i][1].toFixed(1)} ${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}`;
+    }
     return d;
   };
 
-  const fmt=n=>{const a=Math.abs(n);if(a>9999999)return n>0?'+∞':'-∞';if(a>=100000)return`${n>0?'+':'-'}₹${(a/100000).toFixed(1)}L`;if(a>=1000)return`${n>0?'+':'-'}₹${(a/1000).toFixed(1)}k`;return`${n>0?'+':'-'}₹${a}`;};
+  const fillSmooth = (arr, pos) => {
+    const pts = range.map((s,i) => [tx(s), ty(arr[i])]);
+    const base = pos ? Math.min(zy, PAD.t+CH) : Math.max(zy, PAD.t);
+    let segs=[], cur=[], inside=false;
+    pts.forEach(([x,y],i) => {
+      const p=arr[i];
+      if (pos?p>=0:p<0) { if(!inside){inside=true;cur=[];} cur.push([x,y]); }
+      else if(inside){ inside=false; segs.push(cur); cur=[]; }
+    });
+    if(inside&&cur.length) segs.push(cur);
+    return segs.map(seg => {
+      if(!seg.length) return '';
+      let d = `M${seg[0][0].toFixed(1)},${base}`;
+      seg.forEach(([x,y]) => { d += ` L${x.toFixed(1)},${y.toFixed(1)}`; });
+      d += ` L${seg[seg.length-1][0].toFixed(1)},${base} Z`;
+      return d;
+    }).join(' ');
+  };
 
   const hvPnl = useMemo(() => {
-    if (hx === null) return null;
-    const s = range[0] + (hx - PAD.l) / CW * (range[range.length-1] - range[0]);
-    let ex = 0, nw = 0;
-    const T1 = Math.max(tDte, 0.01) / 365;
+    if(hx===null) return null;
+    const s = range[0] + (hx-PAD.l)/CW*(range[range.length-1]-range[0]);
+    const T1 = Math.max(tDte,0.01)/365;
+    let ex=0, nw=0;
     legs.forEach(l => {
-      ex += l.q * (Math.max(0, l.t==='CE'?s-l.k:l.k-s) - l.p) * lots * LOT;
-      nw += l.q * (bsP(s, l.k, T1, sig, l.t) - l.p) * lots * LOT;
+      ex += l.q*(Math.max(0,l.t==='CE'?s-l.k:l.k-s)-l.p)*lots*LOT;
+      nw += l.q*(bsP(s,l.k,T1,sig,l.t)-l.p)*lots*LOT;
     });
-    return { s: Math.round(s), ex: Math.round(ex), nw: Math.round(nw) };
+    const distPct = ((s-spot)/spot*100).toFixed(1);
+    const totalCost = legs.reduce((a,l)=>a+Math.abs(l.q*l.p*lots*LOT),0);
+    const retPct = totalCost>0 ? (ex/totalCost*100).toFixed(1) : null;
+    return { s:Math.round(s), ex:Math.round(ex), nw:Math.round(nw), distPct, retPct };
   }, [hx, legs, vix, dte, lots, tDte, sig, range]);
 
-  const sd1 = Math.round(spot * (vix / 100) * Math.sqrt(Math.max(dte, 0.5) / 365));
-  const nowIdx = range.reduce((b,s,i)=>Math.abs(s-tSpot)<Math.abs(range[b]-tSpot)?i:b, 0);
-  const nowPnl = nowPnls[nowIdx] || 0;
+  const fmt = n => {
+    const a=Math.abs(n);
+    if(a>9999999) return n>0?'+∞':'-∞';
+    if(a>=100000) return `${n>=0?'+':'-'}₹${(a/100000).toFixed(1)}L`;
+    if(a>=1000)   return `${n>=0?'+':'-'}₹${(a/1000).toFixed(1)}k`;
+    return `${n>=0?'+':'-'}₹${Math.round(a)}`;
+  };
+
+  const nowIdx = range.reduce((b,s,i)=>Math.abs(s-tSpot)<Math.abs(range[b]-tSpot)?i:b,0);
+  const nowPnl = nowPnls[nowIdx]||0;
+  const sd1 = Math.round(spot*(vix/100)*Math.sqrt(Math.max(dte,1)/365));
+  const maxExpIdx = expPnls.indexOf(maxExpP);
+  const minExpIdx = expPnls.indexOf(minExpP);
+  const maxExpX = maxExpIdx>=0 ? tx(range[maxExpIdx]) : null;
+  const minExpX = minExpIdx>=0 ? tx(range[minExpIdx]) : null;
+
+  const expPath = mkSmooth(expPnls);
+  const nowPath = mkSmooth(nowPnls);
+  const greenFill = fillSmooth(expPnls, true);
+  const redFill   = fillSmooth(expPnls, false);
 
   return (
-    <div className="spc-chart-outer">
-      <div className="spc-chart" onMouseLeave={() => setHx(null)}>
-        <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', cursor:'crosshair' }}
-          onMouseMove={e => {
-            const r = e.currentTarget.getBoundingClientRect();
-            const x = (e.clientX - r.left) / r.width * W;
-            if (x >= PAD.l && x <= PAD.l+CW) setHx(x);
+    <div className="spc-chart-wrap">
+
+      {/* CHART HEADER */}
+      <div className="spc-chart-header">
+        <div className="spc-chart-legend">
+          <button className={`spc-legend-btn ${showExp?'on':''}`} onClick={()=>setShowExp(v=>!v)}>
+            <span className="spc-legend-line spc-legend-exp"/>
+            <span>At expiry</span>
+          </button>
+          <button className={`spc-legend-btn ${showToday?'on':''}`} onClick={()=>setShowToday(v=>!v)}>
+            <span className="spc-legend-line spc-legend-today"/>
+            <span>Today ({tDte}d left)</span>
+          </button>
+          {bes.length>0&&(
+            <div className="spc-chart-be-pills">
+              <span className="spc-chart-be-lbl">BE:</span>
+              {bes.map((b,i)=><span key={i} className="spc-chart-be-pill">{b.toLocaleString('en-IN')}</span>)}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* SVG CHART */}
+      <div className="spc-chart-svg-wrap" onMouseLeave={()=>setHx(null)}>
+        <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',cursor:'crosshair',display:'block'}}
+          onMouseMove={e=>{
+            const r=e.currentTarget.getBoundingClientRect();
+            const x=(e.clientX-r.left)/r.width*W;
+            if(x>=PAD.l&&x<=PAD.l+CW) setHx(x); else setHx(null);
           }}>
           <defs>
-            <clipPath id="spc3cl"><rect x={PAD.l} y={PAD.t} width={CW} height={CH}/></clipPath>
-            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="2" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
+            <clipPath id="chartClip"><rect x={PAD.l} y={PAD.t} width={CW} height={CH}/></clipPath>
+            <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#00C896" stopOpacity="0.25"/>
+              <stop offset="60%" stopColor="#00C896" stopOpacity="0.08"/>
+              <stop offset="100%" stopColor="#00C896" stopOpacity="0.02"/>
+            </linearGradient>
+            <linearGradient id="redGrad" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stopColor="#FF4455" stopOpacity="0.25"/>
+              <stop offset="60%" stopColor="#FF4455" stopOpacity="0.08"/>
+              <stop offset="100%" stopColor="#FF4455" stopOpacity="0.02"/>
+            </linearGradient>
+            <filter id="glowWhite"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glowBlue"><feGaussianBlur stdDeviation="1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
           </defs>
-          {/* SD zones */}
-          {[sd1, sd1*2].map((sd,i) => {
+
+          {/* Background */}
+          <rect x={PAD.l} y={PAD.t} width={CW} height={CH} fill="rgba(0,0,0,0.15)"/>
+
+          {/* SD Zones */}
+          {[sd1,sd1*2].map((sd,i)=>{
             const x1=tx(spot-sd), x2=tx(spot+sd);
-            return <rect key={i} x={Math.max(PAD.l,x1)} y={PAD.t} width={Math.min(PAD.l+CW,x2)-Math.max(PAD.l,x1)} height={CH} fill={`rgba(255,255,255,${0.025-i*0.01})`}/>;
+            return <rect key={i} x={Math.max(PAD.l,x1)} y={PAD.t}
+              width={Math.min(PAD.l+CW,x2)-Math.max(PAD.l,x1)} height={CH}
+              fill={`rgba(255,255,255,${i===0?0.025:0.012})`}/>;
           })}
-          {[-sd1*2,-sd1,sd1,sd1*2].map((sd,i) => {
-            const x=tx(spot+sd), lbl=`${i<2?'-':'+'}{${i<2?2-i:i-1}}SD`.replace('{','').replace('}','');
-            const lb2 = i===0?'-2SD':i===1?'-1SD':i===2?'+1SD':'+2SD';
-            return x>=PAD.l&&x<=PAD.l+CW?<text key={i} x={x} y={PAD.t+9} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="monospace">{lb2}</text>:null;
+          {[{sd:-sd1*2,lbl:'-2SD'},{sd:-sd1,lbl:'-1SD'},{sd:sd1,lbl:'+1SD'},{sd:sd1*2,lbl:'+2SD'}].map(({sd,lbl})=>{
+            const x=tx(spot+sd);
+            return x>=PAD.l&&x<=PAD.l+CW
+              ?<text key={lbl} x={x} y={PAD.t+10} textAnchor="middle" fill="rgba(255,255,255,0.18)" fontSize="8" fontFamily="monospace">{lbl}</text>
+              :null;
           })}
-          {/* Zero line */}
-          {zy>=PAD.t&&zy<=PAD.t+CH&&<line x1={PAD.l} y1={zy} x2={PAD.l+CW} y2={zy} stroke="rgba(255,255,255,0.18)" strokeWidth="1" strokeDasharray="4,3"/>}
-          {/* Fills */}
-          <path d={fillPath(expPnls,true)} fill="rgba(0,200,150,0.08)" clipPath="url(#spc3cl)"/>
-          <path d={fillPath(expPnls,false)} fill="rgba(255,68,85,0.1)" clipPath="url(#spc3cl)"/>
-          {/* Strike lines */}
-          {[...new Set(legs.map(l=>l.k))].map(k => {
-            const kx=tx(k);
-            return kx>=PAD.l&&kx<=PAD.l+CW?<line key={k} x1={kx} y1={PAD.t} x2={kx} y2={PAD.t+CH} stroke="rgba(255,255,255,0.07)" strokeWidth="1" strokeDasharray="2,3"/>:null;
-          })}
-          {/* Breakevens */}
-          {bes.map((be,i) => {
-            const bx=tx(be);
-            return bx>=PAD.l&&bx<=PAD.l+CW?<g key={i}><circle cx={bx} cy={zy} r="4" fill="#F59E0B" stroke="#08080A" strokeWidth="1.5"/><text x={bx} y={PAD.t+CH+14} textAnchor="middle" fill="#F59E0B" fontSize="8" fontFamily="monospace">{be.toLocaleString('en-IN')}</text></g>:null;
-          })}
-          {/* Today path dashed */}
-          <path d={mkPath(nowPnls)} fill="none" stroke="#4A9EFF" strokeWidth="1.5" strokeDasharray="4,3" opacity="0.7" strokeLinejoin="round" clipPath="url(#spc3cl)"/>
-          {/* Expiry path solid */}
-          <path d={mkPath(expPnls)} fill="none" stroke="#FFFFFF" strokeWidth="2.5" filter="url(#glow)" strokeLinejoin="round" clipPath="url(#spc3cl)"/>
-          {/* Spot */}
-          {sx>=PAD.l&&sx<=PAD.l+CW&&<g><line x1={sx} y1={PAD.t} x2={sx} y2={PAD.t+CH} stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" strokeDasharray="3,3"/><text x={sx} y={PAD.t-3} textAnchor="middle" fill="#F59E0B" fontSize="8" fontFamily="monospace">SPOT</text></g>}
-          {/* Target */}
-          {tsx>=PAD.l&&tsx<=PAD.l+CW&&Math.abs(tsx-sx)>2&&<g><line x1={tsx} y1={PAD.t} x2={tsx} y2={PAD.t+CH} stroke="rgba(74,158,255,0.5)" strokeWidth="1.5" strokeDasharray="4,2"/><text x={tsx} y={PAD.t-3} textAnchor="middle" fill="#4A9EFF" fontSize="8" fontFamily="monospace">TARGET</text></g>}
-          {/* Y labels */}
-          {[[maxP,'#00C896'],[0,'rgba(255,255,255,0.2)'],[minP,'#FF4455']].map(([v,c]) => {
+
+          {/* Y-axis grid */}
+          {[[maxP,'#00C896',0.35],[0,'rgba(255,255,255,1)',0.2],[minP,'#FF4455',0.35]].map(([v,c,op])=>{
             const y=ty(v);
-            return y>=PAD.t&&y<=PAD.t+CH?<text key={v} x={PAD.l-6} y={y+4} textAnchor="end" fill={c} fontSize="9" fontFamily="monospace">{v===0?'0':fmt(v)}</text>:null;
+            if(y<PAD.t||y>PAD.t+CH) return null;
+            return <g key={v}>
+              <line x1={PAD.l} y1={y} x2={PAD.l+CW} y2={y}
+                stroke={v===0?'rgba(255,255,255,0.22)':c}
+                strokeWidth={v===0?1:0.5}
+                strokeDasharray={v===0?"5,4":"3,5"} opacity={op}/>
+              <text x={PAD.l-8} y={y+4} textAnchor="end"
+                fill={v===0?'rgba(255,255,255,0.4)':c}
+                fontSize="9" fontFamily="monospace" fontWeight="600">
+                {v===0?'0':fmt(v)}
+              </text>
+            </g>;
           })}
-          {/* Legend */}
-          <line x1={PAD.l+2} y1={PAD.t+8} x2={PAD.l+16} y2={PAD.t+8} stroke="rgba(255,255,255,0.75)" strokeWidth="2"/>
-          <text x={PAD.l+19} y={PAD.t+12} fill="rgba(255,255,255,0.4)" fontSize="8" fontFamily="monospace">At expiry</text>
-          <line x1={PAD.l+62} y1={PAD.t+8} x2={PAD.l+76} y2={PAD.t+8} stroke="#4A9EFF" strokeWidth="2" strokeDasharray="4,2"/>
-          <text x={PAD.l+79} y={PAD.t+12} fill="rgba(74,158,255,0.6)" fontSize="8" fontFamily="monospace">Today ({tDte}d left)</text>
-          {/* Hover */}
-          {hx&&hvPnl&&hx>=PAD.l&&hx<=PAD.l+CW&&<g>
-            <line x1={hx} y1={PAD.t} x2={hx} y2={PAD.t+CH} stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
+
+          {/* Strike lines */}
+          {[...new Set(legs.map(l=>l.k))].map(k=>{
+            const kx=tx(k);
+            return kx>=PAD.l&&kx<=PAD.l+CW
+              ?<line key={k} x1={kx} y1={PAD.t} x2={kx} y2={PAD.t+CH}
+                stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="2,4"/>
+              :null;
+          })}
+
+          {/* Gradient fills */}
+          <path d={greenFill} fill="url(#greenGrad)" clipPath="url(#chartClip)"/>
+          <path d={redFill}   fill="url(#redGrad)"   clipPath="url(#chartClip)"/>
+
+          {/* Profit zone label */}
+          {maxExpP>0&&maxExpX!==null&&maxExpX>=PAD.l&&maxExpX<=PAD.l+CW&&(()=>{
+            const y=Math.max(PAD.t+16,Math.min(ty(maxExpP/2),zy-18));
+            return <text x={maxExpX} y={y} textAnchor="middle"
+              fill="rgba(0,200,150,0.35)" fontSize="9" fontFamily="monospace" fontWeight="700"
+              letterSpacing="1.5">PROFIT ZONE</text>;
+          })()}
+
+          {/* Today path */}
+          {showToday&&<path d={nowPath} fill="none" stroke="#4A9EFF" strokeWidth="1.5"
+            strokeDasharray="6,3" opacity="0.8" strokeLinejoin="round"
+            clipPath="url(#chartClip)" filter="url(#glowBlue)"/>}
+
+          {/* Expiry path */}
+          {showExp&&<path d={expPath} fill="none" stroke="#FFFFFF" strokeWidth="2"
+            strokeLinejoin="round" clipPath="url(#chartClip)" filter="url(#glowWhite)"/>}
+
+          {/* BE points */}
+          {bes.map((be,i)=>{
+            const bx=tx(be);
+            if(bx<PAD.l||bx>PAD.l+CW) return null;
+            return <g key={i}>
+              <circle cx={bx} cy={zy} r="5" fill="#F59E0B" stroke="#09090F" strokeWidth="2"/>
+              <line x1={bx} y1={zy+5} x2={bx} y2={PAD.t+CH+2}
+                stroke="rgba(245,158,11,0.25)" strokeWidth="1"/>
+              <rect x={bx-27} y={PAD.t+CH+4} width={54} height={14} rx="3"
+                fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.35)" strokeWidth="0.5"/>
+              <text x={bx} y={PAD.t+CH+14} textAnchor="middle"
+                fill="#F59E0B" fontSize="8.5" fontFamily="monospace" fontWeight="700">
+                {be.toLocaleString('en-IN')}
+              </text>
+            </g>;
+          })}
+
+          {/* Max profit annotation */}
+          {Math.abs(maxExpP)<5000000&&maxExpP>0&&maxExpX!==null&&maxExpX>=PAD.l&&maxExpX<=PAD.l+CW&&(()=>{
+            const y=Math.max(PAD.t+4,ty(maxExpP)-5);
+            return <text x={maxExpX} y={y} textAnchor="middle"
+              fill="#00C896" fontSize="9" fontFamily="monospace" fontWeight="700">{fmt(maxExpP)}</text>;
+          })()}
+
+          {/* Max loss annotation */}
+          {Math.abs(minExpP)<5000000&&minExpP<0&&minExpX!==null&&minExpX>=PAD.l&&minExpX<=PAD.l+CW&&(()=>{
+            const y=Math.min(PAD.t+CH-4,ty(minExpP)+12);
+            return <text x={minExpX} y={y} textAnchor="middle"
+              fill="#FF4455" fontSize="9" fontFamily="monospace" fontWeight="700">{fmt(minExpP)}</text>;
+          })()}
+
+          {/* SPOT line */}
+          {sx>=PAD.l&&sx<=PAD.l+CW&&<g>
+            <line x1={sx} y1={PAD.t} x2={sx} y2={PAD.t+CH}
+              stroke="rgba(245,158,11,0.75)" strokeWidth="1.5" strokeDasharray="4,3"/>
+            <rect x={sx-18} y={PAD.t} width={36} height={14} rx="3"
+              fill="rgba(245,158,11,0.18)" stroke="rgba(245,158,11,0.5)" strokeWidth="0.5"/>
+            <text x={sx} y={PAD.t+10} textAnchor="middle"
+              fill="#F59E0B" fontSize="8.5" fontFamily="monospace" fontWeight="800">SPOT</text>
+          </g>}
+
+          {/* Target line */}
+          {tsx>=PAD.l&&tsx<=PAD.l+CW&&Math.abs(tsx-sx)>3&&<g>
+            <line x1={tsx} y1={PAD.t} x2={tsx} y2={PAD.t+CH}
+              stroke="rgba(74,158,255,0.45)" strokeWidth="1.5" strokeDasharray="5,3"/>
+          </g>}
+
+          {/* Hover crosshair + tooltip */}
+          {hx!==null&&hvPnl&&hx>=PAD.l&&hx<=PAD.l+CW&&<g>
+            <line x1={hx} y1={PAD.t} x2={hx} y2={PAD.t+CH}
+              stroke="rgba(255,255,255,0.22)" strokeWidth="1" strokeDasharray="2,2"/>
+            {showExp&&<circle cx={hx} cy={Math.min(Math.max(ty(hvPnl.ex),PAD.t),PAD.t+CH)}
+              r="4" fill="#FFF" stroke="#09090F" strokeWidth="1.5"/>}
+            {showToday&&<circle cx={hx} cy={Math.min(Math.max(ty(hvPnl.nw),PAD.t),PAD.t+CH)}
+              r="3" fill="#4A9EFF" stroke="#09090F" strokeWidth="1.5"/>}
             {(()=>{
-              const tx2=hx>PAD.l+CW*0.65?hx-118:hx+8;
+              const tipW=158, tipH=showToday?82:58;
+              const tipX=hx>PAD.l+CW*0.62?hx-tipW-8:hx+8;
+              const tipY=PAD.t+4;
               return <g>
-                <rect x={tx2} y={16} width={120} height={58} rx="6" fill="#13131A" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
-                <text x={tx2+55} y={33} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="8" fontFamily="monospace">{Math.round(hvPnl.s).toLocaleString('en-IN')}</text>
-                <text x={tx2+8} y={47} fill="rgba(255,255,255,0.35)" fontSize="8" fontFamily="monospace">Expiry:</text>
-                <text x={tx2+102} y={47} textAnchor="end" fontSize="11" fontWeight="700" fill={hvPnl.ex>=0?'#00C896':'#FF4455'} fontFamily="monospace">{fmt(hvPnl.ex)}</text>
-                <text x={tx2+8} y={60} fill="rgba(74,158,255,0.5)" fontSize="8" fontFamily="monospace">Today:</text>
-                <text x={tx2+102} y={60} textAnchor="end" fontSize="11" fontWeight="700" fill={hvPnl.nw>=0?'#4A9EFF':'#FF8888'} fontFamily="monospace">{fmt(hvPnl.nw)}</text>
+                <rect x={tipX} y={tipY} width={tipW} height={tipH} rx="7"
+                  fill="#0F0F1A" stroke="rgba(255,255,255,0.18)" strokeWidth="1"/>
+                <text x={tipX+8} y={tipY+15} fill="rgba(255,255,255,0.55)"
+                  fontSize="9" fontFamily="monospace">
+                  {hvPnl.s.toLocaleString('en-IN')}
+                </text>
+                <text x={tipX+tipW-8} y={tipY+15} textAnchor="end"
+                  fill={Number(hvPnl.distPct)>=0?'#00C896':'#FF4455'}
+                  fontSize="9" fontFamily="monospace" fontWeight="700">
+                  {Number(hvPnl.distPct)>=0?'+':''}{hvPnl.distPct}% from spot
+                </text>
+                <line x1={tipX+6} y1={tipY+20} x2={tipX+tipW-6} y2={tipY+20}
+                  stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+                <text x={tipX+8} y={tipY+33} fill="rgba(255,255,255,0.4)"
+                  fontSize="8.5" fontFamily="monospace">At expiry</text>
+                <text x={tipX+tipW-8} y={tipY+33} textAnchor="end"
+                  fill={hvPnl.ex>=0?'#00C896':'#FF4455'}
+                  fontSize="13" fontWeight="800" fontFamily="monospace">{fmt(hvPnl.ex)}</text>
+                {hvPnl.retPct&&<text x={tipX+tipW-8} y={tipY+44} textAnchor="end"
+                  fill="rgba(255,255,255,0.3)" fontSize="8" fontFamily="monospace">
+                  {hvPnl.ex>=0?'+':''}{hvPnl.retPct}% return
+                </text>}
+                {showToday&&<>
+                  <line x1={tipX+6} y1={tipY+51} x2={tipX+tipW-6} y2={tipY+51}
+                    stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+                  <text x={tipX+8} y={tipY+65} fill="rgba(74,158,255,0.55)"
+                    fontSize="8.5" fontFamily="monospace">Today ({tDte}d left)</text>
+                  <text x={tipX+tipW-8} y={tipY+65} textAnchor="end"
+                    fill={hvPnl.nw>=0?'#4A9EFF':'#FF8888'}
+                    fontSize="13" fontWeight="800" fontFamily="monospace">{fmt(hvPnl.nw)}</text>
+                </>}
               </g>;
             })()}
           </g>}
         </svg>
       </div>
-      {/* Sliders */}
-      <div className="spc-sliders">
-        <div className="spc-slider-row">
-          <span className="spc-sl-lbl">Target Price</span>
-          <input type="range" min={Math.round(spot*.85)} max={Math.round(spot*1.15)} step={spot>10000?50:25} value={tSpot} onChange={e=>setTSpot(+e.target.value)} className="spc-slider"/>
-          <span className="spc-sl-val">{tSpot.toLocaleString('en-IN')}</span>
-          <button className="spc-sl-reset" onClick={()=>setTSpot(spot)}>↺</button>
+
+      {/* SLIDERS */}
+      <div className="spc-sliders-v2">
+        <div className="spc-slider-v2">
+          <div className="spc-slider-v2-top">
+            <span className="spc-slider-v2-lbl">Target Price</span>
+            <div className="spc-slider-v2-ctrl">
+              <button className="spc-slv2-step" onClick={()=>setTSpot(v=>Math.max(Math.round(spot*.85),v-spotStep))}>−</button>
+              <span className="spc-slv2-val">{tSpot.toLocaleString('en-IN')}</span>
+              <button className="spc-slv2-step" onClick={()=>setTSpot(v=>Math.min(Math.round(spot*1.15),v+spotStep))}>+</button>
+              <span className="spc-slv2-pct" style={{color:tSpot>=spot?'#00C896':'#FF4455'}}>
+                {tSpot>=spot?'+':''}{((tSpot-spot)/spot*100).toFixed(1)}%
+              </span>
+              <button className="spc-slv2-reset" onClick={()=>setTSpot(spot)}>↺</button>
+            </div>
+          </div>
+          <input type="range" min={Math.round(spot*.85)} max={Math.round(spot*1.15)}
+            step={spotStep} value={tSpot} onChange={e=>setTSpot(+e.target.value)}
+            className="spc-range-v2"/>
         </div>
-        <div className="spc-slider-row">
-          <span className="spc-sl-lbl">Days to Expiry</span>
-          <input type="range" min={0} max={dte} step={1} value={tDte} onChange={e=>setTDte(+e.target.value)} className="spc-slider"/>
-          <span className="spc-sl-val">{tDte}d left</span>
-          <button className="spc-sl-reset" onClick={()=>setTDte(dte)}>↺</button>
+
+        <div className="spc-slider-v2">
+          <div className="spc-slider-v2-top">
+            <span className="spc-slider-v2-lbl">Days to Expiry</span>
+            <div className="spc-slider-v2-ctrl">
+              <button className="spc-slv2-step" onClick={()=>setTDte(v=>Math.max(0,v-1))}>−</button>
+              <span className="spc-slv2-val" style={{minWidth:52,textAlign:'center'}}>
+                {tDte===0?'Expiry':tDte===dte?'Today':`${tDte}d`}
+              </span>
+              <button className="spc-slv2-step" onClick={()=>setTDte(v=>Math.min(dte,v+1))}>+</button>
+              <button className="spc-slv2-reset" onClick={()=>setTDte(dte)}>↺</button>
+            </div>
+          </div>
+          <div className="spc-range-track">
+            <input type="range" min={0} max={dte} step={1} value={tDte}
+              onChange={e=>setTDte(+e.target.value)} className="spc-range-v2"/>
+            <div className="spc-range-labels"><span>Expiry</span><span>Today</span></div>
+          </div>
         </div>
       </div>
-      <div className="spc-pnl-bar">
-        <span className="spc-pnl-lbl">At {tSpot.toLocaleString('en-IN')} · {tDte}d left:</span>
-        <span className="spc-pnl-val" style={{color:nowPnl>=0?'#00C896':'#FF4455'}}>{fmt(nowPnl)}</span>
-        {bes.length>0&&<span className="spc-pnl-be">BE: {bes.map(b=>b.toLocaleString('en-IN')).join(' / ')}</span>}
+
+      {/* P&L SUMMARY */}
+      <div className="spc-pnl-v2">
+        <span className="spc-pnl-v2-price">{tSpot.toLocaleString('en-IN')}</span>
+        <span className="spc-pnl-v2-sep">·</span>
+        <span className="spc-pnl-v2-dte">{tDte===0?'at expiry':tDte===dte?'today':`${tDte}d left`}</span>
+        <span className="spc-pnl-v2-arrow">→</span>
+        <span className="spc-pnl-v2-val" style={{color:nowPnl>=0?'#00C896':'#FF4455'}}>{fmt(nowPnl)}</span>
+        {bes.length>0&&(
+          <span className="spc-pnl-v2-be">BE: {bes.map(b=>b.toLocaleString('en-IN')).join(' · ')}</span>
+        )}
       </div>
     </div>
   );
 }
+
 
 // ── GREEKS ────────────────────────────────────────────────────────────────────
 function Greeks({ legs, spot, vix, dte, lots, symbol }) {
