@@ -131,28 +131,29 @@ function ExpectedMove({ data, expiries }) {
   return (
     <div className="fno-widget">
       <div className="fno-widget-title">EXPECTED MOVE <span className="fno-widget-formula">Price × (VIX÷100) × √(DTE÷365)</span></div>
-      <div className="fno-widget-sub">Market-implied range by expiry · VIX {vix ? vix.toFixed(2) : '—'}</div>
-      {rows.map(({ label, color, price, weekly, monthly, wDate, mDate }) => (
-        <div key={label} className="fno-em-index-block">
-          <div className="fno-em-index-hdr" style={{ color }}>
-            {label} <span style={{ fontWeight: 400, color: 'var(--text3)', fontSize: 10 }}>
-              {price ? `· ${price.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` : ''}
-            </span>
-          </div>
-          <div className="fno-em-grid">
+      <div className="fno-widget-sub">Market-implied range · VIX {vix ? vix.toFixed(2) : '—'}</div>
+      <div className="fno-em-two-col">
+        {rows.map(({ label, color, price, weekly, monthly, wDate, mDate }) => (
+          <div key={label} className="fno-em-col">
+            <div className="fno-em-index-hdr" style={{ color }}>
+              {label}
+              <span style={{ fontWeight:400, color:'var(--text3)', fontSize:10, marginLeft:6 }}>
+                {price ? price.toLocaleString('en-IN', { maximumFractionDigits:0 }) : ''}
+              </span>
+            </div>
             {[[`Weekly · ${wDate}`, weekly], [`Monthly · ${mDate}`, monthly]].map(([lbl, em]) => (
               em && <div key={lbl} className="fno-em-card">
                 <div className="fno-em-label">{lbl}</div>
                 <div className="fno-em-range">
                   <span className="fno-em-up gain">▲ {em.up.toLocaleString('en-IN')}</span>
-                  <span className="fno-em-pts" style={{ color }}>±{em.pts} pts</span>
+                  <span className="fno-em-pts" style={{ color }}>±{em.pts}</span>
                   <span className="fno-em-dn loss">▼ {em.dn.toLocaleString('en-IN')}</span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

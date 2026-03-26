@@ -3165,3 +3165,30 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-em-index-block   { border-bottom: 1px solid var(--border); padding: 10px 0; }
 .fno-em-index-block:last-child { border-bottom: none; }
 .fno-em-index-hdr     { font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 0 0 8px; }
+
+/* ── Overview row 2 — fix stretch ───────────────────────────────────────── */
+.fno-overview-row2      { align-items: start !important; min-height: 0; }
+.fno-overview-metrics   { overflow-y: auto; max-height: 520px; }
+.fno-overview-metrics .fno-widget { padding: 12px 14px !important; }
+.fno-overview-metrics .fno-widget-title { font-size: 9px !important; }
+.fno-overview-metrics .fno-widget-sub   { font-size: 9px !important; margin-bottom: 6px !important; }
+
+/* Compact Expected Move */
+.fno-em-index-block  { padding: 6px 0 !important; }
+.fno-em-index-hdr    { font-size: 11px !important; padding-bottom: 4px !important; }
+.fno-em-card         { padding: 5px 8px !important; }
+.fno-em-label        { font-size: 9px !important; }
+.fno-em-pts          { font-size: 14px !important; }
+.fno-em-up, .fno-em-dn { font-size: 11px !important; }
+
+/* Compact Rollover */
+.fno-rollover-row    { margin-bottom: 6px !important; }
+.fno-rollover-label  { font-size: 10px !important; }
+.fno-rollover-dte    { font-size: 9px !important; white-space: nowrap; }
+.fno-rollover-pct    { font-size: 10px !important; }
+
+/* ── Expected Move 2-col grid ────────────────────────────────────────────── */
+.fno-em-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.fno-em-col     { padding: 8px 6px; border-right: 1px solid var(--border); }
+.fno-em-col:last-child { border-right: none; }
+.fno-em-index-hdr { font-family: var(--mono); font-size: 11px; font-weight: 700; margin-bottom: 6px; }
