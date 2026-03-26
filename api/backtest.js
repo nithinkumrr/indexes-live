@@ -96,8 +96,10 @@ async function getHistoricalData(index, fromYear, toYear) {
   const highs      = quotes.high  || [];
   const lows       = quotes.low   || [];
 
+  const opens = quotes.open || [];
   const data = timestamps.map((ts, i) => ({
     date:  new Date(ts * 1000).toISOString().slice(0, 10),
+    open:  opens[i],
     close: closes[i],
     high:  highs[i],
     low:   lows[i],
@@ -170,7 +172,7 @@ function getNextExpiry(date, index, expiry) {
 function calcPnlV2(strategy, entrySpot, exitSpot, vix, dte, lots, lotSize, strikePct, width, slPct, tpPct) {
   // Entry: options priced at entrySpot with DTE remaining
   // Exit: options valued at expiry (intrinsic only if DTE=0, else BS with remaining time)
-  const entryDteY = Math.max(0.001, dte / 365);
+  const entryDteY = dte === 0 ? (6.25 / (365 * 24)) : (dte / 365); // 6.25 hrs for 0 DTE entry at 9:20
   const exitDteY  = 0.0001; // essentially at expiry
 
   const step    = lotSize === 65 ? 50 : lotSize === 30 ? 100 : 50; // crude but works
@@ -384,7 +386,7 @@ export default async function handler(req, res) {
 
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:v2:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v3:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) {
