@@ -59,16 +59,63 @@ function getStrike(spot, index, offset, direction = 'up') {
   return direction === 'up' ? atm + offset * step : atm - offset * step;
 }
 
-// ── Fetch historical NSE data ─────────────────────────────────────────────────
+// ── Fetch historical data — Kite first, Yahoo fallback ───────────────────────
 async function getHistoricalData(index, fromYear, toYear) {
-  const cacheKey = `bt:hist2:${index}:${fromYear}:${toYear}`;
+  const cacheKey = `bt:hist3:${index}:${fromYear}:${toYear}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) return typeof cached === 'string' ? JSON.parse(cached) : cached;
   } catch (_) {}
 
-  // Use Yahoo Finance for historical OHLC + approximate VIX
-  const symbols = {
+  // Kite instrument tokens for indices
+  const KITE_TOKENS = {
+    NIFTY:      256265,
+    BANKNIFTY:  260105,
+    FINNIFTY:   257801,
+    MIDCPNIFTY: 288009,
+    NIFTYNXT50: 270857,
+    SENSEX:     265,
+    BANKEX:     270601,
+    SENSEX50:   274441,
+  };
+
+  const apiKey = process.env.KITE_API_KEY;
+  let kiteToken = null;
+  try {
+    kiteToken = await kv.get('kite_token');
+  } catch (_) {}
+
+  const fromStr = `${fromYear}-01-01+09:15:00`;
+  const toStr   = `${toYear}-12-31+15:30:00`;
+
+  // Try Kite first
+  if (kiteToken && apiKey && KITE_TOKENS[index]) {
+    try {
+      const token = KITE_TOKENS[index];
+      const r = await fetch(
+        `https://api.kite.trade/instruments/historical/${token}/day?from=${fromStr}&to=${toStr}&oi=0`,
+        { headers: { 'X-Kite-Version': '3', 'Authorization': `token ${apiKey}:${kiteToken}` } }
+      );
+      if (r.ok) {
+        const json = await r.json();
+        const candles = json?.data?.candles || [];
+        if (candles.length > 0) {
+          const data = candles.map(c => ({
+            date:  c[0].slice(0, 10),
+            open:  c[1],
+            high:  c[2],
+            low:   c[3],
+            close: c[4],
+          })).filter(d => d.close);
+          try { await kv.set(cacheKey, JSON.stringify(data), { ex: 7 * 24 * 60 * 60 }); } catch (_) {}
+          return data;
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Fallback: Yahoo Finance
+  const YAHOO_SYMBOLS = {
     NIFTY:      '%5ENSEI',
     BANKNIFTY:  '%5ENSEBANK',
     FINNIFTY:   '%5EFINNNIFTY',
@@ -78,7 +125,7 @@ async function getHistoricalData(index, fromYear, toYear) {
     BANKEX:     '%5EBANKEX',
     SENSEX50:   '%5EBSESEN50',
   };
-  const sym = symbols[index];
+  const sym  = YAHOO_SYMBOLS[index];
   const from = Math.floor(new Date(`${fromYear}-01-01`).getTime() / 1000);
   const to   = Math.floor(new Date(`${toYear}-12-31`).getTime() / 1000);
 
@@ -88,22 +135,17 @@ async function getHistoricalData(index, fromYear, toYear) {
   );
   const json = await r.json();
   const result = json?.chart?.result?.[0];
-  if (!result) throw new Error('No historical data from Yahoo');
+  if (!result) throw new Error('No historical data available');
 
   const timestamps = result.timestamp || [];
   const quotes     = result.indicators?.quote?.[0] || {};
-  const closes     = quotes.close || [];
-  const highs      = quotes.high  || [];
-  const lows       = quotes.low   || [];
-
-  const opens = quotes.open || [];
   const data = timestamps.map((ts, i) => ({
     date:  new Date(ts * 1000).toISOString().slice(0, 10),
-    open:  opens[i],
-    close: closes[i],
-    high:  highs[i],
-    low:   lows[i],
-  })).filter(d => d.close);
+    open:  quotes.open?.[i],
+    close: quotes.close?.[i],
+    high:  quotes.high?.[i],
+    low:   quotes.low?.[i],
+  })).filter(d => d.close && d.open); // only days with both open and close
 
   try { await kv.set(cacheKey, JSON.stringify(data), { ex: 7 * 24 * 60 * 60 }); } catch (_) {}
   return data;
