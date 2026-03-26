@@ -2650,3 +2650,53 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .fiidii-card-v2   { border-right: none; border-bottom: 1px solid var(--border); }
   .fiidii-card-v2:last-child { border-bottom: none; }
 }
+
+/* ── FiiDii stacked (cards-only, 30% panel) ─────────────────────────────── */
+.fiidii-cards-stacked {
+  grid-template-columns: 1fr !important;
+  border-top: none !important;
+  height: 100%;
+}
+.fiidii-cards-stacked .fiidii-card-v2 {
+  border-right: none !important;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  flex: 1;
+}
+.fiidii-cards-stacked .fiidii-card-v2:last-child {
+  border-bottom: none;
+}
+.fiidii-cards-stacked .fiidii-cv2-value {
+  font-size: 22px;
+}
+.fiidii-cards-stacked .fiidii-cv2-label {
+  font-size: 9px;
+  margin-bottom: 4px;
+}
+.fiidii-cards-stacked .fiidii-cv2-tag {
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+.fiidii-cards-stacked .fiidii-cv2-bs {
+  flex-direction: row;
+  gap: 8px;
+}
+.fiidii-cards-stacked .fiidii-cv2-mood .fiidii-mood {
+  font-size: 18px;
+}
+
+/* Panel itself fills height */
+.sentiment-fiidii-panel {
+  display: flex;
+  flex-direction: column;
+}
+.sentiment-fiidii-panel .fiidii-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.sentiment-fiidii-panel .fiidii-cards-stacked {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}

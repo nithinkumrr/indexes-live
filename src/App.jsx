@@ -90,7 +90,7 @@ export default function App() {
               <div className="sentiment-bubble-main"><BubbleView data={data} /></div>
               <div className="sentiment-fiidii-panel">
                 <div className="sentiment-fiidii-hdr">FII / DII FLOW</div>
-                <FiiDii />
+                <FiiDii cardsOnly={true} />
               </div>
             </div>
           )}
