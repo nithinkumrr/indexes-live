@@ -703,9 +703,63 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
   const sel = ALL.find(s => s.id === selId) || ALL[0];
   const cmp = ALL.find(s => s.id === cmpId) || ALL[1];
 
-  // Fetch expiries from Kite (30min cache in option-chain API)
+  // ── EXPIRY HELPERS ──────────────────────────────────────────────────────────
+  // NSE weekly expiry days (post-SEBI 2024 consolidation):
+  //   NIFTY 50  → Tuesday  (2)
+  //   SENSEX    → Thursday (4)  [BSE]
+  //   BANKNIFTY → Wednesday (3) — monthly only now, keep for reference
+  //   FINNIFTY  → Tuesday  (2)
+  //   MIDCPNIFTY→ Monday   (1)
+  const EXPIRY_DAY = { NIFTY:2, SENSEX:4, BANKNIFTY:3, FINNIFTY:2, MIDCPNIFTY:1 };
+
+  // NSE holidays 2025-2026 (hardcoded fallback — used only when API fails)
+  const NSE_HOLIDAYS = new Set([
+    '2025-03-31','2025-04-10','2025-04-14','2025-04-18','2025-05-01',
+    '2025-08-15','2025-08-27','2025-10-02','2025-10-21','2025-10-22',
+    '2025-11-05','2025-12-25',
+    '2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31',
+    '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26',
+    '2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24',
+    '2026-12-25',
+  ]);
+
+  // Shift date backward past weekends and holidays
+  function adjustExpiry(d) {
+    const dt = new Date(d);
+    while (dt.getDay() === 0 || dt.getDay() === 6 || NSE_HOLIDAYS.has(dt.toISOString().split('T')[0])) {
+      dt.setDate(dt.getDate() - 1);
+    }
+    return dt;
+  }
+
+  // Build fallback expiry list (13 weekly entries) with holiday shift
+  function buildFallbackExpiries(weekday) {
+    const now = new Date();
+    const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const opts = [];
+    let checked = 0, week = 0;
+    while (opts.length < 13 && checked < 30) {
+      checked++;
+      const d = new Date(ist);
+      let daysUntil = ((weekday - d.getDay()) + 7) % 7;
+      if (daysUntil === 0 && (ist.getHours() > 15 || (ist.getHours() === 15 && ist.getMinutes() >= 30))) daysUntil = 7;
+      d.setDate(d.getDate() + daysUntil + week * 7);
+      d.setHours(15, 30, 0, 0);
+      const adjusted = adjustExpiry(d);
+      const raw = adjusted.toISOString().split('T')[0];
+      const dte = Math.max(0, Math.ceil((adjusted - now) / 86400000));
+      // Skip if same as last entry
+      if (!opts.length || opts[opts.length-1].raw !== raw) {
+        opts.push({ raw, label: adjusted.toLocaleDateString('en-IN', { day:'numeric', month:'short' }), dte });
+      }
+      week++;
+    }
+    return opts;
+  }
+
+  // Fetch expiries from API with fallback
   useEffect(() => {
-    const weekday = symbol === 'SENSEX' ? 5 : symbol === 'BANKNIFTY' ? 3 : 4; // Thu=4, Wed=3, Fri=5
+    const weekday = EXPIRY_DAY[symbol] ?? 2;
     setExpIdx(0);
     fetch(`/api/option-chain?action=expiries&symbol=${symbol}`)
       .then(r => r.json())
@@ -717,19 +771,11 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
             label: new Date(e).toLocaleDateString('en-IN', { day:'numeric', month:'short' }),
             dte: Math.max(0, Math.ceil((new Date(e) - now) / 86400000)),
           })));
+        } else {
+          setExpiries(buildFallbackExpiries(weekday));
         }
       })
-      .catch(() => {
-        // Fallback: compute expiry weekdays
-        const now = new Date(), opts = [];
-        for (let w = 0; w < 13; w++) {
-          const d = new Date(now);
-          const dt = ((weekday - d.getDay()) + 7) % 7 || 7;
-          d.setDate(d.getDate() + dt + w * 7);
-          opts.push({ raw: d.toISOString().split('T')[0], label: d.toLocaleDateString('en-IN', { day:'numeric', month:'short' }), dte: Math.max(0, Math.ceil((d - now) / 86400000)) });
-        }
-        setExpiries(opts);
-      });
+      .catch(() => setExpiries(buildFallbackExpiries(weekday)));
   }, [symbol]);
 
   const curExp = expiries[expIdx];
@@ -764,44 +810,81 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
 
   return (
     <div className="spc-root">
-      {/* Top bar */}
+      {/* ── TOP BAR ─────────────────────────────────────────────────────── */}
       <div className="spc-topbar">
-        <div className="spc-pills">
+
+        {/* Left cluster: market data pills */}
+        <div className="spc-tb-left">
+
           {/* Symbol selector */}
-          <div className="spc-pill spc-symbol-pill">
-            <span className="spc-pill-l">SYMBOL</span>
-            <select className="spc-expiry-sel" value={symbol} onChange={e => setSymbol(e.target.value)}>
+          <div className="spc-tb-pill spc-tb-pill-select">
+            <span className="spc-tb-lbl">SYMBOL</span>
+            <select className="spc-tb-select" value={symbol} onChange={e => setSymbol(e.target.value)}>
               {['NIFTY','BANKNIFTY','SENSEX','FINNIFTY','MIDCPNIFTY'].map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
           </div>
-          {[
-            [symbol, spot.toLocaleString('en-IN'), null],
-            ['VIX',   vix.toFixed(1), vix>25?'#FF4455':vix>18?'#F59E0B':'#00C896'],
-            ['REGIME', vix<15?'LOW · buy options':vix<20?'NORMAL':vix<25?'ELEVATED · sell premium':'HIGH · sell premium', '#F59E0B'],
-          ].map(([l,v,c]) => (
-            <div key={l} className="spc-pill">
-              <span className="spc-pill-l">{l}</span>
-              <span className="spc-pill-v" style={c?{color:c}:{}}>{v}</span>
-            </div>
-          ))}
-          <div className="spc-pill spc-expiry-pill">
-            <span className="spc-pill-l">EXPIRY</span>
+
+          <div className="spc-tb-divider"/>
+
+          {/* Spot price */}
+          <div className="spc-tb-pill">
+            <span className="spc-tb-lbl">{symbol}</span>
+            <span className="spc-tb-val">{spot.toLocaleString('en-IN')}</span>
+          </div>
+
+          {/* VIX */}
+          <div className="spc-tb-pill">
+            <span className="spc-tb-lbl">VIX</span>
+            <span className="spc-tb-val" style={{color:vix>25?'#FF4455':vix>18?'#F59E0B':'#00C896'}}>{vix.toFixed(1)}</span>
+          </div>
+
+          {/* Regime */}
+          <div className="spc-tb-pill">
+            <span className="spc-tb-lbl">REGIME</span>
+            <span className="spc-tb-val" style={{color:vix<15?'#4A9EFF':vix<20?'#00C896':vix<25?'#F59E0B':'#FF4455'}}>
+              {vix<15?'LOW · buy options':vix<20?'NORMAL':vix<25?'ELEVATED · sell premium':'HIGH · sell premium'}
+            </span>
+          </div>
+
+          <div className="spc-tb-divider"/>
+
+          {/* Expiry selector */}
+          <div className="spc-tb-pill spc-tb-pill-select">
+            <span className="spc-tb-lbl">EXPIRY</span>
             {expiries.length > 0
-              ? <select className="spc-expiry-sel" value={expIdx} onChange={e => setExpIdx(+e.target.value)}>
-                  {expiries.map((o,i) => <option key={i} value={i}>{o.label} ({o.dte}d)</option>)}
+              ? <select className="spc-tb-select" value={expIdx} onChange={e => setExpIdx(+e.target.value)}>
+                  {expiries.map((o,i) => <option key={i} value={i}>{o.label} · {o.dte}d</option>)}
                 </select>
-              : <span className="spc-pill-v">Loading...</span>
+              : <span className="spc-tb-val spc-tb-loading">loading...</span>
             }
           </div>
+
+          <div className="spc-tb-divider"/>
+
+          {/* Lot size — global control */}
+          <div className="spc-tb-pill spc-tb-pill-lots">
+            <span className="spc-tb-lbl">LOTS</span>
+            <div className="spc-tb-lots-wrap">
+              <button className="spc-tb-lots-btn" onClick={() => setLots(l => Math.max(1, l-1))}>−</button>
+              <input type="number" value={lots} min={1} step={1} className="spc-tb-lots-input"
+                onChange={e => setLots(Math.max(1, +e.target.value || 1))}/>
+              <button className="spc-tb-lots-btn" onClick={() => setLots(l => l+1)}>+</button>
+            </div>
+            <span className="spc-tb-lots-units">{lots * LOT} units</span>
+          </div>
+
         </div>
+
+        {/* Right cluster: top setups */}
         {top.length > 0 && (
-          <div className="spc-best">
-            <span className="spc-best-l">SETUPS IDENTIFIED · NOT A RECOMMENDATION</span>
+          <div className="spc-tb-right">
+            <span className="spc-tb-setups-lbl">TODAY'S SETUPS</span>
             {top.map(s => (
-              <button key={s.id} className="spc-best-btn" onClick={() => setSelId(s.id)}>
-                {s.label} <span style={{color:'#00C896',fontWeight:700}}>{scores[s.id]}/10</span>
+              <button key={s.id} className={`spc-tb-setup-btn ${selId===s.id?'active':''}`} onClick={() => setSelId(s.id)}>
+                <span className="spc-tb-setup-name">{s.label}</span>
+                <span className="spc-tb-setup-score" style={{color:scores[s.id]>=8?'#00C896':'#F59E0B'}}>{scores[s.id]}/10</span>
               </button>
             ))}
           </div>

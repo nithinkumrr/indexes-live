@@ -3538,26 +3538,84 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── TOPBAR ── */
 .spc-topbar {
-  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-  padding:10px 16px; border-bottom:1px solid var(--border);
-  background:var(--bg2);
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:0 16px; height:52px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,#0F0F14 0%,#0A0A0F 100%);
+  flex-shrink:0; overflow-x:auto;
 }
-.spc-pills   { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-.spc-pill    {
-  display:flex; gap:5px; align-items:center;
-  padding:5px 10px; background:var(--bg3);
-  border:1px solid var(--border); border-radius:6px;
+.spc-topbar::-webkit-scrollbar { display:none; }
+
+.spc-tb-left  { display:flex; align-items:center; gap:0; flex-shrink:0; height:100%; }
+.spc-tb-right { display:flex; align-items:center; gap:6px; flex-shrink:0; padding-left:12px; }
+
+/* Individual pill */
+.spc-tb-pill {
+  display:flex; align-items:center; gap:7px;
+  padding:0 16px; height:100%; border-right:1px solid rgba(255,255,255,.05);
+  white-space:nowrap;
 }
-.spc-pill-l { font-size:9px; font-weight:700; letter-spacing:.07em; color:var(--text3); text-transform:uppercase; }
-.spc-pill-v { font-size:12px; font-weight:700; color:var(--text); font-family:var(--mono); }
-.spc-best   { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:auto; }
-.spc-best-l { font-size:9px; font-weight:700; letter-spacing:.07em; color:var(--text3); white-space:nowrap; }
-.spc-best-btn {
-  padding:4px 10px; border-radius:12px; border:1px solid rgba(0,200,150,.3);
-  background:rgba(0,200,150,.08); color:var(--text); font-size:11px; cursor:pointer;
-  display:flex; gap:5px; align-items:center; transition:all .15s;
+.spc-tb-pill:first-child { border-left:none; }
+.spc-tb-divider { width:1px; height:28px; background:rgba(255,255,255,.08); margin:0 2px; flex-shrink:0; }
+
+.spc-tb-lbl {
+  font-size:9px; font-weight:700; letter-spacing:.09em;
+  color:var(--text3); text-transform:uppercase; flex-shrink:0;
 }
-.spc-best-btn:hover { background:rgba(0,200,150,.18); transform:translateY(-1px); }
+.spc-tb-val {
+  font-size:14px; font-weight:700; color:var(--text);
+  font-family:var(--mono); white-space:nowrap;
+}
+.spc-tb-loading { font-size:11px; color:var(--text3); }
+
+/* Symbol + expiry — select pill */
+.spc-tb-pill-select { gap:6px; }
+.spc-tb-select {
+  background:transparent; border:none; outline:none;
+  color:var(--text); font-size:14px; font-weight:700;
+  font-family:var(--mono); cursor:pointer; padding:0;
+  max-width:220px;
+}
+.spc-tb-select option { background:#1A1A22; color:var(--text); }
+.spc-tb-select:hover { color:#fff; }
+
+/* Lots pill */
+.spc-tb-pill-lots { gap:8px; }
+.spc-tb-lots-wrap {
+  display:flex; align-items:center; gap:2px;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+  border-radius:6px; padding:2px;
+}
+.spc-tb-lots-btn {
+  width:24px; height:24px; border-radius:4px;
+  border:none; background:rgba(255,255,255,.07);
+  color:var(--text); font-size:15px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .12s; line-height:1; flex-shrink:0;
+}
+.spc-tb-lots-btn:hover { background:rgba(74,158,255,.25); color:#4A9EFF; }
+.spc-tb-lots-input {
+  width:36px; background:transparent; border:none; outline:none;
+  color:#fff; font-size:15px; font-weight:800;
+  font-family:var(--mono); text-align:center; padding:0 2px;
+}
+.spc-tb-lots-units { font-size:10px; color:var(--text3); font-family:var(--mono); }
+
+/* Top setups row */
+.spc-tb-setups-lbl {
+  font-size:8px; font-weight:700; letter-spacing:.1em;
+  color:var(--text3); white-space:nowrap; text-transform:uppercase;
+}
+.spc-tb-setup-btn {
+  display:flex; align-items:center; gap:5px;
+  padding:5px 12px; border-radius:6px; cursor:pointer;
+  border:1px solid rgba(0,200,150,.25); background:rgba(0,200,150,.07);
+  transition:all .15s; white-space:nowrap;
+}
+.spc-tb-setup-btn:hover,
+.spc-tb-setup-btn.active { background:rgba(0,200,150,.15); border-color:rgba(0,200,150,.5); transform:translateY(-1px); }
+.spc-tb-setup-name  { font-size:12px; font-weight:600; color:var(--text); }
+.spc-tb-setup-score { font-size:12px; font-weight:800; font-family:var(--mono); }
 
 /* ── BODY ── */
 .spc-body { display:grid; grid-template-columns:20% 80%; min-height:600px; }
@@ -3875,15 +3933,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   margin-bottom:10px; font-size:11px; color:#00C896;
 }
 
-/* Expiry + symbol selectors */
-.spc-expiry-pill { gap:8px; }
-.spc-symbol-pill { gap:8px; }
-.spc-expiry-sel, .spc-symbol-pill .spc-expiry-sel {
-  background:transparent; border:none; color:var(--text);
-  font-size:12px; font-weight:700; font-family:var(--mono);
-  cursor:pointer; outline:none; padding:0; max-width:180px;
-}
-.spc-expiry-sel option { background:var(--bg3); color:var(--text); }
+/* legacy expiry/symbol selectors removed */
 
 /* Responsive */
 @media (max-width:1100px) {
