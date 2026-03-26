@@ -836,13 +836,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── FII/DII Flow Chart ─────────────────────────────────────────────── */
 .fc-root        { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px 20px 16px; margin-top: 6px; }
-.fiidii-segment-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--text3); margin-bottom: 12px; }
+.fiidii-segment-label { font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; color: var(--text3); text-align: center; padding: 12px 0 8px; margin-bottom: 0; }
 .fiidii-tabs       { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
 .fiidii-tab        { font-family: var(--mono); font-size: 11px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg2); color: var(--text3); cursor: pointer; transition: all 0.15s; }
 .fiidii-tab:hover  { border-color: var(--border2); color: var(--text); }
 .fiidii-tab-active { border-color: #4A9EFF; color: #4A9EFF; background: rgba(74,158,255,0.08); }
 .fiidii-chart-wrap   { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 20px 12px; margin-top: 12px; min-width: 0; overflow: hidden; width: 100%; box-sizing: border-box; }
-.fiidii-chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+.fiidii-chart-header { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
 .fiidii-chart-title  { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text2); }
 .fiidii-chart-legend { display: flex; gap: 12px; font-family: var(--mono); font-size: 10px; color: var(--text3); align-items: center; }
 .fc-header      { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
@@ -1293,9 +1293,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fiidii-cards-col    { display: flex; flex-direction: column; gap: 10px; }
 .fiidii-card-side    { }
 .fiidii-card-mood    { }
-.fiidii-totals-row   { display: flex; align-items: center; gap: 0; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
-.fiidii-total-item   { display: flex; flex-direction: column; gap: 3px; padding: 0 16px; flex: 1; }
-.fiidii-total-item:first-child { padding-left: 0; }
+.fiidii-totals-row   { display: flex; align-items: center; justify-content: center; gap: 0; margin-top: 10px; padding: 10px 0 4px; border-top: 1px solid var(--border); }
+.fiidii-total-item   { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; padding: 0 20px; flex: 1; }
+.fiidii-total-item:first-child { padding-left: 20px; }
 .fiidii-total-sep    { width: 1px; height: 36px; background: var(--border); }
 .fiidii-total-lbl    { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text3); }
 .fiidii-total-val    { font-family: var(--mono); font-size: 15px; font-weight: 700; }
@@ -2627,8 +2627,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   gap: 0; border-top: 1px solid var(--border);
 }
 .fiidii-card-v2     {
-  padding: 16px 20px; border-right: 1px solid var(--border);
-  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 16px; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; gap: 3px;
 }
 .fiidii-card-v2:last-child { border-right: none; }
 .fiidii-cv2-label   { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text3); margin-bottom: 2px; }
