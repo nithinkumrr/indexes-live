@@ -1458,13 +1458,13 @@ function PivotPointsV2({ data }) {
           );
 
           const levels = [
-            { key:'R3', val:p.R3, type:'res',   opacity: p.C < p.R3 ? 0.4 : 1 },
-            { key:'R2', val:p.R2, type:'res',   opacity: p.C < p.R2 ? 0.4 : 1 },
-            { key:'R1', val:p.R1, type:'res',   opacity: p.C < p.R1 ? 0.4 : 1 },
-            { key:'PP', val:p.PP, type:'pivot', opacity: 1 },
-            { key:'S1', val:p.S1, type:'sup',   opacity: p.C > p.S1 ? 0.4 : 1 },
-            { key:'S2', val:p.S2, type:'sup',   opacity: p.C > p.S2 ? 0.4 : 1 },
-            { key:'S3', val:p.S3, type:'sup',   opacity: p.C > p.S3 ? 0.4 : 1 },
+            { key:'R3', val:p.R3, type:'res',   color:'#FF9999' },
+            { key:'R2', val:p.R2, type:'res',   color:'#FF6666' },
+            { key:'R1', val:p.R1, type:'res',   color:'#FF4455' },
+            { key:'PP', val:p.PP, type:'pivot', color:'#F59E0B' },
+            { key:'S1', val:p.S1, type:'sup',   color:'#00C896' },
+            { key:'S2', val:p.S2, type:'sup',   color:'#00A07A' },
+            { key:'S3', val:p.S3, type:'sup',   color:'#006B52' },
           ];
 
           const chg = d?.changePct || 0;
@@ -1475,7 +1475,7 @@ function PivotPointsV2({ data }) {
               <div className="fno-pv2-col-hdr" style={{ borderTopColor: color }}>
                 <span className="fno-pv2-col-name" style={{ color }}>{label}</span>
                 <span className="fno-pv2-col-price">{fmt(p.C)}</span>
-                <span className={`fno-pv2-col-chg ${gain?'gain':'loss'}`}>{gain?'▲':'▼'} {Math.abs(chg).toFixed(2)}%</span>
+                <span style={{ fontFamily:'var(--mono)', fontSize:11, fontWeight:700, color: gain ? '#00C896' : '#FF4455' }}>{gain?'▲':'▼'} {Math.abs(chg).toFixed(2)}%</span>
               </div>
 
               {/* Day range bar */}
@@ -1521,51 +1521,79 @@ function PivotPointsV2({ data }) {
         {/* 4th column: Breadth + summary */}
         <div className="fno-pv2-col fno-pv2-extra">
           <div className="fno-pv2-col-hdr" style={{ borderTopColor: '#64748B' }}>
-            <span className="fno-pv2-col-name" style={{ color: '#64748B' }}>Market Pulse</span>
+            <span className="fno-pv2-col-name" style={{ color: 'var(--text)' }}>Market Pulse</span>
           </div>
 
-          {/* Nifty 50 breadth */}
-          <div className="fno-pv2-extra-section">
-            <div className="fno-pv2-extra-label">NIFTY 50 BREADTH</div>
-            {breadth ? (
-              <>
-                <div className="fno-pv2-breadth-nums">
-                  <span className="gain" style={{fontSize:28,fontFamily:'var(--mono)',fontWeight:700}}>{breadth.adv}</span>
-                  <span style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)',margin:'0 6px'}}>up</span>
-                  <span className="loss" style={{fontSize:28,fontFamily:'var(--mono)',fontWeight:700}}>{breadth.dec}</span>
-                  <span style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)',marginLeft:6}}>dn</span>
-                </div>
-                <div style={{height:6,background:'var(--bg4)',borderRadius:4,display:'flex',overflow:'hidden',margin:'8px 0'}}>
-                  <div style={{width:`${breadth.advPct}%`,background:'var(--gain)',transition:'width .5s'}}/>
-                  <div style={{width:`${breadth.decPct}%`,background:'var(--loss)',transition:'width .5s'}}/>
-                </div>
-                <div style={{fontFamily:'var(--mono)',fontSize:11,color: breadth.adv > breadth.dec*1.5 ? 'var(--gain)' : breadth.dec > breadth.adv*1.5 ? 'var(--loss)' : 'var(--text3)'}}>
-                  {breadth.adv > breadth.dec*1.5 ? '↑ Broad strength' : breadth.dec > breadth.adv*1.5 ? '↓ Broad weakness' : '⇌ Mixed market'}
-                </div>
-              </>
-            ) : <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--text3)'}}>Market closed</div>}
-          </div>
-
-          {/* Index day change summary */}
-          <div className="fno-pv2-extra-section" style={{borderTop:'1px solid var(--border)',paddingTop:12,marginTop:12}}>
-            <div className="fno-pv2-extra-label">DAY CHANGE</div>
+          {/* Day change bars */}
+          <div className="fno-mp-section">
+            <div className="fno-mp-label">DAY CHANGE</div>
             {INDICES.map(({ id, label, color }) => {
               const d = data?.[id];
               if (!d) return null;
               const gain = d.changePct >= 0;
-              const barW = Math.min(Math.abs(d.changePct) * 20, 100);
+              const barW = Math.min(Math.abs(d.changePct) * 25, 100);
               return (
-                <div key={id} style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
-                  <span style={{fontFamily:'var(--mono)',fontSize:10,color,minWidth:72}}>{label}</span>
-                  <div style={{flex:1,height:4,background:'var(--bg4)',borderRadius:2,overflow:'hidden'}}>
-                    <div style={{width:`${barW}%`,background:gain?'var(--gain)':'var(--loss)',height:'100%',borderRadius:2}}/>
+                <div key={id} className="fno-mp-bar-row">
+                  <span className="fno-mp-bar-name" style={{ color }}>{label}</span>
+                  <div className="fno-mp-bar-track">
+                    <div className="fno-mp-bar-fill" style={{ width:`${barW}%`, background: gain ? '#00C896' : '#FF4455' }} />
                   </div>
-                  <span style={{fontFamily:'var(--mono)',fontSize:11,fontWeight:700,color:gain?'var(--gain)':'var(--loss)',minWidth:52,textAlign:'right'}}>
-                    {gain?'+':''}{d.changePct?.toFixed(2)}%
+                  <span className="fno-mp-bar-val" style={{ color: gain ? '#00C896' : '#FF4455' }}>
+                    {gain ? '+' : ''}{d.changePct?.toFixed(2)}%
                   </span>
                 </div>
               );
             })}
+          </div>
+
+          {/* Points change */}
+          <div className="fno-mp-section fno-mp-section-border">
+            <div className="fno-mp-label">POINTS CHANGE</div>
+            {INDICES.map(({ id, label, color }) => {
+              const d = data?.[id];
+              if (!d) return null;
+              const chg = d.change || 0;
+              const gain = chg >= 0;
+              return (
+                <div key={id} className="fno-mp-stat-row">
+                  <span className="fno-mp-stat-name" style={{ color }}>{label}</span>
+                  <span className="fno-mp-stat-val" style={{ color: gain ? '#00C896' : '#FF4455' }}>
+                    {gain ? '+' : ''}{chg.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Breadth */}
+          <div className="fno-mp-section fno-mp-section-border fno-mp-flex">
+            <div className="fno-mp-label">NIFTY 50 BREADTH</div>
+            {breadth ? (
+              <>
+                <div className="fno-mp-breadth-nums">
+                  <div className="fno-mp-bn">
+                    <span className="fno-mp-bn-val gain">{breadth.adv}</span>
+                    <span className="fno-mp-bn-lbl">up</span>
+                  </div>
+                  <div className="fno-mp-bn">
+                    <span className="fno-mp-bn-val loss">{breadth.dec}</span>
+                    <span className="fno-mp-bn-lbl">dn</span>
+                  </div>
+                </div>
+                <div style={{height:8,background:'var(--bg4)',borderRadius:4,display:'flex',overflow:'hidden',margin:'8px 0'}}>
+                  <div style={{width:`${breadth.advPct}%`,background:'#00C896',transition:'width .5s'}}/>
+                  <div style={{width:`${breadth.decPct}%`,background:'#FF4455',transition:'width .5s'}}/>
+                </div>
+                <div style={{fontFamily:'var(--mono)',fontSize:12,fontWeight:700,
+                  color: breadth.adv > breadth.dec*1.5 ? '#00C896' : breadth.dec > breadth.adv*1.5 ? '#FF4455' : 'var(--text3)'}}>
+                  {breadth.adv > breadth.dec*1.5 ? '↑ Broad strength' : breadth.dec > breadth.adv*1.5 ? '↓ Broad weakness' : '⇌ Mixed market'}
+                </div>
+              </>
+            ) : (
+              <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--text3)',lineHeight:1.6}}>
+                Available during market hours<br/>9:15 AM – 3:30 PM IST
+              </div>
+            )}
           </div>
         </div>
       </div>

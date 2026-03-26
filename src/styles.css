@@ -3087,25 +3087,34 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 /* Force full opacity on all levels — control fade via background not text */
 .fno-pv2-level { opacity: 1 !important; }
 
-/* R levels — vivid red → fades as further from price */
-.fno-pv2-level:nth-child(3) .fno-pv2-key { color: #FF4455 !important; }
-.fno-pv2-level:nth-child(3) .fno-pv2-val { color: #FF4455 !important; }
-.fno-pv2-level:nth-child(4) .fno-pv2-key { color: #FF7070 !important; }
-.fno-pv2-level:nth-child(4) .fno-pv2-val { color: #FF7070 !important; }
-.fno-pv2-level:nth-child(5) .fno-pv2-key { color: #FF9999 !important; }
-.fno-pv2-level:nth-child(5) .fno-pv2-val { color: #FF9999 !important; }
-
-/* PP — bright accent */
+/* PP — bright amber */
 .fno-pv2-pp .fno-pv2-key { color: #F59E0B !important; font-size: 12px !important; }
 .fno-pv2-pp .fno-pv2-val { color: #F59E0B !important; font-size: 15px !important; }
 
-/* S levels — vivid green → fades */
-.fno-pv2-level:nth-child(7) .fno-pv2-key { color: #99FFD0 !important; }
-.fno-pv2-level:nth-child(7) .fno-pv2-val { color: #99FFD0 !important; }
-.fno-pv2-level:nth-child(8) .fno-pv2-key { color: #66C896 !important; }
-.fno-pv2-level:nth-child(8) .fno-pv2-val { color: #66C896 !important; }
-.fno-pv2-level:nth-child(9) .fno-pv2-key { color: #3A9070 !important; }
-.fno-pv2-level:nth-child(9) .fno-pv2-val { color: #3A9070 !important; }
-
 /* Distance number bright */
 .fno-pv2-dist { color: var(--text2) !important; }
+
+/* ── Market Pulse column ─────────────────────────────────────────────────── */
+.fno-pv2-extra        { display: flex; flex-direction: column; }
+.fno-mp-section       { padding: 12px 14px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.fno-mp-section-border{ border-top: 1px solid var(--border); }
+.fno-mp-flex          { flex: 2; }
+.fno-mp-label         { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text3); }
+
+/* Day change bars */
+.fno-mp-bar-row       { display: flex; align-items: center; gap: 8px; }
+.fno-mp-bar-name      { font-family: var(--mono); font-size: 11px; font-weight: 700; min-width: 70px; }
+.fno-mp-bar-track     { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+.fno-mp-bar-fill      { height: 100%; border-radius: 3px; transition: width .5s; }
+.fno-mp-bar-val       { font-family: var(--mono); font-size: 12px; font-weight: 700; min-width: 50px; text-align: right; }
+
+/* Points change */
+.fno-mp-stat-row      { display: flex; justify-content: space-between; align-items: center; }
+.fno-mp-stat-name     { font-family: var(--mono); font-size: 11px; font-weight: 700; }
+.fno-mp-stat-val      { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+
+/* Breadth */
+.fno-mp-breadth-nums  { display: flex; gap: 16px; }
+.fno-mp-bn            { display: flex; flex-direction: column; align-items: center; }
+.fno-mp-bn-val        { font-family: var(--mono); font-size: 32px; font-weight: 700; line-height: 1; }
+.fno-mp-bn-lbl        { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 2px; }
