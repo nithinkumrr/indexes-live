@@ -858,30 +858,22 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
           </div>
 
           <div className="spc-checklist">
-            <div className="spc-checklist-title">BEFORE YOU TRADE</div>
+            <div className="spc-checklist-title">THINGS TO CHECK BEFORE YOU HIT BUY</div>
             {[
-              // Entry setup
-              { step: 'Confirm expiry date',    note: `Nifty expires Tue · pick the right week`, icon: '📅' },
-              { step: 'Enter real premiums',    note: 'Open option chain, copy LTP for each strike', icon: '💰' },
-              { step: 'Verify breakeven levels',note: hasPremiums ? `Your BE: ${(() => { const s2=spot>10000?50:25,ks=legs.map(l=>l.k),ps=[];for(let s=Math.min(...ks)-s2*15;s<=Math.max(...ks)+s2*15;s+=s2){let t=0;legs.forEach(l=>{t+=l.q*(Math.max(0,l.t==='CE'?s-l.k:l.k-s)-l.p);});ps.push({s,t});}const bes=[];for(let i=0;i<ps.length-1;i++){if((ps[i].t<0&&ps[i+1].t>=0)||(ps[i].t>=0&&ps[i+1].t<0)){bes.push(Math.round(ps[i].s+(-ps[i].t/(ps[i+1].t-ps[i].t))*(ps[i+1].s-ps[i].s)));}}return bes.length?bes.map(b=>b.toLocaleString('en-IN')).join(' / '):'enter premiums first';})()}` : 'Enter premiums above to see your breakevens', icon: '⚖️' },
-              // Risk management
-              { step: 'Set your stop loss',     note: strat.credit ? 'If loss hits 2x premium collected, exit' : 'Exit if premium loses 50% of value', icon: '🛑' },
-              { step: 'Size your position',     note: 'Risk no more than 2 to 3% of capital per trade', icon: '📊' },
-              // Market context
-              { step: 'Check upcoming events',  note: 'Budget, RBI, earnings? Big events crush sellers', icon: '📰' },
-              { step: 'Check open interest',    note: 'High OI at your strikes means better liquidity', icon: '🔍' },
-              // VIX fit
-              { step: `VIX is ${vix.toFixed(1)}, ${vixCtx.label}`, note: vixCtx.tip, icon: '🌡️' },
-              // Exit plan
-              { step: 'Plan your exit before entry', note: strat.credit ? 'Target 50% of max profit. Exit early, not at expiry' : 'Target 2x premium paid. Avoid holding to expiry', icon: '🎯' },
-            ].map(({ step, note, icon }) => (
+              { step: 'Confirm expiry date',      note: 'Nifty expires Tuesday. Wrong week = wrong trade.' },
+              { step: 'Enter real premiums',       note: 'Black-Scholes estimates drift. Use live LTP from option chain.' },
+              { step: 'Know your breakeven',       note: hasPremiums ? `Your BE: ${(() => { const s2=spot>10000?50:25,ks=legs.map(l=>l.k),ps=[];for(let s=Math.min(...ks)-s2*15;s<=Math.max(...ks)+s2*15;s+=s2){let t=0;legs.forEach(l=>{t+=l.q*(Math.max(0,l.t==='CE'?s-l.k:l.k-s)-l.p);});ps.push({s,t});}const bes=[];for(let i=0;i<ps.length-1;i++){if((ps[i].t<0&&ps[i+1].t>=0)||(ps[i].t>=0&&ps[i+1].t<0)){bes.push(Math.round(ps[i].s+(-ps[i].t/(ps[i+1].t-ps[i].t))*(ps[i+1].s-ps[i].s)));}}return bes.length?bes.map(b=>b.toLocaleString('en-IN')).join(' / '):'enter premiums first';})()}` : 'Enter premiums above to calculate your breakevens.' },
+              { step: 'Decide your stop loss now', note: strat.credit ? 'Once you are in, emotions take over. Decide exit levels now.' : 'Buyers lose 100% fast. Know the point where you walk away.' },
+              { step: 'Check how much you are risking', note: 'One trade should not move your portfolio meaningfully.' },
+              { step: 'Any big events this week',  note: 'RBI, earnings, Budget. Volatility spikes kill sellers and confuse buyers.' },
+              { step: 'Check open interest at your strikes', note: 'Low OI = wide bid-ask spreads = bad fills. Avoid thin strikes.' },
+              { step: `VIX is ${vix.toFixed(1)}, ${vixCtx.label}`, note: vixCtx.tip },
+              { step: 'Have an exit target before entry', note: strat.credit ? 'Most sellers give back profits by holding too long. Decide your target now.' : 'Premium decays fast. Holding to expiry is rarely the right move.' },
+            ].map(({ step, note }) => (
               <label key={step} className="spc-checklist-row">
                 <input type="checkbox" className="spc-check"/>
                 <div className="spc-check-content">
-                  <div className="spc-check-step">
-                    <span className="spc-check-icon">{icon}</span>
-                    {step}
-                  </div>
+                  <div className="spc-check-step">{step}</div>
                   <div className="spc-check-note">{note}</div>
                 </div>
               </label>
