@@ -2576,3 +2576,46 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .fnos-half-grid .fno-widget,
   .fnos-ref-grid .fno-widget { padding: 14px; }
 }
+
+/* ── Sentiment page: Bubble 70% + FII/DII 30% ───────────────────────────── */
+.sentiment-bubble-row {
+  display: grid;
+  grid-template-columns: 70% 30%;
+  border-bottom: 1px solid var(--border);
+  min-height: 480px;
+}
+.sentiment-bubble-main {
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+.sentiment-fiidii-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sentiment-fiidii-hdr {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: var(--text3);
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sentiment-fiidii-panel > div:last-child {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 4px;
+}
+
+@media (max-width: 900px) {
+  .sentiment-bubble-row {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  .sentiment-bubble-main {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}

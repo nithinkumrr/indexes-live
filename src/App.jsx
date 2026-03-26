@@ -16,6 +16,7 @@ import IndexModal from './components/IndexModal';
 import Footer from './components/Footer';
 import SentimentTop from './components/SentimentTop';
 import IndiaHeatmap from './components/IndiaHeatmap';
+import FiiDii from './components/FiiDii';
 import { MARKETS } from './data/markets';
 
 const HASH_MAP = {
@@ -84,7 +85,15 @@ export default function App() {
           {view !== 'bubble' && <WorldBenchmarks data={data} region={region} nseData={nseData} />}
           {view === 'grid'   && <MarketGrid data={data} nseData={nseData} />}
           {view === 'bubble' && <SentimentTop data={data} nseData={nseData} />}
-          {view === 'bubble' && <BubbleView data={data} />}
+          {view === 'bubble' && (
+            <div className="sentiment-bubble-row">
+              <div className="sentiment-bubble-main"><BubbleView data={data} /></div>
+              <div className="sentiment-fiidii-panel">
+                <div className="sentiment-fiidii-hdr">FII / DII FLOW</div>
+                <FiiDii />
+              </div>
+            </div>
+          )}
           {view === 'bubble' && <IndiaHeatmap />}
         </>
       )}
