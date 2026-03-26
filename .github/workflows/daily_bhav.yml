@@ -18,9 +18,6 @@ jobs:
         with:
           r-version: '4.3.0'
 
-      - name: Install packages
-        run: Rscript -e "install.packages(c('nser','httr','jsonlite'),repos='https://cran.r-project.org')"
-
       - name: Run script
         env:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
