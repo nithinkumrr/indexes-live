@@ -1,5 +1,6 @@
 // src/components/FnOPage.jsx · Full F&O dashboard
 import React, { useState, useEffect, useMemo } from 'react';
+import Backtest from './Backtest';
 import Ticker from './Ticker';
 import { getNiftyExpiries } from '../utils/timezone';
 import { formatPrice } from '../utils/format';
@@ -1745,6 +1746,7 @@ export default function FnOPage({ data = {} }) {
   const TABS = [
     { id: 'overview',   label: 'Overview'   },
     { id: 'strategy',   label: 'Strategy'   },
+    { id: 'backtest',   label: 'Backtest'   },
     { id: 'calculator', label: 'Calculator' },
     { id: 'reference',  label: 'Reference'  },
   ];
@@ -1808,6 +1810,12 @@ export default function FnOPage({ data = {} }) {
       )}
 
       {/* ══ TAB: CALCULATOR ══════════════════════════════════════════════ */}
+      {tab === 'backtest' && (
+        <div className="fno-tab-content">
+          <Backtest data={data} />
+        </div>
+      )}
+
       {tab === 'calculator' && (
         <div className="fno-tab-content">
           <div className="fnos-calc-grid">
