@@ -3160,3 +3160,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* No blank space — market closed message fills nicely */
 .fno-mp-closed-msg    { display: flex; flex-direction: column; justify-content: center; flex: 1; }
+
+/* ── Expected Move — index blocks ────────────────────────────────────────── */
+.fno-em-index-block   { border-bottom: 1px solid var(--border); padding: 10px 0; }
+.fno-em-index-block:last-child { border-bottom: none; }
+.fno-em-index-hdr     { font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 0 0 8px; }

@@ -36,21 +36,39 @@ function ExpiryCard({ label, date, secsLeft, color, shifted, originalDate, holid
 // ROLLOVER METER
 // ─────────────────────────────────────────────────────────────────────────────
 function RolloverMeter({ expiries }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
+
   const items = [
-    { label: 'Nifty Weekly',  secsLeft: expiries.niftyWeekly?.secsLeft,   total: 7  * 86400, color: '#4A9EFF' },
-    { label: 'Nifty Monthly', secsLeft: expiries.niftyMonthly?.secsLeft,  total: 30 * 86400, color: '#4A9EFF' },
-    { label: 'Sensex Weekly', secsLeft: expiries.sensexWeekly?.secsLeft,  total: 7  * 86400, color: '#F59E0B' },
+    { label: 'Nifty Weekly',   exp: expiries.niftyWeekly,   totalDays: 7,  color: '#4A9EFF' },
+    { label: 'Nifty Monthly',  exp: expiries.niftyMonthly,  totalDays: 30, color: '#4A9EFF' },
+    { label: 'Sensex Weekly',  exp: expiries.sensexWeekly,  totalDays: 7,  color: '#F59E0B' },
+    { label: 'Sensex Monthly', exp: expiries.sensexMonthly, totalDays: 30, color: '#F59E0B' },
   ];
+
+  const fmtLeft = (secs) => {
+    if (!secs || secs <= 0) return 'Expired';
+    const d = Math.floor(secs / 86400);
+    const h = Math.floor((secs % 86400) / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    if (d > 0) return `${d}d ${h}h left`;
+    if (h > 0) return `${h}h ${m}m left`;
+    return `${m}m left`;
+  };
+
   return (
     <div className="fno-widget">
       <div className="fno-widget-title">ROLLOVER METER</div>
-      <div className="fno-widget-sub">How much of the current expiry period has elapsed</div>
+      <div className="fno-widget-sub">Time elapsed in current expiry cycle · holiday-adjusted</div>
       <div className="fno-rollover-list">
-        {items.map(({ label, secsLeft, total, color }) => {
-          if (!secsLeft) return null;
-          const elapsed = Math.max(0, total - secsLeft);
-          const pct     = Math.min(100, Math.round((elapsed / total) * 100));
-          const dte     = Math.ceil(secsLeft / 86400);
+        {items.map(({ label, exp, totalDays, color }) => {
+          if (!exp?.secsLeft) return null;
+          const totalSecs = totalDays * 86400;
+          const elapsed   = Math.max(0, totalSecs - exp.secsLeft);
+          const pct       = Math.min(100, Math.round((elapsed / totalSecs) * 100));
           return (
             <div key={label} className="fno-rollover-row">
               <div className="fno-rollover-label">{label}</div>
@@ -60,7 +78,7 @@ function RolloverMeter({ expiries }) {
                 </div>
                 <span className="fno-rollover-pct" style={{ color }}>{pct}%</span>
               </div>
-              <div className="fno-rollover-dte">{dte}d left</div>
+              <div className="fno-rollover-dte">{fmtLeft(exp.secsLeft)}</div>
             </div>
           );
         })}
@@ -69,12 +87,15 @@ function RolloverMeter({ expiries }) {
   );
 }
 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPECTED MOVE
 // ─────────────────────────────────────────────────────────────────────────────
 function ExpectedMove({ data, expiries }) {
-  const nifty = data?.nifty50;
+  const nifty  = data?.nifty50;
+  const sensex = data?.sensex;
   const [vix, setVix] = useState(null);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -93,34 +114,45 @@ function ExpectedMove({ data, expiries }) {
     if (!price || !vixVal || !secsLeft) return null;
     const dte  = secsLeft / 86400;
     const move = price * (vixVal / 100) * Math.sqrt(dte / 365);
-    return { up: price + move, dn: price - move, pts: Math.round(move) };
+    return { up: Math.round(price + move), dn: Math.round(price - move), pts: Math.round(move) };
   };
 
-  const price    = nifty?.price;
-  const weekly   = calc(price, vix, expiries.niftyWeekly?.secsLeft);
-  const monthly  = calc(price, vix, expiries.niftyMonthly?.secsLeft);
+  const rows = [
+    { label: 'Nifty 50', color: '#4A9EFF', price: nifty?.price,
+      weekly:  calc(nifty?.price, vix, expiries.niftyWeekly?.secsLeft),
+      monthly: calc(nifty?.price, vix, expiries.niftyMonthly?.secsLeft),
+      wDate: expiries.niftyWeekly?.date, mDate: expiries.niftyMonthly?.date },
+    { label: 'Sensex',   color: '#F59E0B', price: sensex?.price,
+      weekly:  calc(sensex?.price, vix, expiries.sensexWeekly?.secsLeft),
+      monthly: calc(sensex?.price, vix, expiries.sensexMonthly?.secsLeft),
+      wDate: expiries.sensexWeekly?.date, mDate: expiries.sensexMonthly?.date },
+  ];
 
   return (
     <div className="fno-widget">
       <div className="fno-widget-title">EXPECTED MOVE <span className="fno-widget-formula">Price × (VIX÷100) × √(DTE÷365)</span></div>
-      <div className="fno-widget-sub">Market-implied range for Nifty 50 by expiry</div>
-      {(!price || !vix) ? (
-        <div className="fno-loading">{!price ? 'Waiting for Nifty price...' : 'Waiting for VIX...'}</div>
-      ) : (
-        <div className="fno-em-grid">
-          {[['Weekly', weekly, expiries.niftyWeekly], ['Monthly', monthly, expiries.niftyMonthly]].map(([lbl, em, exp]) => (
-            em && <div key={lbl} className="fno-em-card">
-              <div className="fno-em-label">{lbl} <span className="fno-em-date">· {exp?.date}</span></div>
-              <div className="fno-em-range">
-                <span className="fno-em-up gain">▲ {em.up.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
-                <span className="fno-em-pts">±{em.pts} pts</span>
-                <span className="fno-em-dn loss">▼ {em.dn.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+      <div className="fno-widget-sub">Market-implied range by expiry · VIX {vix ? vix.toFixed(2) : '—'}</div>
+      {rows.map(({ label, color, price, weekly, monthly, wDate, mDate }) => (
+        <div key={label} className="fno-em-index-block">
+          <div className="fno-em-index-hdr" style={{ color }}>
+            {label} <span style={{ fontWeight: 400, color: 'var(--text3)', fontSize: 10 }}>
+              {price ? `· ${price.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` : ''}
+            </span>
+          </div>
+          <div className="fno-em-grid">
+            {[[`Weekly · ${wDate}`, weekly], [`Monthly · ${mDate}`, monthly]].map(([lbl, em]) => (
+              em && <div key={lbl} className="fno-em-card">
+                <div className="fno-em-label">{lbl}</div>
+                <div className="fno-em-range">
+                  <span className="fno-em-up gain">▲ {em.up.toLocaleString('en-IN')}</span>
+                  <span className="fno-em-pts" style={{ color }}>±{em.pts} pts</span>
+                  <span className="fno-em-dn loss">▼ {em.dn.toLocaleString('en-IN')}</span>
+                </div>
               </div>
-              <div className="fno-em-note">From spot {price.toLocaleString('en-IN', { maximumFractionDigits: 0 })} · VIX {vix?.toFixed(2)}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
