@@ -20,19 +20,112 @@ export default async function handler(req, res) {
 
   const result = {};
 
+  // Try Kite for live data if token available
+  let kiteToken = null;
+  const kiteKey = process.env.KITE_API_KEY;
+  try {
+    const kUrl = process.env.KV_REST_API_URL, kTok = process.env.KV_REST_API_TOKEN;
+    if (kUrl && kTok) {
+      const kr = await fetch(`${kUrl}/get/kite_token`, { headers: { Authorization: `Bearer ${kTok}` } });
+      const kd = await kr.json();
+      if (kd?.result) kiteToken = kd.result;
+    }
+  } catch(_) {}
+
+  // Kite instrument tokens for Indian indices
+  const KITE_INSTRUMENTS = {
+    256265: 'nifty50',   260105: 'banknifty',  274441: 'niftymidcap150',
+    288009: 'niftynext50', 264969: 'niftyit',  258313: 'niftyauto',
+    261897: 'niftyfmcg',  261641: 'niftypharma', 290825: 'niftyrealty',
+    258825: 'niftymetal', 262409: 'niftyenergy', 257801: 'niftyfinservice',
+    288265: 'niftymedia', 261385: 'niftypsubank', 261129: 'niftypvtbank',
+    408065: 'niftysmallcap250',
+  };
+
+  if (kiteToken && kiteKey) {
+    try {
+      const tokens = Object.keys(KITE_INSTRUMENTS).map(t => `i=NSE:${t}`).join('&');
+      const kr = await fetch(`https://api.kite.trade/quote?${Object.keys(KITE_INSTRUMENTS).map(t=>`i=${t}`).join('&')}`, {
+        headers: { 'X-Kite-Version': '3', 'Authorization': `token ${kiteKey}:${kiteToken}` }
+      });
+      if (kr.ok) {
+        const kd = await kr.json();
+        for (const [token, key] of Object.entries(KITE_INSTRUMENTS)) {
+          const q = kd?.data?.[token];
+          if (q) {
+            const price = q.last_price, prev = q.ohlc?.close || price;
+            result[key] = {
+              price, change: +(price - prev).toFixed(2),
+              changePct: prev > 0 ? +((price-prev)/prev*100).toFixed(2) : 0,
+              high: q.ohlc?.high, low: q.ohlc?.low, open: q.ohlc?.open,
+              source: 'kite'
+            };
+          }
+        }
+      }
+    } catch(_) {}
+  }
+
+
   // 1. VIX
   try {
     const r = await fetch('https://www.nseindia.com/api/allIndices', { headers: H(cookie) });
     if (r.ok) {
       const d = await r.json();
-      const vixRow = (d?.data||[]).find(i => i.index === 'INDIA VIX');
-      if (vixRow) result.vix = parseFloat(vixRow.last);
-      const niftyRow = (d?.data||[]).find(i => i.index === 'NIFTY 50');
+      const allData = d?.data || [];
+      const parseRow = row => ({
+        price: parseFloat(row.last),
+        change: parseFloat(row.variation || row.change || 0),
+        changePct: parseFloat(row.percentChange || 0),
+        high52: parseFloat(row['52WeekHigh'] || 0),
+        low52:  parseFloat(row['52WeekLow']  || 0),
+        advances: parseInt(row.advances || 0),
+        declines: parseInt(row.declines || 0),
+      });
+
+      const IDX_MAP = {
+        'INDIA VIX':                    'indiavix',
+        'NIFTY 50':                     'nifty50',
+        'NIFTY BANK':                   'banknifty',
+        'NIFTY NEXT 50':               'niftynext50',
+        'NIFTY MIDCAP 150':            'niftymidcap150',
+        'NIFTY SMALLCAP 250':          'niftysmallcap250',
+        'NIFTY IT':                     'niftyit',
+        'NIFTY AUTO':                   'niftyauto',
+        'NIFTY FMCG':                   'niftyfmcg',
+        'NIFTY PHARMA':                 'niftypharma',
+        'NIFTY REALTY':                 'niftyrealty',
+        'NIFTY METAL':                  'niftymetal',
+        'NIFTY ENERGY':                 'niftyenergy',
+        'NIFTY FINANCIAL SERVICES':     'niftyfinservice',
+        'NIFTY MEDIA':                  'niftymedia',
+        'NIFTY PSU BANK':               'niftypsubank',
+        'NIFTY PRIVATE BANK':           'niftypvtbank',
+        'NIFTY CONSUMER DURABLES':      'niftyconsumer',
+        'NIFTY MIDCAP SELECT':         'niftymidcapselect',
+        'NIFTY500 MULTICAP 50:25:25':  'nifty500',
+      };
+
+      for (const row of allData) {
+        const key = IDX_MAP[row.index];
+        if (key) result[key] = parseRow(row);
+      }
+
+      // VIX special — just a number
+      if (result.indiavix) result.vix = result.indiavix.price;
+
+      // Nifty50 breadth
+      const niftyRow = allData.find(i => i.index === 'NIFTY 50');
       if (niftyRow) {
-        result.niftyLast   = parseFloat(niftyRow.last);
-        result.niftyChange = parseFloat(niftyRow.percentChange);
-        result.niftyHigh52 = parseFloat(niftyRow['52WeekHigh'] || 0);
-        result.niftyLow52  = parseFloat(niftyRow['52WeekLow']  || 0);
+        result.nifty50 = { ...result.nifty50,
+          advances: parseInt(niftyRow.advances || 0),
+          declines: parseInt(niftyRow.declines || 0),
+          unchanged: parseInt(niftyRow.unchanged || 0),
+        };
+        result.niftyLast   = result.nifty50.price;
+        result.niftyChange = result.nifty50.changePct;
+        result.niftyHigh52 = result.nifty50.high52;
+        result.niftyLow52  = result.nifty50.low52;
       }
     }
   } catch(_) {}
@@ -101,6 +194,22 @@ export default async function handler(req, res) {
     if (r.ok) {
       const d = await r.json();
       result.lows52w = (d?.data||[]).length;
+    }
+  } catch(_) {}
+
+  // Sensex from BSE
+  try {
+    const r = await fetch('https://api.bseindia.com/BseIndiaAPI/api/GetSensexData/w', {
+      headers: { 'User-Agent': UA, 'Accept': 'application/json', 'Referer': 'https://www.bseindia.com/' }
+    });
+    if (r.ok) {
+      const d = await r.json();
+      const price = parseFloat(d?.CurrVal || d?.Data?.[0]?.CurrVal || 0);
+      const prev  = parseFloat(d?.PrevClose || d?.Data?.[0]?.PrevClose || 0);
+      if (price) result.sensex = {
+        price, change: parseFloat(d?.Change || price - prev),
+        changePct: parseFloat(d?.PchangeStr || ((price-prev)/prev*100).toFixed(2)),
+      };
     }
   } catch(_) {}
 

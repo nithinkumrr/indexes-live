@@ -1,5 +1,5 @@
 // src/components/FnOPage.jsx — Full F&O dashboard
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Ticker from './Ticker';
 import { getNiftyExpiries } from '../utils/timezone';
 import { formatPrice } from '../utils/format';
@@ -1753,10 +1753,10 @@ export default function FnOPage({ data = {} }) {
     <div className="fno-page">
 
       {/* ══ TICKER ══════════════════════════════════════════════════════ */}
-      <Ticker data={data} />
+      <IndiaTickerFno />
 
       {/* ══ COMPACT EXPIRY STRIP ════════════════════════════════════════ */}
-      <ExpiryStrip expiries={expiries} holidayLive={holidayLive} />
+      <ExpiryStrip expiries={expiries} holidayLive={holidayLive} holidayNames={holidayNames} />
 
       {/* ══ TABS ════════════════════════════════════════════════════════ */}
       <div className="fno-tabs-bar">
@@ -1837,17 +1837,116 @@ export default function FnOPage({ data = {} }) {
 }
 
 // ── Compact expiry strip ──────────────────────────────────────────────────────
-function ExpiryStrip({ expiries, holidayLive }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// INDIA-ONLY TICKER — F&O page only
+// ─────────────────────────────────────────────────────────────────────────────
+function IndiaTickerFno() {
+  const [quotes, setQuotes] = useState([]);
+  const [lastUpdate, setLastUpdate] = useState(null);
+
+  const SYMBOLS = [
+    // Broad market
+    { label: 'Nifty 50',       id: 'nifty50',        color: '#4A9EFF' },
+    { label: 'Sensex',         id: 'sensex',          color: '#F59E0B' },
+    { label: 'Bank Nifty',     id: 'banknifty',       color: '#A78BFA' },
+    { label: 'Nifty Next 50',  id: 'niftynext50',     color: '#4A9EFF' },
+    { label: 'Midcap 150',     id: 'niftymidcap150',  color: '#34D399' },
+    { label: 'Smallcap 250',   id: 'niftysmallcap250',color: '#34D399' },
+    { label: 'India VIX',      id: 'indiavix',        color: '#FF4455' },
+    { label: 'Gift Nifty',     id: 'giftnifty',       color: '#64748B' },
+    // Sectoral
+    { label: 'IT',             id: 'niftyit',         color: '#A78BFA' },
+    { label: 'Auto',           id: 'niftyauto',       color: '#F97316' },
+    { label: 'FMCG',           id: 'niftyfmcg',       color: '#34D399' },
+    { label: 'Pharma',         id: 'niftypharma',     color: '#06B6D4' },
+    { label: 'Realty',         id: 'niftyrealty',     color: '#EC4899' },
+    { label: 'Metal',          id: 'niftymetal',      color: '#94A3B8' },
+    { label: 'Energy',         id: 'niftyenergy',     color: '#F59E0B' },
+    { label: 'Fin Service',    id: 'niftyfinservice', color: '#4A9EFF' },
+    { label: 'Media',          id: 'niftymedia',      color: '#64748B' },
+    { label: 'PSU Bank',       id: 'niftypsubank',    color: '#F59E0B' },
+    { label: 'Private Bank',   id: 'niftypvtbank',    color: '#4A9EFF' },
+    { label: 'Consumer Dur',   id: 'niftyconsumer',   color: '#34D399' },
+  ];
+
+  const isMarketOpen = () => {
+    const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const day = ist.getDay();
+    if (day === 0 || day === 6) return false;
+    const mins = ist.getHours() * 60 + ist.getMinutes();
+    return mins >= 555 && mins < 930;
+  };
+
+  const load = async () => {
+    try {
+      const r = await fetch('/api/nse-india');
+      const d = await r.json();
+      const q = SYMBOLS.map(s => {
+        const idx = d?.[s.id];
+        if (!idx) return null;
+        return { ...s, price: idx.price, change: idx.change, changePct: idx.changePct };
+      }).filter(Boolean);
+      if (q.length) { setQuotes(q); setLastUpdate(new Date()); }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    load();
+    // Only poll during market hours, every 5 min
+    const id = setInterval(() => { if (isMarketOpen()) load(); }, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const fmt = (n) => n?.toLocaleString('en-IN', { maximumFractionDigits: 2 }) || '—';
+  const istStr = lastUpdate?.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+
   return (
-    <div className="fno-expiry-strip-compact">
-      <ExpiryStripItem label="Nifty Weekly"  color="#4A9EFF" {...expiries.niftyWeekly}  />
-      <div className="fno-estrip-sep" />
-      <ExpiryStripItem label="Nifty Monthly" color="#4A9EFF" {...expiries.niftyMonthly} />
-      <div className="fno-estrip-sep" />
-      <ExpiryStripItem label="Sensex Weekly"  color="#F59E0B" {...expiries.sensexWeekly}  />
-      <div className="fno-estrip-sep" />
-      <ExpiryStripItem label="Sensex Monthly" color="#F59E0B" {...expiries.sensexMonthly} />
-      <div className="fno-estrip-meta">
+    <div className="fno-india-ticker">
+      <div className="fno-india-ticker-inner">
+        {quotes.map(q => {
+          const gain = q.changePct >= 0;
+          return (
+            <div key={q.id} className="fno-it-item">
+              <span className="fno-it-label" style={{ color: q.color }}>{q.label}</span>
+              <span className="fno-it-price">{fmt(q.price)}</span>
+              <span className={`fno-it-chg ${gain ? 'gain' : 'loss'}`}>
+                {gain ? '▲' : '▼'} {Math.abs(q.changePct).toFixed(2)}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="fno-it-meta">
+        {isMarketOpen()
+          ? <span className="fno-it-live">● LIVE · updates every 5m</span>
+          : <span className="fno-it-closed">Market closed{istStr ? ` · as of ${istStr} IST` : ''}</span>
+        }
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPIRY STRIP — with holiday indicators per contract
+// ─────────────────────────────────────────────────────────────────────────────
+function ExpiryStrip({ expiries, holidayLive, holidayNames = {} }) {
+  const CONTRACTS = [
+    { key: 'niftyWeekly',   label: 'Nifty Weekly',   rule: 'Tue',  color: '#4A9EFF', exp: expiries.niftyWeekly  },
+    { key: 'niftyMonthly',  label: 'Nifty Monthly',  rule: 'Thu',  color: '#4A9EFF', exp: expiries.niftyMonthly },
+    { key: 'sensexWeekly',  label: 'Sensex Weekly',  rule: 'Thu',  color: '#F59E0B', exp: expiries.sensexWeekly  },
+    { key: 'sensexMonthly', label: 'Sensex Monthly', rule: 'Thu',  color: '#F59E0B', exp: expiries.sensexMonthly },
+  ];
+
+  return (
+    <div className="fno-expiry-strip-v2">
+      <div className="fno-esv2-label">F&amp;O EXPIRY</div>
+      {CONTRACTS.map(({ key, label, rule, color, exp }) => (
+        <React.Fragment key={key}>
+          <div className="fno-esv2-sep" />
+          <ExpiryStripItem label={label} rule={rule} color={color} exp={exp} holidayNames={holidayNames} />
+        </React.Fragment>
+      ))}
+      <div className="fno-esv2-meta">
         Holiday-adjusted · 15:30 IST
         {holidayLive && <span style={{ color: 'var(--accent)', marginLeft: 5 }}>· NSE live</span>}
       </div>
@@ -1855,27 +1954,41 @@ function ExpiryStrip({ expiries, holidayLive }) {
   );
 }
 
-function ExpiryStripItem({ label, date, secsLeft, color, shifted }) {
-  const [secs, setSecs] = useState(secsLeft);
+function ExpiryStripItem({ label, rule, color, exp, holidayNames }) {
+  const [secs, setSecs] = useState(exp?.secsLeft || 0);
   useEffect(() => {
-    setSecs(secsLeft);
+    setSecs(exp?.secsLeft || 0);
     const id = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
     return () => clearInterval(id);
-  }, [secsLeft]);
+  }, [exp?.secsLeft]);
+
   const d = Math.floor(secs / 86400), h = Math.floor((secs % 86400) / 3600),
         m = Math.floor((secs % 3600) / 60), s = secs % 60;
   const p = n => String(n).padStart(2, '0');
+
+  const urgent = secs < 86400; // less than 1 day
+  const holidayName = exp?.shifted && exp?.originalDate ? (holidayNames[exp.originalDate] || 'holiday') : null;
+
   return (
-    <div className="fno-estrip-item">
-      <span className="fno-estrip-label" style={{ color }}>{label}</span>
-      <span className="fno-estrip-date">{date}</span>
-      {shifted && <span className="fno-estrip-shifted">⚠ shifted</span>}
-      <span className="fno-estrip-clock">
-        {d > 0 && <><span className="fno-estrip-n">{d}</span><span className="fno-estrip-u">d</span></>}
-        <span className="fno-estrip-n">{p(h)}</span><span className="fno-estrip-u">h</span>
-        <span className="fno-estrip-n">{p(m)}</span><span className="fno-estrip-u">m</span>
-        <span className="fno-estrip-n fno-estrip-s">{p(s)}</span><span className="fno-estrip-u">s</span>
-      </span>
+    <div className="fno-esv2-item">
+      <div className="fno-esv2-top">
+        <span className="fno-esv2-name" style={{ color }}>{label}</span>
+        <span className="fno-esv2-rule">({rule} expiry)</span>
+      </div>
+      <div className="fno-esv2-bottom">
+        <span className="fno-esv2-date" style={{ color: urgent ? color : undefined }}>{exp?.date || '—'}</span>
+        {exp?.shifted && (
+          <span className="fno-esv2-holiday" title={`${exp.originalDate} is ${holidayName}`}>
+            ⚠ {holidayName}
+          </span>
+        )}
+        <span className="fno-esv2-clock" style={{ color: urgent ? color : undefined }}>
+          {d > 0 && <><span className="fno-estrip-n">{d}</span><span className="fno-estrip-u">d</span></>}
+          <span className="fno-estrip-n">{p(h)}</span><span className="fno-estrip-u">h</span>
+          <span className="fno-estrip-n">{p(m)}</span><span className="fno-estrip-u">m</span>
+          <span className="fno-estrip-n">{p(s)}</span><span className="fno-estrip-u">s</span>
+        </span>
+      </div>
     </div>
   );
 }
