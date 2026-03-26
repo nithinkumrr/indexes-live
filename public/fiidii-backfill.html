@@ -5,162 +5,88 @@
   <style>
     body { background: #111; color: #eee; font-family: monospace; padding: 24px; max-width: 700px; }
     h2 { color: #4A9EFF; }
-    button { background: #4A9EFF; color: #000; border: none; padding: 10px 24px; font-size: 14px; font-family: monospace; cursor: pointer; border-radius: 4px; margin-right: 10px; }
-    button:disabled { background: #333; color: #666; }
-    #log { margin-top: 20px; background: #1a1a1a; border: 1px solid #333; padding: 16px; border-radius: 4px; height: 400px; overflow-y: auto; font-size: 12px; line-height: 1.6; }
+    button { background: #4A9EFF; color: #000; border: none; padding: 10px 24px; font-size: 14px; font-family: monospace; cursor: pointer; border-radius: 4px; margin-right: 10px; margin-bottom: 10px; }
+    button:disabled { background: #333; color: #666; cursor: not-allowed; }
+    #log { margin-top: 20px; background: #1a1a1a; border: 1px solid #333; padding: 16px; border-radius: 4px; height: 400px; overflow-y: auto; font-size: 12px; line-height: 1.8; }
     .ok   { color: #00C896; }
     .err  { color: #FF4455; }
     .info { color: #F59E0B; }
     .dim  { color: #666; }
-    input { background: #1a1a1a; border: 1px solid #333; color: #eee; padding: 6px 10px; font-family: monospace; border-radius: 4px; margin-right: 8px; }
   </style>
 </head>
 <body>
   <h2>🇮🇳 FiiDii Backfill Tool</h2>
-  <p style="color:#9CA3AF;font-size:12px">This tool fetches real historical FII/DII data directly from your browser (bypasses server Cloudflare blocks) and stores each day into Vercel KV. Run once to seed the chart.</p>
+  <p style="color:#9CA3AF;font-size:12px">Fetches last 7 trading days of FII/DII data via your Vercel server and stores in KV. Takes ~30 seconds.</p>
 
-  <div style="margin-bottom:12px">
-    <label style="font-size:12px;color:#9CA3AF">API base URL: </label>
-    <input id="baseUrl" value="" placeholder="https://indexes-live.vercel.app" style="width:280px" />
-  </div>
+  <button id="btnRun" onclick="runBackfill()">▶ Backfill Last 7 Days</button>
+  <button onclick="checkKV()">🔍 Check What's Stored</button>
 
-  <button id="btnRun" onclick="runBackfill()">▶ Fetch & Store Last 7 Days</button>
-  <button onclick="checkKV()">🔍 Check KV Status</button>
-
-  <div id="log"></div>
+  <div id="log"><div class="dim">Click the button to start...</div></div>
 
   <script>
-    const HOLIDAYS = new Set(['2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31',
-      '2026-04-03','2026-04-14','2026-05-01']);
+    const BASE = window.location.origin;
 
     function log(msg, cls='') {
       const el = document.getElementById('log');
       el.innerHTML += `<div class="${cls}">${msg}</div>`;
       el.scrollTop = el.scrollHeight;
     }
-
-    function getBase() {
-      return document.getElementById('baseUrl').value.trim() || window.location.origin;
-    }
-
-    function getTradingDays(n = 10) {
-      const days = [];
-      const cur = new Date();
-      while (days.length < n) {
-        const iso = cur.toLocaleDateString('en-CA');
-        const dow = cur.getDay();
-        if (dow !== 0 && dow !== 6 && !HOLIDAYS.has(iso)) days.push(iso);
-        cur.setDate(cur.getDate() - 1);
-      }
-      return days.reverse();
-    }
-
-    function fmtDate(iso) {
-      const [y,m,d] = iso.split('-');
-      return `${d}-${m}-${y}`;
-    }
-
-    const pn = v => { const n = parseFloat(String(v||'').replace(/,/g,'')); return isNaN(n) ? 0 : n; };
-    const isFII = r => /FII|FPI|FOREIGN/i.test(String(r?.category||r?.clientType||r?.participant||r?.name||''));
-    const isDII = r => /DII|DOMESTIC/i.test(String(r?.category||r?.clientType||r?.participant||r?.name||''));
-    const parseRow = row => {
-      if (!row) return { net: 0, buy: 0, sell: 0 };
-      const net  = pn(row.netValue ?? row.net ?? row.netPurchaseSales ?? row.NET ?? 0);
-      const buy  = pn(row.buyValue ?? row.grossPurchase ?? row.BUY ?? row.buy ?? 0);
-      const sell = pn(row.sellValue ?? row.grossSales ?? row.SELL ?? row.sell ?? 0);
-      return { net: net || (buy - sell), buy, sell };
-    };
-
-    async function getNSEData(nseDate) {
-      // Direct browser fetch to NSE — works from browser, blocked from server
-      const url = `https://www.nseindia.com/api/fiidiiTradeReact?date=${nseDate}`;
-      const r = await fetch(url, {
-        headers: { 'Accept': 'application/json', 'Referer': 'https://www.nseindia.com/' },
-        credentials: 'omit',
-      });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const data = await r.json();
-      return Array.isArray(data) ? data : (data.data || []);
-    }
+    function clearLog() { document.getElementById('log').innerHTML = ''; }
 
     async function runBackfill() {
-      document.getElementById('log').innerHTML = '';
+      clearLog();
       document.getElementById('btnRun').disabled = true;
-      const days = getTradingDays(10);
-      log(`📅 Will attempt to fetch ${days.length} trading days...`, 'info');
+      log('🚀 Starting backfill via server...', 'info');
+      log(`📡 Calling: ${BASE}/api/fiidii-store?days=7`, 'dim');
+      log('⏳ This may take 20–40 seconds (NSE rate limits)...', 'dim');
       log('');
 
-      const records = [];
-
-      // First get NSE cookies by loading the home page
       try {
-        log('🍪 Loading NSE home page for cookies...', 'dim');
-        await fetch('https://www.nseindia.com', { mode: 'no-cors', credentials: 'omit' });
-        log('✓ Done', 'dim');
-      } catch(e) {
-        log(`⚠ Cookie fetch skipped: ${e.message}`, 'dim');
-      }
-
-      for (const iso of days) {
-        const nseDate = fmtDate(iso);
-        log(`\n📆 Fetching ${iso} (${nseDate})...`, 'info');
-        try {
-          const rows = await getNSEData(nseDate);
-          if (!rows.length) { log(`  ⚠ No data returned`, 'err'); continue; }
-
-          const fiiRow = rows.find(isFII);
-          const diiRow = rows.find(isDII);
-          if (!fiiRow && !diiRow) { log(`  ⚠ No FII/DII rows found. Got: ${rows.map(r=>r.category||r.clientType||'?').join(', ')}`, 'err'); continue; }
-
-          const f = parseRow(fiiRow);
-          const d = parseRow(diiRow);
-
-          records.push({ date: iso, fiiNet: f.net, fiiBuy: f.buy, fiiSell: f.sell, diiNet: d.net, diiBuy: d.buy, diiSell: d.sell });
-          log(`  FII: ${f.net >= 0 ? '+' : ''}${f.net.toFixed(0)} Cr  |  DII: ${d.net >= 0 ? '+' : ''}${d.net.toFixed(0)} Cr`, 'ok');
-        } catch(e) {
-          log(`  ✗ Error: ${e.message}`, 'err');
-        }
-        await new Promise(r => setTimeout(r, 500)); // 500ms delay between requests
-      }
-
-      if (!records.length) {
-        log('\n❌ No records fetched — NSE may be blocking. Try opening https://nseindia.com first in a new tab, then retry.', 'err');
-        document.getElementById('btnRun').disabled = false;
-        return;
-      }
-
-      log(`\n💾 Storing ${records.length} records to Vercel KV...`, 'info');
-      try {
-        const base = getBase();
-        const r = await fetch(`${base}/api/fiidii-backfill`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ records }),
-        });
+        const r = await fetch(`${BASE}/api/fiidii-store?days=7`);
         const result = await r.json();
-        if (result.success) {
+
+        if (result.stored?.length) {
           log(`✅ Stored: ${result.stored.join(', ')}`, 'ok');
-          log('\n🎉 Done! Refresh your indexes.live page to see the chart with real historical data.', 'ok');
-        } else {
-          log(`❌ Store failed: ${result.error}`, 'err');
+        }
+        if (result.skipped?.length) {
+          log(`⏭ Already in KV (skipped): ${result.skipped.join(', ')}`, 'dim');
+        }
+        if (result.failed?.length) {
+          result.failed.forEach(f => log(`❌ ${f.date}: ${f.error}`, 'err'));
+        }
+
+        log('');
+        log(`📊 ${result.message}`, 'info');
+
+        if (result.stored?.length > 0) {
+          log('');
+          log('🎉 Done! Refresh indexes.live to see the chart with real daily data.', 'ok');
+        } else if (result.failed?.length > 0) {
+          log('');
+          log('⚠ NSE may be blocking. Try again in a few minutes — NSE sometimes blocks multiple rapid requests.', 'err');
         }
       } catch(e) {
-        log(`❌ POST failed: ${e.message}`, 'err');
+        log(`❌ Request failed: ${e.message}`, 'err');
       }
 
       document.getElementById('btnRun').disabled = false;
     }
 
     async function checkKV() {
-      log('\n🔍 Checking KV status...', 'info');
+      clearLog();
+      log('🔍 Checking KV...', 'info');
       try {
-        const base = getBase();
-        const r = await fetch(`${base}/api/fiidii-backfill`);
+        const r = await fetch(`${BASE}/api/fiidii-backfill`);
         const result = await r.json();
-        log(`KV has ${result.stored} days stored:`, 'ok');
-        Object.entries(result.data).forEach(([k, v]) => {
-          log(`  ${k}: FII ${v.fiiNet >= 0 ? '+' : ''}${v.fiiNet} | DII ${v.diiNet >= 0 ? '+' : ''}${v.diiNet}`, 'dim');
-        });
+        if (result.stored === 0) {
+          log('KV is empty — run the backfill first.', 'err');
+        } else {
+          log(`✅ ${result.stored} days stored in KV:`, 'ok');
+          Object.entries(result.data).sort().forEach(([k, v]) => {
+            const date = k.replace('fiidii:', '');
+            log(`  ${date}  FII: ${v.fiiNet >= 0 ? '+' : ''}${Math.round(v.fiiNet)} Cr  |  DII: ${v.diiNet >= 0 ? '+' : ''}${Math.round(v.diiNet)} Cr`, 'dim');
+          });
+        }
       } catch(e) {
         log(`❌ ${e.message}`, 'err');
       }
