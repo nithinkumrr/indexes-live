@@ -351,11 +351,11 @@ function StrategySheet({ vixLevel }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // PIVOT POINTS
 // ─────────────────────────────────────────────────────────────────────────────
-function PivotPoints({ data }) {
+function PivotPoints({ data, horizontal = false }) {
   const indices = [
-    { id: 'nifty50', label: 'Nifty 50' },
-    { id: 'sensex',  label: 'Sensex'   },
-    { id: 'banknifty', label: 'Bank Nifty' },
+    { id: 'nifty50',   label: 'Nifty 50'   },
+    { id: 'sensex',    label: 'Sensex'      },
+    { id: 'banknifty', label: 'Bank Nifty'  },
   ];
 
   const computePivots = (d) => {
@@ -364,17 +364,60 @@ function PivotPoints({ data }) {
     const L = d.low   || d.price * 0.995;
     const C = d.price;
     const P  = (H + L + C) / 3;
-    const R1 = 2 * P - L;
-    const R2 = P + (H - L);
-    const R3 = H + 2 * (P - L);
-    const S1 = 2 * P - H;
-    const S2 = P - (H - L);
-    const S3 = L - 2 * (H - P);
+    const R1 = 2 * P - L,  R2 = P + (H - L),    R3 = H + 2 * (P - L);
+    const S1 = 2 * P - H,  S2 = P - (H - L),    S3 = L - 2 * (H - P);
     return { P, R1, R2, R3, S1, S2, S3, current: C };
   };
 
   const fmt = (n) => n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  const LEVELS = ['R3','R2','R1','PP','S1','S2','S3'];
 
+  if (horizontal) {
+    // Horizontal layout: each index is a row, levels are columns
+    return (
+      <div className="fno-pivot-horiz">
+        <div className="fno-widget-title" style={{ padding: '14px 16px 8px' }}>
+          PIVOT POINTS <span className="fno-widget-formula">Classic · (H+L+C)÷3</span>
+        </div>
+        <div className="fno-pvh-table">
+          {/* Header */}
+          <div className="fno-pvh-row fno-pvh-hdr">
+            <span className="fno-pvh-index">Index</span>
+            <span className="fno-pvh-price">Last</span>
+            {LEVELS.map(l => (
+              <span key={l} className={`fno-pvh-cell ${l==='PP'?'fno-pvh-pp':l.startsWith('R')?'fno-pres':'fno-psup'}`}>{l}</span>
+            ))}
+          </div>
+          {indices.map(({ id, label }) => {
+            const d = data?.[id];
+            const p = computePivots(d);
+            if (!p) return null;
+            const vals = { R3: p.R3, R2: p.R2, R1: p.R1, PP: p.P, S1: p.S1, S2: p.S2, S3: p.S3 };
+            return (
+              <div key={id} className="fno-pvh-row">
+                <span className="fno-pvh-index">{label}</span>
+                <span className="fno-pvh-price">{fmt(p.current)}</span>
+                {LEVELS.map(l => {
+                  const v = vals[l];
+                  const near = p.current > v * 0.998 && p.current < v * 1.002;
+                  const above = v <= p.current;
+                  return (
+                    <span key={l} className={`fno-pvh-cell ${l==='PP'?'':l.startsWith('R')?'loss':'gain'} ${near?'fno-pvh-near':''}`}
+                      style={{ opacity: l !== 'PP' && !above ? 0.45 : 1 }}>
+                      {fmt(v)}{near ? ' ★' : ''}
+                    </span>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+        <div className="fno-widget-sub" style={{ padding: '6px 16px 12px' }}>Based on today's high/low/close · ★ = price near this level</div>
+      </div>
+    );
+  }
+
+  // Original vertical layout
   return (
     <div className="fno-widget">
       <div className="fno-widget-title">PIVOT POINTS <span className="fno-widget-formula">Classic · (H+L+C)÷3</span></div>
@@ -393,8 +436,6 @@ function PivotPoints({ data }) {
             { key: 'S2', label: 'S2', val: p.S2, type: 'sup' },
             { key: 'S3', label: 'S3', val: p.S3, type: 'sup' },
           ];
-          // Find where current price sits
-          const above = levels.filter(l => l.val <= p.current).map(l => l.key);
           return (
             <div key={id} className="fno-pivot-table">
               <div className="fno-pivot-header">
@@ -403,20 +444,14 @@ function PivotPoints({ data }) {
               </div>
               {levels.map(l => {
                 const isAbove = l.val <= p.current;
-                const isPivot = l.type === 'pivot';
                 return (
-                  <div key={l.key} className={`fno-pivot-row ${isPivot ? 'fno-pivot-pp' : ''}`}>
+                  <div key={l.key} className={`fno-pivot-row ${l.type === 'pivot' ? 'fno-pivot-pp' : ''}`}>
                     <span className={`fno-pivot-key ${l.type === 'res' ? 'fno-pres' : l.type === 'sup' ? 'fno-psup' : 'fno-ppp'}`}>{l.label}</span>
                     <div className="fno-pivot-bar-wrap">
-                      <div className="fno-pivot-fill" style={{
-                        width: '100%',
-                        background: l.type === 'res' ? 'rgba(255,68,85,0.12)' : l.type === 'sup' ? 'rgba(0,200,150,0.12)' : 'rgba(74,158,255,0.12)',
-                        opacity: isAbove ? 1 : 0.4
-                      }} />
+                      <div className="fno-pivot-fill" style={{ width: '100%', background: l.type === 'res' ? 'rgba(255,68,85,0.12)' : l.type === 'sup' ? 'rgba(0,200,150,0.12)' : 'rgba(74,158,255,0.12)', opacity: isAbove ? 1 : 0.4 }} />
                     </div>
                     <span className={`fno-pivot-val ${l.type === 'res' ? 'loss' : l.type === 'sup' ? 'gain' : ''}`}>{fmt(l.val)}</span>
-                    {p.current > l.val * 0.998 && p.current < l.val * 1.002 &&
-                      <span className="fno-pivot-near">← near</span>}
+                    {p.current > l.val * 0.998 && p.current < l.val * 1.002 && <span className="fno-pivot-near">← near</span>}
                   </div>
                 );
               })}
@@ -1340,60 +1375,78 @@ function VixZoneCard({ vixLevel, onStrategyClick }) {
   const ZONES = [
     {
       max: 15, label: 'LOW VOL', color: '#00C896',
-      bias: 'Historically favours option buyers',
-      strategies: ['Long Straddle', 'Long Strangle', 'Debit Spreads'],
-      pattern: 'Low VIX periods have historically preceded sharp moves. Premium is cheap — buyers have an edge.',
-      avoid: 'Selling naked options — premium too thin to justify risk',
+      bias: 'Premium is cheap — option buyers historically have an edge',
+      strategies: [
+        { name: 'Long Straddle',  note: 'ATM call + put. Any sharp move tends to pay off when IV is suppressed.' },
+        { name: 'Long Strangle',  note: 'OTM wings. Cheaper, needs a bigger move — cost-to-move ratio often favourable.' },
+        { name: 'Debit Spreads',  note: 'Defined risk directional play. More efficient when IV is low.' },
+      ],
+      pattern: 'Low VIX periods have historically preceded the sharpest moves. Sellers get slowly ground down.',
+      avoid: 'Selling naked — premiums too thin to justify the risk',
     },
     {
       max: 20, label: 'NORMAL', color: '#4A9EFF',
-      bias: 'Balanced — both buyers and sellers viable',
-      strategies: ['Iron Condor', 'Vertical Spreads', 'Covered Calls'],
-      pattern: 'Neither buyers nor sellers have a structural edge. Textbook strategies tend to play out as designed.',
+      bias: 'Balanced — neither buyers nor sellers have a structural edge',
+      strategies: [
+        { name: 'Iron Condor',      note: 'OTM call + put spreads. The sweet spot range — premium is fair.' },
+        { name: 'Vertical Spreads', note: 'Credit or debit, both viable. Market is pricing moves accurately.' },
+        { name: 'Covered Calls',    note: 'Moderate IV — good for writing calls against existing positions.' },
+      ],
+      pattern: 'The zone where textbook strategies tend to play out as designed. Mix of buying and selling works.',
       avoid: null,
     },
     {
       max: 30, label: 'ELEVATED', color: '#F59E0B',
-      bias: 'Historically favours premium sellers',
-      strategies: ['Short Straddle', 'Short Strangle', 'Credit Spreads'],
-      pattern: 'Elevated VIX has historically mean-reverted. Markets that stay range-bound after a fear spike reward sellers.',
+      bias: 'Premium is expensive — sellers historically have an edge',
+      strategies: [
+        { name: 'Short Straddle',  note: 'Sell ATM call + put. Fat premiums if market stays range-bound.' },
+        { name: 'Short Strangle',  note: 'Wider strikes, more room to be wrong. Historical edge in this band.' },
+        { name: 'Credit Spreads',  note: 'Defined-risk premium selling. More credit per unit of risk taken.' },
+      ],
+      pattern: 'Elevated VIX has historically mean-reverted. Markets that settle after a fear spike reward sellers.',
       avoid: 'Unhedged long options — overpaying for vol',
     },
     {
       max: 99, label: 'HIGH FEAR', color: '#FF4455',
-      bias: 'Reduce size · hedge aggressively',
-      strategies: ['Far OTM Credit Spreads', 'Ratio Spreads', 'Wait & Observe'],
-      pattern: 'Highest risk and highest potential reward simultaneously. Gaps and overnight reversals are common.',
-      avoid: 'Large directional bets — tails are fat',
+      bias: 'Reduce size · hedge first · tails are fat',
+      strategies: [
+        { name: 'Far OTM Puts',    note: 'Extreme IV = enormous premium. Also the most dangerous trade.' },
+        { name: 'Ratio Spreads',   note: 'Buy ATM protection, sell 2× OTM. Participate in mean-reversion.' },
+        { name: 'Wait & Observe',  note: 'Many desks reduce size in panic. Entering too early is historically costly.' },
+      ],
+      pattern: 'Highest risk and highest potential reward simultaneously. Gaps and reversals are common overnight.',
+      avoid: 'Large directional bets — 5%+ gaps have happened in this zone',
     },
   ];
 
   const zone = ZONES.find(z => vixLevel <= z.max) || ZONES[3];
 
   return (
-    <div className="fno-vix-zone-card" style={{ borderLeftColor: zone.color }}>
-      <div className="fno-vzc-header">
-        <div className="fno-vzc-left">
-          <span className="fno-vzc-label">CURRENT VIX REGIME</span>
-          <div className="fno-vzc-zone" style={{ color: zone.color }}>
-            {vixLevel.toFixed(2)} — <span>{zone.label}</span>
-          </div>
-          <div className="fno-vzc-bias">{zone.bias}</div>
+    <div className="fno-cheatcode" style={{ '--zc': zone.color }}>
+      <div className="fno-cc-header">
+        <div className="fno-cc-title">OPTIONS CHEAT CODE</div>
+        <div className="fno-cc-zone" style={{ color: zone.color }}>
+          <span className="fno-cc-zone-badge" style={{ background: `${zone.color}15`, borderColor: `${zone.color}40` }}>{zone.label}</span>
+          <span className="fno-cc-zone-vix">VIX {vixLevel.toFixed(2)}</span>
         </div>
-        <div className="fno-vzc-right">
-          <div className="fno-vzc-strats">
-            {zone.strategies.map(s => (
-              <span key={s} className="fno-vzc-strat" style={{ borderColor: `${zone.color}40`, color: zone.color }}>{s}</span>
-            ))}
-          </div>
-          {zone.avoid && <div className="fno-vzc-avoid">Historically avoid: {zone.avoid}</div>}
-        </div>
+        <div className="fno-cc-bias" style={{ color: zone.color }}>{zone.bias}</div>
+        <div className="fno-cc-disclaimer">Historical patterns · not advice</div>
       </div>
-      <div className="fno-vzc-pattern">{zone.pattern}</div>
-      <button className="fno-vzc-more" onClick={onStrategyClick} style={{ color: zone.color, borderColor: `${zone.color}40` }}>
-        Full strategy playbook →
-      </button>
-      <div className="fno-vzc-disclaimer">Historical patterns only · not investment advice</div>
+      <div className="fno-cc-strategies">
+        {zone.strategies.map(s => (
+          <div key={s.name} className="fno-cc-strat">
+            <div className="fno-cc-strat-name" style={{ color: zone.color }}>{s.name}</div>
+            <div className="fno-cc-strat-note">{s.note}</div>
+          </div>
+        ))}
+      </div>
+      <div className="fno-cc-footer">
+        <div className="fno-cc-pattern">{zone.pattern}</div>
+        {zone.avoid && <div className="fno-cc-avoid">Historically avoid: {zone.avoid}</div>}
+        <button className="fno-cc-more" onClick={onStrategyClick} style={{ color: zone.color, borderColor: `${zone.color}40` }}>
+          Full strategy calculator →
+        </button>
+      </div>
     </div>
   );
 }
@@ -1453,16 +1506,31 @@ export default function FnOPage({ data = {} }) {
       {/* ══ TAB: OVERVIEW ═══════════════════════════════════════════════ */}
       {tab === 'overview' && (
         <div className="fno-tab-content">
-          <div className="fnos-pulse-grid">
-            <div className="fnos-pulse-vix"><VIXCard onVix={setLiveVix} /></div>
-            <div className="fnos-pulse-em"><ExpectedMove data={data} expiries={expiries} /></div>
-            <div className="fnos-pulse-roll"><RolloverMeter expiries={expiries} /></div>
+
+          {/* Row 1: VIX 20% + Cheat Code 80% */}
+          <div className="fno-overview-row1">
+            <div className="fno-overview-vix">
+              <VIXCard onVix={setLiveVix} />
+            </div>
+            <div className="fno-overview-cheatcode">
+              {liveVix != null
+                ? <VixZoneCard vixLevel={liveVix} onStrategyClick={() => setTab('strategy')} />
+                : <div className="fno-loading" style={{padding:20}}>Loading VIX...</div>
+              }
+            </div>
           </div>
-          {/* Current VIX zone — inline playbook reference */}
-          {liveVix != null && <VixZoneCard vixLevel={liveVix} onStrategyClick={() => setTab('strategy')} />}
-          <div className="fnos-full-section">
-            <PivotPoints data={data} />
+
+          {/* Row 2: Small cards left + Pivot Points right */}
+          <div className="fno-overview-row2">
+            <div className="fno-overview-metrics">
+              <ExpectedMove data={data} expiries={expiries} />
+              <RolloverMeter expiries={expiries} />
+            </div>
+            <div className="fno-overview-pivots">
+              <PivotPoints data={data} horizontal />
+            </div>
           </div>
+
         </div>
       )}
 

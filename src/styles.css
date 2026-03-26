@@ -2822,3 +2822,78 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-vzc-more    { font-family: var(--mono); font-size: 11px; font-weight: 600; background: transparent; border: 1px solid; padding: 5px 14px; border-radius: 4px; cursor: pointer; transition: all .15s; margin-right: 12px; }
 .fno-vzc-more:hover { opacity: 0.8; }
 .fno-vzc-disclaimer { display: inline; font-family: var(--mono); font-size: 9px; color: var(--text3); opacity: 0.6; }
+
+/* ── Overview tab layout ─────────────────────────────────────────────────── */
+.fno-overview-row1 {
+  display: grid; grid-template-columns: 240px 1fr;
+  border-bottom: 1px solid var(--border);
+  min-height: 0;
+}
+.fno-overview-vix  { border-right: 1px solid var(--border); }
+.fno-overview-cheatcode { min-width: 0; }
+
+.fno-overview-row2 {
+  display: grid; grid-template-columns: 280px 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.fno-overview-metrics {
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+}
+.fno-overview-metrics > .fno-widget {
+  border-right: none; border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+}
+.fno-overview-metrics > .fno-widget:last-child { border-bottom: none; }
+.fno-overview-pivots { min-width: 0; }
+
+/* ── Cheat Code panel ───────────────────────────────────────────────────── */
+.fno-cheatcode { padding: 16px 20px; height: 100%; display: flex; flex-direction: column; gap: 12px; }
+.fno-cc-header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fno-cc-title  { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text3); }
+.fno-cc-zone   { display: flex; align-items: center; gap: 8px; }
+.fno-cc-zone-badge { font-family: var(--mono); font-size: 11px; font-weight: 700;
+  border: 1px solid; padding: 2px 10px; border-radius: 20px; }
+.fno-cc-zone-vix { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.fno-cc-bias   { font-family: var(--mono); font-size: 11px; font-weight: 600; margin-left: auto; }
+.fno-cc-disclaimer { font-family: var(--mono); font-size: 9px; color: var(--text3); opacity: 0.6; }
+
+.fno-cc-strategies { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex: 1; }
+.fno-cc-strat      { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 10px 14px; }
+.fno-cc-strat-name { font-family: var(--mono); font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+.fno-cc-strat-note { font-family: var(--mono); font-size: 10px; color: var(--text3); line-height: 1.5; }
+
+.fno-cc-footer  { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.fno-cc-pattern { font-family: var(--mono); font-size: 10px; color: var(--text2); line-height: 1.5; flex: 1; }
+.fno-cc-avoid   { font-family: var(--mono); font-size: 10px; color: var(--text3); font-style: italic; }
+.fno-cc-more    { font-family: var(--mono); font-size: 11px; font-weight: 600; background: transparent;
+  border: 1px solid; padding: 5px 14px; border-radius: 4px; cursor: pointer; white-space: nowrap;
+  transition: opacity .15s; flex-shrink: 0; }
+.fno-cc-more:hover { opacity: 0.75; }
+
+/* ── Horizontal pivot table ─────────────────────────────────────────────── */
+.fno-pivot-horiz   { }
+.fno-pvh-table     { display: flex; flex-direction: column; }
+.fno-pvh-row       {
+  display: grid;
+  grid-template-columns: 90px 80px repeat(7, 1fr);
+  align-items: center; border-bottom: 1px solid var(--border);
+  padding: 6px 16px; gap: 4px;
+}
+.fno-pvh-hdr       { background: var(--bg2); }
+.fno-pvh-row:last-child { border-bottom: none; }
+.fno-pvh-index     { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text2); }
+.fno-pvh-price     { font-family: var(--mono); font-size: 11px; color: var(--text); font-weight: 600; }
+.fno-pvh-cell      { font-family: var(--mono); font-size: 10px; text-align: center; color: var(--text3); }
+.fno-pvh-hdr .fno-pvh-cell { font-size: 9px; letter-spacing: 0.5px; font-weight: 700; }
+.fno-pvh-pp        { color: #4A9EFF !important; font-weight: 700; }
+.fno-pvh-near      { background: rgba(245,158,11,0.15); border-radius: 3px; color: #F59E0B !important; font-weight: 700; }
+
+@media (max-width: 900px) {
+  .fno-overview-row1 { grid-template-columns: 1fr; }
+  .fno-overview-vix  { border-right: none; border-bottom: 1px solid var(--border); }
+  .fno-cc-strategies { grid-template-columns: 1fr; }
+  .fno-overview-row2 { grid-template-columns: 1fr; }
+  .fno-overview-metrics { border-right: none; border-bottom: 1px solid var(--border); }
+  .fno-pvh-row       { grid-template-columns: 80px 70px repeat(7, 1fr); font-size: 9px; padding: 5px 10px; }
+}
