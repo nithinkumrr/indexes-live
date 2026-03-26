@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { getNiftyExpiries } from '../utils/timezone';
 
 // ── BLACK-SCHOLES ENGINE ──────────────────────────────────────────────────────
 function norm(x) {
@@ -190,7 +191,7 @@ function PayoffChart({ legs, spot, vix, dte, lots }) {
     return { range, pnls, breakevens, maxP: Math.max(...pnls), minP: Math.min(...pnls) };
   }, [legs, spot, vix, dte, lots]);
 
-  const W = 660, H = 190;
+  const W = 660, H = 160;
   const PAD = { t: 14, r: 12, b: 32, l: 60 };
   const CW = W - PAD.l - PAD.r, CH = H - PAD.t - PAD.b;
   const span = Math.max(maxP - minP, 1);
@@ -337,7 +338,7 @@ function ThetaLine({ legs, spot, vix, dte }) {
   }, [legs, spot, vix, dte]);
 
   if (pts.length < 2) return null;
-  const W = 660, H = 60;
+  const W = 660, H = 50;
   const PAD = { t: 4, r: 8, b: 18, l: 56 };
   const CW = W - PAD.l - PAD.r, CH = H - PAD.t - PAD.b;
   const vals = pts.map(p => p.v);
@@ -488,12 +489,46 @@ function StrategyDetail({ strat, spot, vix, dte, onBacktest }) {
 export default function StrategyPage({ data, onSwitchToBacktest }) {
   const spot = data?.nifty50?.price ? Math.round(data.nifty50.price) : 23000;
   const vix  = data?.vix?.price || 16;
-  const dte  = 4;
 
-  const [filter,     setFilter]     = useState('all');
-  const [selectedId, setSelectedId] = useState('short_straddle');
-  const [compare,    setCompare]    = useState(false);
-  const [compareId,  setCompareId]  = useState('short_iron_condor');
+  // Build expiry options from real dates
+  const expiryOptions = useMemo(() => {
+    const exp = getNiftyExpiries();
+    const now  = new Date();
+    const opts = [];
+    const addOpt = (label, dateObj) => {
+      if (!dateObj?.date) return;
+      const msLeft = dateObj.date - now;
+      const dteVal = Math.max(0, Math.ceil(msLeft / 86400000));
+      const d = dateObj.date;
+      const fmt = `${d.getDate()} ${d.toLocaleString('en-IN',{month:'short'})}`;
+      opts.push({ label: `${label} · ${fmt}`, dte: dteVal, date: fmt });
+    };
+    addOpt('Nifty Weekly', exp.niftyWeekly);
+    addOpt('Nifty Monthly', exp.niftyMonthly);
+    addOpt('Sensex Weekly', exp.sensexWeekly);
+    // Add a few more weeks manually
+    const nw = exp.niftyWeekly?.date;
+    if (nw) {
+      const w2 = new Date(nw); w2.setDate(w2.getDate() + 7);
+      const w3 = new Date(nw); w3.setDate(w3.getDate() + 14);
+      const fmt2 = `${w2.getDate()} ${w2.toLocaleString('en-IN',{month:'short'})}`;
+      const fmt3 = `${w3.getDate()} ${w3.toLocaleString('en-IN',{month:'short'})}`;
+      const dte2 = Math.max(0, Math.ceil((w2 - now) / 86400000));
+      const dte3 = Math.max(0, Math.ceil((w3 - now) / 86400000));
+      opts.push({ label: `Nifty W+2 · ${fmt2}`, dte: dte2, date: fmt2 });
+      opts.push({ label: `Nifty W+3 · ${fmt3}`, dte: dte3, date: fmt3 });
+    }
+    return opts.sort((a, b) => a.dte - b.dte);
+  }, []);
+
+  const [filter,      setFilter]      = useState('all');
+  const [selectedId,  setSelectedId]  = useState('short_straddle');
+  const [compare,     setCompare]     = useState(false);
+  const [compareId,   setCompareId]   = useState('short_iron_condor');
+  const [expiryIdx,   setExpiryIdx]   = useState(0);
+
+  const dte = expiryOptions[expiryIdx]?.dte ?? 4;
+  const expiryLabel = expiryOptions[expiryIdx]?.date ?? '';
 
   const selectedStrat = ALL_STRATEGIES.find(s => s.id === selectedId) || ALL_STRATEGIES[0];
   const compareStrat  = ALL_STRATEGIES.find(s => s.id === compareId);
@@ -501,7 +536,7 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
   const FILTERS = [
     {id:'all',label:'All'},{id:'bullish',label:'Bullish'},{id:'bearish',label:'Bearish'},
     {id:'neutral',label:'Neutral'},{id:'volatile',label:'Volatile'},
-    {id:'income',label:'Income (Sell Premium)'},{id:'buying',label:'Buying (Pay Premium)'},
+    {id:'income',label:'Premium Intake'},{id:'buying',label:'Buying (Pay Premium)'},
   ];
 
   const scores = useMemo(() => {
@@ -540,7 +575,6 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
           {[
             ['NIFTY', spot.toLocaleString('en-IN'), null],
             ['VIX', vix.toFixed(1), vix>25?'#FF4455':vix>18?'#F59E0B':'#00C896'],
-            ['DTE', `${dte}d`, null],
             ['REGIME', vix<15?'LOW · buy options':vix<20?'NORMAL · mixed':vix<25?'ELEVATED · sell premium':'HIGH · sell premium', '#F59E0B'],
           ].map(([l,v,c]) => (
             <div key={l} className="spc-pill">
@@ -548,6 +582,16 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
               <span className="spc-pill-v" style={c?{color:c}:{}}>{v}</span>
             </div>
           ))}
+          {/* Expiry selector */}
+          <div className="spc-pill spc-expiry-pill">
+            <span className="spc-pill-l">EXPIRY</span>
+            <select className="spc-expiry-sel" value={expiryIdx}
+              onChange={e => setExpiryIdx(+e.target.value)}>
+              {expiryOptions.map((o, i) => (
+                <option key={i} value={i}>{o.label} ({o.dte}d)</option>
+              ))}
+            </select>
+          </div>
         </div>
         {topSetups.length > 0 && (
           <div className="spc-best">
@@ -588,7 +632,7 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
                       </div>
                       <div className="spc-item-r2">
                         <span style={{color:VIEW_COLORS[s.view],fontSize:10}}>{s.view}</span>
-                        <span style={{color:s.credit?'#00C896':'#FF4455',fontSize:10}}>{s.credit?'income':'buying'}</span>
+                        <span style={{color:s.credit?'#00C896':'#FF4455',fontSize:10}}>{s.credit?'intake':'buying'}</span>
                         <span style={{color:'var(--text3)',fontSize:9,letterSpacing:2}}>
                           {'●'.repeat(s.complexity)}
                         </span>
