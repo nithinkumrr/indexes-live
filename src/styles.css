@@ -2962,3 +2962,19 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   font-family: var(--mono); font-size: 9px; color: var(--text2);
   font-style: italic; padding-top: 6px; opacity: 0.8;
 }
+
+/* ── Strategy grid compact — bigger fonts, no empty space ───────────────── */
+.fno-strategy-grid-compact { align-items: stretch; }
+.fno-strategy-grid-compact .fno-strategy-zone {
+  display: flex; flex-direction: column; height: 100%;
+}
+.fno-strategy-grid-compact .fno-strategy-zone-label {
+  font-size: 12px !important; margin-bottom: 12px;
+}
+.fno-strategy-grid-compact .fno-strategy-name  { font-size: 14px !important; }
+.fno-strategy-grid-compact .fno-strategy-note  { font-size: 11px !important; line-height: 1.5; }
+.fno-strategy-grid-compact .fno-strategy-avoid {
+  font-size: 11px !important; margin-top: auto; padding-top: 10px;
+}
+.fno-strategy-grid-compact .fno-strategy-list  { gap: 10px; }
+.fno-strategy-grid-compact .fno-strategy-item  { gap: 3px; }
