@@ -3118,3 +3118,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-mp-bn            { display: flex; flex-direction: column; align-items: center; }
 .fno-mp-bn-val        { font-family: var(--mono); font-size: 32px; font-weight: 700; line-height: 1; }
 .fno-mp-bn-lbl        { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+/* ── Market Pulse — fill height, no blank space ─────────────────────────── */
+.fno-pv2-extra { display: flex !important; flex-direction: column !important; height: 100%; }
+.fno-mp-section { flex: 1 !important; min-height: 0; }
+.fno-mp-flex    { flex: 2 !important; }
+.fno-pv2-cols   { display: grid !important; align-items: stretch !important; }
