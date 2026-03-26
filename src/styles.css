@@ -3727,7 +3727,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 }
 .spc-best-btn:hover { background:rgba(0,200,150,.15); }
 
-.spc-body   { display:grid; grid-template-columns:25% 75%; min-height:600px; }
+.spc-body   { display:grid; grid-template-columns:20% 80%; min-height:600px; }
 
 /* Left panel */
 .spc-left   { display:flex; flex-direction:column; border-right:1px solid var(--border); max-height:80vh; overflow-y:auto; }
@@ -4004,7 +4004,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── DETAIL 2-COLUMN LAYOUT ──────────────────────────────────────────────── */
 .spc-hero-stats {
-  display: grid; grid-template-columns: 1fr 1fr 1fr auto;
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
   gap: 1px; background: var(--border);
   border: 1px solid var(--border); border-radius: var(--r);
   overflow: hidden; margin-bottom: 12px;
@@ -4071,7 +4071,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── MODERN REDESIGN ─────────────────────────────────────────────────────── */
 /* Widen input column */
-.spc-two-col { grid-template-columns: 260px 1fr !important; gap: 14px; }
+.spc-two-col { grid-template-columns: 220px 1fr !important; gap: 14px; }
 
 /* Input column - cleaner card */
 .spc-inputs-col {
@@ -4181,3 +4181,43 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .spc-greeks { border-radius: 8px !important; overflow: hidden !important; }
 .spc-greek { background: #0D0D13 !important; border: none !important; padding: 9px 12px !important; }
 .spc-greek-val { font-size: 14px !important; }
+
+/* ── SENSIBULL-STYLE SLIDERS ─────────────────────────────────────────────── */
+.spc-sliders-modern {
+  background: #0D0D14; border: 1px solid rgba(255,255,255,0.07);
+  border-top: none; padding: 10px 14px; display: flex; gap: 24px; flex-wrap: wrap;
+}
+.spc-slider-group { flex: 1; min-width: 200px; }
+.spc-slider-top {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 6px; flex-wrap: wrap;
+}
+.spc-sl-title { font-size: 10px; font-weight: 600; color: var(--text2); min-width: fit-content; }
+.spc-sl-pct   { font-size: 10px; font-weight: 700; font-family: monospace; min-width: 42px; }
+.spc-sl-step  {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05);
+  color: var(--text); font-size: 14px; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: background .1s;
+}
+.spc-sl-step:hover { background: rgba(255,255,255,0.12); }
+.spc-sl-num {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px; color: var(--text); font-size: 12px; font-family: monospace;
+  padding: 3px 6px; width: 72px; text-align: center;
+}
+.spc-sl-num:focus { outline: none; border-color: rgba(74,158,255,.4); }
+.spc-sl-reset-sm {
+  font-size: 9px; color: var(--accent); background: transparent;
+  border: none; cursor: pointer; padding: 0; text-decoration: underline;
+  text-underline-offset: 2px; flex-shrink: 0;
+}
+.spc-slider-full {
+  width: 100%; accent-color: #4A9EFF; height: 3px; cursor: pointer;
+  appearance: auto;
+}
+.spc-slider-dates {
+  display: flex; justify-content: space-between;
+  font-size: 9px; color: var(--text3); margin-top: 3px; font-family: monospace;
+}
