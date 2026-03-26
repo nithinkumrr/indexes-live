@@ -2514,7 +2514,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   display: grid;
   grid-template-columns: 70% 30%;
   border-bottom: 1px solid var(--border);
-  min-height: 480px;
 }
 .sentiment-bubble-main {
   border-right: 1px solid var(--border);
@@ -2617,7 +2616,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   display: grid;
   grid-template-columns: 60% 40%;
   border-bottom: 1px solid var(--border);
-  min-height: 480px;
   align-items: start;
 }
 .sentiment-bubble-main {
