@@ -676,25 +676,28 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
           <div className="spc-list">
             {fGroups.map(g => (
               <div key={g.id}>
-                <div className="spc-glabel" style={{color:g.color}}>{g.icon} {g.label}</div>
+                <div className="spc-glabel">
+                  <span className="spc-glabel-dot" style={{background:g.color}}/>
+                  <span style={{color:g.color}}>{g.label.toUpperCase()}</span>
+                </div>
                 {g.strategies.map(s => {
                   const sc = scores[s.id];
-                  const c  = sc>=8?'#00C896':sc>=6?'#F59E0B':'var(--text3)';
+                  const scoreC = sc>=8?'#00C896':sc>=6?'#F59E0B':'#666';
                   const lastS = loadSession(s.id);
                   const hasSession = lastS && lastS.some(l => l.p > 0);
                   return (
-                    <div key={s.id} className={`spc-item ${selId===s.id?'spc-item-on':''}`} onClick={() => setSelId(s.id)}>
-                      <div className="spc-item-r1">
-                        <span className="spc-item-name">{s.label}</span>
-                        <div style={{display:'flex',alignItems:'center',gap:4}}>
-                          {hasSession && <span style={{fontSize:8,color:'var(--text3)'}}>📋</span>}
-                          <span style={{color:c,fontSize:10,fontFamily:'monospace',fontWeight:700}}>{sc}/10</span>
-                        </div>
-                      </div>
-                      <div className="spc-item-r2">
-                        <span style={{color:g.color,fontSize:10}}>{g.label.toLowerCase()}</span>
-                        <span style={{color:s.credit?'#00C896':'#FF4455',fontSize:10}}>{s.credit?'collect':'pay'}</span>
-                        <span style={{color:'var(--text3)',fontSize:9,letterSpacing:2}}>{'●'.repeat(s.complexity)}</span>
+                    <div key={s.id}
+                      className={`spc-item ${selId===s.id?'spc-item-on':''}`}
+                      style={{'--gc': g.color}}
+                      onClick={() => setSelId(s.id)}>
+                      <div className="spc-item-stripe" style={{background:g.color}}/>
+                      <span className="spc-item-name">{s.label}</span>
+                      <div className="spc-item-meta">
+                        {hasSession && <span className="spc-item-dot-saved">●</span>}
+                        <span className="spc-item-type" style={{color:s.credit?'#00C896':'#FF4455'}}>
+                          {s.credit?'C':'P'}
+                        </span>
+                        <span className="spc-item-score" style={{color:scoreC}}>{sc}/10</span>
                       </div>
                     </div>
                   );
