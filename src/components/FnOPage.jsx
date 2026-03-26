@@ -1458,13 +1458,13 @@ function PivotPointsV2({ data }) {
           );
 
           const levels = [
-            { key:'R3', val:p.R3, type:'res',   color:'#FF9999' },
-            { key:'R2', val:p.R2, type:'res',   color:'#FF6666' },
-            { key:'R1', val:p.R1, type:'res',   color:'#FF4455' },
-            { key:'PP', val:p.PP, type:'pivot', color:'#F59E0B' },
-            { key:'S1', val:p.S1, type:'sup',   color:'#00C896' },
-            { key:'S2', val:p.S2, type:'sup',   color:'#00A07A' },
-            { key:'S3', val:p.S3, type:'sup',   color:'#006B52' },
+            { key:'R3', val:p.R3, type:'res',   color:'#FF9999', cls:'lvl-r3' },
+            { key:'R2', val:p.R2, type:'res',   color:'#FF7070', cls:'lvl-r2' },
+            { key:'R1', val:p.R1, type:'res',   color:'#FF3344', cls:'lvl-r1' },
+            { key:'PP', val:p.PP, type:'pivot', color:'#F59E0B', cls:'lvl-pp' },
+            { key:'S1', val:p.S1, type:'sup',   color:'#00D4A0', cls:'lvl-s1' },
+            { key:'S2', val:p.S2, type:'sup',   color:'#009970', cls:'lvl-s2' },
+            { key:'S3', val:p.S3, type:'sup',   color:'#006644', cls:'lvl-s3' },
           ];
 
           const chg = d?.changePct || 0;
@@ -1590,8 +1590,9 @@ function PivotPointsV2({ data }) {
                 </div>
               </>
             ) : (
-              <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--text3)',lineHeight:1.6}}>
-                Available during market hours<br/>9:15 AM – 3:30 PM IST
+              <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--text3)',lineHeight:2,flex:1,display:'flex',flexDirection:'column',justifyContent:'center'}}>
+                <div>Available during market hours</div>
+                <div style={{color:'var(--text2)',fontWeight:600}}>9:15 AM – 3:30 PM IST</div>
               </div>
             )}
           </div>

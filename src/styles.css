@@ -3124,3 +3124,39 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-mp-section { flex: 1 !important; min-height: 0; }
 .fno-mp-flex    { flex: 2 !important; }
 .fno-pv2-cols   { display: grid !important; align-items: stretch !important; }
+
+/* ── Pivot level colors — direct class targeting ─────────────────────────── */
+.lvl-r1 .fno-pv2-key, .lvl-r1 .fno-pv2-val { color: #FF3344 !important; }
+.lvl-r2 .fno-pv2-key, .lvl-r2 .fno-pv2-val { color: #FF7070 !important; }
+.lvl-r3 .fno-pv2-key, .lvl-r3 .fno-pv2-val { color: #FF9999 !important; }
+.lvl-pp .fno-pv2-key, .lvl-pp .fno-pv2-val { color: #F59E0B !important; }
+.lvl-s1 .fno-pv2-key, .lvl-s1 .fno-pv2-val { color: #00D4A0 !important; }
+.lvl-s2 .fno-pv2-key, .lvl-s2 .fno-pv2-val { color: #009970 !important; }
+.lvl-s3 .fno-pv2-key, .lvl-s3 .fno-pv2-val { color: #006644 !important; }
+
+.lvl-r1 { background: rgba(255,51,68,0.08) !important; }
+.lvl-r2 { background: rgba(255,112,112,0.06) !important; }
+.lvl-r3 { background: rgba(255,153,153,0.04) !important; }
+.lvl-pp { background: rgba(245,158,11,0.10) !important; }
+.lvl-s1 { background: rgba(0,212,160,0.08) !important; }
+.lvl-s2 { background: rgba(0,153,112,0.06) !important; }
+.lvl-s3 { background: rgba(0,102,68,0.04) !important; }
+
+/* ── Market Pulse layout fixes ───────────────────────────────────────────── */
+.fno-mp-section       { padding: 12px 14px !important; display: flex !important; flex-direction: column !important; gap: 8px !important; }
+.fno-mp-section.fno-mp-flex { flex: 1 !important; }
+
+/* Sections don't overlap — clear gap */
+.fno-mp-section-border { border-top: 1px solid var(--border) !important; margin-top: 0 !important; }
+
+/* Bar rows spacing */
+.fno-mp-bar-row       { display: flex !important; align-items: center !important; gap: 8px !important; min-height: 22px; }
+.fno-mp-stat-row      { display: flex !important; justify-content: space-between !important; align-items: center !important; min-height: 22px; }
+
+/* Breadth fills remaining space */
+.fno-pv2-extra        { display: flex !important; flex-direction: column !important; }
+.fno-pv2-extra > .fno-pv2-col-hdr { flex-shrink: 0; }
+.fno-mp-section:last-child { flex: 1 !important; }
+
+/* No blank space — market closed message fills nicely */
+.fno-mp-closed-msg    { display: flex; flex-direction: column; justify-content: center; flex: 1; }
