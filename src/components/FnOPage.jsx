@@ -1948,7 +1948,7 @@ function IndiaTickerFno() {
       </div>
       <div className="fno-it-meta">
         {isMarketOpen()
-          ? <span className="fno-it-live">● LIVE · Kite · every 5s</span>
+          ? <span className="fno-it-live">● LIVE · every 5s</span>
           : <span className="fno-it-closed">Market closed{istStr ? ` · as of ${istStr} IST` : ''}</span>
         }
       </div>
