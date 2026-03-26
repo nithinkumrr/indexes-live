@@ -1342,6 +1342,7 @@ export default function FnOPage({ data = {} }) {
   const [expiries, setExpiries]         = useState(() => getNiftyExpiries(FALLBACK_HOLIDAYS, FALLBACK_NAMES));
   const [holidayLive, setHolidayLive]   = useState(false);
   const [liveVix, setLiveVix]           = useState(null);
+  const [tab, setTab]                   = useState('overview');
 
   useEffect(() => {
     fetch('/api/holidays').then(r => r.json()).then(d => {
@@ -1357,103 +1358,127 @@ export default function FnOPage({ data = {} }) {
     return () => clearInterval(id);
   }, [holidays, holidayNames]);
 
+  const TABS = [
+    { id: 'overview',   label: 'Overview'   },
+    { id: 'strategy',   label: 'Strategy'   },
+    { id: 'calculator', label: 'Calculator' },
+    { id: 'reference',  label: 'Reference'  },
+  ];
+
   return (
     <div className="fno-page">
 
       {/* ══ TICKER ══════════════════════════════════════════════════════ */}
       <Ticker data={data} />
 
-      {/* ══ EXPIRY COUNTDOWNS ══════════════════════════════════════════ */}
-      <div className="fnos-expiry-strip">
-        <div className="fnos-expiry-group">
-          <div className="fnos-group-hdr">
-            <span className="fnos-group-name">Nifty 50</span>
-            <span className="fnos-group-rule">Tue weekly · last-Thu monthly</span>
+      {/* ══ COMPACT EXPIRY STRIP ════════════════════════════════════════ */}
+      <ExpiryStrip expiries={expiries} holidayLive={holidayLive} />
+
+      {/* ══ TABS ════════════════════════════════════════════════════════ */}
+      <div className="fno-tabs-bar">
+        {TABS.map(t => (
+          <button key={t.id}
+            className={`fno-tab-btn ${tab === t.id ? 'fno-tab-active' : ''}`}
+            onClick={() => setTab(t.id)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ══ TAB: OVERVIEW ═══════════════════════════════════════════════ */}
+      {tab === 'overview' && (
+        <div className="fno-tab-content">
+          <div className="fnos-pulse-grid">
+            <div className="fnos-pulse-vix"><VIXCard onVix={setLiveVix} /></div>
+            <div className="fnos-pulse-em"><ExpectedMove data={data} expiries={expiries} /></div>
+            <div className="fnos-pulse-roll"><RolloverMeter expiries={expiries} /></div>
           </div>
-          <div className="fnos-expiry-cards">
-            <ExpiryCard label="Weekly"  color="#4A9EFF" {...expiries.niftyWeekly}  />
-            <ExpiryCard label="Monthly" color="#4A9EFF" {...expiries.niftyMonthly} />
+          <div className="fnos-full-section">
+            <PivotPoints data={data} />
           </div>
         </div>
-        <div className="fnos-expiry-group">
-          <div className="fnos-group-hdr">
-            <span className="fnos-group-name">Sensex</span>
-            <span className="fnos-group-rule">Thu weekly · last-Thu monthly</span>
+      )}
+
+      {/* ══ TAB: STRATEGY ════════════════════════════════════════════════ */}
+      {tab === 'strategy' && (
+        <div className="fno-tab-content">
+          <div className="fnos-playbook-wrap">
+            <StrategySheet vixLevel={liveVix} />
           </div>
-          <div className="fnos-expiry-cards">
-            <ExpiryCard label="Weekly"  color="#F59E0B" {...expiries.sensexWeekly}  />
-            <ExpiryCard label="Monthly" color="#F59E0B" {...expiries.sensexMonthly} />
+          <PayoffBuilder data={data} />
+        </div>
+      )}
+
+      {/* ══ TAB: CALCULATOR ══════════════════════════════════════════════ */}
+      {tab === 'calculator' && (
+        <div className="fno-tab-content">
+          <div className="fnos-calc-grid">
+            <BlackScholes data={data} />
+            <PositionSizer data={data} />
+          </div>
+          <div className="fnos-half-grid">
+            <ExpiryStats />
+            <VixSeasonality />
           </div>
         </div>
-        <div className="fnos-expiry-meta">
-          Holiday-adjusted · 15:30 IST
-          {holidayLive && <span className="fnos-live-badge">· NSE calendar live</span>}
+      )}
+
+      {/* ══ TAB: REFERENCE ═══════════════════════════════════════════════ */}
+      {tab === 'reference' && (
+        <div className="fno-tab-content">
+          <div className="fnos-ref-grid">
+            <ThetaDecayCurve />
+            <ExpiryCalendar holidays={holidays} holidayNames={holidayNames} />
+            <LotSizes />
+          </div>
         </div>
-      </div>
-
-      {/* ══ SECTION: MARKET PULSE ══════════════════════════════════════ */}
-      <div className="fnos-section-hdr">
-        <span>MARKET PULSE</span>
-      </div>
-      <div className="fnos-pulse-grid">
-        <div className="fnos-pulse-vix">
-          <VIXCard onVix={setLiveVix} />
-        </div>
-        <div className="fnos-pulse-em">
-          <ExpectedMove data={data} expiries={expiries} />
-        </div>
-        <div className="fnos-pulse-roll">
-          <RolloverMeter expiries={expiries} />
-        </div>
-      </div>
-
-      {/* ══ SECTION: OPTIONS PLAYBOOK ══════════════════════════════════ */}
-      <div className="fnos-section-hdr">
-        <span>OPTIONS PLAYBOOK</span>
-        <span className="fnos-section-sub">Historical patterns · not advice</span>
-      </div>
-      <div className="fnos-playbook-wrap">
-        <StrategySheet vixLevel={liveVix} />
-      </div>
-
-      {/* ══ SECTION: STRATEGY CALCULATOR ══════════════════════════════ */}
-      <div className="fnos-section-hdr">
-        <span>STRATEGY CALCULATOR</span>
-        <span className="fnos-section-sub">Theoretical payoff at expiry</span>
-      </div>
-      <PayoffBuilder data={data} />
-
-      {/* ══ SECTION: CALCULATORS ═══════════════════════════════════════ */}
-      <div className="fnos-section-hdr">
-        <span>CALCULATORS</span>
-      </div>
-      <div className="fnos-calc-grid">
-        <BlackScholes data={data} />
-        <PositionSizer data={data} />
-      </div>
-
-      {/* ══ SECTION: LEVELS & ANALYSIS ════════════════════════════════ */}
-      <div className="fnos-section-hdr">
-        <span>LEVELS & ANALYSIS</span>
-      </div>
-      <div className="fnos-full-section">
-        <PivotPoints data={data} />
-      </div>
-      <div className="fnos-half-grid">
-        <ExpiryStats />
-        <VixSeasonality />
-      </div>
-
-      {/* ══ SECTION: REFERENCE ════════════════════════════════════════ */}
-      <div className="fnos-section-hdr">
-        <span>REFERENCE</span>
-      </div>
-      <div className="fnos-ref-grid">
-        <ThetaDecayCurve />
-        <ExpiryCalendar holidays={holidays} holidayNames={holidayNames} />
-        <LotSizes />
-      </div>
+      )}
 
     </div>
   );
 }
+
+// ── Compact expiry strip ──────────────────────────────────────────────────────
+function ExpiryStrip({ expiries, holidayLive }) {
+  return (
+    <div className="fno-expiry-strip-compact">
+      <ExpiryStripItem label="Nifty Weekly"  color="#4A9EFF" {...expiries.niftyWeekly}  />
+      <div className="fno-estrip-sep" />
+      <ExpiryStripItem label="Nifty Monthly" color="#4A9EFF" {...expiries.niftyMonthly} />
+      <div className="fno-estrip-sep" />
+      <ExpiryStripItem label="Sensex Weekly"  color="#F59E0B" {...expiries.sensexWeekly}  />
+      <div className="fno-estrip-sep" />
+      <ExpiryStripItem label="Sensex Monthly" color="#F59E0B" {...expiries.sensexMonthly} />
+      <div className="fno-estrip-meta">
+        Holiday-adjusted · 15:30 IST
+        {holidayLive && <span style={{ color: 'var(--accent)', marginLeft: 5 }}>· NSE live</span>}
+      </div>
+    </div>
+  );
+}
+
+function ExpiryStripItem({ label, date, secsLeft, color, shifted }) {
+  const [secs, setSecs] = useState(secsLeft);
+  useEffect(() => {
+    setSecs(secsLeft);
+    const id = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [secsLeft]);
+  const d = Math.floor(secs / 86400), h = Math.floor((secs % 86400) / 3600),
+        m = Math.floor((secs % 3600) / 60), s = secs % 60;
+  const p = n => String(n).padStart(2, '0');
+  return (
+    <div className="fno-estrip-item">
+      <span className="fno-estrip-label" style={{ color }}>{label}</span>
+      <span className="fno-estrip-date">{date}</span>
+      {shifted && <span className="fno-estrip-shifted">⚠ shifted</span>}
+      <span className="fno-estrip-clock">
+        {d > 0 && <><span className="fno-estrip-n">{d}</span><span className="fno-estrip-u">d</span></>}
+        <span className="fno-estrip-n">{p(h)}</span><span className="fno-estrip-u">h</span>
+        <span className="fno-estrip-n">{p(m)}</span><span className="fno-estrip-u">m</span>
+        <span className="fno-estrip-n fno-estrip-s">{p(s)}</span><span className="fno-estrip-u">s</span>
+      </span>
+    </div>
+  );
+}
+
