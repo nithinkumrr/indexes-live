@@ -858,17 +858,29 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
           <div className="spc-checklist">
             <div className="spc-checklist-title">BEFORE YOU TRADE</div>
             {[
-              ['Pick expiry',         'Match DTE to your strategy'],
-              ['Enter real premiums', 'Use option chain LTP from your broker'],
-              ['Set your stop loss',  'Know exit before you enter'],
-              ['Check VIX regime',    'Confirms strategy fit today'],
-              [strat.credit?'Check SPAN margin':'Arrange capital', strat.credit?'Check SPAN margin in your broker platform':'Full debit amount must be available'],
-            ].map(([s, n]) => (
-              <label key={s} className="spc-checklist-row">
+              // Entry setup
+              { step: 'Confirm expiry date',    note: `Nifty expires Tue · pick the right week`, icon: '📅' },
+              { step: 'Enter real premiums',    note: 'Open option chain, copy LTP for each strike', icon: '💰' },
+              { step: 'Verify breakeven levels',note: hasPremiums ? `Your BE: ${(() => { const s2=spot>10000?50:25,ks=legs.map(l=>l.k),ps=[];for(let s=Math.min(...ks)-s2*15;s<=Math.max(...ks)+s2*15;s+=s2){let t=0;legs.forEach(l=>{t+=l.q*(Math.max(0,l.t==='CE'?s-l.k:l.k-s)-l.p);});ps.push({s,t});}const bes=[];for(let i=0;i<ps.length-1;i++){if((ps[i].t<0&&ps[i+1].t>=0)||(ps[i].t>=0&&ps[i+1].t<0)){bes.push(Math.round(ps[i].s+(-ps[i].t/(ps[i+1].t-ps[i].t))*(ps[i+1].s-ps[i].s)));}}return bes.length?bes.map(b=>b.toLocaleString('en-IN')).join(' / '):'enter premiums first';})()}` : 'Enter premiums above to see your breakevens', icon: '⚖️' },
+              // Risk management
+              { step: 'Set your stop loss',     note: strat.credit ? 'If loss hits 2x premium collected, exit' : 'Exit if premium loses 50% of value', icon: '🛑' },
+              { step: 'Size your position',     note: 'Risk no more than 2 to 3% of capital per trade', icon: '📊' },
+              // Market context
+              { step: 'Check upcoming events',  note: 'Budget, RBI, earnings? Big events crush sellers', icon: '📰' },
+              { step: 'Check open interest',    note: 'High OI at your strikes means better liquidity', icon: '🔍' },
+              // VIX fit
+              { step: `VIX is ${vix.toFixed(1)}, ${vixCtx.label}`, note: vixCtx.tip, icon: '🌡️' },
+              // Exit plan
+              { step: 'Plan your exit before entry', note: strat.credit ? 'Target 50% of max profit. Exit early, not at expiry' : 'Target 2x premium paid. Avoid holding to expiry', icon: '🎯' },
+            ].map(({ step, note, icon }) => (
+              <label key={step} className="spc-checklist-row">
                 <input type="checkbox" className="spc-check"/>
-                <div>
-                  <div className="spc-check-step">{s}</div>
-                  <div className="spc-check-note">{n}</div>
+                <div className="spc-check-content">
+                  <div className="spc-check-step">
+                    <span className="spc-check-icon">{icon}</span>
+                    {step}
+                  </div>
+                  <div className="spc-check-note">{note}</div>
                 </div>
               </label>
             ))}
