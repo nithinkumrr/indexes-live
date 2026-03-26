@@ -2929,3 +2929,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-overview-vix .fno-vix-hist-row { font-size: 10px; }
 .fno-overview-vix .fno-vix-hist-note { font-size: 9px; }
 .fno-overview-vix .fno-vix-bias    { padding: 5px 10px; font-size: 10px; margin-top: 6px; }
+
+/* ── VIX bias block expanded ─────────────────────────────────────────────── */
+.fno-vix-bias             { border: 1px solid; border-radius: var(--r); padding: 10px 12px; margin-top: 6px; display: flex; flex-direction: column; gap: 5px; }
+.fno-vix-bias-label       { font-family: var(--mono); font-size: 12px; font-weight: 700; }
+.fno-vix-bias-detail      { font-family: var(--mono); font-size: 10px; color: var(--text2); line-height: 1.5; }
+.fno-vix-bias-disclaimer  { font-family: var(--mono); font-size: 9px; color: var(--text3); line-height: 1.4; border-top: 1px solid var(--border); padding-top: 5px; margin-top: 2px; opacity: 0.7; }
+
+/* Fill VIX card height — no empty space */
+.fno-overview-vix .fno-vix-card { display: flex; flex-direction: column; }
+.fno-overview-vix .fno-vix-bias { flex: 1; margin-top: auto; }

@@ -153,10 +153,22 @@ function VIXCard({ onVix }) {
   }, []);
 
   const REGIMES = [
-    { max: 12, label: 'VERY LOW',  color: '#00C896', bias: 'Buy options — cheap insurance', bg: 'rgba(0,200,150,0.06)' },
-    { max: 20, label: 'NORMAL',    color: '#4A9EFF', bias: 'Balanced — directional strategies', bg: 'rgba(74,158,255,0.06)' },
-    { max: 30, label: 'ELEVATED',  color: '#F59E0B', bias: 'Sell premium — straddle / strangle', bg: 'rgba(245,158,11,0.06)' },
-    { max: 99, label: 'HIGH FEAR', color: '#FF4455', bias: 'Hedge aggressively, reduce size', bg: 'rgba(255,68,85,0.06)' },
+    { max: 12, label: 'VERY LOW',  color: '#00C896', bg: 'rgba(0,200,150,0.06)',
+      bias: 'Option buyers historically favoured',
+      detail: 'Low VIX = cheap premiums. Long straddles & strangles have historically offered good cost-to-move ratios. Sellers collect little premium for the risk taken.',
+    },
+    { max: 20, label: 'NORMAL',    color: '#4A9EFF', bg: 'rgba(74,158,255,0.06)',
+      bias: 'Balanced — no structural edge either side',
+      detail: 'Iron condors, vertical spreads, and covered calls tend to perform as designed in this range. Neither buyers nor sellers have a consistent historical advantage.',
+    },
+    { max: 30, label: 'ELEVATED',  color: '#F59E0B', bg: 'rgba(245,158,11,0.06)',
+      bias: 'Premium sellers historically favoured',
+      detail: 'Elevated VIX has historically mean-reverted. Short straddles and strangles collect fat premiums. Credit spreads offer more credit per unit of risk. Markets that settle reward sellers.',
+    },
+    { max: 99, label: 'HIGH FEAR', color: '#FF4455', bg: 'rgba(255,68,85,0.06)',
+      bias: 'Reduce size · hedge first',
+      detail: 'Extreme VIX means gaps and overnight reversals are common. Far OTM credit spreads collect outsized premium but tails are fat. Many professional desks reduce position size significantly.',
+    },
   ];
 
   const HISTORY = [
@@ -204,8 +216,10 @@ function VIXCard({ onVix }) {
       </div>
 
       {/* Regime bias */}
-      <div className="fno-vix-bias" style={{ background: zone.bg, borderColor: `${zone.color}30`, color: zone.color }}>
-        → {zone.bias}
+      <div className="fno-vix-bias" style={{ background: zone.bg, borderColor: `${zone.color}30` }}>
+        <div className="fno-vix-bias-label" style={{ color: zone.color }}>→ {zone.bias}</div>
+        <div className="fno-vix-bias-detail">{zone.detail}</div>
+        <div className="fno-vix-bias-disclaimer">Based on publicly available historical VIX data. For educational reference only — not investment advice. Past patterns do not guarantee future results.</div>
       </div>
     </div>
   );
