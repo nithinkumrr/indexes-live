@@ -492,33 +492,45 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
 
   // Build expiry options from real dates
   const expiryOptions = useMemo(() => {
-    const exp = getNiftyExpiries();
-    const now  = new Date();
-    const opts = [];
-    const addOpt = (label, dateObj) => {
-      if (!dateObj?.date) return;
-      const msLeft = dateObj.date - now;
-      const dteVal = Math.max(0, Math.ceil(msLeft / 86400000));
-      const d = dateObj.date;
-      const fmt = `${d.getDate()} ${d.toLocaleString('en-IN',{month:'short'})}`;
-      opts.push({ label: `${label} · ${fmt}`, dte: dteVal, date: fmt });
-    };
-    addOpt('Nifty Weekly', exp.niftyWeekly);
-    addOpt('Nifty Monthly', exp.niftyMonthly);
-    addOpt('Sensex Weekly', exp.sensexWeekly);
-    // Add a few more weeks manually
-    const nw = exp.niftyWeekly?.date;
-    if (nw) {
-      const w2 = new Date(nw); w2.setDate(w2.getDate() + 7);
-      const w3 = new Date(nw); w3.setDate(w3.getDate() + 14);
-      const fmt2 = `${w2.getDate()} ${w2.toLocaleString('en-IN',{month:'short'})}`;
-      const fmt3 = `${w3.getDate()} ${w3.toLocaleString('en-IN',{month:'short'})}`;
-      const dte2 = Math.max(0, Math.ceil((w2 - now) / 86400000));
-      const dte3 = Math.max(0, Math.ceil((w3 - now) / 86400000));
-      opts.push({ label: `Nifty W+2 · ${fmt2}`, dte: dte2, date: fmt2 });
-      opts.push({ label: `Nifty W+3 · ${fmt3}`, dte: dte3, date: fmt3 });
+    try {
+      const exp = getNiftyExpiries();
+      const now  = new Date();
+      const opts = [];
+      const addOpt = (label, dateObj) => {
+        if (!dateObj?.date) return;
+        try {
+          const msLeft = dateObj.date - now;
+          const dteVal = Math.max(0, Math.ceil(msLeft / 86400000));
+          const d = dateObj.date;
+          const fmt = `${d.getDate()} ${d.toLocaleString('en-IN',{month:'short'})}`;
+          opts.push({ label: `${label} · ${fmt}`, dte: dteVal, date: fmt });
+        } catch (_) {}
+      };
+      addOpt('Nifty Weekly', exp.niftyWeekly);
+      addOpt('Nifty Monthly', exp.niftyMonthly);
+      addOpt('Sensex Weekly', exp.sensexWeekly);
+      const nw = exp.niftyWeekly?.date;
+      if (nw) {
+        const w2 = new Date(nw); w2.setDate(w2.getDate() + 7);
+        const w3 = new Date(nw); w3.setDate(w3.getDate() + 14);
+        const fmt2 = `${w2.getDate()} ${w2.toLocaleString('en-IN',{month:'short'})}`;
+        const fmt3 = `${w3.getDate()} ${w3.toLocaleString('en-IN',{month:'short'})}`;
+        const dte2 = Math.max(0, Math.ceil((w2 - now) / 86400000));
+        const dte3 = Math.max(0, Math.ceil((w3 - now) / 86400000));
+        opts.push({ label: `Nifty W+2 · ${fmt2}`, dte: dte2, date: fmt2 });
+        opts.push({ label: `Nifty W+3 · ${fmt3}`, dte: dte3, date: fmt3 });
+      }
+      const sorted = opts.sort((a, b) => a.dte - b.dte);
+      return sorted.length > 0 ? sorted : [
+        { label: 'Weekly (4d)', dte: 4, date: '' },
+        { label: 'Monthly (25d)', dte: 25, date: '' },
+      ];
+    } catch (_) {
+      return [
+        { label: 'Weekly (4d)', dte: 4, date: '' },
+        { label: 'Monthly (25d)', dte: 25, date: '' },
+      ];
     }
-    return opts.sort((a, b) => a.dte - b.dte);
   }, []);
 
   const [filter,      setFilter]      = useState('all');
