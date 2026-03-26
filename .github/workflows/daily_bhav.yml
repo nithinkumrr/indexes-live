@@ -1,0 +1,20 @@
+name: Daily Bhav Download
+
+on:
+  schedule:
+    - cron: '30 13 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  download-bhav:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.3.0'
+      - run: Rscript -e "install.packages(c('nser','httr','jsonlite'),repos='https://cran.r-project.org')"
+      - env:
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: Rscript .github/scripts/daily_bhav.R
