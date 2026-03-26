@@ -4068,3 +4068,116 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .spc-two-col { grid-template-columns: 1fr; }
   .spc-hero-stats { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── MODERN REDESIGN ─────────────────────────────────────────────────────── */
+/* Widen input column */
+.spc-two-col { grid-template-columns: 260px 1fr !important; gap: 14px; }
+
+/* Input column - cleaner card */
+.spc-inputs-col {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  padding: 12px !important;
+}
+
+/* Leg cards - modern pill style */
+.spc-dleg-v {
+  background: var(--bg3) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  padding: 9px 11px !important;
+  transition: border-color .15s;
+}
+.spc-dleg-v:focus-within { border-color: rgba(74,158,255,.4) !important; }
+
+/* Inputs inside legs */
+.spc-strike-input-v, .spc-prem-input-v {
+  background: var(--bg) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
+  padding: 5px 8px !important;
+  color: var(--text) !important;
+  transition: border-color .15s, box-shadow .15s;
+}
+.spc-strike-input-v:focus, .spc-prem-input-v:focus {
+  outline: none !important;
+  border-color: rgba(74,158,255,.5) !important;
+  box-shadow: 0 0 0 2px rgba(74,158,255,.1) !important;
+}
+.spc-prem-input-v.spc-prem-filled {
+  border-color: rgba(0,200,150,.4) !important;
+  color: #00D4A8 !important;
+  font-weight: 600 !important;
+}
+
+/* Lots - compact inline badge style */
+.spc-lots {
+  background: var(--bg) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 6px !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  padding: 4px 8px !important;
+  width: 60px !important;
+  font-family: var(--mono) !important;
+}
+.spc-lots:focus { outline: none; border-color: rgba(74,158,255,.5); }
+
+/* Hero stats - bolder, more contrast */
+.spc-hero-val { font-size: 22px !important; font-weight: 800 !important; letter-spacing: -.02em !important; }
+.spc-hero-stat { border-radius: 0 !important; }
+
+/* Chart area - dark premium feel */
+.spc-chart {
+  background: #0A0A0F !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 10px 10px 0 0 !important;
+  padding: 10px 8px 6px !important;
+}
+.spc-sliders {
+  background: #0D0D13 !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-top: 1px solid rgba(255,255,255,0.04) !important;
+  padding: 8px 12px !important;
+}
+.spc-pnl-bar {
+  background: #0D0D13 !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-top: 1px solid rgba(255,255,255,0.04) !important;
+  border-radius: 0 0 10px 10px !important;
+  padding: 6px 12px !important;
+}
+
+/* Slider track accent color */
+.spc-slider { accent-color: #4A9EFF !important; height: 2px !important; }
+
+/* Prompt message */
+.spc-prem-prompt {
+  height: 200px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #0A0A0F !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 10px !important;
+  color: var(--text3) !important;
+  font-size: 13px !important;
+}
+
+/* Share/Backtest buttons */
+.spc-share-btn { border-radius: 8px !important; font-size: 12px !important; padding: 9px 14px !important; }
+.spc-bt-btn { border-radius: 8px !important; font-size: 12px !important; }
+
+/* Section labels */
+.spc-section-lbl { font-size: 9px !important; letter-spacing: .1em !important; color: rgba(255,255,255,0.25) !important; }
+
+/* How to get premium button */
+.spc-prem-hint-btn { border-radius: 6px !important; font-size: 10px !important; }
+.spc-reset-btn { border-radius: 6px !important; font-size: 10px !important; }
+
+/* Greeks - sleeker */
+.spc-greeks { border-radius: 8px !important; overflow: hidden !important; }
+.spc-greek { background: #0D0D13 !important; border: none !important; padding: 9px 12px !important; }
+.spc-greek-val { font-size: 14px !important; }
