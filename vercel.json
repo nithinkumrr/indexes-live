@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/kite-callback", "destination": "/api/kite-auth" },
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
   "headers": [
