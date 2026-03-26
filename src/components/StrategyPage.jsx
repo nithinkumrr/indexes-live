@@ -762,7 +762,12 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
         <div className="spc-stat-cell" style={{borderColor:'#FF445530',background:'#FF44550A'}}>
           <div className="spc-stat-lbl">MAX LOSS</div>
           <div className="spc-stat-val loss">
-            {maxL===0&&net===0?<span style={{color:'#444'}}>—</span>:iu(maxL)?<span style={{fontSize:26}}>∞</span>:fmt(Math.abs(maxL))}
+            {maxL===0&&net===0?<span style={{color:'#444'}}>—</span>:iu(maxL)
+              ?<span style={{display:'flex',flexDirection:'column',gap:2}}>
+                  <span style={{fontSize:13,fontWeight:800,letterSpacing:'.05em',color:'#FF4455'}}>UNLIMITED</span>
+                  <span style={{fontSize:32,fontWeight:900,lineHeight:1,color:'#FF4455'}}>∞</span>
+                </span>
+              :fmt(Math.abs(maxL))}
           </div>
           {iu(maxL)&&<div className="spc-stat-sub" style={{color:'#FF4455'}}>use stop loss</div>}
         </div>
