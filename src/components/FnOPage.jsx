@@ -335,8 +335,14 @@ function StrategySheet({ vixLevel, compact = false }) {
 
   return (
     <div className={compact ? 'fno-strategy-compact' : 'fno-widget fno-strategy-widget'}>
+      {compact && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '1.5px', color: 'var(--text3)' }}>OPTIONS CHEAT CODE — LIVE VIX REGIME</span>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text2)', fontStyle: 'italic' }}>Historical patterns · not investment advice · options involve substantial risk</span>
+        </div>
+      )}
       {!compact && <div className="fno-widget-title">OPTIONS PLAYBOOK <span className="fno-widget-formula">based on live VIX · for educational reference only</span></div>}
-      <div className="fno-strategy-disclaimer">Historical patterns · not investment advice · options trading involves substantial risk</div>
+      {!compact && <div className="fno-strategy-disclaimer">Historical patterns · not investment advice · options trading involves substantial risk</div>}
       <div className={compact ? 'fno-strategy-grid-compact' : 'fno-strategy-grid'}>
         {STRATEGIES.map(s => (
           <div key={s.zone} className={`fno-strategy-zone ${s.active ? 'fno-strategy-active' : ''}`}

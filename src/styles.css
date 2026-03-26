@@ -2939,3 +2939,26 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 /* Fill VIX card height — no empty space */
 .fno-overview-vix .fno-vix-card { display: flex; flex-direction: column; }
 .fno-overview-vix .fno-vix-bias { flex: 1; margin-top: auto; }
+
+/* ── VIX history font fixes ──────────────────────────────────────────────── */
+.fno-vix-regime-title  { font-size: 10px !important; letter-spacing: 1.5px; }
+.fno-vix-hist-row      { font-size: 12px !important; }
+.fno-vix-hist-label    { font-size: 12px !important; color: var(--text2) !important; }
+.fno-vix-hist-range    { font-size: 12px !important; }
+.fno-vix-hist-note     { font-size: 11px !important; color: var(--text3) !important; }
+.fno-vix-bias-disclaimer {
+  font-size: 10px !important; color: var(--text2) !important;
+  opacity: 1 !important; font-style: italic;
+}
+
+/* ── Strategy disclaimer brighter ───────────────────────────────────────── */
+.fno-strategy-disclaimer {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--text2) !important; font-style: italic;
+  margin-bottom: 10px; opacity: 1 !important;
+}
+/* Compact mode — small disclaimer at bottom */
+.fno-strategy-compact .fno-strategy-disclaimer-bottom {
+  font-family: var(--mono); font-size: 9px; color: var(--text2);
+  font-style: italic; padding-top: 6px; opacity: 0.8;
+}
