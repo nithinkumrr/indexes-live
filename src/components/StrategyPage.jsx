@@ -911,20 +911,14 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
                 {g.strategies.map(s => {
                   const sc = scores[s.id];
                   const scoreC = sc>=8?'#00C896':sc>=6?'#F59E0B':'#666';
-                  const lastS = loadSession(s.id);
-                  const hasSession = lastS && lastS.some(l => l.p > 0);
+                  const hasSession = loadSession(s.id)?.some(l => l.p > 0);
                   return (
                     <div key={s.id}
                       className={`spc-item ${selId===s.id?'spc-item-on':''}`}
-                      style={{'--gc': g.color}}
                       onClick={() => setSelId(s.id)}>
-                      <div className="spc-item-stripe" style={{background:g.color}}/>
                       <span className="spc-item-name">{s.label}</span>
                       <div className="spc-item-meta">
                         {hasSession && <span className="spc-item-dot-saved">●</span>}
-                        <span className="spc-item-type" style={{color:s.credit?'#00C896':'#FF4455'}}>
-                          {s.credit?'C':'P'}
-                        </span>
                         <span className="spc-item-score" style={{color:scoreC}}>{sc}/10</span>
                       </div>
                     </div>
