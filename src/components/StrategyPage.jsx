@@ -107,6 +107,7 @@ function buildShareUrl(stratId, legs, lots, spot, expiry) {
 
 function parseShareUrl() {
   try {
+    if (typeof window === 'undefined') return null;
     const p = new URLSearchParams(window.location.search);
     if (!p.get('s')) return null;
     return {
@@ -133,6 +134,7 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
   const { range, expPnls, nowPnls, bes, maxP, minP } = useMemo(() => {
     const st = spot > 10000 ? 50 : 25;
     const ks = legs.map(l => l.k);
+    if (!ks.length) return { range:[spot], expPnls:[0], nowPnls:[0], bes:[], maxP:0, minP:0 };
     const pad = Math.max(...ks) - Math.min(...ks) + st * 14;
     const fr = Math.min(...ks, spot) - pad / 2;
     const to = Math.max(...ks, spot) + pad / 2;
@@ -380,7 +382,7 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
           <div className="spc-slider-top">
             <span className="spc-sl-title">Date: {tDte}D to expiry</span>
             <button className="spc-sl-step" onClick={()=>setTDte(v=>Math.max(0,v-1))}>‹</button>
-            <span className="spc-sl-datestr" style={{color:'var(--text2)',fontSize:11,fontFamily:'monospace',minWidth:60,textAlign:'center'}}>
+            <span className="spc-sl-datestr" style={{color:'var(--text2)',fontSize:11,fontFamily:'monospace',minWidth:60}}>
               {tDte === dte ? 'Today' : tDte === 0 ? 'Expiry' : `${tDte}d left`}
             </span>
             <button className="spc-sl-step" onClick={()=>setTDte(v=>Math.min(dte,v+1))}>›</button>
@@ -408,6 +410,7 @@ function PayoffChart({ legs, spot, vix, dte, lots, symbol }) {
 function Greeks({ legs, spot, vix, dte, lots }) {
   const sig=(vix||15)/100, T=Math.max(dte,0.25)/365;
   const g = useMemo(() => {
+    if (!legs?.length) return { d:0, th:0, ga:0, v:0 };
     let d=0, th=0, ga=0, v=0;
     legs.forEach(l => {
       d  += l.q * bsDelta(spot, l.k, T, sig, l.t) * lots * LOT;
@@ -490,6 +493,7 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
 
   const { maxP, maxL } = useMemo(() => {
     const s2 = spot > 10000 ? 50 : 25, ks = legs.map(l=>l.k), ps = [];
+    if (!ks.length) return { maxP: 0, maxL: 0 };
     for (let s = Math.min(...ks)-s2*15; s <= Math.max(...ks)+s2*15; s += s2) {
       let t = 0; legs.forEach(l => { t += l.q * (Math.max(0,l.t==='CE'?s-l.k:l.k-s) - l.p) * lots * LOT; }); ps.push(t);
     }
@@ -668,7 +672,8 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
 
   // Fetch expiries from Kite (30min cache in option-chain API)
   useEffect(() => {
-    fetch('/api/option-chain?action=expiries&symbol=NIFTY')
+    const weekday = symbol === 'SENSEX' ? 4 : symbol === 'BANKNIFTY' ? 3 : 2;
+    fetch(`/api/option-chain?action=expiries&symbol=${symbol}`)
       .then(r => r.json())
       .then(d => {
         if (d.expiries?.length > 0) {
@@ -681,17 +686,16 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
         }
       })
       .catch(() => {
-        // Fallback: compute Thursdays
         const now = new Date(), opts = [];
         for (let w = 0; w < 13; w++) {
           const d = new Date(now);
-          const dt = ((4 - d.getDay()) + 7) % 7 || 7;
+          const dt = ((weekday - d.getDay()) + 7) % 7 || 7;
           d.setDate(d.getDate() + dt + w * 7);
           opts.push({ raw: d.toISOString().split('T')[0], label: d.toLocaleDateString('en-IN', { day:'numeric', month:'short' }), dte: Math.max(0, Math.ceil((d - now) / 86400000)) });
         }
         setExpiries(opts);
       });
-  }, []);
+  }, [symbol]);
 
   const curExp = expiries[expIdx];
   const dte = curExp?.dte ?? 4;
