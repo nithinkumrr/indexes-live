@@ -1900,21 +1900,27 @@ function IndiaTickerFno() {
   const fmt = (n) => n?.toLocaleString('en-IN', { maximumFractionDigits: 2 }) || '—';
   const istStr = lastUpdate?.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
 
+  const tickerItems = (
+    <>
+      {quotes.map(q => {
+        const gain = q.changePct >= 0;
+        return (
+          <div key={q.id} className="fno-it-item">
+            <span className="fno-it-label" style={{ color: q.color }}>{q.label}</span>
+            <span className="fno-it-price">{fmt(q.price)}</span>
+            <span className={`fno-it-chg ${gain ? 'gain' : 'loss'}`}>
+              {gain ? '▲' : '▼'} {Math.abs(q.changePct).toFixed(2)}%
+            </span>
+          </div>
+        );
+      })}
+    </>
+  );
+
   return (
     <div className="fno-india-ticker">
       <div className="fno-india-ticker-inner">
-        {quotes.map(q => {
-          const gain = q.changePct >= 0;
-          return (
-            <div key={q.id} className="fno-it-item">
-              <span className="fno-it-label" style={{ color: q.color }}>{q.label}</span>
-              <span className="fno-it-price">{fmt(q.price)}</span>
-              <span className={`fno-it-chg ${gain ? 'gain' : 'loss'}`}>
-                {gain ? '▲' : '▼'} {Math.abs(q.changePct).toFixed(2)}%
-              </span>
-            </div>
-          );
-        })}
+        {tickerItems}{tickerItems}
       </div>
       <div className="fno-it-meta">
         {isMarketOpen()
@@ -1939,7 +1945,7 @@ function ExpiryStrip({ expiries, holidayLive, holidayNames = {} }) {
 
   return (
     <div className="fno-expiry-strip-v2">
-      <div className="fno-esv2-label">F&amp;O EXPIRY</div>
+      <div className="fno-esv2-label">EXPIRY COUNTDOWN</div>
       {CONTRACTS.map(({ key, label, rule, color, exp }) => (
         <React.Fragment key={key}>
           <div className="fno-esv2-sep" />

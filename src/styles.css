@@ -3251,3 +3251,21 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   font-family: var(--mono); font-size: 9px; color: var(--text3);
   margin-left: auto; flex-shrink: 0; padding-left: 16px;
 }
+
+/* ── F&O India Ticker — scrolling ───────────────────────────────────────── */
+.fno-india-ticker { overflow: hidden; padding: 0; }
+.fno-india-ticker-inner {
+  display: flex; animation: fno-ticker-scroll 40s linear infinite;
+  width: max-content;
+}
+.fno-india-ticker-inner:hover { animation-play-state: paused; }
+@keyframes fno-ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+/* Duplicate items for seamless loop handled in JSX */
+
+/* ── Expiry Countdown — full width stretch ──────────────────────────────── */
+.fno-expiry-strip-v2 { justify-content: space-between; }
+.fno-esv2-item { flex: 1; padding: 6px 12px; }
+.fno-esv2-sep  { flex-shrink: 0; }
