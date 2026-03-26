@@ -1,230 +1,181 @@
 import { useState, useMemo, useCallback } from 'react';
 
-// ── STRATEGY DATA ─────────────────────────────────────────────────────────────
-
-const STRATEGIES = [
-  {
-    id: 'long_call', group: 'SINGLE LEG', label: 'Long Call',
-    view: ['bullish'], complexity: 'Simple', credit: false,
-    tagline: 'Bet the market goes up. Limited loss, unlimited profit.',
-    explain: 'You buy the right to purchase Nifty at a fixed price. If Nifty rises above your strike + premium paid, you profit. If it falls, you only lose the premium paid — nothing more.',
-    whenTo: 'When you expect a strong upward move before expiry. Best used before a positive event like RBI policy, earnings, or budget.',
-    risk: 'Time decay hurts you every day. If Nifty stays flat or moves slowly, you lose the full premium even if the direction is right.',
-    maxProfit: 'Unlimited', maxLoss: 'Premium paid',
-  },
-  {
-    id: 'long_put', group: 'SINGLE LEG', label: 'Long Put',
-    view: ['bearish'], complexity: 'Simple', credit: false,
-    tagline: 'Bet the market goes down. Limited loss, large profit potential.',
-    explain: 'You buy the right to sell Nifty at a fixed price. Profits when the market falls below your strike minus premium. Maximum loss is the premium paid.',
-    whenTo: 'When you expect a sharp downward move. Useful as portfolio insurance during uncertain times.',
-    risk: 'Time decay works against you. A slow grind down may not be enough to cover the premium paid.',
-    maxProfit: 'Strike price minus premium', maxLoss: 'Premium paid',
-  },
-  {
-    id: 'short_call', group: 'SINGLE LEG', label: 'Short Call',
-    view: ['bearish', 'neutral'], complexity: 'Simple', credit: true,
-    tagline: 'Collect premium. Profit if market stays flat or falls.',
-    explain: 'You sell the right to buy Nifty at a fixed price. You collect premium upfront. Profit if Nifty stays below your strike at expiry.',
-    whenTo: 'When you expect the market to stay flat or fall. Commonly sold against existing long positions.',
-    risk: 'Unlimited loss if market rises sharply. Requires margin. Not suitable for beginners without a hedge.',
-    maxProfit: 'Premium collected', maxLoss: 'Unlimited',
-  },
-  {
-    id: 'short_put', group: 'SINGLE LEG', label: 'Short Put',
-    view: ['bullish', 'neutral'], complexity: 'Simple', credit: true,
-    tagline: 'Collect premium. Profit if market stays flat or rises.',
-    explain: 'You sell the right to sell Nifty at a fixed price. Premium collected upfront. Profit if Nifty stays above your strike at expiry.',
-    whenTo: 'When you expect the market to stay flat or rise. Popular income strategy during calm markets.',
-    risk: 'Large loss if market falls sharply below strike. Requires margin.',
-    maxProfit: 'Premium collected', maxLoss: 'Strike minus premium',
-  },
-  {
-    id: 'long_straddle', group: 'VOLATILITY', label: 'Long Straddle',
-    view: ['volatile'], complexity: 'Medium', credit: false,
-    tagline: 'Profit from a big move in either direction.',
-    explain: 'Buy both a call and put at the same strike. Profit when Nifty moves sharply either up or down. The move must be large enough to cover both premiums paid.',
-    whenTo: 'Before major events like Union Budget, RBI policy, election results — when you expect a big move but are unsure of direction.',
-    risk: 'If the market stays flat, you lose both premiums. Theta decay accelerates near expiry.',
-    maxProfit: 'Unlimited in either direction', maxLoss: 'Total premium paid for both legs',
-  },
-  {
-    id: 'short_straddle', group: 'VOLATILITY', label: 'Short Straddle',
-    view: ['neutral'], complexity: 'Medium', credit: true,
-    tagline: 'Collect maximum premium. Profit if market barely moves.',
-    explain: 'Sell both a call and put at the same strike. Collect premium from both. Profit if Nifty stays close to the strike at expiry.',
-    whenTo: 'When implied volatility is high and you expect the market to stay in a tight range. Popular on weekly expiry days.',
-    risk: 'Unlimited loss if market moves sharply in either direction. The most dangerous naked strategy.',
-    maxProfit: 'Total premium collected', maxLoss: 'Unlimited',
-  },
-  {
-    id: 'long_strangle', group: 'VOLATILITY', label: 'Long Strangle',
-    view: ['volatile'], complexity: 'Medium', credit: false,
-    tagline: 'Cheaper than straddle. Needs a bigger move to profit.',
-    explain: 'Buy an OTM call and OTM put. Cheaper than a straddle since both options are out of the money. Requires a larger move to profit.',
-    whenTo: 'Before events when you expect a large move but want to spend less than a straddle.',
-    risk: 'Needs an even bigger move than straddle. Time decay hurts both legs.',
-    maxProfit: 'Unlimited in either direction', maxLoss: 'Total premium paid',
-  },
-  {
-    id: 'short_strangle', group: 'VOLATILITY', label: 'Short Strangle',
-    view: ['neutral'], complexity: 'Medium', credit: true,
-    tagline: 'Wider profit range than short straddle. Still unlimited risk.',
-    explain: 'Sell OTM call and OTM put. Collect premium. Profitable as long as Nifty stays between the two strikes at expiry.',
-    whenTo: 'When you expect low volatility and the market to stay in a range. Gives more room than a short straddle.',
-    risk: 'Unlimited loss if market breaks out strongly in either direction.',
-    maxProfit: 'Total premium collected', maxLoss: 'Unlimited',
-  },
-  {
-    id: 'bull_call_spread', group: 'VERTICAL SPREADS', label: 'Bull Call Spread',
-    view: ['bullish'], complexity: 'Medium', credit: false,
-    tagline: 'Capped upside, capped downside. Bullish with defined risk.',
-    explain: 'Buy a lower strike call, sell a higher strike call. The sold call reduces your cost. Profit capped at the higher strike.',
-    whenTo: 'When moderately bullish. Cheaper than buying a naked call. Good for range-bound bullish views.',
-    risk: 'Maximum loss is the net premium paid. Profit is capped at the spread width minus premium.',
-    maxProfit: 'Spread width minus net premium', maxLoss: 'Net premium paid',
-  },
-  {
-    id: 'bear_put_spread', group: 'VERTICAL SPREADS', label: 'Bear Put Spread',
-    view: ['bearish'], complexity: 'Medium', credit: false,
-    tagline: 'Capped downside profit, defined risk. Bearish with protection.',
-    explain: 'Buy a higher strike put, sell a lower strike put. Lower cost than buying a naked put. Profit capped at the lower strike.',
-    whenTo: 'When moderately bearish. Reduces premium cost compared to a straight long put.',
-    risk: 'Maximum loss is the net premium paid.',
-    maxProfit: 'Spread width minus net premium', maxLoss: 'Net premium paid',
-  },
-  {
-    id: 'short_iron_condor', group: 'IRON STRATS', label: 'Short Iron Condor',
-    view: ['neutral'], complexity: 'Complex', credit: true,
-    tagline: 'The professional income strategy. Profit in a range.',
-    explain: 'Sell OTM call spread + sell OTM put spread. Collect premium from both sides. Profit as long as Nifty stays between the inner strikes at expiry. Risk is defined and capped.',
-    whenTo: 'When you expect low volatility and the market to stay in a range. The go-to strategy for consistent income traders.',
-    risk: 'Loss is capped at spread width minus premium collected. Much safer than naked strangles.',
-    maxProfit: 'Net premium collected', maxLoss: 'Spread width minus premium',
-  },
-  {
-    id: 'short_iron_butterfly', group: 'IRON STRATS', label: 'Short Iron Butterfly',
-    view: ['neutral'], complexity: 'Complex', credit: true,
-    tagline: 'Maximum premium at exact strike. Tight profit zone.',
-    explain: 'Sell ATM call and put, buy OTM call and put as wings. Collect maximum premium if Nifty expires exactly at your strike.',
-    whenTo: 'When you have a very precise view on where the market will expire. Higher reward than iron condor but narrower range.',
-    risk: 'Loss is capped but the profit zone is narrow. Hard to manage near expiry.',
-    maxProfit: 'Net premium collected', maxLoss: 'Wing width minus premium',
-  },
-  {
-    id: 'long_call_butterfly', group: 'BUTTERFLY', label: 'Long Call Butterfly',
-    view: ['neutral'], complexity: 'Complex', credit: false,
-    tagline: 'Low cost, high reward if market pins exactly at strike.',
-    explain: 'Buy 1 lower call, sell 2 ATM calls, buy 1 higher call. Maximum profit if Nifty expires exactly at the middle strike. Very low cost.',
-    whenTo: 'When you expect the market to pin near a specific level at expiry. Very cheap to enter.',
-    risk: 'Maximum loss is the small net premium paid. Very forgiving on the downside.',
-    maxProfit: 'Wing width minus net premium', maxLoss: 'Net premium paid',
-  },
-  {
-    id: 'long_iron_condor', group: 'IRON STRATS', label: 'Long Iron Condor',
-    view: ['volatile'], complexity: 'Complex', credit: false,
-    tagline: 'Profit from a big move breaking out of range.',
-    explain: 'Buy OTM call spread + buy OTM put spread. Profit if Nifty breaks out strongly in either direction. Defined risk.',
-    whenTo: 'Before major events when you expect a breakout but want defined risk.',
-    risk: 'Net debit paid is the maximum loss. Market must break out strongly to profit.',
-    maxProfit: 'Spread width minus net premium', maxLoss: 'Net premium paid',
-  },
-  {
-    id: 'synthetic_long', group: 'SYNTHETIC', label: 'Synthetic Long',
-    view: ['bullish'], complexity: 'Medium', credit: false,
-    tagline: 'Acts like holding Nifty futures. Unlimited upside and downside.',
-    explain: 'Buy ATM call, sell ATM put at the same strike. Behaves like a long futures position. No premium outflow if strikes are equal.',
-    whenTo: 'When strongly bullish and want futures-like exposure with options flexibility.',
-    risk: 'Unlimited loss on downside just like futures. Full directional exposure.',
-    maxProfit: 'Unlimited', maxLoss: 'Unlimited',
-  },
-  {
-    id: 'synthetic_short', group: 'SYNTHETIC', label: 'Synthetic Short',
-    view: ['bearish'], complexity: 'Medium', credit: false,
-    tagline: 'Acts like short Nifty futures. Profit from any fall.',
-    explain: 'Sell ATM call, buy ATM put. Behaves like a short futures position.',
-    whenTo: 'When strongly bearish and want futures-like exposure.',
-    risk: 'Unlimited loss if market rises sharply.',
-    maxProfit: 'Unlimited', maxLoss: 'Unlimited',
-  },
-];
-
-const VIEWS = [
-  { id: 'all',      label: 'All Strategies' },
-  { id: 'bullish',  label: 'Bullish' },
-  { id: 'bearish',  label: 'Bearish' },
-  { id: 'neutral',  label: 'Neutral' },
-  { id: 'volatile', label: 'Volatile' },
-];
-
-const COMPLEXITY_COLOR = { Simple: '#00C896', Medium: '#F59E0B', Complex: '#FF4455' };
-const VIEW_COLOR = { bullish: '#00C896', bearish: '#FF4455', neutral: '#F59E0B', volatile: '#4A9EFF' };
-
-// ── DEFAULT LEGS ──────────────────────────────────────────────────────────────
-
-function defaultLegs(stratId, spot) {
-  const step = spot > 10000 ? 100 : 50;
-  const atm  = Math.round(spot / step) * step;
-  const w    = step * 2;
-
-  const C = (K, p, q) => ({ type: 'call', qty: q, strike: K, premium: p });
-  const P = (K, p, q) => ({ type: 'put',  qty: q, strike: K, premium: p });
-
-  const map = {
-    long_call:   [C(atm,150,1)],
-    long_put:    [P(atm,150,1)],
-    short_call:  [C(atm,150,-1)],
-    short_put:   [P(atm,150,-1)],
-    long_straddle:   [C(atm,150,1), P(atm,150,1)],
-    short_straddle:  [C(atm,150,-1), P(atm,150,-1)],
-    long_strangle:   [C(atm+w,100,1), P(atm-w,100,1)],
-    short_strangle:  [C(atm+w,100,-1), P(atm-w,100,-1)],
-    long_guts:       [C(atm-w,250,1), P(atm+w,250,1)],
-    short_guts:      [C(atm-w,250,-1), P(atm+w,250,-1)],
-    bull_call_spread: [C(atm,150,1), C(atm+w,70,-1)],
-    bear_call_spread: [C(atm,150,-1), C(atm+w,70,1)],
-    bull_put_spread:  [P(atm-w,70,-1), P(atm,150,1)],
-    bear_put_spread:  [P(atm,150,1), P(atm-w,70,-1)],
-    short_iron_condor:    [P(atm-w*2,40,1), P(atm-w,80,-1), C(atm+w,80,-1), C(atm+w*2,40,1)],
-    long_iron_condor:     [P(atm-w*2,40,-1), P(atm-w,80,1), C(atm+w,80,1), C(atm+w*2,40,-1)],
-    short_iron_butterfly: [P(atm-w,80,1), P(atm,150,-1), C(atm,150,-1), C(atm+w,80,1)],
-    long_iron_butterfly:  [P(atm-w,80,-1), P(atm,150,1), C(atm,150,1), C(atm+w,80,-1)],
-    long_call_butterfly:  [C(atm-w,120,1), C(atm,150,-2), C(atm+w,80,1)],
-    short_call_butterfly: [C(atm-w,120,-1), C(atm,150,2), C(atm+w,80,-1)],
-    long_put_butterfly:   [P(atm-w,80,1), P(atm,150,-2), P(atm+w,120,1)],
-    short_put_butterfly:  [P(atm-w,80,-1), P(atm,150,2), P(atm+w,120,-1)],
-    long_call_condor:  [C(atm-w*2,150,1), C(atm-w,120,-1), C(atm+w,80,-1), C(atm+w*2,60,1)],
-    short_call_condor: [C(atm-w*2,150,-1), C(atm-w,120,1), C(atm+w,80,1), C(atm+w*2,60,-1)],
-    long_put_condor:   [P(atm-w*2,60,1), P(atm-w,80,-1), P(atm+w,120,-1), P(atm+w*2,150,1)],
-    short_put_condor:  [P(atm-w*2,60,-1), P(atm-w,80,1), P(atm+w,120,1), P(atm+w*2,150,-1)],
-    synthetic_long:  [C(atm,150,1), P(atm,150,-1)],
-    synthetic_short: [C(atm,150,-1), P(atm,150,1)],
-  };
-  return (map[stratId] || map.long_call).map(l => ({ ...l }));
+// ── BLACK-SCHOLES ENGINE ──────────────────────────────────────────────────────
+function norm(x) {
+  const t = 1/(1+0.2316419*Math.abs(x));
+  const d = 0.3989423*Math.exp(-x*x/2);
+  const p = d*t*(0.3193815+t*(-0.3565638+t*(1.7814779+t*(-1.8212560+t*1.3302744))));
+  return x >= 0 ? 1-p : p;
+}
+function bsPrice(S, K, T, sigma, type) {
+  if (T <= 0) return Math.max(0, type==='CE' ? S-K : K-S);
+  const d1 = (Math.log(S/K)+(0.065+sigma*sigma/2)*T)/(sigma*Math.sqrt(T));
+  const d2 = d1-sigma*Math.sqrt(T);
+  if (type==='CE') return S*norm(d1)-K*Math.exp(-0.065*T)*norm(d2);
+  return K*Math.exp(-0.065*T)*norm(-d2)-S*norm(-d1);
 }
 
-// ── PAYOFF DIAGRAM ────────────────────────────────────────────────────────────
+const LOT_SIZE = 75;
+const VIEW_COLORS = { bullish:'#00C896', bearish:'#FF4455', neutral:'#F59E0B', volatile:'#4A9EFF' };
 
-function PayoffDiagram({ legs, spot, lots = 1, lotSize = 75, height = 240 }) {
+// ── STRATEGY DEFINITIONS ──────────────────────────────────────────────────────
+const STRATEGY_GROUPS = [
+  { id:'single', label:'Single Leg', icon:'▸', strategies:[
+    { id:'long_call',   label:'Long Call',   view:'bullish', credit:false, complexity:1,
+      hook:'Unlimited upside. You only lose what you paid.',
+      why:'Buy when VIX is low and a big upward catalyst is coming. Time is your enemy but a large move is your friend.',
+      kill:'Time decay kills you if the move is slow. Being right on direction but wrong on timing still loses money.',
+      legs:(a,w)=>[{t:'CE',q:1,k:a}] },
+    { id:'long_put',    label:'Long Put',    view:'bearish', credit:false, complexity:1,
+      hook:'Best portfolio hedge. Profits multiply on crashes.',
+      why:'Cheap insurance before uncertain events. Works best when VIX is low so put premiums are cheap.',
+      kill:'A slow grind down rarely pays off. Needs a fast sharp move to cover premium paid.',
+      legs:(a,w)=>[{t:'PE',q:1,k:a}] },
+    { id:'short_call',  label:'Short Call',  view:'bearish', credit:true,  complexity:2,
+      hook:'Collect premium weekly. Profit from time decay.',
+      why:'Works 60-65% of weeks historically. Higher VIX gives better premiums to collect.',
+      kill:'Unlimited loss if market gaps up strongly. Always have a stop loss.',
+      legs:(a,w)=>[{t:'CE',q:-1,k:a+w}] },
+    { id:'short_put',   label:'Short Put',   view:'bullish', credit:true,  complexity:2,
+      hook:'Get paid to be bullish. Income strategy for calm markets.',
+      why:'Collect premium and profit if market stays flat or rises. Popular for income generation.',
+      kill:'Sharp fall below strike wipes multiple weeks of gains in one day.',
+      legs:(a,w)=>[{t:'PE',q:-1,k:a-w}] },
+  ]},
+  { id:'volatility', label:'Volatility', icon:'⚡', strategies:[
+    { id:'short_straddle', label:'Short Straddle', view:'neutral', credit:true,  complexity:3,
+      hook:'Most popular Indian strategy. High win rate, very painful when wrong.',
+      why:'Historically 61-72% profitable on weekly expiry. Best when VIX is elevated and expected to fall after the event.',
+      kill:'A 2% gap in either direction wipes 3-4 weeks of premium. Budget day, election results, and RBI shocks are killers.',
+      legs:(a,w)=>[{t:'CE',q:-1,k:a},{t:'PE',q:-1,k:a}] },
+    { id:'long_straddle',  label:'Long Straddle',  view:'volatile',credit:false, complexity:2,
+      hook:'Bet on chaos. Profit from any big move in either direction.',
+      why:'Before RBI, Budget, elections when you know a big move is coming but not the direction.',
+      kill:'If market stays flat you lose both premiums. Every day that passes costs you money.',
+      legs:(a,w)=>[{t:'CE',q:1,k:a},{t:'PE',q:1,k:a}] },
+    { id:'short_strangle', label:'Short Strangle', view:'neutral', credit:true,  complexity:3,
+      hook:'Wider cushion than straddle. Collect premium from both sides with more room.',
+      why:'Higher probability of profit than straddle. Market has to move further to hurt you.',
+      kill:'Still unlimited risk. A black swan event like a flash crash destroys the trade instantly.',
+      legs:(a,w)=>[{t:'CE',q:-1,k:a+w},{t:'PE',q:-1,k:a-w}] },
+    { id:'long_strangle',  label:'Long Strangle',  view:'volatile',credit:false, complexity:2,
+      hook:'Cheaper than straddle. Needs bigger move but costs less upfront.',
+      why:'When you expect a large move but want to spend less premium than a straddle.',
+      kill:'Needs an even bigger move than straddle. Both legs can expire completely worthless.',
+      legs:(a,w)=>[{t:'CE',q:1,k:a+w},{t:'PE',q:1,k:a-w}] },
+  ]},
+  { id:'spreads', label:'Vertical Spreads', icon:'↕', strategies:[
+    { id:'bull_call_spread', label:'Bull Call Spread', view:'bullish', credit:false, complexity:2,
+      hook:'Defined risk bull trade. Cheaper than buying a naked call.',
+      why:'Sell a higher strike call to reduce cost. Good for moderate bullish views where you expect a limited move.',
+      kill:'Profit is capped. If market rallies strongly beyond your short strike, you miss the extra gains.',
+      legs:(a,w)=>[{t:'CE',q:1,k:a},{t:'CE',q:-1,k:a+w}] },
+    { id:'bear_put_spread',  label:'Bear Put Spread',  view:'bearish', credit:false, complexity:2,
+      hook:'Defined risk bear trade. Cheaper than buying a naked put.',
+      why:'Sell a lower strike put to reduce cost. Good for moderate bearish views.',
+      kill:'Profit is capped if market falls sharply beyond your short strike.',
+      legs:(a,w)=>[{t:'PE',q:1,k:a},{t:'PE',q:-1,k:a-w}] },
+    { id:'bull_put_spread',  label:'Bull Put Spread',  view:'bullish', credit:true,  complexity:2,
+      hook:'Collect credit upfront and profit if market stays flat or rises.',
+      why:'High probability trade. Collect premium with defined maximum loss.',
+      kill:'Full loss if market falls through the lower strike.',
+      legs:(a,w)=>[{t:'PE',q:-1,k:a},{t:'PE',q:1,k:a-w}] },
+    { id:'bear_call_spread', label:'Bear Call Spread', view:'bearish', credit:true,  complexity:2,
+      hook:'Collect credit and profit if market stays flat or falls.',
+      why:'High probability bearish or neutral trade with defined risk.',
+      kill:'Full loss if market rallies through the upper strike.',
+      legs:(a,w)=>[{t:'CE',q:-1,k:a},{t:'CE',q:1,k:a+w}] },
+  ]},
+  { id:'iron', label:'Iron Strategies', icon:'🔩', strategies:[
+    { id:'short_iron_condor',    label:'Short Iron Condor',    view:'neutral', credit:true,  complexity:4,
+      hook:'The professional income machine. Defined risk, consistent returns.',
+      why:'4 legs give defined max loss unlike naked strangles. Works 65-70% of weeks. The go-to for serious income traders.',
+      kill:'Big directional move breaks one side. Manage early when a wing gets threatened by rolling or closing.',
+      legs:(a,w)=>[{t:'PE',q:1,k:a-w*2},{t:'PE',q:-1,k:a-w},{t:'CE',q:-1,k:a+w},{t:'CE',q:1,k:a+w*2}] },
+    { id:'short_iron_butterfly', label:'Short Iron Butterfly', view:'neutral', credit:true,  complexity:4,
+      hook:'Maximum premium at exact strike. Very tight profit zone but high reward.',
+      why:'Higher premium than iron condor but needs market to pin near your strike.',
+      kill:'Narrow profit zone means any significant move hurts. Hard to manage near expiry.',
+      legs:(a,w)=>[{t:'PE',q:1,k:a-w},{t:'PE',q:-1,k:a},{t:'CE',q:-1,k:a},{t:'CE',q:1,k:a+w}] },
+    { id:'long_iron_condor',     label:'Long Iron Condor',     view:'volatile',credit:false, complexity:4,
+      hook:'Profit from a big breakout in either direction with defined risk.',
+      why:'Defined risk way to bet on large event-driven moves.',
+      kill:'If market stays in range all 4 legs expire worthless.',
+      legs:(a,w)=>[{t:'PE',q:-1,k:a-w*2},{t:'PE',q:1,k:a-w},{t:'CE',q:1,k:a+w},{t:'CE',q:-1,k:a+w*2}] },
+    { id:'long_iron_butterfly',  label:'Long Iron Butterfly',  view:'volatile',credit:false, complexity:3,
+      hook:'Cheap volatility bet with defined maximum loss.',
+      why:'Lower cost than straddle with defined risk. Good before big events.',
+      kill:'Needs a significant move to profit. Time decay hurts both long legs.',
+      legs:(a,w)=>[{t:'PE',q:-1,k:a-w},{t:'PE',q:1,k:a},{t:'CE',q:1,k:a},{t:'CE',q:-1,k:a+w}] },
+  ]},
+  { id:'butterfly', label:'Butterfly', icon:'🦋', strategies:[
+    { id:'long_call_butterfly', label:'Long Call Butterfly', view:'neutral', credit:false, complexity:3,
+      hook:'Tiny cost, huge reward if market pins exactly at your level.',
+      why:'Risk ₹5k to potentially make ₹50k if Nifty expires near your middle strike.',
+      kill:'Narrow profit zone. Needs precise view on exact expiry level.',
+      legs:(a,w)=>[{t:'CE',q:1,k:a-w},{t:'CE',q:-2,k:a},{t:'CE',q:1,k:a+w}] },
+    { id:'long_put_butterfly',  label:'Long Put Butterfly',  view:'neutral', credit:false, complexity:3,
+      hook:'Same high reward low cost structure using puts.',
+      why:'Alternative to call butterfly. Sometimes better pricing available on put side.',
+      kill:'Same narrow profit zone issue. Must be precise on expiry level.',
+      legs:(a,w)=>[{t:'PE',q:1,k:a-w},{t:'PE',q:-2,k:a},{t:'PE',q:1,k:a+w}] },
+  ]},
+  { id:'synthetic', label:'Synthetic', icon:'⚙', strategies:[
+    { id:'synthetic_long',  label:'Synthetic Long',  view:'bullish', credit:false, complexity:2,
+      hook:'Acts like long futures using options. No futures margin needed.',
+      why:'Options flexibility with futures-like P&L. Good when futures spread is wide.',
+      kill:'Unlimited downside like a futures position. Full directional exposure.',
+      legs:(a,w)=>[{t:'CE',q:1,k:a},{t:'PE',q:-1,k:a}] },
+    { id:'synthetic_short', label:'Synthetic Short', view:'bearish', credit:false, complexity:2,
+      hook:'Acts like short futures. Profit from any sustained fall.',
+      why:'Bearish futures-like exposure with options flexibility.',
+      kill:'Unlimited loss if market rises sharply against you.',
+      legs:(a,w)=>[{t:'CE',q:-1,k:a},{t:'PE',q:1,k:a}] },
+  ]},
+];
+
+const ALL_STRATEGIES = STRATEGY_GROUPS.flatMap(g => g.strategies.map(s => ({ ...s, groupLabel: g.label })));
+
+function calcSetupScore(strat, vix, dte) {
+  let score = 5;
+  if (strat.view === 'neutral') {
+    if (vix > 18) score += 2;
+    if (vix > 25) score += 1;
+    if (dte <= 2)  score += 1;
+    if (dte <= 1)  score += 1;
+  } else if (strat.view === 'volatile') {
+    if (vix < 15) score += 2;
+    if (dte <= 5 && dte >= 2) score += 2;
+  } else {
+    if (vix < 18) score += 1;
+    if (dte >= 5) score += 1;
+  }
+  if (strat.credit && vix > 20) score += 1;
+  return Math.min(10, Math.max(1, score));
+}
+
+// ── PAYOFF CHART ──────────────────────────────────────────────────────────────
+function PayoffChart({ legs, spot, vix, dte, lots }) {
   const [hoverX, setHoverX] = useState(null);
 
-  const { range, pnls, breakevens } = useMemo(() => {
-    const strikes = legs.map(l => l.strike);
-    const minS = Math.min(...strikes), maxS = Math.max(...strikes);
-    const step  = spot > 10000 ? 50 : 25;
-    const pad   = Math.max((maxS - minS) * 0.8, step * 12);
-    const from  = Math.min(minS - pad, spot - pad);
-    const to    = Math.max(maxS + pad, spot + pad);
+  const { range, pnls, breakevens, maxP, minP } = useMemo(() => {
+    const step = spot > 10000 ? 50 : 25;
+    const strikes = legs.map(l => l.k);
+    const pad = Math.max(...strikes) - Math.min(...strikes) + step * 14;
+    const from = Math.min(...strikes, spot) - pad / 2;
+    const to   = Math.max(...strikes, spot) + pad / 2;
     const range = [];
     for (let s = from; s <= to; s += step) range.push(Math.round(s));
+
+    const sigma = (vix || 15) / 100;
+    const T = Math.max(dte, 0.25) / 365;
 
     const pnls = range.map(s => {
       let total = 0;
       for (const leg of legs) {
-        const intrinsic = leg.type === 'call'
-          ? Math.max(0, s - leg.strike)
-          : Math.max(0, leg.strike - s);
-        total += leg.qty * (intrinsic - leg.premium) * lots * lotSize;
+        const entry = bsPrice(spot, leg.k, T, sigma, leg.t);
+        const exit  = Math.max(0, leg.t === 'CE' ? s - leg.k : leg.k - s);
+        total += leg.q * (exit - entry) * lots * LOT_SIZE;
       }
       return Math.round(total);
     });
@@ -232,196 +183,125 @@ function PayoffDiagram({ legs, spot, lots = 1, lotSize = 75, height = 240 }) {
     const breakevens = [];
     for (let i = 0; i < pnls.length - 1; i++) {
       if ((pnls[i] < 0 && pnls[i+1] >= 0) || (pnls[i] >= 0 && pnls[i+1] < 0)) {
-        const frac = -pnls[i] / (pnls[i+1] - pnls[i]);
-        breakevens.push(Math.round(range[i] + frac * (range[i+1] - range[i])));
+        const f = -pnls[i] / (pnls[i+1] - pnls[i]);
+        breakevens.push(Math.round(range[i] + f * (range[i+1] - range[i])));
       }
     }
-    return { range, pnls, breakevens };
-  }, [legs, spot, lots, lotSize]);
+    return { range, pnls, breakevens, maxP: Math.max(...pnls), minP: Math.min(...pnls) };
+  }, [legs, spot, vix, dte, lots]);
 
-  const W = 700, H = height;
-  const PAD = { t: 20, r: 24, b: 40, l: 68 };
-  const CW  = W - PAD.l - PAD.r;
-  const CH  = H - PAD.t - PAD.b;
-
-  const maxP = Math.max(...pnls, 0);
-  const minP = Math.min(...pnls, 0);
+  const W = 660, H = 190;
+  const PAD = { t: 14, r: 12, b: 32, l: 60 };
+  const CW = W - PAD.l - PAD.r, CH = H - PAD.t - PAD.b;
   const span = Math.max(maxP - minP, 1);
+  const toX = s => PAD.l + ((s - range[0]) / (range[range.length-1] - range[0])) * CW;
+  const toY = p => PAD.t + CH - ((p - minP) / span) * CH;
+  const zeroY = toY(0);
+  const spotX = toX(spot);
+  const pts = range.map((s, i) => ({ x: toX(s), y: toY(pnls[i]), p: pnls[i] }));
+  const linePath = pts.map((p, i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
-  const toX = s  => PAD.l + ((s  - range[0])  / (range[range.length-1] - range[0])) * CW;
-  const toY = p  => PAD.t + CH - ((p  - minP)  / span)  * CH;
-  const zeroY    = toY(0);
-  const spotX    = toX(spot);
-
-  // Build SVG path
-  const pts  = range.map((s, i) => ({ x: toX(s), y: toY(pnls[i]), p: pnls[i] }));
-  const pathD = pts.map((pt, i) => `${i===0?'M':'L'}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
-
-  // Green fill (profit zone)
-  const greenFill = (() => {
-    let d = '';
-    let inProfit = false;
+  const fillPath = (positive) => {
+    let d = '', open = false;
     for (let i = 0; i < pts.length; i++) {
-      const p = pts[i];
-      if (p.p >= 0 && !inProfit) {
-        inProfit = true;
-        d += `M${p.x.toFixed(1)},${zeroY.toFixed(1)} L${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-      } else if (p.p >= 0 && inProfit) {
-        d += ` L${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-      } else if (p.p < 0 && inProfit) {
-        inProfit = false;
-        d += ` L${pts[i-1].x.toFixed(1)},${zeroY.toFixed(1)} Z`;
-      }
+      const { x, y, p } = pts[i];
+      const cond = positive ? p >= 0 : p < 0;
+      const base = positive ? Math.min(zeroY, PAD.t + CH) : Math.max(zeroY, PAD.t);
+      if (cond && !open) { open = true; d += `M${x},${base} L${x},${y}`; }
+      else if (cond) { d += ` L${x},${y}`; }
+      else if (open) { open = false; d += ` L${pts[i-1].x},${base} Z`; }
     }
-    if (inProfit) d += ` L${pts[pts.length-1].x.toFixed(1)},${zeroY.toFixed(1)} Z`;
+    if (open) d += ` L${pts[pts.length-1].x},${positive ? Math.min(zeroY,PAD.t+CH) : Math.max(zeroY,PAD.t)} Z`;
     return d;
-  })();
+  };
 
-  // Red fill (loss zone)
-  const redFill = (() => {
-    let d = '';
-    let inLoss = false;
-    for (let i = 0; i < pts.length; i++) {
-      const p = pts[i];
-      if (p.p < 0 && !inLoss) {
-        inLoss = true;
-        d += `M${p.x.toFixed(1)},${zeroY.toFixed(1)} L${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-      } else if (p.p < 0 && inLoss) {
-        d += ` L${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-      } else if (p.p >= 0 && inLoss) {
-        inLoss = false;
-        d += ` L${pts[i-1].x.toFixed(1)},${zeroY.toFixed(1)} Z`;
-      }
-    }
-    if (inLoss) d += ` L${pts[pts.length-1].x.toFixed(1)},${zeroY.toFixed(1)} Z`;
-    return d;
-  })();
+  const fmt = n => {
+    const a = Math.abs(n);
+    if (a > 9999999) return n > 0 ? '+∞' : '-∞';
+    if (a >= 100000) return `${n>0?'+':'-'}₹${(a/100000).toFixed(1)}L`;
+    if (a >= 1000)   return `${n>0?'+':'-'}₹${(a/1000).toFixed(1)}k`;
+    return `${n>0?'+':'-'}₹${a}`;
+  };
 
-  // Hover interpolation
   const hoverPnl = useMemo(() => {
     if (hoverX === null) return null;
     const s = range[0] + (hoverX - PAD.l) / CW * (range[range.length-1] - range[0]);
+    const sigma = (vix || 15) / 100;
+    const T = Math.max(dte, 0.25) / 365;
     let total = 0;
     for (const leg of legs) {
-      const intrinsic = leg.type === 'call'
-        ? Math.max(0, s - leg.strike)
-        : Math.max(0, leg.strike - s);
-      total += leg.qty * (intrinsic - leg.premium) * lots * lotSize;
+      const entry = bsPrice(spot, leg.k, T, sigma, leg.t);
+      const exit  = Math.max(0, leg.t === 'CE' ? s - leg.k : leg.k - s);
+      total += leg.q * (exit - entry) * lots * LOT_SIZE;
     }
-    return { s: Math.round(s), p: Math.round(total), x: hoverX, y: toY(total) };
-  }, [hoverX, range, legs, lots, lotSize]);
-
-  const fmt = n => {
-    const abs = Math.abs(n);
-    if (abs >= 100000) return `${n < 0 ? '-' : '+'}₹${(abs/100000).toFixed(1)}L`;
-    if (abs >= 1000)   return `${n < 0 ? '-' : '+'}₹${(abs/1000).toFixed(1)}k`;
-    return `${n < 0 ? '-' : '+'}₹${abs}`;
-  };
-
-  // Y-axis labels
-  const yLabels = [minP, minP/2, 0, maxP/2, maxP].filter(v => v !== 0 || true);
-
-  // X-axis labels - strikes + spot
-  const strikes = [...new Set(legs.map(l => l.strike))];
-  const xLabelPrices = [...new Set([...strikes, spot])].sort((a,b)=>a-b);
+    return { s: Math.round(s), p: Math.round(total), y: toY(total) };
+  }, [hoverX, legs, spot, vix, dte, lots, range]);
 
   return (
-    <div className="sp-diagram" onMouseLeave={() => setHoverX(null)}>
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        style={{ width: '100%', cursor: 'crosshair' }}
+    <div className="spc-chart" onMouseLeave={() => setHoverX(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', cursor:'crosshair' }}
         onMouseMove={e => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = (e.clientX - rect.left) / rect.width * W;
+          const r = e.currentTarget.getBoundingClientRect();
+          const x = (e.clientX - r.left) / r.width * W;
           if (x >= PAD.l && x <= PAD.l + CW) setHoverX(x);
-        }}
-      >
-        <defs>
-          <clipPath id="sp-clip">
-            <rect x={PAD.l} y={PAD.t} width={CW} height={CH} />
-          </clipPath>
-        </defs>
-
-        {/* Zero line */}
-        {zeroY >= PAD.t && zeroY <= PAD.t + CH && (
-          <line x1={PAD.l} y1={zeroY} x2={PAD.l+CW} y2={zeroY}
-            stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeDasharray="6,4" />
-        )}
-
-        {/* Green fill */}
-        <path d={greenFill} fill="rgba(0,200,150,0.15)" clipPath="url(#sp-clip)" />
-
-        {/* Red fill */}
-        <path d={redFill} fill="rgba(255,68,85,0.15)" clipPath="url(#sp-clip)" />
-
-        {/* Payoff curve */}
-        <path d={pathD} fill="none" stroke="#4A9EFF" strokeWidth="2.5"
-          strokeLinejoin="round" clipPath="url(#sp-clip)" />
-
-        {/* Breakeven markers */}
-        {breakevens.map((be, i) => {
-          const bx = toX(be);
-          return (
-            <g key={i}>
-              <line x1={bx} y1={PAD.t} x2={bx} y2={PAD.t+CH}
-                stroke="rgba(245,158,11,0.5)" strokeWidth="1" strokeDasharray="4,3" />
-              <circle cx={bx} cy={zeroY} r="4" fill="#F59E0B" />
-              <text x={bx} y={PAD.t+CH+14} textAnchor="middle"
-                fill="#F59E0B" fontSize="10" fontFamily="monospace">{be.toLocaleString('en-IN')}</text>
-            </g>
-          );
+        }}>
+        <clipPath id="spc-cl"><rect x={PAD.l} y={PAD.t} width={CW} height={CH}/></clipPath>
+        <line x1={PAD.l} y1={zeroY} x2={PAD.l+CW} y2={zeroY}
+          stroke="rgba(255,255,255,0.12)" strokeWidth="1" strokeDasharray="5,4"/>
+        <path d={fillPath(true)}  fill="rgba(0,200,150,0.15)" clipPath="url(#spc-cl)"/>
+        <path d={fillPath(false)} fill="rgba(255,68,85,0.15)"  clipPath="url(#spc-cl)"/>
+        <path d={linePath} fill="none" stroke="#4A9EFF" strokeWidth="2.5"
+          strokeLinejoin="round" clipPath="url(#spc-cl)"/>
+        {[...new Set(legs.map(l => l.k))].map(k => {
+          const kx = toX(k);
+          return kx >= PAD.l && kx <= PAD.l+CW ? (
+            <line key={k} x1={kx} y1={PAD.t} x2={kx} y2={PAD.t+CH}
+              stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="2,3"/>
+          ) : null;
         })}
-
-        {/* Spot line */}
         {spotX >= PAD.l && spotX <= PAD.l+CW && (
           <g>
             <line x1={spotX} y1={PAD.t} x2={spotX} y2={PAD.t+CH}
-              stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeDasharray="3,3" />
-            <text x={spotX} y={PAD.t-6} textAnchor="middle"
-              fill="rgba(255,255,255,0.6)" fontSize="10" fontFamily="monospace">SPOT</text>
+              stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" strokeDasharray="3,3"/>
+            <text x={spotX} y={PAD.t-3} textAnchor="middle"
+              fill="#F59E0B" fontSize="9" fontFamily="monospace">SPOT</text>
           </g>
         )}
-
-        {/* Y-axis */}
-        {[-1, 0, 1].map(f => {
-          const v = f === 0 ? 0 : f > 0 ? maxP * 0.7 : minP * 0.7;
-          const y = toY(v);
-          if (y < PAD.t || y > PAD.t+CH) return null;
-          return (
-            <g key={f}>
-              <line x1={PAD.l-4} y1={y} x2={PAD.l} y2={y} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-              <text x={PAD.l-8} y={y+4} textAnchor="end"
-                fill={v > 0 ? '#00C896' : v < 0 ? '#FF4455' : 'rgba(255,255,255,0.4)'}
-                fontSize="10" fontFamily="monospace">
-                {v === 0 ? '0' : fmt(v)}
+        {breakevens.map((be, i) => {
+          const bx = toX(be);
+          return bx >= PAD.l && bx <= PAD.l+CW ? (
+            <g key={i}>
+              <circle cx={bx} cy={zeroY} r="4" fill="#F59E0B" stroke="#08080A" strokeWidth="1.5"/>
+              <text x={bx} y={PAD.t+CH+14} textAnchor="middle" fill="#F59E0B" fontSize="9" fontFamily="monospace">
+                {be.toLocaleString('en-IN')}
               </text>
             </g>
-          );
+          ) : null;
         })}
-
-        {/* Hover line + tooltip */}
-        {hoverPnl && hoverPnl.x >= PAD.l && hoverPnl.x <= PAD.l+CW && (
+        {[[maxP,'#00C896'],[0,'rgba(255,255,255,0.2)'],[minP,'#FF4455']].map(([v,c]) => {
+          const y = toY(v);
+          return y >= PAD.t && y <= PAD.t+CH ? (
+            <text key={v} x={PAD.l-6} y={y+4} textAnchor="end" fill={c} fontSize="9" fontFamily="monospace">
+              {v === 0 ? '0' : fmt(v)}
+            </text>
+          ) : null;
+        })}
+        {hoverX && hoverPnl && (
           <g>
-            <line x1={hoverPnl.x} y1={PAD.t} x2={hoverPnl.x} y2={PAD.t+CH}
-              stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
-            <circle cx={hoverPnl.x} cy={Math.min(Math.max(hoverPnl.y, PAD.t), PAD.t+CH)}
-              r="5" fill={hoverPnl.p >= 0 ? '#00C896' : '#FF4455'}
-              stroke="var(--bg)" strokeWidth="2" />
-            {/* Tooltip box */}
+            <line x1={hoverX} y1={PAD.t} x2={hoverX} y2={PAD.t+CH}
+              stroke="rgba(255,255,255,0.18)" strokeWidth="1"/>
+            <circle cx={hoverX} cy={Math.min(Math.max(hoverPnl.y, PAD.t), PAD.t+CH)} r="5"
+              fill={hoverPnl.p >= 0 ? '#00C896' : '#FF4455'} stroke="#08080A" strokeWidth="2"/>
             {(() => {
-              const tx = hoverPnl.x > PAD.l + CW * 0.7 ? hoverPnl.x - 110 : hoverPnl.x + 10;
-              const ty = 28;
+              const tx = hoverX > PAD.l + CW * 0.65 ? hoverX - 106 : hoverX + 8;
               return (
                 <g>
-                  <rect x={tx} y={ty} width={100} height={42} rx="4"
-                    fill="var(--bg4)" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-                  <text x={tx+50} y={ty+14} textAnchor="middle"
-                    fill="rgba(255,255,255,0.6)" fontSize="10" fontFamily="monospace">
-                    {hoverPnl.s.toLocaleString('en-IN')}
-                  </text>
-                  <text x={tx+50} y={ty+30} textAnchor="middle"
-                    fill={hoverPnl.p >= 0 ? '#00C896' : '#FF4455'}
-                    fontSize="13" fontWeight="700" fontFamily="monospace">
+                  <rect x={tx} y={22} width={98} height={36} rx="4"
+                    fill="#1E1E22" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+                  <text x={tx+49} y={35} textAnchor="middle" fill="rgba(255,255,255,0.4)"
+                    fontSize="9" fontFamily="monospace">{Math.round(hoverPnl.s).toLocaleString('en-IN')}</text>
+                  <text x={tx+49} y={50} textAnchor="middle" fontSize="13" fontWeight="700"
+                    fill={hoverPnl.p >= 0 ? '#00C896' : '#FF4455'} fontFamily="monospace">
                     {fmt(hoverPnl.p)}
                   </text>
                 </g>
@@ -429,320 +309,321 @@ function PayoffDiagram({ legs, spot, lots = 1, lotSize = 75, height = 240 }) {
             })()}
           </g>
         )}
-
-        {/* X-axis border */}
-        <line x1={PAD.l} y1={PAD.t+CH} x2={PAD.l+CW} y2={PAD.t+CH}
-          stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
       </svg>
-
-      {/* Breakeven legend below chart */}
       {breakevens.length > 0 && (
-        <div className="sp-breakevens">
-          {breakevens.map((be, i) => (
-            <span key={i} className="sp-be-tag">
-              BE{breakevens.length > 1 ? i+1 : ''} {be.toLocaleString('en-IN')}
-            </span>
-          ))}
+        <div className="spc-be-row">
+          <span className="spc-be-lbl">BE</span>
+          {breakevens.map((be,i) => <span key={i} className="spc-be-val">{be.toLocaleString('en-IN')}</span>)}
         </div>
       )}
     </div>
   );
 }
 
-// ── STRATEGY CARD ─────────────────────────────────────────────────────────────
+// ── THETA TIMELINE ────────────────────────────────────────────────────────────
+function ThetaLine({ legs, spot, vix, dte }) {
+  const pts = useMemo(() => {
+    const sigma = (vix || 15) / 100;
+    const result = [];
+    const steps = Math.min(dte * 4, 40);
+    for (let i = 0; i <= steps; i++) {
+      const d = dte - (dte / steps) * i;
+      const T = Math.max(d, 0.1) / 365;
+      let val = 0;
+      for (const l of legs) val += l.q * bsPrice(spot, l.k, T, sigma, l.t);
+      result.push({ d, v: Math.round(val * LOT_SIZE) });
+    }
+    return result;
+  }, [legs, spot, vix, dte]);
 
-function StrategyCard({ strat, isSelected, onSelect, spot }) {
-  const legs    = defaultLegs(strat.id, spot);
-  const LOT     = 75;
-  const netCost = -legs.reduce((s, l) => s + l.qty * l.premium, 0);
+  if (pts.length < 2) return null;
+  const W = 660, H = 60;
+  const PAD = { t: 4, r: 8, b: 18, l: 56 };
+  const CW = W - PAD.l - PAD.r, CH = H - PAD.t - PAD.b;
+  const vals = pts.map(p => p.v);
+  const maxV = Math.max(...vals), minV = Math.min(...vals);
+  const span = Math.max(maxV - minV, 1);
+  const toX = d => PAD.l + (1 - d / dte) * CW;
+  const toY = v => PAD.t + CH - ((v - minV) / span) * CH;
+  const path = pts.map((p,i) => `${i===0?'M':'L'}${toX(p.d).toFixed(1)},${toY(p.v).toFixed(1)}`).join(' ');
+  const isCredit = pts[0].v < 0;
+  const fmt = n => { const a=Math.abs(n); return a>=100000?`${n>0?'+':'-'}₹${(a/100000).toFixed(1)}L`:a>=1000?`${n>0?'+':'-'}₹${(a/1000).toFixed(0)}k`:`${n>0?'+':'-'}₹${a}`; };
 
   return (
-    <div
-      className={`sp-card ${isSelected ? 'sp-card-active' : ''}`}
-      onClick={() => onSelect(strat.id)}
-    >
-      <div className="sp-card-header">
-        <span className="sp-card-name">{strat.label}</span>
-        <span className="sp-card-credit" style={{ color: strat.credit ? '#00C896' : '#FF4455' }}>
-          {strat.credit ? 'CREDIT' : 'DEBIT'}
-        </span>
-      </div>
-      <div className="sp-card-tagline">{strat.tagline}</div>
-      <div className="sp-card-footer">
-        <span className="sp-card-complexity" style={{ color: COMPLEXITY_COLOR[strat.complexity] }}>
-          {strat.complexity}
-        </span>
-        <span className="sp-card-views">
-          {strat.view.map(v => (
-            <span key={v} style={{ color: VIEW_COLOR[v] }}>
-              {v.charAt(0).toUpperCase() + v.slice(1)}
-            </span>
-          ))}
-        </span>
-      </div>
+    <div className="spc-theta">
+      <div className="spc-theta-lbl">THETA DECAY · how position value changes over time →</div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%' }}>
+        <path d={path} fill="none" stroke={isCredit?'#00C896':'#FF4455'} strokeWidth="2" strokeLinejoin="round"/>
+        <line x1={toX(dte)} y1={PAD.t} x2={toX(dte)} y2={PAD.t+CH}
+          stroke="rgba(245,158,11,0.4)" strokeWidth="1" strokeDasharray="3,2"/>
+        <text x={toX(dte)} y={PAD.t+CH+13} textAnchor="middle" fill="#F59E0B" fontSize="8" fontFamily="monospace">NOW</text>
+        <text x={toX(0)+2} y={PAD.t+CH+13} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize="8" fontFamily="monospace">EXPIRY</text>
+        <text x={PAD.l-4} y={PAD.t+8} textAnchor="end" fill={maxV>=0?'#00C896':'#FF4455'} fontSize="8" fontFamily="monospace">{fmt(maxV)}</text>
+        <text x={PAD.l-4} y={PAD.t+CH-2} textAnchor="end" fill={minV>=0?'#00C896':'#FF4455'} fontSize="8" fontFamily="monospace">{fmt(minV)}</text>
+      </svg>
     </div>
   );
 }
 
 // ── STRATEGY DETAIL ───────────────────────────────────────────────────────────
+function StrategyDetail({ strat, spot, vix, dte, onBacktest }) {
+  const [lots, setLots] = useState(1);
+  const step = spot > 10000 ? 100 : 50;
+  const atm  = Math.round(spot / step) * step;
+  const w    = step * 2;
+  const legs = strat.legs(atm, w);
+  const sigma = (vix || 15) / 100;
+  const T = Math.max(dte, 0.25) / 365;
+  const legPrices = legs.map(l => ({ ...l, price: Math.max(0.5, bsPrice(spot, l.k, T, sigma, l.t)) }));
+  const netPrem = legPrices.reduce((s,l) => s + l.q * l.price, 0);
+  const isCredit = netPrem < 0;
+  const score = calcSetupScore(strat, vix, dte);
+  const scoreC = score >= 8 ? '#00C896' : score >= 6 ? '#F59E0B' : '#FF4455';
+  const scoreLbl = score >= 8 ? 'Strong setup today' : score >= 6 ? 'Decent conditions' : 'Weak setup today';
 
-function StrategyDetail({ strat, spot, data }) {
-  const LOT_SIZE = 75;
-  const [legs, setLegs]   = useState(() => defaultLegs(strat.id, spot));
-  const [lots, setLots]   = useState(1);
-  const [localSpot, setLocalSpot] = useState(spot);
+  const fmt = n => { const a=Math.abs(n); return a>=100000?`₹${(a/100000).toFixed(1)}L`:a>=1000?`₹${(a/1000).toFixed(1)}k`:`₹${Math.round(a).toLocaleString('en-IN')}`; };
 
-  const updateLeg = (i, field, val) => {
-    setLegs(prev => prev.map((l, idx) => idx === i ? { ...l, [field]: +val } : l));
-  };
-
-  const netPremium = legs.reduce((s, l) => s + l.qty * l.premium, 0);
-  const isCredit   = netPremium < 0;
-
-  // Stats
-  const { pnls, range } = useMemo(() => {
-    const strikes = legs.map(l => l.strike);
-    const minS = Math.min(...strikes), maxS = Math.max(...strikes);
-    const step = localSpot > 10000 ? 50 : 25;
-    const pad  = Math.max((maxS - minS) * 1.2, step * 15);
-    const range = [];
-    for (let s = Math.min(minS, localSpot) - pad; s <= Math.max(maxS, localSpot) + pad; s += step) {
-      range.push(Math.round(s));
-    }
-    const pnls = range.map(s => {
+  // Max profit/loss from payoff
+  const { maxP, maxL } = useMemo(() => {
+    const sigma = (vix||15)/100, T = Math.max(dte,0.25)/365;
+    const step2 = spot > 10000 ? 50 : 25;
+    const strikes = legs.map(l=>l.k);
+    const pnls = [];
+    for (let s = Math.min(...strikes)-step2*15; s <= Math.max(...strikes)+step2*15; s += step2) {
       let total = 0;
-      for (const leg of legs) {
-        const intrinsic = leg.type === 'call' ? Math.max(0, s - leg.strike) : Math.max(0, leg.strike - s);
-        total += leg.qty * (intrinsic - leg.premium) * lots * LOT_SIZE;
+      for (const l of legs) {
+        const entry = bsPrice(spot,l.k,T,sigma,l.t);
+        const exit  = Math.max(0,l.t==='CE'?s-l.k:l.k-s);
+        total += l.q*(exit-entry)*lots*LOT_SIZE;
       }
-      return Math.round(total);
-    });
-    return { pnls, range };
-  }, [legs, lots, localSpot]);
+      pnls.push(total);
+    }
+    return { maxP: Math.max(...pnls), maxL: Math.min(...pnls) };
+  }, [legs, spot, vix, dte, lots]);
 
-  const maxProfit = Math.max(...pnls);
-  const maxLoss   = Math.min(...pnls);
-  const isUnlimited = v => Math.abs(v) > 10000000;
-  const fmt = n => {
-    const abs = Math.abs(n);
-    if (isUnlimited(n)) return 'Unlimited';
-    if (abs >= 100000) return `₹${(abs/100000).toFixed(1)}L`;
-    if (abs >= 1000)   return `₹${(abs/1000).toFixed(1)}k`;
-    return `₹${abs.toLocaleString('en-IN')}`;
-  };
+  const isUnlimited = v => Math.abs(v) > 5000000;
 
   return (
-    <div className="sp-detail">
-      {/* Header */}
-      <div className="sp-detail-header">
-        <div>
-          <div className="sp-detail-title">{strat.label}</div>
-          <div className="sp-detail-tagline">{strat.tagline}</div>
+    <div className="spc-detail">
+      <div className="spc-dhead">
+        <div className="spc-dhead-left">
+          <div className="spc-dname">{strat.label}</div>
+          <div className="spc-dhook">{strat.hook}</div>
         </div>
-        <div className="sp-detail-badges">
-          <span className="sp-badge" style={{ color: COMPLEXITY_COLOR[strat.complexity], borderColor: COMPLEXITY_COLOR[strat.complexity] + '40' }}>
-            {strat.complexity}
-          </span>
-          <span className="sp-badge" style={{ color: isCredit ? '#00C896' : '#FF4455', borderColor: (isCredit ? '#00C896' : '#FF4455') + '40' }}>
-            {isCredit ? 'CREDIT' : 'DEBIT'}
-          </span>
+        <div className="spc-dscore" style={{ borderColor: scoreC+'40', background: scoreC+'0D' }}>
+          <div className="spc-dscore-num" style={{ color: scoreC }}>{score}/10</div>
+          <div className="spc-dscore-lbl" style={{ color: scoreC }}>{scoreLbl}</div>
         </div>
       </div>
 
-      {/* Stats row */}
-      <div className="sp-stats-row">
-        <div className="sp-stat">
-          <div className="sp-stat-label">Max Profit</div>
-          <div className="sp-stat-val gain">{fmt(maxProfit)}</div>
-        </div>
-        <div className="sp-stat">
-          <div className="sp-stat-label">Max Loss</div>
-          <div className="sp-stat-val loss">{fmt(maxLoss)}</div>
-        </div>
-        <div className="sp-stat">
-          <div className="sp-stat-label">Net {isCredit ? 'Credit' : 'Debit'}</div>
-          <div className="sp-stat-val" style={{ color: isCredit ? '#00C896' : '#FF4455' }}>
-            ₹{Math.abs(netPremium * lots * LOT_SIZE).toLocaleString('en-IN')}
+      {/* Live stats bar */}
+      <div className="spc-dstats">
+        <div className="spc-dstat">
+          <div className="spc-dstat-l">Net {isCredit?'Income':'Cost'}</div>
+          <div className="spc-dstat-v" style={{ color: isCredit?'#00C896':'#FF4455' }}>
+            {fmt(Math.abs(netPrem * lots * LOT_SIZE))}
           </div>
         </div>
-        <div className="sp-stat">
-          <div className="sp-stat-label">Risk:Reward</div>
-          <div className="sp-stat-val" style={{ color: 'var(--text)' }}>
-            {isUnlimited(maxLoss) || isUnlimited(maxProfit) ? 'Unlimited'
-              : `1 : ${(Math.abs(maxProfit / maxLoss)).toFixed(1)}`}
-          </div>
+        <div className="spc-dstat">
+          <div className="spc-dstat-l">Max Profit</div>
+          <div className="spc-dstat-v gain">{isUnlimited(maxP) ? 'Unlimited' : fmt(maxP)}</div>
+        </div>
+        <div className="spc-dstat">
+          <div className="spc-dstat-l">Max Loss</div>
+          <div className="spc-dstat-v loss">{isUnlimited(maxL) ? 'Unlimited' : fmt(Math.abs(maxL))}</div>
+        </div>
+        <div className="spc-dstat">
+          <div className="spc-dstat-l">Lots</div>
+          <input type="number" value={lots} min={1} step={1} className="spc-lots"
+            onChange={e => setLots(Math.max(1,+e.target.value))}/>
         </div>
       </div>
 
-      {/* Explanation */}
-      <div className="sp-explain-grid">
-        <div className="sp-explain-block">
-          <div className="sp-explain-head">What it is</div>
-          <div className="sp-explain-text">{strat.explain}</div>
-        </div>
-        <div className="sp-explain-block">
-          <div className="sp-explain-head">When to use</div>
-          <div className="sp-explain-text">{strat.whenTo}</div>
-        </div>
-        <div className="sp-explain-block sp-explain-risk">
-          <div className="sp-explain-head">What can go wrong</div>
-          <div className="sp-explain-text">{strat.risk}</div>
-        </div>
-      </div>
-
-      {/* Inputs */}
-      <div className="sp-inputs-row">
-        <label className="sp-input-group">
-          <span>Spot</span>
-          <input type="number" value={localSpot} step={50}
-            onChange={e => { setLocalSpot(+e.target.value); setLegs(defaultLegs(strat.id, +e.target.value)); }}
-            className="sp-input" />
-        </label>
-        <label className="sp-input-group">
-          <span>Lots</span>
-          <input type="number" value={lots} min={1} step={1}
-            onChange={e => setLots(+e.target.value)} className="sp-input sp-input-sm" />
-        </label>
-      </div>
-
-      {/* Leg editor */}
-      <div className="sp-legs">
-        {legs.map((leg, i) => (
-          <div key={i} className={`sp-leg ${leg.qty > 0 ? 'sp-leg-buy' : 'sp-leg-sell'}`}>
-            <span className="sp-leg-dir" style={{ color: leg.qty > 0 ? '#4A9EFF' : '#F59E0B' }}>
-              {leg.qty > 0 ? 'BUY' : 'SELL'}{Math.abs(leg.qty) > 1 ? ` ${Math.abs(leg.qty)}x` : ''}
+      {/* Legs */}
+      <div className="spc-dlegs">
+        {legPrices.map((l,i) => (
+          <div key={i} className="spc-dleg">
+            <span style={{ color: l.q>0?'#4A9EFF':'#F59E0B', fontWeight:700, fontSize:11, fontFamily:'monospace' }}>
+              {l.q>0?'BUY':'SELL'}{Math.abs(l.q)>1?` ${Math.abs(l.q)}×`:''}
             </span>
-            <span className="sp-leg-type" style={{ color: leg.type === 'call' ? '#FF4455' : '#00C896' }}>
-              {leg.type.toUpperCase()}
+            <span style={{ color: l.t==='CE'?'#FF8090':'#80FFD0', fontWeight:700, fontSize:11, fontFamily:'monospace' }}>
+              {l.t==='CE'?'CALL':'PUT'}
             </span>
-            <label className="sp-leg-field">
-              <span>Strike</span>
-              <input type="number" value={leg.strike} step={50}
-                onChange={e => updateLeg(i, 'strike', e.target.value)} className="sp-leg-input" />
-            </label>
-            <label className="sp-leg-field">
-              <span>Premium</span>
-              <input type="number" value={leg.premium} step={5} min={1}
-                onChange={e => updateLeg(i, 'premium', e.target.value)} className="sp-leg-input" />
-            </label>
-            <span className="sp-leg-cost" style={{ color: leg.qty > 0 ? '#FF4455' : '#00C896' }}>
-              {leg.qty > 0 ? '-' : '+'}₹{Math.abs(leg.qty * leg.premium * lots * LOT_SIZE).toLocaleString('en-IN')}
+            <span style={{ color:'var(--text)', fontSize:12, fontFamily:'monospace' }}>{l.k.toLocaleString('en-IN')}</span>
+            <span style={{ color:'var(--text2)', fontSize:11 }}>≈ ₹{Math.round(l.price).toLocaleString('en-IN')}</span>
+            <span style={{ marginLeft:'auto', color: l.q>0?'#FF4455':'#00C896', fontSize:11, fontFamily:'monospace', fontWeight:600 }}>
+              {l.q>0?'-':'+'}₹{fmt(Math.abs(l.q*l.price*lots*LOT_SIZE))}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Payoff diagram */}
-      <div className="sp-diagram-wrap">
-        <div className="sp-diagram-title">PAYOFF AT EXPIRY <span>hover to see P&L at any price</span></div>
-        <PayoffDiagram legs={legs} spot={localSpot} lots={lots} lotSize={LOT_SIZE} height={220} />
-      </div>
+      {/* Payoff */}
+      <div className="spc-section-lbl">PAYOFF AT EXPIRY · hover to see P&L at any price</div>
+      <PayoffChart legs={legs} spot={spot} vix={vix} dte={dte} lots={lots}/>
 
-      <div className="sp-disclaimer">Payoff shown at expiry only. For educational reference. Not investment advice.</div>
-    </div>
-  );
-}
+      {/* Theta */}
+      <ThetaLine legs={legs} spot={spot} vix={vix} dte={dte}/>
 
-// ── COMPARE VIEW ──────────────────────────────────────────────────────────────
-
-function CompareView({ spot }) {
-  const [stratA, setStratA] = useState('short_straddle');
-  const [stratB, setStratB] = useState('short_iron_condor');
-
-  const allStrats = STRATEGIES.map(s => ({ id: s.id, label: s.label }));
-  const LOT_SIZE  = 75;
-
-  const renderSide = (stratId, setFn, label) => {
-    const strat = STRATEGIES.find(s => s.id === stratId);
-    const legs  = defaultLegs(stratId, spot);
-    return (
-      <div className="sp-compare-side">
-        <select className="sp-compare-select" value={stratId} onChange={e => setFn(e.target.value)}>
-          {allStrats.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-        </select>
-        {strat && (
-          <>
-            <div className="sp-compare-tagline">{strat.tagline}</div>
-            <PayoffDiagram legs={legs} spot={spot} lots={1} lotSize={LOT_SIZE} height={180} />
-          </>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <div className="sp-compare">
-      <div className="sp-compare-title">COMPARE STRATEGIES</div>
-      <div className="sp-compare-grid">
-        {renderSide(stratA, setStratA, 'A')}
-        <div className="sp-compare-vs">VS</div>
-        {renderSide(stratB, setStratB, 'B')}
-      </div>
-    </div>
-  );
-}
-
-// ── MAIN STRATEGY PAGE ────────────────────────────────────────────────────────
-
-export default function StrategyPage({ data }) {
-  const spot = data?.nifty50?.price ? Math.round(data.nifty50.price / 50) * 50 : 23000;
-  const [view,       setView]       = useState('all');
-  const [selectedId, setSelectedId] = useState('short_straddle');
-  const [showCompare, setShowCompare] = useState(false);
-
-  const filtered = view === 'all'
-    ? STRATEGIES
-    : STRATEGIES.filter(s => s.view.includes(view));
-
-  const selectedStrat = STRATEGIES.find(s => s.id === selectedId) || STRATEGIES[0];
-
-  // Group filtered strategies
-  const grouped = filtered.reduce((acc, s) => {
-    if (!acc[s.group]) acc[s.group] = [];
-    acc[s.group].push(s);
-    return acc;
-  }, {});
-
-  return (
-    <div className="sp-root">
-      {/* View filter */}
-      <div className="sp-view-bar">
-        <div className="sp-view-label">Your market view:</div>
-        <div className="sp-view-tabs">
-          {VIEWS.map(v => (
-            <button key={v.id}
-              className={`sp-view-btn ${view === v.id ? 'sp-view-active' : ''}`}
-              onClick={() => setView(v.id)}>
-              {v.label}
-            </button>
-          ))}
+      {/* Education */}
+      <div className="spc-edu">
+        <div className="spc-edu-block">
+          <div className="spc-edu-h">WHY IT WORKS</div>
+          <div className="spc-edu-t">{strat.why}</div>
         </div>
-        <button className={`sp-compare-toggle ${showCompare ? 'sp-compare-on' : ''}`}
-          onClick={() => setShowCompare(v => !v)}>
-          {showCompare ? 'Hide Compare' : 'Compare Strategies'}
-        </button>
+        <div className="spc-edu-block spc-edu-danger">
+          <div className="spc-edu-h">WHAT KILLS IT</div>
+          <div className="spc-edu-t">{strat.kill}</div>
+        </div>
       </div>
 
-      <div className="sp-layout">
-        {/* Left — strategy cards */}
-        <div className="sp-cards-panel">
-          {Object.entries(grouped).map(([group, strats]) => (
-            <div key={group} className="sp-group">
-              <div className="sp-group-label">{group}</div>
-              {strats.map(s => (
-                <StrategyCard key={s.id} strat={s}
-                  isSelected={selectedId === s.id}
-                  onSelect={setSelectedId}
-                  spot={spot} />
-              ))}
+      <button className="spc-bt-btn" onClick={() => onBacktest && onBacktest(strat.id)}>
+        Backtest {strat.label} with real data →
+      </button>
+    </div>
+  );
+}
+
+// ── MAIN ──────────────────────────────────────────────────────────────────────
+export default function StrategyPage({ data, onSwitchToBacktest }) {
+  const spot = data?.nifty50?.price ? Math.round(data.nifty50.price) : 23000;
+  const vix  = data?.vix?.price || 16;
+  const dte  = 4;
+
+  const [filter,     setFilter]     = useState('all');
+  const [selectedId, setSelectedId] = useState('short_straddle');
+  const [compare,    setCompare]    = useState(false);
+  const [compareId,  setCompareId]  = useState('short_iron_condor');
+
+  const selectedStrat = ALL_STRATEGIES.find(s => s.id === selectedId) || ALL_STRATEGIES[0];
+  const compareStrat  = ALL_STRATEGIES.find(s => s.id === compareId);
+
+  const FILTERS = [
+    {id:'all',label:'All'},{id:'bullish',label:'Bullish'},{id:'bearish',label:'Bearish'},
+    {id:'neutral',label:'Neutral'},{id:'volatile',label:'Volatile'},
+    {id:'income',label:'Income (Sell Premium)'},{id:'buying',label:'Buying (Pay Premium)'},
+  ];
+
+  const scores = useMemo(() => {
+    const m = {};
+    ALL_STRATEGIES.forEach(s => { m[s.id] = calcSetupScore(s, vix, dte); });
+    return m;
+  }, [vix, dte]);
+
+  const topSetups = useMemo(() =>
+    ALL_STRATEGIES.filter(s => scores[s.id] >= 8).slice(0, 3),
+    [scores]
+  );
+
+  const filteredGroups = useMemo(() =>
+    STRATEGY_GROUPS.map(g => ({
+      ...g,
+      strategies: g.strategies.filter(s => {
+        if (filter === 'all')    return true;
+        if (filter === 'income') return s.credit;
+        if (filter === 'buying')  return !s.credit;
+        return s.view === filter;
+      })
+    })).filter(g => g.strategies.length > 0),
+    [filter]
+  );
+
+  const handleBacktest = useCallback((id) => {
+    if (onSwitchToBacktest) onSwitchToBacktest(id);
+  }, [onSwitchToBacktest]);
+
+  return (
+    <div className="spc-root">
+      {/* Top bar */}
+      <div className="spc-topbar">
+        <div className="spc-pills">
+          {[
+            ['NIFTY', spot.toLocaleString('en-IN'), null],
+            ['VIX', vix.toFixed(1), vix>25?'#FF4455':vix>18?'#F59E0B':'#00C896'],
+            ['DTE', `${dte}d`, null],
+            ['REGIME', vix<15?'LOW · buy options':vix<20?'NORMAL · mixed':vix<25?'ELEVATED · sell premium':'HIGH · sell premium', '#F59E0B'],
+          ].map(([l,v,c]) => (
+            <div key={l} className="spc-pill">
+              <span className="spc-pill-l">{l}</span>
+              <span className="spc-pill-v" style={c?{color:c}:{}}>{v}</span>
             </div>
           ))}
         </div>
+        {topSetups.length > 0 && (
+          <div className="spc-best">
+            <span className="spc-best-l">TODAY'S BEST</span>
+            {topSetups.map(s => (
+              <button key={s.id} className="spc-best-btn" onClick={() => setSelectedId(s.id)}>
+                {s.label} <span style={{color:'#00C896',fontWeight:700}}>{scores[s.id]}/10</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-        {/* Right — detail */}
-        <div className="sp-detail-panel">
-          <StrategyDetail strat={selectedStrat} spot={spot} data={data} />
-          {showCompare && <CompareView spot={spot} />}
+      <div className="spc-body">
+        {/* Left */}
+        <div className="spc-left">
+          <div className="spc-filters">
+            {FILTERS.map(f => (
+              <button key={f.id} className={`spc-fb ${filter===f.id?'spc-fb-on':''}`}
+                onClick={() => setFilter(f.id)}>{f.label}</button>
+            ))}
+          </div>
+
+          <div className="spc-list">
+            {filteredGroups.map(g => (
+              <div key={g.id}>
+                <div className="spc-glabel">{g.icon} {g.label}</div>
+                {g.strategies.map(s => {
+                  const sc = scores[s.id];
+                  const c  = sc >= 8 ? '#00C896' : sc >= 6 ? '#F59E0B' : 'var(--text3)';
+                  return (
+                    <div key={s.id}
+                      className={`spc-item ${selectedId===s.id?'spc-item-on':''}`}
+                      onClick={() => setSelectedId(s.id)}>
+                      <div className="spc-item-r1">
+                        <span className="spc-item-name">{s.label}</span>
+                        <span style={{color:c,fontSize:10,fontFamily:'monospace',fontWeight:700}}>{sc}/10</span>
+                      </div>
+                      <div className="spc-item-r2">
+                        <span style={{color:VIEW_COLORS[s.view],fontSize:10}}>{s.view}</span>
+                        <span style={{color:s.credit?'#00C896':'#FF4455',fontSize:10}}>{s.credit?'income':'buying'}</span>
+                        <span style={{color:'var(--text3)',fontSize:9,letterSpacing:2}}>
+                          {'●'.repeat(s.complexity)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          <div className="spc-cmp-row">
+            <button className={`spc-cmp-btn ${compare?'spc-cmp-on':''}`}
+              onClick={() => setCompare(v => !v)}>
+              {compare ? '✕ Close' : '⇄ Compare'}
+            </button>
+            {compare && (
+              <select className="spc-cmp-sel" value={compareId} onChange={e => setCompareId(e.target.value)}>
+                {ALL_STRATEGIES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+              </select>
+            )}
+          </div>
+        </div>
+
+        {/* Right */}
+        <div className="spc-right">
+          {!compare ? (
+            <StrategyDetail strat={selectedStrat} spot={spot} vix={vix} dte={dte} onBacktest={handleBacktest}/>
+          ) : (
+            <div className="spc-cmp-grid">
+              <StrategyDetail strat={selectedStrat} spot={spot} vix={vix} dte={dte} onBacktest={handleBacktest}/>
+              <div className="spc-cmp-div"/>
+              <StrategyDetail strat={compareStrat}  spot={spot} vix={vix} dte={dte} onBacktest={handleBacktest}/>
+            </div>
+          )}
         </div>
       </div>
     </div>
