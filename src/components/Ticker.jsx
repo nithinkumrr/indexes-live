@@ -25,8 +25,9 @@ function useIndiaIndices() {
     const load = async (forceFirstLoad = false) => {
       // Skip polling outside market hours — but always run on first load
       // so we have the last close price to display
-      if (!forceFirstLoad && !isNSEOpen()) return;
+
       try {
+        // Try Kite first
         const r    = await fetch('/api/kite-quote');
         const json = await r.json();
         const data = (json.quotes || []).map(q => ({
@@ -35,8 +36,32 @@ function useIndiaIndices() {
         if (data.length > 0) {
           frozenRef.current = data;
           setItems(data);
-        } else if (frozenRef.current.length > 0) {
-          setItems(frozenRef.current);
+          return;
+        }
+      } catch (_) {}
+      // Fallback: NSE allIndices
+      try {
+        const r2   = await fetch('/api/nse-india');
+        const d2   = await r2.json();
+        const NSE_LABELS = {
+          nifty50:'Nifty 50', banknifty:'Bank Nifty', niftynext50:'Nifty Next 50',
+          nifty100:'Nifty 100', nifty200:'Nifty 200', nifty500:'Nifty 500',
+          niftymidcap150:'Midcap 150', niftymidcapselect:'Mid Select',
+          niftysmallcap250:'Smallcap 250', niftyit:'IT', niftyauto:'Auto',
+          niftyfmcg:'FMCG', niftypharma:'Pharma', niftyrealty:'Realty',
+          niftymetal:'Metal', niftyinfra:'Infra', niftyenergy:'Energy',
+          niftyfinservice:'Fin Service', niftymedia:'Media',
+          niftypsubank:'PSU Bank', niftypvtbank:'Pvt Bank',
+          niftymnc:'MNC', niftyconsumer:'Consumer Dur', bankex:'Bankex',
+          niftytotalmkt:'Total Mkt', indiavix:'India VIX',
+        };
+        const data2 = Object.entries(NSE_LABELS).map(([id, name]) => {
+          const idx = d2?.[id];
+          return idx?.price ? { name, price: idx.price, changePct: idx.changePct, change: idx.change } : null;
+        }).filter(Boolean);
+        if (data2.length > 0) {
+          frozenRef.current = data2;
+          setItems(data2);
         }
       } catch (_) {}
     };
