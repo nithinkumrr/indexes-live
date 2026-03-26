@@ -3026,3 +3026,36 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* Row 2 updated to 25/75 */
 .fno-overview-row2 { grid-template-columns: 25% 75% !important; }
+
+/* ── PivotPointsV2 fixes ─────────────────────────────────────────────────── */
+/* No blank space — fill height */
+.fno-pv2-cols   { align-items: stretch; }
+.fno-pv2-col    { min-height: 0; }
+
+/* Bigger index name */
+.fno-pv2-col-name  { font-size: 14px !important; font-weight: 700; }
+.fno-pv2-extra .fno-pv2-col-name { font-size: 14px !important; }
+
+/* Better range bar */
+.fno-pv2-range { background: var(--bg2); padding: 10px 14px; gap: 8px; }
+.fno-pv2-range-bar {
+  flex: 1; height: 8px; background: var(--bg4);
+  border-radius: 4px; position: relative; min-width: 60px;
+  overflow: visible;
+}
+.fno-pv2-range-fill {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid var(--bg); box-shadow: 0 0 0 2px currentColor;
+  z-index: 1;
+}
+/* Gradient bar — red left to green right */
+.fno-pv2-range-bar::before {
+  content: ''; position: absolute; inset: 0;
+  border-radius: 4px;
+  background: linear-gradient(to right, rgba(255,68,85,0.5), rgba(245,158,11,0.4), rgba(0,200,150,0.5));
+}
+
+/* Market Pulse header bigger */
+.fno-pv2-extra-label { font-size: 10px !important; letter-spacing: 1.5px; }
+.fno-pv2-extra-section:first-of-type { padding-top: 14px; }
