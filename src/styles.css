@@ -2914,3 +2914,18 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 @media (max-width: 900px) {
   .fno-strategy-grid-compact { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── VIX card in overview 25% column ────────────────────────────────────── */
+.fno-overview-vix .fno-vix-card {
+  border-radius: 0; border: none; border-right: 1px solid var(--border);
+  border-left: 4px solid var(--vix-color);
+  padding: 16px; height: 100%; box-sizing: border-box;
+}
+.fno-overview-vix .fno-vix-price   { font-size: 40px; margin-bottom: 4px; }
+.fno-overview-vix .fno-vix-row     { margin-bottom: 10px; }
+.fno-overview-vix .fno-vix-bar-wrap { margin-bottom: 8px; }
+.fno-overview-vix .fno-vix-regime-title { margin: 8px 0 6px; }
+.fno-overview-vix .fno-vix-history { gap: 3px; margin-bottom: 6px; }
+.fno-overview-vix .fno-vix-hist-row { font-size: 10px; }
+.fno-overview-vix .fno-vix-hist-note { font-size: 9px; }
+.fno-overview-vix .fno-vix-bias    { padding: 5px 10px; font-size: 10px; margin-top: 6px; }
