@@ -45,7 +45,14 @@ function getViewFromHash() {
 export default function App() {
   const region = useMemo(() => detectRegion(), []);
   const { data, lastUpdate, nseData } = useMarketData();
-  const [view, setView]             = useState(getViewFromHash);
+  const [view, setView] = useState(() => {
+    // Auto-navigate to F&O if URL has shared strategy params
+    try {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get('s')) return 'fno';
+    } catch(_) {}
+    return getViewFromHash();
+  });
   const [selectedId, setSelectedId] = useState(null);
 
   // Sync hash → view on back/forward

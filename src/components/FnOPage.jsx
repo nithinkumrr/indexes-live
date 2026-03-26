@@ -1728,7 +1728,14 @@ export default function FnOPage({ data = {} }) {
   const [expiries, setExpiries]         = useState(() => getNiftyExpiries(FALLBACK_HOLIDAYS, FALLBACK_NAMES));
   const [holidayLive, setHolidayLive]   = useState(false);
   const [liveVix, setLiveVix]           = useState(null);
-  const [tab, setTab]                   = useState('overview');
+  // Auto-switch to strategy tab if URL has shared setup params
+  const [tab, setTab] = useState(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get('s')) return 'strategy';
+    } catch(_) {}
+    return 'overview';
+  });
 
   useEffect(() => {
     fetch('/api/holidays').then(r => r.json()).then(d => {
@@ -1803,7 +1810,7 @@ export default function FnOPage({ data = {} }) {
       {/* ══ TAB: STRATEGY ════════════════════════════════════════════════ */}
       {tab === 'strategy' && (
         <div className="fno-tab-content" style={{ padding: 0 }}>
-          <StrategyPage data={data} />
+          <StrategyPage data={data} onSwitchToBacktest={() => setTab('backtest')} />
         </div>
       )}
 

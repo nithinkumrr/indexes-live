@@ -395,7 +395,7 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
   };
 
   const lastSession = loadSession(strat.id);
-  const hasLastSession = lastSession && JSON.stringify(lastSession) !== JSON.stringify(strat.legs(atm, w));
+  const hasLastSession = lastSession && lastSession.some(l => l.p > 0);
 
   return (
     <div className="spc-detail">
@@ -676,7 +676,7 @@ export default function StrategyPage({ data, onSwitchToBacktest }) {
                   const sc = scores[s.id];
                   const c  = sc>=8?'#00C896':sc>=6?'#F59E0B':'var(--text3)';
                   const lastS = loadSession(s.id);
-                  const hasSession = lastS && JSON.stringify(lastS) !== JSON.stringify(s.legs(Math.round(spot/(spot>10000?100:50))*( spot>10000?100:50), (spot>10000?100:50)*2));
+                  const hasSession = lastS && lastS.some(l => l.p > 0);
                   return (
                     <div key={s.id} className={`spc-item ${selId===s.id?'spc-item-on':''}`} onClick={() => setSelId(s.id)}>
                       <div className="spc-item-r1">
