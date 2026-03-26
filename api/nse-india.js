@@ -34,12 +34,14 @@ export default async function handler(req, res) {
 
   // Kite instrument tokens for Indian indices
   const KITE_INSTRUMENTS = {
-    256265: 'nifty50',   260105: 'banknifty',  274441: 'niftymidcap150',
-    288009: 'niftynext50', 264969: 'niftyit',  258313: 'niftyauto',
-    261897: 'niftyfmcg',  261641: 'niftypharma', 290825: 'niftyrealty',
-    258825: 'niftymetal', 262409: 'niftyenergy', 257801: 'niftyfinservice',
+    256265: 'nifty50',    260105: 'banknifty',    274441: 'niftymidcap150',
+    288009: 'niftynext50',264969: 'niftyit',      258313: 'niftyauto',
+    261897: 'niftyfmcg', 261641: 'niftypharma',  290825: 'niftyrealty',
+    258825: 'niftymetal', 262409: 'niftyenergy',  257801: 'niftyfinservice',
     288265: 'niftymedia', 261385: 'niftypsubank', 261129: 'niftypvtbank',
-    408065: 'niftysmallcap250',
+    408065: 'niftysmallcap250', 266249: 'nifty100', 270857: 'nifty200',
+    272905: 'nifty500',  268033: 'niftymidcapselect', 263945: 'niftymnc',
+    259337: 'niftyinfra', 271881: 'niftytotalmkt', 270601: 'bankex',
   };
 
   if (kiteToken && kiteKey) {
@@ -84,26 +86,17 @@ export default async function handler(req, res) {
       });
 
       const IDX_MAP = {
-        'INDIA VIX':                    'indiavix',
-        'NIFTY 50':                     'nifty50',
-        'NIFTY BANK':                   'banknifty',
-        'NIFTY NEXT 50':               'niftynext50',
-        'NIFTY MIDCAP 150':            'niftymidcap150',
-        'NIFTY SMALLCAP 250':          'niftysmallcap250',
-        'NIFTY IT':                     'niftyit',
-        'NIFTY AUTO':                   'niftyauto',
-        'NIFTY FMCG':                   'niftyfmcg',
-        'NIFTY PHARMA':                 'niftypharma',
-        'NIFTY REALTY':                 'niftyrealty',
-        'NIFTY METAL':                  'niftymetal',
-        'NIFTY ENERGY':                 'niftyenergy',
-        'NIFTY FINANCIAL SERVICES':     'niftyfinservice',
-        'NIFTY MEDIA':                  'niftymedia',
-        'NIFTY PSU BANK':               'niftypsubank',
-        'NIFTY PRIVATE BANK':           'niftypvtbank',
-        'NIFTY CONSUMER DURABLES':      'niftyconsumer',
-        'NIFTY MIDCAP SELECT':         'niftymidcapselect',
-        'NIFTY500 MULTICAP 50:25:25':  'nifty500',
+        'INDIA VIX':'indiavix','NIFTY 50':'nifty50','NIFTY BANK':'banknifty',
+        'NIFTY NEXT 50':'niftynext50','NIFTY 100':'nifty100','NIFTY 200':'nifty200',
+        'NIFTY 500':'nifty500','NIFTY MIDCAP 150':'niftymidcap150',
+        'NIFTY MIDCAP SELECT':'niftymidcapselect','NIFTY SMALLCAP 250':'niftysmallcap250',
+        'NIFTY TOTAL MARKET':'niftytotalmkt','NIFTY IT':'niftyit','NIFTY AUTO':'niftyauto',
+        'NIFTY FMCG':'niftyfmcg','NIFTY PHARMA':'niftypharma','NIFTY REALTY':'niftyrealty',
+        'NIFTY METAL':'niftymetal','NIFTY INFRA':'niftyinfra','NIFTY ENERGY':'niftyenergy',
+        'NIFTY FINANCIAL SERVICES':'niftyfinservice','NIFTY MEDIA':'niftymedia',
+        'NIFTY PSU BANK':'niftypsubank','NIFTY PRIVATE BANK':'niftypvtbank',
+        'NIFTY CONSUMER DURABLES':'niftyconsumer','NIFTY MNC':'niftymnc',
+        'BANKEX':'bankex','NIFTY500 MULTICAP 50:25:25':'nifty500',
       };
 
       for (const row of allData) {

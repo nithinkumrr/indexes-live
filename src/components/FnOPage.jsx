@@ -1,4 +1,4 @@
-// src/components/FnOPage.jsx — Full F&O dashboard
+// src/components/FnOPage.jsx · Full F&O dashboard
 import React, { useState, useEffect, useMemo } from 'react';
 import Ticker from './Ticker';
 import { getNiftyExpiries } from '../utils/timezone';
@@ -131,7 +131,7 @@ function ExpectedMove({ data, expiries }) {
   return (
     <div className="fno-widget">
       <div className="fno-widget-title">EXPECTED MOVE <span className="fno-widget-formula">Price × (VIX÷100) × √(DTE÷365)</span></div>
-      <div className="fno-widget-sub">Market-implied range · VIX {vix ? vix.toFixed(2) : '—'}</div>
+      <div className="fno-widget-sub">Market-implied range · VIX {vix ? vix.toFixed(2) : '-'}</div>
       <div className="fno-em-two-col">
         {rows.map(({ label, color, price, weekly, monthly, wDate, mDate }) => (
           <div key={label} className="fno-em-col">
@@ -191,7 +191,7 @@ function VIXCard({ onVix }) {
       detail: 'Low VIX = cheap premiums. Long straddles & strangles have historically offered good cost-to-move ratios. Sellers collect little premium for the risk taken.',
     },
     { max: 20, label: 'NORMAL',    color: '#4A9EFF', bg: 'rgba(74,158,255,0.06)',
-      bias: 'Balanced — no structural edge either side',
+      bias: 'Balanced · no structural edge either side',
       detail: 'Iron condors, vertical spreads, and covered calls tend to perform as designed in this range. Neither buyers nor sellers have a consistent historical advantage.',
     },
     { max: 30, label: 'ELEVATED',  color: '#F59E0B', bg: 'rgba(245,158,11,0.06)',
@@ -206,9 +206,9 @@ function VIXCard({ onVix }) {
 
   const HISTORY = [
     { label: 'Pre-COVID normal', range: '10–15',  note: '2018–2019 baseline' },
-    { label: 'COVID peak',       range: '~85',    note: 'Mar 2020 — all-time high' },
+    { label: 'COVID peak',       range: '~85',    note: 'Mar 2020 · all-time high' },
     { label: 'Post-COVID',       range: '12–18',  note: '2021–2022 recovery' },
-    { label: 'Current',          range: vix ? vix.price.toFixed(2) : '—', note: 'Today', highlight: true },
+    { label: 'Current',          range: vix ? vix.price.toFixed(2) : '-', note: 'Today', highlight: true },
   ];
 
   const v     = vix?.price || 0;
@@ -252,7 +252,7 @@ function VIXCard({ onVix }) {
       <div className="fno-vix-bias" style={{ background: zone.bg, borderColor: `${zone.color}30` }}>
         <div className="fno-vix-bias-label" style={{ color: zone.color }}>→ {zone.bias}</div>
         <div className="fno-vix-bias-detail">{zone.detail}</div>
-        <div className="fno-vix-bias-disclaimer">Based on publicly available historical VIX data. For educational reference only — not investment advice. Past patterns do not guarantee future results.</div>
+        <div className="fno-vix-bias-disclaimer">Based on publicly available historical VIX data. For educational reference only · not investment advice. Past patterns do not guarantee future results.</div>
       </div>
     </div>
   );
@@ -321,48 +321,48 @@ function BreadthCard() {
 function StrategySheet({ vixLevel, compact = false }) {
   const STRATEGIES = [
     {
-      zone: 'VIX < 15 — Complacency',
+      zone: 'VIX < 15 · Complacency',
       color: '#00C896',
       active: vixLevel != null && vixLevel < 15,
       strategies: [
-        { name: 'Long Straddle',   note: 'Premiums historically cheap here. ATM call + put costs less — any sharp move tends to pay off.' },
+        { name: 'Long Straddle',   note: 'Premiums historically cheap here. ATM call + put costs less · any sharp move tends to pay off.' },
         { name: 'Long Strangle',   note: 'Even cheaper. OTM wings need a bigger swing but the cost-to-move ratio is often favourable.' },
         { name: 'Debit Spreads',   note: 'Defined cost, defined max loss. Directional plays tend to be more efficient when IV is suppressed.' },
       ],
       pattern: 'Historically: low VIX periods precede the sharpest moves. Premium sellers get slowly ground down; buyers wait for the snap.',
     },
     {
-      zone: 'VIX 15–20 — Equilibrium',
+      zone: 'VIX 15–20 · Equilibrium',
       color: '#4A9EFF',
       active: vixLevel != null && vixLevel >= 15 && vixLevel < 20,
       strategies: [
-        { name: 'Iron Condor',      note: 'OTM call + put spreads on both sides. The "sweet spot" range — premium is fair, defined risk.' },
+        { name: 'Iron Condor',      note: 'OTM call + put spreads on both sides. The "sweet spot" range · premium is fair, defined risk.' },
         { name: 'Covered Calls',    note: 'Writing calls against held positions tends to work well when IV is neither rich nor cheap.' },
         { name: 'Vertical Spreads', note: 'Both credit and debit flavours are viable. Market is typically pricing moves accurately here.' },
       ],
       pattern: 'The zone where most textbook strategies play out as designed. Neither premium buyers nor sellers have a structural edge.',
     },
     {
-      zone: 'VIX 20–30 — Fear Spike',
+      zone: 'VIX 20–30 · Fear Spike',
       color: '#F59E0B',
       active: vixLevel != null && vixLevel >= 20 && vixLevel < 30,
       strategies: [
         { name: 'Short Straddle',   note: 'IV is historically "expensive" here. Selling ATM call + put captures inflated premium if market settles.' },
         { name: 'Short Strangle',   note: 'Wider strikes, more room to be wrong. Premium sellers have historically had an edge in this band.' },
-        { name: 'Credit Spreads',   note: 'Defined-risk premium selling — elevated IV means more credit collected per unit of risk taken.' },
+        { name: 'Credit Spreads',   note: 'Defined-risk premium selling · elevated IV means more credit collected per unit of risk taken.' },
       ],
       pattern: 'Historically: elevated VIX tends to mean-revert. Markets that stay range-bound after a fear spike reward premium sellers.',
     },
     {
-      zone: 'VIX > 30 — Panic',
+      zone: 'VIX > 30 · Panic',
       color: '#FF4455',
       active: vixLevel != null && vixLevel >= 30,
       strategies: [
-        { name: 'Far OTM Puts',     note: 'Extreme IV means put sellers can collect enormous premium. Also the most dangerous trade — tails are fat.' },
+        { name: 'Far OTM Puts',     note: 'Extreme IV means put sellers can collect enormous premium. Also the most dangerous trade · tails are fat.' },
         { name: 'Ratio Spreads',    note: 'Buy ATM protection, sell 2× OTM. Lets you participate in mean-reversion without pure naked exposure.' },
         { name: 'Wait & Observe',   note: 'Many professional desks reduce size during panic. Historically, entering too early in fear spikes is costly.' },
       ],
-      pattern: 'The most dangerous and most profitable zone — simultaneously. Markets can gap 5%+ overnight. Position sizing matters more than strategy choice.',
+      pattern: 'The most dangerous and most profitable zone · simultaneously. Markets can gap 5%+ overnight. Position sizing matters more than strategy choice.',
     },
   ];
 
@@ -370,7 +370,7 @@ function StrategySheet({ vixLevel, compact = false }) {
     <div className={compact ? 'fno-strategy-compact' : 'fno-widget fno-strategy-widget'}>
       {compact && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '1.5px', color: 'var(--text3)' }}>OPTIONS CHEAT CODE — LIVE VIX REGIME</span>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '1.5px', color: 'var(--text3)' }}>OPTIONS CHEAT CODE · LIVE VIX REGIME</span>
           <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text2)', fontStyle: 'italic' }}>Historical patterns · not investment advice · options involve substantial risk</span>
         </div>
       )}
@@ -542,7 +542,7 @@ function ThetaDecayCurve() {
   return (
     <div className="fno-widget">
       <div className="fno-widget-title">THETA DECAY CURVE</div>
-      <div className="fno-widget-sub">How time value erodes as expiry approaches — decay accelerates in the last 7 days</div>
+      <div className="fno-widget-sub">How time value erodes as expiry approaches · decay accelerates in the last 7 days</div>
       <div className="fno-theta-wrap">
         <svg viewBox={`0 0 ${W} ${H}`} className="fno-theta-svg">
           <defs>
@@ -607,9 +607,9 @@ function ThetaDecayCurve() {
                 transform={`rotate(-90, 10, ${PAD.t + CH / 2})`}>Time value</text>
         </svg>
         <div className="fno-theta-notes">
-          <div className="fno-theta-note"><span className="fno-tn-dot" style={{ background: '#F59E0B' }} />Curve is not linear — decay speeds up near expiry</div>
-          <div className="fno-theta-note"><span className="fno-tn-dot" style={{ background: '#FF4455' }} />Last 7 days: sharpest drop — sellers benefit, buyers fight time</div>
-          <div className="fno-theta-note"><span className="fno-tn-dot" style={{ background: '#4A9EFF' }} />Far-dated options decay slowly — why sellers prefer weekly expiry</div>
+          <div className="fno-theta-note"><span className="fno-tn-dot" style={{ background: '#F59E0B' }} />Curve is not linear · decay speeds up near expiry</div>
+          <div className="fno-theta-note"><span className="fno-tn-dot" style={{ background: '#FF4455' }} />Last 7 days: sharpest drop · sellers benefit, buyers fight time</div>
+          <div className="fno-theta-note"><span className="fno-tn-dot" style={{ background: '#4A9EFF' }} />Far-dated options decay slowly · why sellers prefer weekly expiry</div>
         </div>
       </div>
     </div>
@@ -622,7 +622,7 @@ function ThetaDecayCurve() {
 function PayoffBuilder({ data }) { return <StrategyCalculator data={data} />; }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STRATEGY CALCULATOR — full multi-leg payoff builder
+// STRATEGY CALCULATOR · full multi-leg payoff builder
 // ─────────────────────────────────────────────────────────────────────────────
 const STRATEGY_GROUPS = [
   { group: 'SINGLE LEG', items: [
@@ -792,7 +792,7 @@ function StrategyCalculator({ data }) {
   // Colour based on whether net debit or credit
   const curveColor = netCredit >= 0 ? '#F59E0B' : '#4A9EFF';
 
-  // X-axis labels — show strikes + a few others
+  // X-axis labels · show strikes + a few others
   const strikeSet = new Set(legs.map(l => l.strike));
   const xLabels = range.filter((s, i) => {
     if (strikeSet.has(s)) return true;
@@ -1165,7 +1165,7 @@ function BlackScholes({ data }) {
   return (
     <div className="fno-widget">
       <div className="fno-widget-title">BLACK-SCHOLES GREEKS <span className="fno-widget-formula">educational · theoretical values</span></div>
-      <div className="fno-widget-sub">Real-world prices differ — use as reference only</div>
+      <div className="fno-widget-sub">Real-world prices differ · use as reference only</div>
       <div className="fno-bs-controls">
         <div className="fno-payoff-seg">
           {['call','put'].map(t => (
@@ -1306,7 +1306,7 @@ function ExpiryStats() {
       withinEM: 61, outsideEM: 39,
       avgMove: 1.8, maxMove: 11.4, minMove: 0.1,
       bigMoves: 22,
-      note: 'Higher beta — moves more than Nifty 71% of weeks',
+      note: 'Higher beta · moves more than Nifty 71% of weeks',
       color: '#F59E0B',
     },
   ];
@@ -1314,7 +1314,7 @@ function ExpiryStats() {
   const INSIGHTS = [
     { icon: '📌', text: 'Expected Move (1SD) was accurate ~2 in 3 weekly expiries for Nifty' },
     { icon: '⚡', text: 'Budget, election, and RBI policy weeks historically show 2–3× normal move' },
-    { icon: '🎯', text: 'Straddle sellers historically profitable 61–72% of expiries — but losers are big' },
+    { icon: '🎯', text: 'Straddle sellers historically profitable 61–72% of expiries · but losers are big' },
     { icon: '📉', text: 'COVID (Mar 2020) alone accounts for 40%+ of all extreme move data' },
   ];
 
@@ -1356,18 +1356,18 @@ function ExpiryStats() {
 // ─────────────────────────────────────────────────────────────────────────────
 function VixSeasonality() {
   const MONTHS = [
-    { m: 'Jan', avg: 14.2, note: 'Budget month — uncertainty builds pre-announcement',  events: ['Union Budget'], flag: 'budget' },
+    { m: 'Jan', avg: 14.2, note: 'Budget month · uncertainty builds pre-announcement',  events: ['Union Budget'], flag: 'budget' },
     { m: 'Feb', avg: 13.8, note: 'Post-budget relief rally usually calms vol',           events: [], flag: '' },
     { m: 'Mar', avg: 15.1, note: 'Quarter end, FII rebalancing, expiry week active',     events: ['F&O Q4 expiry'], flag: '' },
-    { m: 'Apr', avg: 14.5, note: 'Q4 results season begins — stock vol high, index low', events: ['Results season'], flag: '' },
+    { m: 'Apr', avg: 14.5, note: 'Q4 results season begins · stock vol high, index low', events: ['Results season'], flag: '' },
     { m: 'May', avg: 18.2, note: 'Election months historically the most volatile',       events: ['Election risk'], flag: 'high' },
-    { m: 'Jun', avg: 17.6, note: 'Post-election, new govt formation — settling period',  events: [], flag: 'high' },
-    { m: 'Jul', avg: 14.3, note: 'Budget 2.0 (full budget) — second spike of the year', events: ['Full Budget'], flag: 'budget' },
-    { m: 'Aug', avg: 13.1, note: 'Monsoon season — usually calm unless global shock',    events: [], flag: 'low' },
+    { m: 'Jun', avg: 17.6, note: 'Post-election, new govt formation · settling period',  events: [], flag: 'high' },
+    { m: 'Jul', avg: 14.3, note: 'Budget 2.0 (full budget) · second spike of the year', events: ['Full Budget'], flag: 'budget' },
+    { m: 'Aug', avg: 13.1, note: 'Monsoon season · usually calm unless global shock',    events: [], flag: 'low' },
     { m: 'Sep', avg: 13.8, note: 'FII flows pick up, pre-festive positioning',           events: [], flag: '' },
     { m: 'Oct', avg: 15.4, note: 'Festive season + global Q3 earnings = mixed signals',  events: ['Diwali'], flag: '' },
     { m: 'Nov', avg: 16.1, note: 'US election years spike this month significantly',     events: ['US election risk'], flag: '' },
-    { m: 'Dec', avg: 12.8, note: 'Year-end lightest vol — institutions reduce positions',events: [], flag: 'low' },
+    { m: 'Dec', avg: 12.8, note: 'Year-end lightest vol · institutions reduce positions',events: [], flag: 'low' },
   ];
 
   const maxAvg = Math.max(...MONTHS.map(m => m.avg));
@@ -1379,7 +1379,7 @@ function VixSeasonality() {
   return (
     <div className="fno-widget" style={{ borderRight: 'none' }}>
       <div className="fno-widget-title">VIX SEASONALITY <span className="fno-widget-formula">historical averages · 2015–2024 · approximate</span></div>
-      <div className="fno-widget-sub">India VIX tends to spike predictably around events — plan your strategy accordingly</div>
+      <div className="fno-widget-sub">India VIX tends to spike predictably around events · plan your strategy accordingly</div>
       <div className="fno-season-grid">
         {MONTHS.map((m, i) => {
           const barH = Math.round((m.avg / maxAvg) * 100);
@@ -1422,7 +1422,7 @@ function VixSeasonality() {
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
-// PIVOT POINTS V2 — 3 vertical columns + breadth + day range
+// PIVOT POINTS V2 · 3 vertical columns + breadth + day range
 // ─────────────────────────────────────────────────────────────────────────────
 function PivotPointsV2({ data }) {
   const [breadth, setBreadth] = useState(null);
@@ -1463,7 +1463,7 @@ function PivotPointsV2({ data }) {
       S1: 2*P-H, S2: P-(H-L), S3: L-2*(H-P),
       C, H, L,
       dayRangePct: H > L ? Math.round(((C-L)/(H-L))*100) : 50,
-      rangePct: H > L ? (((H-L)/L)*100).toFixed(2) : '—',
+      rangePct: H > L ? (((H-L)/L)*100).toFixed(2) : '-',
     };
   };
 
@@ -1529,7 +1529,7 @@ function PivotPointsV2({ data }) {
                 return (
                   <div key={l.key} className={`fno-pv2-level ${near?'fno-pv2-near':''} ${l.type==='pivot'?'fno-pv2-pp':''}`}
                     style={{ background: near ? `${color}20` : bg, opacity: l.opacity }}>
-                    <span className="fno-pv2-key" style={{ color: textColor }} title={l.key === 'PP' ? 'Pivot Point — central reference level' : l.key.startsWith('R') ? 'Resistance level' : 'Support level'}>{l.key}</span>
+                    <span className="fno-pv2-key" style={{ color: textColor }} title={l.key === 'PP' ? 'Pivot Point · central reference level' : l.key.startsWith('R') ? 'Resistance level' : 'Support level'}>{l.key}</span>
                     <span className="fno-pv2-val" style={{ color: near ? color : textColor }}>
                       {fmt(l.val)}{near ? ' ★' : ''}
                     </span>
@@ -1641,36 +1641,36 @@ function VixZoneCard({ vixLevel, onStrategyClick }) {
   const ZONES = [
     {
       max: 15, label: 'LOW VOL', color: '#00C896',
-      bias: 'Premium is cheap — option buyers historically have an edge',
+      bias: 'Premium is cheap · option buyers historically have an edge',
       strategies: [
         { name: 'Long Straddle',  note: 'ATM call + put. Any sharp move tends to pay off when IV is suppressed.' },
-        { name: 'Long Strangle',  note: 'OTM wings. Cheaper, needs a bigger move — cost-to-move ratio often favourable.' },
+        { name: 'Long Strangle',  note: 'OTM wings. Cheaper, needs a bigger move · cost-to-move ratio often favourable.' },
         { name: 'Debit Spreads',  note: 'Defined risk directional play. More efficient when IV is low.' },
       ],
       pattern: 'Low VIX periods have historically preceded the sharpest moves. Sellers get slowly ground down.',
-      avoid: 'Selling naked — premiums too thin to justify the risk',
+      avoid: 'Selling naked · premiums too thin to justify the risk',
     },
     {
       max: 20, label: 'NORMAL', color: '#4A9EFF',
-      bias: 'Balanced — neither buyers nor sellers have a structural edge',
+      bias: 'Balanced · neither buyers nor sellers have a structural edge',
       strategies: [
-        { name: 'Iron Condor',      note: 'OTM call + put spreads. The sweet spot range — premium is fair.' },
+        { name: 'Iron Condor',      note: 'OTM call + put spreads. The sweet spot range · premium is fair.' },
         { name: 'Vertical Spreads', note: 'Credit or debit, both viable. Market is pricing moves accurately.' },
-        { name: 'Covered Calls',    note: 'Moderate IV — good for writing calls against existing positions.' },
+        { name: 'Covered Calls',    note: 'Moderate IV · good for writing calls against existing positions.' },
       ],
       pattern: 'The zone where textbook strategies tend to play out as designed. Mix of buying and selling works.',
       avoid: null,
     },
     {
       max: 30, label: 'ELEVATED', color: '#F59E0B',
-      bias: 'Premium is expensive — sellers historically have an edge',
+      bias: 'Premium is expensive · sellers historically have an edge',
       strategies: [
         { name: 'Short Straddle',  note: 'Sell ATM call + put. Fat premiums if market stays range-bound.' },
         { name: 'Short Strangle',  note: 'Wider strikes, more room to be wrong. Historical edge in this band.' },
         { name: 'Credit Spreads',  note: 'Defined-risk premium selling. More credit per unit of risk taken.' },
       ],
       pattern: 'Elevated VIX has historically mean-reverted. Markets that settle after a fear spike reward sellers.',
-      avoid: 'Unhedged long options — overpaying for vol',
+      avoid: 'Unhedged long options · overpaying for vol',
     },
     {
       max: 99, label: 'HIGH FEAR', color: '#FF4455',
@@ -1681,7 +1681,7 @@ function VixZoneCard({ vixLevel, onStrategyClick }) {
         { name: 'Wait & Observe',  note: 'Many desks reduce size in panic. Entering too early is historically costly.' },
       ],
       pattern: 'Highest risk and highest potential reward simultaneously. Gaps and reversals are common overnight.',
-      avoid: 'Large directional bets — 5%+ gaps have happened in this zone',
+      avoid: 'Large directional bets · 5%+ gaps have happened in this zone',
     },
   ];
 
@@ -1838,35 +1838,43 @@ export default function FnOPage({ data = {} }) {
 
 // ── Compact expiry strip ──────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
-// INDIA-ONLY TICKER — F&O page only
+// INDIA-ONLY TICKER · F&O page only
 // ─────────────────────────────────────────────────────────────────────────────
 function IndiaTickerFno() {
   const [quotes, setQuotes] = useState([]);
   const [lastUpdate, setLastUpdate] = useState(null);
 
   const SYMBOLS = [
-    // Broad market
-    { label: 'Nifty 50',       id: 'nifty50',        color: '#4A9EFF' },
-    { label: 'Sensex',         id: 'sensex',          color: '#F59E0B' },
-    { label: 'Bank Nifty',     id: 'banknifty',       color: '#A78BFA' },
-    { label: 'Nifty Next 50',  id: 'niftynext50',     color: '#4A9EFF' },
-    { label: 'Midcap 150',     id: 'niftymidcap150',  color: '#34D399' },
-    { label: 'Smallcap 250',   id: 'niftysmallcap250',color: '#34D399' },
-    { label: 'India VIX',      id: 'indiavix',        color: '#FF4455' },
-    { label: 'Gift Nifty',     id: 'giftnifty',       color: '#64748B' },
+    // Broad
+    { label: 'Nifty 50',       id: 'nifty50',          color: '#4A9EFF' },
+    { label: 'Sensex',         id: 'sensex',            color: '#F59E0B' },
+    { label: 'Bank Nifty',     id: 'banknifty',         color: '#A78BFA' },
+    { label: 'Nifty Next 50',  id: 'niftynext50',       color: '#4A9EFF' },
+    { label: 'Nifty 100',      id: 'nifty100',          color: '#4A9EFF' },
+    { label: 'Nifty 200',      id: 'nifty200',          color: '#4A9EFF' },
+    { label: 'Nifty 500',      id: 'nifty500',          color: '#34D399' },
+    { label: 'Midcap 150',     id: 'niftymidcap150',    color: '#34D399' },
+    { label: 'Mid Select',     id: 'niftymidcapselect', color: '#34D399' },
+    { label: 'Smallcap 250',   id: 'niftysmallcap250',  color: '#34D399' },
+    { label: 'Total Mkt',      id: 'niftytotalmkt',     color: '#34D399' },
+    { label: 'India VIX',      id: 'indiavix',          color: '#FF4455' },
+    { label: 'Gift Nifty',     id: 'giftnifty',         color: '#64748B' },
     // Sectoral
-    { label: 'IT',             id: 'niftyit',         color: '#A78BFA' },
-    { label: 'Auto',           id: 'niftyauto',       color: '#F97316' },
-    { label: 'FMCG',           id: 'niftyfmcg',       color: '#34D399' },
-    { label: 'Pharma',         id: 'niftypharma',     color: '#06B6D4' },
-    { label: 'Realty',         id: 'niftyrealty',     color: '#EC4899' },
-    { label: 'Metal',          id: 'niftymetal',      color: '#94A3B8' },
-    { label: 'Energy',         id: 'niftyenergy',     color: '#F59E0B' },
-    { label: 'Fin Service',    id: 'niftyfinservice', color: '#4A9EFF' },
-    { label: 'Media',          id: 'niftymedia',      color: '#64748B' },
-    { label: 'PSU Bank',       id: 'niftypsubank',    color: '#F59E0B' },
-    { label: 'Private Bank',   id: 'niftypvtbank',    color: '#4A9EFF' },
-    { label: 'Consumer Dur',   id: 'niftyconsumer',   color: '#34D399' },
+    { label: 'IT',             id: 'niftyit',           color: '#A78BFA' },
+    { label: 'Auto',           id: 'niftyauto',         color: '#F97316' },
+    { label: 'FMCG',           id: 'niftyfmcg',         color: '#34D399' },
+    { label: 'Pharma',         id: 'niftypharma',       color: '#06B6D4' },
+    { label: 'Realty',         id: 'niftyrealty',       color: '#EC4899' },
+    { label: 'Metal',          id: 'niftymetal',        color: '#94A3B8' },
+    { label: 'Infra',          id: 'niftyinfra',        color: '#64748B' },
+    { label: 'Energy',         id: 'niftyenergy',       color: '#F59E0B' },
+    { label: 'Fin Service',    id: 'niftyfinservice',   color: '#4A9EFF' },
+    { label: 'Media',          id: 'niftymedia',        color: '#64748B' },
+    { label: 'PSU Bank',       id: 'niftypsubank',      color: '#F59E0B' },
+    { label: 'Pvt Bank',       id: 'niftypvtbank',      color: '#4A9EFF' },
+    { label: 'Consumer Dur',   id: 'niftyconsumer',     color: '#34D399' },
+    { label: 'MNC',            id: 'niftymnc',          color: '#64748B' },
+    { label: 'Bankex',         id: 'bankex',            color: '#F59E0B' },
   ];
 
   const isMarketOpen = () => {
@@ -1897,7 +1905,7 @@ function IndiaTickerFno() {
     return () => clearInterval(id);
   }, []);
 
-  const fmt = (n) => n?.toLocaleString('en-IN', { maximumFractionDigits: 2 }) || '—';
+  const fmt = (n) => n?.toLocaleString('en-IN', { maximumFractionDigits: 2 }) || '-';
   const istStr = lastUpdate?.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
 
   const tickerItems = (
@@ -1933,7 +1941,7 @@ function IndiaTickerFno() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EXPIRY STRIP — with holiday indicators per contract
+// EXPIRY STRIP · with holiday indicators per contract
 // ─────────────────────────────────────────────────────────────────────────────
 function ExpiryStrip({ expiries, holidayLive, holidayNames = {} }) {
   const CONTRACTS = [
@@ -1972,29 +1980,30 @@ function ExpiryStripItem({ label, rule, color, exp, holidayNames }) {
         m = Math.floor((secs % 3600) / 60), s = secs % 60;
   const p = n => String(n).padStart(2, '0');
 
-  const urgent = secs < 86400; // less than 1 day
-  const holidayName = exp?.shifted && exp?.originalDate ? (holidayNames[exp.originalDate] || 'holiday') : null;
+  const urgent = secs < 86400;
+  const holidayName = exp?.shifted && exp?.originalDate ? (holidayNames[exp.originalDate] || 'Holiday') : null;
+  const tooltip = "Time left before expiry · where theta increases, liquidity shifts, and trades become more expensive";
 
   return (
-    <div className="fno-esv2-item">
+    <div className="fno-esv2-item" title={tooltip}>
       <div className="fno-esv2-top">
         <span className="fno-esv2-name" style={{ color }}>{label}</span>
         <span className="fno-esv2-rule">({rule} expiry)</span>
       </div>
-      <div className="fno-esv2-bottom">
-        <span className="fno-esv2-date" style={{ color: urgent ? color : undefined }}>{exp?.date || '—'}</span>
+      <div className="fno-esv2-date-row">
+        <span className="fno-esv2-date">{exp?.date || '-'}</span>
         {exp?.shifted && (
-          <span className="fno-esv2-holiday" title={`${exp.originalDate} is ${holidayName}`}>
+          <span className="fno-esv2-holiday" title={`${exp.originalDate} is ${holidayName} · expiry shifted`}>
             ⚠ {holidayName}
           </span>
         )}
-        <span className="fno-esv2-clock" style={{ color: urgent ? color : undefined }}>
-          {d > 0 && <><span className="fno-estrip-n">{d}</span><span className="fno-estrip-u">d</span></>}
-          <span className="fno-estrip-n">{p(h)}</span><span className="fno-estrip-u">h</span>
-          <span className="fno-estrip-n">{p(m)}</span><span className="fno-estrip-u">m</span>
-          <span className="fno-estrip-n">{p(s)}</span><span className="fno-estrip-u">s</span>
-        </span>
       </div>
+      <span className="fno-esv2-clock" style={{ color: urgent ? color : undefined }}>
+        {d > 0 && <><span className="fno-estrip-n">{d}</span><span className="fno-estrip-u">d</span></>}
+        <span className="fno-estrip-n">{p(h)}</span><span className="fno-estrip-u">h</span>
+        <span className="fno-estrip-n">{p(m)}</span><span className="fno-estrip-u">m</span>
+        <span className="fno-estrip-n">{p(s)}</span><span className="fno-estrip-u">s</span>
+      </span>
     </div>
   );
 }

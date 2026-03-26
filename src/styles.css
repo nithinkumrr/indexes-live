@@ -3269,3 +3269,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-expiry-strip-v2 { justify-content: space-between; }
 .fno-esv2-item { flex: 1; padding: 6px 12px; }
 .fno-esv2-sep  { flex-shrink: 0; }
+
+/* ── Expiry Countdown — center aligned items ─────────────────────────────── */
+.fno-esv2-item {
+  flex: 1 !important; padding: 8px 12px !important;
+  display: flex !important; flex-direction: column !important;
+  align-items: center !important; text-align: center !important;
+  border-right: 1px solid var(--border);
+}
+.fno-esv2-item:last-of-type { border-right: none; }
+.fno-esv2-top   { justify-content: center !important; }
+.fno-esv2-date-row { display: flex; align-items: center; gap: 6px; justify-content: center; margin: 2px 0; }
+.fno-esv2-clock { justify-content: center; }
+.fno-esv2-name  { font-size: 12px !important; font-weight: 700 !important; }
+.fno-esv2-date  { font-size: 11px !important; color: var(--text2) !important; }

@@ -11,7 +11,7 @@ function fmtDateFull(str) {
   catch { return str; }
 }
 function fmtCr(n) {
-  if (n == null || isNaN(n)) return '—';
+  if (n == null || isNaN(n)) return '-';
   const abs = Math.abs(n), sign = n >= 0 ? '+' : '-';
   if (abs >= 10000) return `${sign}₹${(abs / 100).toFixed(1)}K Cr`;
   return `${sign}₹${abs.toFixed(0)} Cr`;
@@ -169,7 +169,7 @@ export default function FiiDii() {
       {history.length > 0 && (
         <div className="fiidii-chart-col">
           <div className="fiidii-chart-header">
-            <span className="fiidii-chart-title">FII &amp; DII Net Flow — Last {history.length} Trading Days</span>
+            <span className="fiidii-chart-title">FII &amp; DII Net Flow · Last {history.length} Trading Days</span>
             <div className="fiidii-legend-inline">
               <span><span className="fiidii-dot" style={{background:'rgba(0,200,150,0.85)'}}/> FII Buy</span>
               <span><span className="fiidii-dot" style={{background:'rgba(255,68,85,0.85)'}}/> FII Sell</span>
