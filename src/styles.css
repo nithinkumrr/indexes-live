@@ -2825,7 +2825,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── Overview tab layout ─────────────────────────────────────────────────── */
 .fno-overview-row1 {
-  display: grid; grid-template-columns: 30% 70%;
+  display: grid; grid-template-columns: 25% 75%;
   border-bottom: 1px solid var(--border);
   min-height: 0;
 }
@@ -2904,12 +2904,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 8px; flex: 1;
 }
-.fno-strategy-grid-compact .fno-strategy-zone { padding: 10px 12px; }
-.fno-strategy-grid-compact .fno-strategy-zone-label { font-size: 9px; margin-bottom: 8px; }
-.fno-strategy-grid-compact .fno-strategy-name { font-size: 11px; }
-.fno-strategy-grid-compact .fno-strategy-note { font-size: 9px; line-height: 1.4; }
-.fno-strategy-grid-compact .fno-strategy-avoid { font-size: 9px; padding-top: 6px; }
-.fno-strategy-grid-compact .fno-strategy-current { font-size: 10px !important; }
+.fno-strategy-grid-compact .fno-strategy-zone { padding: 14px 14px; }
+.fno-strategy-grid-compact .fno-strategy-zone-label { font-size: 11px; margin-bottom: 10px; }
+.fno-strategy-grid-compact .fno-strategy-name { font-size: 13px; }
+.fno-strategy-grid-compact .fno-strategy-note { font-size: 11px; line-height: 1.5; }
+.fno-strategy-grid-compact .fno-strategy-avoid { font-size: 10px; padding-top: 8px; }
+.fno-strategy-grid-compact .fno-strategy-current { font-size: 11px !important; }
 
 @media (max-width: 900px) {
   .fno-strategy-grid-compact { grid-template-columns: repeat(2, 1fr); }
