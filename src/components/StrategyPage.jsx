@@ -161,7 +161,7 @@ function PayoffChart({ legs, spot, vix, dte, lots }) {
     return { range, expPnls, nowPnls, bes, maxP: Math.max(...all), minP: Math.min(...all) };
   }, [legs, spot, vix, dte, lots, tDte, sig]);
 
-  const W=660, H=190, PAD={t:18,r:12,b:38,l:64};
+  const W=660, H=145, PAD={t:14,r:12,b:30,l:58};
   const CW=W-PAD.l-PAD.r, CH=H-PAD.t-PAD.b, span=Math.max(maxP-minP,1);
   const tx=s=>PAD.l+((s-range[0])/(range[range.length-1]-range[0]))*CW;
   const ty=p=>PAD.t+CH-((p-minP)/span)*CH;
@@ -234,9 +234,9 @@ function PayoffChart({ legs, spot, vix, dte, lots }) {
             return bx>=PAD.l&&bx<=PAD.l+CW?<g key={i}><circle cx={bx} cy={zy} r="4" fill="#F59E0B" stroke="#08080A" strokeWidth="1.5"/><text x={bx} y={PAD.t+CH+14} textAnchor="middle" fill="#F59E0B" fontSize="8" fontFamily="monospace">{be.toLocaleString('en-IN')}</text></g>:null;
           })}
           {/* Today path dashed */}
-          <path d={mkPath(nowPnls)} fill="none" stroke="#4A9EFF" strokeWidth="2" strokeDasharray="6,3" strokeLinejoin="round" clipPath="url(#spc3cl)"/>
+          <path d={mkPath(nowPnls)} fill="none" stroke="rgba(74,158,255,0.7)" strokeWidth="1.5" strokeDasharray="5,4" strokeLinejoin="round" clipPath="url(#spc3cl)"/>
           {/* Expiry path solid */}
-          <path d={mkPath(expPnls)} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinejoin="round" clipPath="url(#spc3cl)"/>
+          <path d={mkPath(expPnls)} fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2" strokeLinejoin="round" clipPath="url(#spc3cl)"/>
           {/* Spot */}
           {sx>=PAD.l&&sx<=PAD.l+CW&&<g><line x1={sx} y1={PAD.t} x2={sx} y2={PAD.t+CH} stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" strokeDasharray="3,3"/><text x={sx} y={PAD.t-3} textAnchor="middle" fill="#F59E0B" fontSize="8" fontFamily="monospace">SPOT</text></g>}
           {/* Target */}
@@ -258,7 +258,7 @@ function PayoffChart({ legs, spot, vix, dte, lots }) {
               const tx2=hx>PAD.l+CW*0.65?hx-118:hx+8;
               return <g>
                 <rect x={tx2} y={20} width={110} height={52} rx="4" fill="#1E1E22" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-                <text x={tx2+55} y={33} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="9" fontFamily="monospace">{Math.round(hvPnl.s).toLocaleString('en-IN')}</text>
+                <text x={tx2+55} y={33} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="8" fontFamily="monospace">{Math.round(hvPnl.s).toLocaleString('en-IN')}</text>
                 <text x={tx2+8} y={47} fill="rgba(255,255,255,0.35)" fontSize="8" fontFamily="monospace">Expiry:</text>
                 <text x={tx2+102} y={47} textAnchor="end" fontSize="11" fontWeight="700" fill={hvPnl.ex>=0?'#00C896':'#FF4455'} fontFamily="monospace">{fmt(hvPnl.ex)}</text>
                 <text x={tx2+8} y={60} fill="rgba(74,158,255,0.5)" fontSize="8" fontFamily="monospace">Today:</text>
