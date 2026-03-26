@@ -71,27 +71,27 @@ function McxFutures({ ibjaGold24, ibjaSilver }) {
 
   return (
     <>
-      {gold && (
+      {gold?.source === 'MCX live' && (
         <div className="gold-mcx-item gold-mcx-live">
           <span className="gold-mcx-name">
             ⚡ MCX Gold (1 kg)
             {gold.isOpen && <span className="gold-live-dot"/>}
           </span>
           <span className="gold-mcx-price">&#x20B9;{gold.price?.toLocaleString('en-IN')}</span>
-          <span className={`gold-mcx-sub ${gold.chgPct ? (parseFloat(gold.chgPct)>=0?'gain':'loss') : ''}`}>
-            {gold.chgPct ? `${parseFloat(gold.chgPct)>=0?'▲':'▼'} ${Math.abs(gold.chgPct)}% · ` : ''}{gold.source}
+          <span className={`gold-mcx-sub ${parseFloat(gold.chgPct)>=0?'gain':'loss'}`}>
+            {parseFloat(gold.chgPct)>=0?'▲':'▼'} {Math.abs(gold.chgPct)}% · MCX live
           </span>
         </div>
       )}
-      {silver && (
+      {silver?.source === 'MCX live' && (
         <div className="gold-mcx-item gold-mcx-live">
           <span className="gold-mcx-name" style={{color:'#A8B8CC'}}>
             ⚡ MCX Silver (1 kg)
             {silver.isOpen && <span className="gold-live-dot" style={{background:'#8899cc'}}/>}
           </span>
           <span className="gold-mcx-price" style={{color:'#A8B8CC'}}>&#x20B9;{silver.price?.toLocaleString('en-IN')}</span>
-          <span className={`gold-mcx-sub ${silver.chgPct ? (parseFloat(silver.chgPct)>=0?'gain':'loss') : ''}`}>
-            {silver.chgPct ? `${parseFloat(silver.chgPct)>=0?'▲':'▼'} ${Math.abs(silver.chgPct)}% · ` : ''}{silver.source}
+          <span className={`gold-mcx-sub ${parseFloat(silver.chgPct)>=0?'gain':'loss'}`}>
+            {parseFloat(silver.chgPct)>=0?'▲':'▼'} {Math.abs(silver.chgPct)}% · MCX live
           </span>
         </div>
       )}
