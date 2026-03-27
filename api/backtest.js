@@ -462,13 +462,19 @@ export default async function handler(req, res) {
     width      = 1,
     fromYear   = 2016,
     toYear     = 2026,
+    fromDate   = `${fromYear}-01-01`,
+    toDate     = `${toYear}-12-31`,
     slPct      = null,
     tpPct      = null,
   } = body;
 
+  // Extract years for historical data fetch
+  const fromYearActual = parseInt(fromDate.slice(0, 4));
+  const toYearActual   = parseInt(toDate.slice(0, 4));
+
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:v16:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v17:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromDate}:${toDate}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) return res.json({ ...( typeof cached === 'string' ? JSON.parse(cached) : cached ), cached: true });
@@ -476,21 +482,25 @@ export default async function handler(req, res) {
 
   try {
     const [priceData, vixData] = await Promise.all([
-      getHistoricalData(index, fromYear, toYear),
-      getVIXHistory(fromYear, toYear),
+      getHistoricalData(index, fromYearActual, toYearActual),
+      getVIXHistory(fromYearActual, toYearActual),
     ]);
 
     if (!priceData?.length) return res.status(400).json({ error: 'No price data available' });
+
+    // Filter to selected date range
+    const filteredPriceData = priceData.filter(d => d.date >= fromDate && d.date <= toDate);
+    if (!filteredPriceData.length) return res.status(400).json({ error: 'No data for selected date range' });
 
     const lotSize = LOT_SIZES[index]    || 75;
     const step    = STRIKE_STEPS[index] || 50;
 
     // Build trade list
     const trades = [];
-    const priceByDate = Object.fromEntries(priceData.map(d => [d.date, d]));
+    const priceByDate = Object.fromEntries(filteredPriceData.map(d => [d.date, d]));
 
-    for (let i = 0; i < priceData.length; i++) {
-      const day = priceData[i];
+    for (let i = 0; i < filteredPriceData.length; i++) {
+      const day = filteredPriceData[i];
 
       // Get expiry DOW for this date and expiry type
       const dow = getExpiryDow(index, day.date, expiry);
@@ -513,7 +523,7 @@ export default async function handler(req, res) {
       // Find entry day going back DTE trading days
       const entryIdx = i - dte;
       if (entryIdx < 0) continue;
-      const entryDay = priceData[entryIdx];
+      const entryDay = filteredPriceData[entryIdx];
       if (!entryDay) continue;
 
       const entrySpot = entryDay.close || entryDay.open;

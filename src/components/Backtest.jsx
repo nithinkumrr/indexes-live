@@ -346,7 +346,9 @@ export default function Backtest({ data }) {
     strikePct:  0,    // ATM=0, OTM=1,2...
     width:      1,    // spread width in strikes (for spreads)
     fromYear:   2016,
+    fromMonth:  1,
     toYear:     2026,
+    toMonth:    3,
     slPct:      null, // stop loss %
     tpPct:      null, // take profit %
   });
@@ -366,7 +368,12 @@ export default function Backtest({ data }) {
       const r = await fetch('/api/backtest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ strategy: selected, ...params }),
+        body: JSON.stringify({
+          strategy: selected,
+          ...params,
+          fromDate: `${params.fromYear}-${String(params.fromMonth||1).padStart(2,'0')}-01`,
+          toDate:   `${params.toYear}-${String(params.toMonth||12).padStart(2,'0')}-31`,
+        }),
       });
       const d = await r.json();
       if (d.error) setError(d.error);
@@ -497,22 +504,36 @@ export default function Backtest({ data }) {
             </select>
           </div>
 
-          {/* Year range */}
+          {/* Date range */}
           <div className="bt-param-group">
             <label>From</label>
-            <select className="bt-select" value={params.fromYear} onChange={e => p('fromYear', +e.target.value)}>
-              {[2016,2017,2018,2019,2020,2021,2022,2023,2024,2025]
-                .filter(y => y >= (INDICES.find(i => i.id === params.index)?.minYear ?? 2016))
-                .map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
+            <input
+              type="month"
+              className="bt-select"
+              value={`${params.fromYear}-${String(params.fromMonth || 1).padStart(2,'0')}`}
+              min={`${INDICES.find(i => i.id === params.index)?.minYear ?? 2016}-01`}
+              max="2026-03"
+              onChange={e => {
+                const [y, m] = e.target.value.split('-');
+                p('fromYear', +y);
+                p('fromMonth', +m);
+              }}
+            />
           </div>
           <div className="bt-param-group">
             <label>To</label>
-            <select className="bt-select" value={params.toYear} onChange={e => p('toYear', +e.target.value)}>
-              {[2017,2018,2019,2020,2021,2022,2023,2024,2025,2026]
-                .filter(y => y > params.fromYear)
-                .map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
+            <input
+              type="month"
+              className="bt-select"
+              value={`${params.toYear}-${String(params.toMonth || 12).padStart(2,'0')}`}
+              min={`${params.fromYear}-${String((params.fromMonth||1)+1).padStart(2,'0')}`}
+              max="2026-03"
+              onChange={e => {
+                const [y, m] = e.target.value.split('-');
+                p('toYear', +y);
+                p('toMonth', +m);
+              }}
+            />
           </div>
 
           {/* Run button */}
@@ -566,7 +587,7 @@ export default function Backtest({ data }) {
             <div className="bt-results-hdr">
               <div className="bt-results-title">
                 <span style={{ color: strategy?.groupColor }}>{strategy?.label}</span>
-                <span className="bt-results-meta">{params.index} · {params.expiry} · {params.fromYear}-{params.toYear}</span>
+                <span className="bt-results-meta">{params.index} · {params.expiry} · {params.fromYear}/{String(params.fromMonth||1).padStart(2,'0')} to {params.toYear}/{String(params.toMonth||12).padStart(2,'0')}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                 {results.dataSource && (
