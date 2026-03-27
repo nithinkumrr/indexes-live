@@ -1286,6 +1286,52 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 /* Light mode MMI card enhancement */
 [data-theme="light"] .fg-st-wrap { box-shadow: 0 2px 12px rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.12); }
 
+/* ── Tab bar — strong pill style ── */
+.rc-tab-bar { display: flex; gap: 4px; padding: 5px; background: var(--bg0); border: 1px solid var(--border); border-radius: 10px; flex-wrap: wrap; }
+.rc-tab-btn {
+  padding: 10px 20px; font-size: 13px; font-family: var(--mono); background: none;
+  border: none; border-radius: 7px; color: var(--text3); cursor: pointer;
+  display: flex; align-items: center; gap: 7px; transition: all 0.15s; white-space: nowrap; font-weight: 500;
+}
+.rc-tab-btn:hover:not(.rc-tab-active) { color: var(--text); background: var(--bg2); }
+.rc-tab-active { background: var(--accent) !important; color: #000 !important; font-weight: 700 !important; }
+.rc-tab-count { font-size: 10px; background: rgba(0,0,0,0.2); padding: 1px 6px; border-radius: 8px; }
+
+/* ── Result rows — big values ── */
+.rc-result-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); gap: 8px; }
+.rc-result-row:last-child { border-bottom: none; }
+.rc-result-row-big { padding: 14px 16px; background: rgba(0,0,0,0.15); }
+.rc-result-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.rc-result-label { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+.rc-result-val { font-size: 15px; font-weight: 700; font-family: var(--mono); }
+.rc-result-row-big .rc-result-val { font-size: 22px; font-weight: 800; }
+.rc-result-sub { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+
+/* ── Long/Short binary toggle ── */
+.rc-dir-toggle { display: grid; grid-template-columns: 1fr 1fr; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.rc-dir-btn { padding: 10px; font-size: 13px; font-weight: 700; font-family: var(--mono); border: none; cursor: pointer; transition: all 0.15s; background: var(--bg2); color: var(--text3); }
+.rc-dir-long.active  { background: rgba(0,200,150,0.2); color: #00C896; border-right: 2px solid #00C896; }
+.rc-dir-short.active { background: rgba(255,68,85,0.2);  color: #FF4455; border-left: 2px solid #FF4455; }
+.rc-dir-long:not(.active):hover  { background: rgba(0,200,150,0.08); color: #00C896; }
+.rc-dir-short:not(.active):hover { background: rgba(255,68,85,0.08);  color: #FF4455; }
+
+/* ── Why this matters — insight always visible ── */
+.rc-why { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.rc-why-insight { padding: 10px 14px; font-size: 13px; color: var(--text2); background: rgba(74,158,255,0.06); border-bottom: 1px solid rgba(74,158,255,0.15); line-height: 1.5; }
+.rc-why-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; background: none; border: none; color: var(--text3); font-size: 11px; cursor: pointer; font-family: var(--mono); letter-spacing: 0.5px; }
+.rc-why-toggle:hover { background: var(--bg2); color: var(--text2); }
+.rc-why-arrow { font-size: 9px; }
+.rc-why-body { padding: 14px; font-size: 13px; color: var(--text2); line-height: 1.75; border-top: 1px solid var(--border); background: rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 8px; }
+.rc-why-body p { margin: 0; }
+
+/* ── Cross-calc indicator ── */
+.rc-field-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+.rc-from-calc { font-size: 10px; color: var(--accent); font-family: var(--mono); background: rgba(74,158,255,0.1); padding: 1px 6px; border-radius: 3px; }
+
+/* ── MaxLoss big outputs ── */
+.rc-result-row-big .rc-result-label { font-size: 11px; }
+
+
 @media (max-width: 1100px) {
   .st-panels-v2 { grid-template-columns: 260px 1fr; }
 }

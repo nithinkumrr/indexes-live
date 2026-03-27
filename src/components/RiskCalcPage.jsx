@@ -1,4 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, createContext, useContext } from 'react';
+
+// ── Cross-calculator shared context ──────────────────────────────────────────
+const CalcCtx = createContext({ shared:{}, setShared:()=>{} });
+function useCalcCtx() { return useContext(CalcCtx); }
 
 // ── Formatters ───────────────────────────────────────────────────────────────
 function fmtINR(n) {
@@ -26,13 +30,16 @@ const LOT_SIZES = [
 
 // ── Shared UI primitives ──────────────────────────────────────────────────────
 
-function Field({ label, value, onChange, min=0, step=1, placeholder, prefix, suffix, note }) {
+function Field({ label, value, onChange, min=0, step=1, placeholder, prefix, suffix, note, fromCalc }) {
   return (
     <div className="rc-field">
-      <label className="rc-label">
-        {label}
-        {note && <span className="rc-note"> {note}</span>}
-      </label>
+      <div className="rc-field-header">
+        <label className="rc-label">
+          {label}
+          {note && <span className="rc-note"> {note}</span>}
+        </label>
+        {fromCalc && <span className="rc-from-calc">↑ {fromCalc}</span>}
+      </div>
       <div className="rc-input-wrap">
         {prefix && <span className="rc-affix rc-prefix">{prefix}</span>}
         <input className="rc-input" type="number" min={min} step={step} value={value}
@@ -54,13 +61,15 @@ function Select({ label, value, onChange, options }) {
   );
 }
 
-function Result({ label, value, color, sub }) {
+function Result({ label, value, color, sub, big }) {
   const c = { gain:'var(--gain)', loss:'var(--loss)', accent:'var(--accent)', warn:'var(--pre)' };
   return (
-    <div className="rc-result-row">
+    <div className={`rc-result-row${big?' rc-result-row-big':''}`}>
       <span className="rc-result-label">{label}</span>
-      <span className="rc-result-val" style={{ color: c[color] || 'var(--accent)' }}>{value}</span>
-      {sub && <span className="rc-result-sub">{sub}</span>}
+      <div className="rc-result-right">
+        <span className="rc-result-val" style={{ color: c[color] || 'var(--accent)' }}>{value}</span>
+        {sub && <span className="rc-result-sub">{sub}</span>}
+      </div>
     </div>
   );
 }
@@ -69,19 +78,20 @@ function Results({ children, warning }) {
   return (
     <div className="rc-results">
       {children}
-      {warning && <div className="rc-warning">{warning}</div>}
+      {warning && <div className="rc-warning">⚠ {warning}</div>}
     </div>
   );
 }
 
 function Divider() { return <div className="rc-divider" />; }
 
-function WhyMatters({ children }) {
+function WhyMatters({ insight, children }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="rc-why">
+      {insight && <div className="rc-why-insight">💡 {insight}</div>}
       <button className="rc-why-toggle" onClick={() => setOpen(o => !o)}>
-        <span>💡 Why this matters</span>
+        <span>Read more</span>
         <span className="rc-why-arrow">{open ? '▲' : '▼'}</span>
       </button>
       {open && <div className="rc-why-body">{children}</div>}
@@ -89,7 +99,24 @@ function WhyMatters({ children }) {
   );
 }
 
+// Binary direction toggle — Long=green, Short=red
+function DirToggle({ value, onChange }) {
+  return (
+    <div className="rc-dir-toggle">
+      <button className={`rc-dir-btn rc-dir-long ${value==='Long'?'active':''}`} onClick={() => onChange('Long')}>
+        ▲ Long
+      </button>
+      <button className={`rc-dir-btn rc-dir-short ${value==='Short'?'active':''}`} onClick={() => onChange('Short')}>
+        ▼ Short
+      </button>
+    </div>
+  );
+}
+
 function Toggle({ options, value, onChange }) {
+  if (options.includes('Long') && options.includes('Short')) {
+    return <DirToggle value={value} onChange={onChange} />;
+  }
   return (
     <div className="rc-toggle-row">
       {options.map(o => (
@@ -99,19 +126,17 @@ function Toggle({ options, value, onChange }) {
   );
 }
 
-// CalcCard with optional priority flag
 function CalcCard({ title, desc, children, priority }) {
   return (
     <div className={`rc-card ${priority ? 'rc-card-priority' : ''}`}>
       {priority && <div className="rc-card-priority-badge">Most Used</div>}
       <div className="rc-card-title">{title}</div>
-      <div className="rc-card-desc">{desc}</div>
+      {desc && <div className="rc-card-desc">{desc}</div>}
       <div className="rc-card-body">{children}</div>
     </div>
   );
 }
 
-// ── Mini leg input rows ───────────────────────────────────────────────────────
 function LegRow({ children }) {
   return <div className="rc-leg-row">{children}</div>;
 }
@@ -319,6 +344,7 @@ function TheFiveLaws() {
 // ── Trade Risk ────────────────────────────────────────────────────────────────
 
 function PositionSizeCalc() {
+  const { setShared } = useCalcCtx();
   const [capital,setCapital]=useState('500000');
   const [rp,setRp]=useState('1');
   const [entry,setEntry]=useState('');
@@ -333,6 +359,13 @@ function PositionSizeCalc() {
   const actual=(mode==='F&O Lots'?lots*ls:qty)*slDist;
   const warn=risk>2?'Risking more than 2% per trade is aggressive':null;
 
+  // Publish values for other calculators to consume
+  useEffect(() => {
+    if (entry && sl && maxRisk > 0) {
+      setShared(s => ({ ...s, entry, sl, maxRisk: String(Math.round(maxRisk)), qty: String(qty) }));
+    }
+  }, [entry, sl, maxRisk, qty]);
+
   return (
     <CalcCard priority title="Position Size Calculator" desc="Exact quantity or lots from capital, risk % and SL distance">
       <div className="rc-fields-grid">
@@ -344,14 +377,14 @@ function PositionSizeCalc() {
       <Toggle options={['Equity','F&O Lots']} value={mode} onChange={setMode}/>
       {mode==='F&O Lots' && <Select label="Instrument" value={lotSize} onChange={setLotSize} options={LOT_SIZES}/>}
       <Results warning={warn}>
-        <Result label="Max Risk Amount" value={fmtINR(maxRisk)} color="loss"/>
+        <Result label="Max Risk Amount" value={fmtINR(maxRisk)} color="loss" big/>
         <Result label="SL Distance" value={slDist>0?`₹${slDist.toFixed(2)}`:'-'} color="accent"/>
         {mode==='F&O Lots'
-          ? <Result label="Max Lots" value={lots>0?`${lots} lots`:'-'} color="gain" sub={`${lots*ls} shares`}/>
-          : <Result label="Max Quantity" value={qty>0?`${qty} shares`:'-'} color="gain"/>}
+          ? <Result label="Max Lots" value={lots>0?`${lots} lots`:'-'} color="gain" sub={`${lots*ls} shares`} big/>
+          : <Result label="Max Quantity" value={qty>0?`${qty} shares`:'-'} color="gain" big/>}
         <Result label="Actual Risk" value={fmtINR(actual)} color="accent"/>
       </Results>
-      <WhyMatters>
+      <WhyMatters insight="Risking 1% means 100 consecutive losses to wipe your account.">
         <p>Most traders decide quantity from gut feel. That is the same as having no stop loss - your actual risk is undefined.</p>
         <p>Fix your max loss first, then derive quantity. A ₹5L account risking 1% = ₹5,000 per trade. SL 200 points away = 25 shares, not more.</p>
         <p>The difference between 1% and 5% risk per trade is not 5x profit. It is the difference between surviving 10 losses in a row and not.</p>
@@ -377,12 +410,12 @@ function MaxLossCalc() {
         <Field label="Max Trades Per Day" value={trades} onChange={setTrades} step={1}/>
       </div>
       <Results warning={warn}>
-        <Result label="Max Loss Per Trade" value={fmtINR(perTrade)} color="loss"/>
-        <Result label="Max Daily Loss" value={fmtINR(perDay)} color="loss" sub={`${trades} trades x ${fmtINR(perTrade)}`}/>
+        <Result label="Max Loss Per Trade" value={fmtINR(perTrade)} color="loss" big/>
+        <Result label="Max Daily Loss" value={fmtINR(perDay)} color="loss" sub={`${trades} trades x ${fmtINR(perTrade)}`} big/>
         <Result label="Max Weekly Loss" value={fmtINR(perWeek)} color="warn" sub="5 trading days"/>
         <Result label="Daily Loss % of Capital" value={fmtPct(perDay/cap*100)} color="accent"/>
       </Results>
-      <WhyMatters>
+      <WhyMatters insight="A daily loss limit stops you trading on tilt after a bad start.">
         <p>A concrete rupee number is harder to violate than a percentage. "I will not lose more than ₹5,000 today" creates a real line.</p>
         <p>Many professional traders stop the moment they hit their daily max - not because they cannot continue, but because decision quality degrades after losses. The market will be there tomorrow.</p>
       </WhyMatters>
@@ -391,30 +424,39 @@ function MaxLossCalc() {
 }
 
 function SLDistanceCalc() {
+  const { shared } = useCalcCtx();
   const [entry,setEntry]=useState('');
   const [maxRisk,setMaxRisk]=useState('');
   const [qty,setQty]=useState('');
   const [dir,setDir]=useState('Long');
 
+  // Auto-fill from Position Size if available
+  useEffect(() => {
+    if (shared.entry && !entry) setEntry(shared.entry);
+    if (shared.maxRisk && !maxRisk) setMaxRisk(shared.maxRisk);
+    if (shared.qty && !qty) setQty(shared.qty);
+  }, [shared]);
+
   const ent=num(entry),mr=num(maxRisk),q=num(qty);
   const slDist=q>0?mr/q:0;
   const slPrice=dir==='Long'?ent-slDist:ent+slDist;
   const slPct=ent>0?(slDist/ent)*100:0;
+  const hasShared = shared.entry || shared.maxRisk;
 
   return (
     <CalcCard title="Stop Loss Distance Calculator" desc="Given entry and max risk, where should the SL be placed?">
-      <Toggle options={['Long','Short']} value={dir} onChange={setDir}/>
+      <DirToggle value={dir} onChange={setDir}/>
       <div className="rc-fields-grid">
-        <Field label="Entry Price" value={entry} onChange={setEntry} prefix="₹" step={0.05} placeholder="e.g. 24500"/>
-        <Field label="Max Risk (₹)" value={maxRisk} onChange={setMaxRisk} prefix="₹" step={100} placeholder="e.g. 5000"/>
-        <Field label="Quantity" value={qty} onChange={setQty} step={1} placeholder="e.g. 50"/>
+        <Field label="Entry Price" value={entry} onChange={setEntry} prefix="₹" step={0.05} placeholder="e.g. 24500" fromCalc={shared.entry ? 'Position Size' : null}/>
+        <Field label="Max Risk (₹)" value={maxRisk} onChange={setMaxRisk} prefix="₹" step={100} placeholder="e.g. 5000" fromCalc={shared.maxRisk ? 'Position Size' : null}/>
+        <Field label="Quantity" value={qty} onChange={setQty} step={1} placeholder="e.g. 50" fromCalc={shared.qty ? 'Position Size' : null}/>
       </div>
       <Results>
         <Result label="SL Distance" value={slDist>0?`₹${slDist.toFixed(2)}`:'-'} color="accent"/>
-        <Result label="SL Price" value={slPrice>0&&slDist>0?`₹${slPrice.toFixed(2)}`:'-'} color="loss"/>
+        <Result label="SL Price" value={slPrice>0&&slDist>0?`₹${slPrice.toFixed(2)}`:'-'} color="loss" big/>
         <Result label="SL as % of Entry" value={slPct>0?fmtPct(slPct):'-'} color="accent"/>
       </Results>
-      <WhyMatters>
+      <WhyMatters insight="Never move the stop to fit the trade. Move the trade to fit the stop.">
         <p>Use this when you know your quantity and need to find where the stop must go to stay within your max loss.</p>
         <p>If the calculated SL lands at an illogical level, that is a signal to reduce quantity or skip the trade. Never move the SL to fit the trade. Move the trade to fit the SL.</p>
       </WhyMatters>
@@ -423,10 +465,16 @@ function SLDistanceCalc() {
 }
 
 function RRCalc() {
+  const { shared } = useCalcCtx();
   const [entry,setEntry]=useState('');
   const [sl,setSl]=useState('');
   const [target,setTarget]=useState('');
   const [dir,setDir]=useState('Long');
+
+  useEffect(() => {
+    if (shared.entry && !entry) setEntry(shared.entry);
+    if (shared.sl && !sl) setSl(shared.sl);
+  }, [shared]);
 
   const ent=num(entry),stop=num(sl),tgt=num(target);
   const risk=dir==='Long'?ent-stop:stop-ent;
@@ -437,20 +485,20 @@ function RRCalc() {
 
   return (
     <CalcCard title="Risk Reward Ratio" desc="Computes R:R using entry, SL and target">
-      <Toggle options={['Long','Short']} value={dir} onChange={setDir}/>
+      <DirToggle value={dir} onChange={setDir}/>
       <div className="rc-fields-grid">
-        <Field label="Entry Price" value={entry} onChange={setEntry} prefix="₹" step={0.05} placeholder="e.g. 24500"/>
-        <Field label="Stop Loss" value={sl} onChange={setSl} prefix="₹" step={0.05} placeholder="e.g. 24300"/>
+        <Field label="Entry Price" value={entry} onChange={setEntry} prefix="₹" step={0.05} placeholder="e.g. 24500" fromCalc={shared.entry ? 'Position Size' : null}/>
+        <Field label="Stop Loss" value={sl} onChange={setSl} prefix="₹" step={0.05} placeholder="e.g. 24300" fromCalc={shared.sl ? 'Position Size' : null}/>
         <Field label="Target Price" value={target} onChange={setTarget} prefix="₹" step={0.05} placeholder="e.g. 24900"/>
       </div>
       <Results warning={warn}>
         <Result label="Risk (per share)" value={risk>0?`₹${risk.toFixed(2)}`:'-'} color="loss"/>
         <Result label="Reward (per share)" value={reward>0?`₹${reward.toFixed(2)}`:'-'} color="gain"/>
         <Result label="R:R Ratio" value={rr>0?`1 : ${rr.toFixed(2)}`:'-'}
-          color={rr>=2?'gain':rr>=1?'accent':'loss'}/>
+          color={rr>=2?'gain':rr>=1?'accent':'loss'} big/>
         <Result label="Min Win Rate Needed" value={minWin>0?fmtPct(minWin):'-'} color="accent"/>
       </Results>
-      <WhyMatters>
+      <WhyMatters insight="At 2:1 R:R you only need to win 34% of trades to break even.">
         <p>A 2:1 R:R means you only need to be right 34% of the time to break even. Most retail traders chase win rates, not R:R - that is backwards.</p>
         <p>Never take a trade with R:R below 1.5:1 unless your win rate is consistently above 65%.</p>
       </WhyMatters>
@@ -513,7 +561,7 @@ function BreakevenCalc() {
           )}
         </>
       )}
-      <WhyMatters>
+      <WhyMatters insight="Premium is not just a cost — it is a hurdle you must clear first.">
         <p>The underlying does not just need to move in your direction - it needs to move past the breakeven just to not lose money. Premium is a hurdle, not just a cost.</p>
         <p>A ₹24,500 Nifty call at ₹150 premium needs Nifty at ₹24,650 at expiry just to break even. That is a 0.6% move before a single rupee of profit.</p>
       </WhyMatters>
@@ -660,7 +708,7 @@ function DrawdownCalc() {
         <Result label="Recovery Required" value={isFinite(recovery)?fmtPct(recovery):'Infinity'} color="warn"
           sub={`To return to ${fmtINR(cap)}`}/>
       </Results>
-      <WhyMatters>
+      <WhyMatters insight="A 33% drawdown needs a 50% gain just to get back to zero.">
         <p>This is the Recovery Trap made personal. A 33% drawdown requires a 50% gain just to get back to zero. Set your max drawdown limit before trading and treat it as a hard stop.</p>
       </WhyMatters>
     </CalcCard>
@@ -738,7 +786,7 @@ function RiskOfRuinCalc() {
         <Result label="Risk of Ruin" value={fmtPct(ror)} color={ror<5?'gain':ror<20?'warn':'loss'}/>
         <Result label="System Viable" value={edge>0?'Yes - positive edge':'No - negative edge'} color={edge>0?'gain':'loss'}/>
       </Results>
-      <WhyMatters>
+      <WhyMatters insight="Even a profitable system goes bust with aggressive sizing.">
         <p>Risk of Ruin is the probability your account eventually hits zero. A negative-edge system will always reach 0%. The only question is when.</p>
         <p>Even with positive edge, too much risk per trade pushes ruin probability toward 100%. This is the mathematical proof that sizing matters more than strategy.</p>
       </WhyMatters>
@@ -803,7 +851,7 @@ function ExpectancyCalc() {
         <Result label="Expectancy Per Trade" value={aw&&al?fmtINR(exp):'-'} color={exp>0?'gain':'loss'}/>
         <Result label={`Expected P&L (${tr} trades)`} value={aw&&al?fmtINR(total):'-'} color={total>0?'gain':'loss'}/>
       </Results>
-      <WhyMatters>
+      <WhyMatters insight="Your goal is not to win every trade — it is to have positive expectancy.">
         <p>Expectancy tells you whether your system makes money. A +₹300 expectancy means each trade adds ₹300 on average over time, regardless of the individual outcome.</p>
         <p>Your goal is not to win every trade. It is to have positive expectancy and take enough trades to let the math work.</p>
       </WhyMatters>
@@ -1079,6 +1127,7 @@ function PageNav({ activeSection, onNav }) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export default function RiskCalcPage() {
+  const [shared, setShared] = useState({});
   const [activeTab,   setActiveTab]   = useState('trade');
   const [activeSection,setActiveSection] = useState('start');
   const calcRef = useRef(null);
@@ -1115,6 +1164,7 @@ export default function RiskCalcPage() {
   };
 
   return (
+    <CalcCtx.Provider value={{ shared, setShared }}>
     <div className="rc-page">
 
       {/* Sticky section nav */}
@@ -1169,5 +1219,6 @@ export default function RiskCalcPage() {
         For educational purposes only. Not investment advice. Always verify calculations before trading.
       </div>
     </div>
+    </CalcCtx.Provider>
   );
 }
