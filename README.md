@@ -81,7 +81,7 @@ api/
 ```
 
 ## Phase 2 ideas (next)
-- SGX Nifty futures (India pre-market signal)
+- SGX Nifty futures (India pre-market signal) 
 - FII/DII flow tracker
 - Fear & Greed indicator
 - Watchlist (pin your 5 indexes)
