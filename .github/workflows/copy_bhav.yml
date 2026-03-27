@@ -6,49 +6,41 @@ on:
 jobs:
   copy-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Install psql
         run: sudo apt-get install -y postgresql-client
 
-      - name: Create table in new DB
-        env:
-          PGPASSWORD: ${{ secrets.NEW_DB_PASS }}
+      - name: Dump from old DB and restore to new DB
         run: |
-          psql -h db.fffgbfvxxixpkxxcfejd.supabase.co -U postgres -d postgres -c "
-            CREATE TABLE IF NOT EXISTS bhav_options (
-              id BIGSERIAL PRIMARY KEY,
-              date DATE NOT NULL,
-              symbol TEXT NOT NULL,
-              expiry DATE NOT NULL,
-              strike NUMERIC NOT NULL,
-              type TEXT NOT NULL,
-              open NUMERIC, high NUMERIC, low NUMERIC,
-              close NUMERIC, settle NUMERIC,
-              oi BIGINT, volume BIGINT,
-              UNIQUE (date, symbol, expiry, strike, type)
-            );
-            CREATE INDEX IF NOT EXISTS idx_bhav_lookup ON bhav_options (symbol, date, expiry, strike, type);
-            CREATE INDEX IF NOT EXISTS idx_bhav_date ON bhav_options (date);
-          "
-
-      - name: Dump and restore
-        run: |
-          PGPASSWORD=${{ secrets.OLD_DB_PASS }} pg_dump \
-            -h db.axobtyzujcbckkbsakpb.supabase.co \
-            -U postgres -d postgres \
-            --table=bhav_options --data-only --no-owner --no-privileges \
+          echo "Dumping from Petocare..."
+          PGPASSWORD="${{ secrets.OLD_DB_PASS }}" pg_dump \
+            -h aws-0-ap-southeast-1.pooler.supabase.com \
+            -U postgres.axobtyzujcbckkbsakpb \
+            -d postgres \
+            -p 5432 \
+            --table=bhav_options \
+            --data-only \
+            --no-owner \
+            --no-privileges \
             -f /tmp/bhav_dump.sql
-          echo "Dump done. Restoring..."
-          PGPASSWORD=${{ secrets.NEW_DB_PASS }} psql \
-            -h db.fffgbfvxxixpkxxcfejd.supabase.co \
-            -U postgres -d postgres \
+          echo "Dump complete. File size:"
+          ls -lh /tmp/bhav_dump.sql
+          echo "Restoring to indexes-live..."
+          PGPASSWORD="${{ secrets.NEW_DB_PASS }}" psql \
+            -h aws-0-ap-northeast-1.pooler.supabase.com \
+            -U postgres.fffgbfvxxixpkxxcfejd \
+            -d postgres \
+            -p 5432 \
             -f /tmp/bhav_dump.sql
+          echo "Restore complete."
 
-      - name: Verify
-        env:
-          PGPASSWORD: ${{ secrets.NEW_DB_PASS }}
+      - name: Verify row count
         run: |
-          psql -h db.fffgbfvxxixpkxxcfejd.supabase.co -U postgres -d postgres \
-            -c "SELECT COUNT(*) FROM bhav_options;"
+          PGPASSWORD="${{ secrets.NEW_DB_PASS }}" psql \
+            -h aws-0-ap-northeast-1.pooler.supabase.com \
+            -U postgres.fffgbfvxxixpkxxcfejd \
+            -d postgres \
+            -p 5432 \
+            -c "SELECT COUNT(*) as total_rows, MIN(date) as from_date, MAX(date) as to_date FROM bhav_options;"
