@@ -13,6 +13,7 @@ import GoldPage from './components/GoldPage';
 import IpoPage from './components/IpoPage';
 import IndexModal from './components/IndexModal';
 import Footer from './components/Footer';
+import RiskCalcPage from './components/RiskCalcPage';
 import SentimentTop from './components/SentimentTop';
 import IndiaHeatmap from './components/IndiaHeatmap';
 import FiiDii from './components/FiiDii';
@@ -25,6 +26,7 @@ const HASH_MAP = {
   'fno':        'fno',
   'gold':       'gold',
   'ipo':        'ipo',
+  'calc':       'calc',
 };
 
 const VIEW_HASH = {
@@ -33,9 +35,10 @@ const VIEW_HASH = {
   'fno':        'fno',
   'gold':       'gold',
   'ipo':        'ipo',
+  'calc':       'calc',
 };
 
-const FULL_PAGES = new Set(['fno', 'gold', 'ipo']);
+const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc']);
 
 function getViewFromHash() {
   const hash = window.location.hash.replace('#/', '').replace('#', '').toLowerCase();
@@ -75,6 +78,7 @@ export default function App() {
         view === 'fno'       ? <FnOPage data={data} nseData={nseData} /> :
         view === 'gold'      ? <GoldPage /> :
         view === 'ipo'       ? <IpoPage /> :
+        view === 'calc'      ? <RiskCalcPage /> :
         null
       ) : (
         <>
