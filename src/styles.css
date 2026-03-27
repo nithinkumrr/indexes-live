@@ -4370,7 +4370,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── Sticky page nav ── */
 .rc-page-nav {
-  position: sticky; top: 52px; z-index: 80;
+  position: sticky; top: 0; z-index: 80;
   background: var(--bg0); border-bottom: 1px solid var(--border);
   padding: 0 32px;
 }
@@ -4498,8 +4498,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .rc-tab-active { background: var(--bg2) !important; color: var(--text) !important; font-weight: 600; }
 .rc-tab-count { font-size: 10px; background: var(--bg3); padding: 1px 6px; border-radius: 10px; color: var(--text3); }
 
-/* ── Calc grid ── */
-.rc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+/* ── Calc grid — columns set dynamically per tab ── */
+.rc-grid { display: grid; gap: 16px; align-items: start; }
 
 /* ── CalcCard ── */
 .rc-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 14px; position: relative; }
@@ -4592,10 +4592,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .rc-footer-note { font-size: 12px; color: var(--text3); line-height: 1.6; padding: 24px 32px; }
 
 @media (max-width: 1100px) {
-  .rc-grid { grid-template-columns: repeat(2, 1fr); }
+  .rc-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
 @media (max-width: 768px) {
-  .rc-grid { grid-template-columns: 1fr; }
+  .rc-grid { grid-template-columns: 1fr !important; }
   .rc-start-grid { grid-template-columns: 1fr; }
   .rc-hero-title { font-size: 28px; }
   .rc-hero-stats { flex-wrap: wrap; }

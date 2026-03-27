@@ -1201,7 +1201,7 @@ export default function RiskCalcPage() {
           </div>
         </div>
 
-        <div className="rc-grid">
+        <div className="rc-grid" style={{ gridTemplateColumns: `repeat(${tab?.calcs.length || 3}, 1fr)` }}>
           {tab?.calcs.map((Calc,i)=><Calc key={i}/>)}
         </div>
       </div>
