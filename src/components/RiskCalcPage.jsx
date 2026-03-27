@@ -916,40 +916,63 @@ function MaxContractsCalc() {
 
 function MarginUtilCalc() {
   const [capital,setCapital]=useState('500000');
-  const [blocked,setBlocked]=useState('');
-  const [trades,setTrades]=useState([{name:'',margin:''}]);
+  const [trades,setTrades]=useState([{name:'Nifty CE',margin:''},{name:'Bank Nifty PE',margin:''}]);
+  const [newTrade,setNewTrade]=useState('');
 
   const cap=num(capital);
-  const total=num(blocked)||trades.reduce((a,t)=>a+num(t.margin),0);
+  const total=trades.reduce((a,t)=>a+num(t.margin),0);
   const pct=cap>0?(total/cap)*100:0;
-  const warn=pct>80?'Over 80% utilization - very little room for adverse moves':
-             pct>60?'Over 60% - limited headroom for new positions':null;
+  const freeCap=cap-total;
+  const previewPct=newTrade?((total+num(newTrade))/cap)*100:0;
+  const rating=pct>80?{text:'DANGER — forced exit risk',color:'var(--loss)'}:
+               pct>60?{text:'HIGH — limit headroom',color:'var(--pre)'}:
+               pct>40?{text:'MODERATE — monitor',color:'var(--accent)'}:
+               {text:'HEALTHY — strong cushion',color:'var(--gain)'};
+  const stressMoveNeeded=total>0?freeCap/total*100:Infinity;
+  const stressLevel=stressMoveNeeded<10?'HIGH':stressMoveNeeded<25?'MEDIUM':'LOW';
+  const stressColor=stressMoveNeeded<10?'var(--loss)':stressMoveNeeded<25?'var(--pre)':'var(--gain)';
 
   return (
-    <CalcCard title="Margin Utilization" desc="% of capital blocked vs total capital">
-      <div className="rc-fields-grid">
-        <Field label="Total Capital" value={capital} onChange={setCapital} prefix="₹" step={10000}/>
-        <Field label="Margin Blocked" value={blocked} onChange={setBlocked} prefix="₹" step={1000} placeholder="Or sum below"/>
-      </div>
+    <CalcCard title="Margin Utilization" desc="High utilization = forced exit risk, not loss risk">
+      <Field label="Total Capital" value={capital} onChange={setCapital} prefix="₹" step={10000}/>
       <div className="rc-leg-list">
         {trades.map((t,i)=>(
           <div key={i} className="rc-leg-row">
-            <input className="rc-mini-input" style={{flex:1}} placeholder={`Trade ${i+1}`} value={t.name}
+            <input className="rc-mini-input" style={{flex:1}} placeholder="Position name" value={t.name}
               onChange={e=>setTrades(tr=>tr.map((x,j)=>j===i?{...x,name:e.target.value}:x))}/>
             <input className="rc-mini-input" placeholder="Margin ₹" type="number" value={t.margin}
               onChange={e=>setTrades(tr=>tr.map((x,j)=>j===i?{...x,margin:e.target.value}:x))}/>
-            {trades.length>1 && <button className="rc-leg-remove" onClick={()=>setTrades(tr=>tr.filter((_,j)=>j!==i))}>x</button>}
+            {trades.length>1 && <button className="rc-leg-remove" onClick={()=>setTrades(tr=>tr.filter((_,j)=>j!==i))}>×</button>}
           </div>
         ))}
-        <button className="rc-add-leg" onClick={()=>setTrades(t=>[...t,{name:'',margin:''}])}>+ Add Trade</button>
+        <button className="rc-add-leg" onClick={()=>setTrades(t=>[...t,{name:'',margin:''}])}>+ Add Position</button>
       </div>
-      <Results warning={warn}>
+
+      {/* Hero */}
+      <div className="rc-util-hero">
+        <div className="rc-util-pct" style={{color:rating.color}}>{pct.toFixed(1)}%</div>
+        <div className="rc-util-label">margin utilization</div>
+        <div className="rc-util-rating" style={{color:rating.color}}>{rating.text}</div>
+        <div className="rc-util-sub">Safe threshold: under 50%</div>
+      </div>
+
+      <Results>
         <Result label="Margin Blocked" value={fmtINR(total)} color="loss"/>
-        <Result label="Free Capital" value={fmtINR(cap-total)} color="gain"/>
-        <Result label="Utilization" value={fmtPct(pct)} color={pct>80?'loss':pct>60?'warn':'gain'}/>
+        <Result label="Free Capital (buffer)" value={fmtINR(freeCap)} color="gain" big/>
+        <Result label="Margin call risk on 10% move" value={stressLevel} color={stressMoveNeeded<10?'loss':stressMoveNeeded<25?'warn':'gain'}/>
       </Results>
-      <WhyMatters>
-        <p>High margin utilization means a sharp move against you can trigger a margin call, forcing you to close positions at the worst possible moment.</p>
+
+      {/* Preview new trade */}
+      <div className="rc-preview-row">
+        <input className="rc-mini-input" style={{flex:1}} type="number" placeholder="Add new trade margin (₹)"
+          value={newTrade} onChange={e=>setNewTrade(e.target.value)}/>
+        {newTrade && <span className="rc-preview-val" style={{color:previewPct>60?'var(--loss)':'var(--accent)'}}>
+          → {previewPct.toFixed(1)}%
+        </span>}
+      </div>
+
+      <WhyMatters insight="High utilization means broker can force-close your positions at the worst moment.">
+        <p>Margin utilization measures how much of your capital is locked as collateral. At 80%+, a sharp adverse move can trigger a margin call — your broker squares off positions automatically, often at the worst price.</p>
         <p>Most professionals keep utilization under 50-60%. This leaves room to hold through volatility without being forced out by mechanics.</p>
       </WhyMatters>
     </CalcCard>
@@ -959,36 +982,59 @@ function MarginUtilCalc() {
 function PortfolioRiskCalc() {
   const [capital,setCapital]=useState('500000');
   const [positions,setPositions]=useState([
-    {name:'Trade 1',risk:''},{name:'Trade 2',risk:''},
+    {name:'Nifty CE',risk:''},{name:'Bank Nifty PE',risk:''},
   ]);
 
   const cap=num(capital);
   const total=positions.reduce((a,p)=>a+num(p.risk),0);
   const pct=cap>0?(total/cap)*100:0;
-  const warn=pct>5?'Total portfolio risk over 5% - consider reducing exposure':null;
+  const perTrade=positions.length>0?pct/positions.length:0;
+  const maxSafe=cap>0?Math.floor(cap*0.03/Math.max(total/Math.max(positions.length,1),1)):0;
+  const streak3=total*3;
+  const verdict=pct>8?{text:'Over-risked — reduce exposure now',color:'var(--loss)'}:
+                pct>5?{text:'Aggressive — monitor closely',color:'var(--pre)'}:
+                pct>3?{text:'Moderate — acceptable',color:'var(--accent)'}:
+                {text:'Safe — well within limits',color:'var(--gain)'};
 
   return (
-    <CalcCard title="Portfolio Capital at Risk" desc="Aggregate risk across all open trades">
+    <CalcCard title="Portfolio Capital at Risk" desc="Total rupee exposure across all open trades">
       <Field label="Total Capital" value={capital} onChange={setCapital} prefix="₹" step={10000}/>
       <div className="rc-leg-list" style={{marginTop:10}}>
         {positions.map((p,i)=>(
           <div key={i} className="rc-leg-row">
-            <input className="rc-mini-input" style={{flex:1}} placeholder="Name" value={p.name}
+            <input className="rc-mini-input" style={{flex:1}} placeholder="e.g. Nifty CE" value={p.name}
               onChange={e=>setPositions(ps=>ps.map((x,j)=>j===i?{...x,name:e.target.value}:x))}/>
             <input className="rc-mini-input" placeholder="Risk ₹" type="number" value={p.risk}
               onChange={e=>setPositions(ps=>ps.map((x,j)=>j===i?{...x,risk:e.target.value}:x))}/>
-            {positions.length>1 && <button className="rc-leg-remove" onClick={()=>setPositions(ps=>ps.filter((_,j)=>j!==i))}>x</button>}
+            {positions.length>1 && <button className="rc-leg-remove" onClick={()=>setPositions(ps=>ps.filter((_,j)=>j!==i))}>×</button>}
           </div>
         ))}
-        <button className="rc-add-leg" onClick={()=>setPositions(p=>[...p,{name:`Trade ${p.length+1}`,risk:''}])}>+ Add Position</button>
+        <button className="rc-add-leg" onClick={()=>setPositions(p=>[...p,{name:'',risk:''}])}>+ Add Position</button>
       </div>
-      <Results warning={warn}>
-        <Result label="Total Risk (₹)" value={fmtINR(total)} color="loss"/>
-        <Result label="Total Risk % of Capital" value={fmtPct(pct)} color={pct>5?'loss':pct>3?'warn':'gain'}/>
-        <Result label="Capital Safe" value={fmtINR(cap-total)} color="gain"/>
+
+      {/* Hero */}
+      <div className="rc-port-hero" style={{borderColor: pct>5?'rgba(255,68,85,0.3)':'rgba(0,200,150,0.3)'}}>
+        <div className="rc-port-val" style={{color:pct>5?'var(--loss)':pct>3?'var(--pre)':'var(--gain)'}}>
+          {fmtINR(total)} at risk ({fmtPct(pct)})
+        </div>
+        <div className="rc-port-verdict" style={{color:verdict.color}}>{verdict.text}</div>
+      </div>
+
+      <Results>
+        <Result label="Per trade avg risk" value={fmtPct(perTrade)} color="accent"/>
+        <Result label="3-loss streak impact" value={`${fmtINR(streak3)} (${fmtPct(streak3/cap*100)})`} color="loss"/>
+        <Result label="Capital safe" value={fmtINR(cap-total)} color="gain"/>
       </Results>
-      <WhyMatters>
-        <p>Even if each trade risks 1%, having 8 open positions means 8% of capital is at risk simultaneously - and those positions are often correlated. A market-wide sell-off hits all of them at once.</p>
+
+      {pct>3 && (
+        <div className="rc-suggestion-chip rc-chip-warn">
+          At {fmtPct(perTrade)} per trade → max {Math.floor(3/perTrade)} trades safe at this size
+        </div>
+      )}
+
+      <WhyMatters insight="Even 1% per trade becomes 8% total with 8 open positions — all correlated.">
+        <p>Even if each trade risks 1%, having 8 open positions means 8% of capital is at risk simultaneously. In a market-wide move, all positions get hit at once.</p>
+        <p>Keep total portfolio risk under 5%. A 3% rule means never more than 3 trades open at once at 1% risk each.</p>
       </WhyMatters>
     </CalcCard>
   );
@@ -997,72 +1043,128 @@ function PortfolioRiskCalc() {
 function DrawdownCalc() {
   const [capital,setCapital]=useState('500000');
   const [dd,setDd]=useState('20');
+  const [rp,setRp]=useState('2');
 
-  const cap=num(capital),d=num(dd);
+  const cap=num(capital),d=num(dd),r=num(rp);
   const remaining=cap*(1-d/100);
   const loss=cap-remaining;
   const recovery=d<100?(d/(100-d))*100:Infinity;
+  const tradesNeeded=r>0?Math.ceil(recovery/r):0;
+  const zone=d>=30?{text:'Very hard recovery — treat as red line',color:'var(--loss)'}:
+             d>=20?{text:'Serious drawdown — act now',color:'var(--pre)'}:
+             d>=10?{text:'Manageable — but address quickly',color:'var(--accent)'}:
+             {text:'Recoverable — stay disciplined',color:'var(--gain)'};
+
+  // Table for visual curve data
+  const points=[5,10,15,20,25,30,40,50].map(v=>({dd:v,rec:(v/(100-v))*100}));
 
   return (
-    <CalcCard title="Drawdown Impact Calculator" desc="Capital remaining after X% loss and recovery % required">
+    <CalcCard title="Drawdown Impact Calculator" desc="How much do you need to earn back after a loss?">
       <div className="rc-fields-grid">
         <Field label="Starting Capital" value={capital} onChange={setCapital} prefix="₹" step={10000}/>
-        <Field label="Drawdown" value={dd} onChange={setDd} suffix="%" step={1} min={1}/>
+        <Field label="Risk Per Trade" value={rp} onChange={setRp} suffix="%" step={0.5}/>
       </div>
+      <div className="rc-dd-slider-row">
+        <label className="rc-label">Drawdown: <strong style={{color:'var(--loss)'}}>{dd}%</strong></label>
+        <input type="range" min={1} max={80} value={dd} onChange={e=>setDd(e.target.value)} className="rc-dd-slider"/>
+      </div>
+
+      {/* Hero */}
+      <div className="rc-dd-hero" style={{borderColor:d>=30?'rgba(255,68,85,0.3)':d>=20?'rgba(245,158,11,0.3)':'rgba(74,158,255,0.3)'}}>
+        <div className="rc-dd-hero-label">You need this gain to recover</div>
+        <div className="rc-dd-hero-val" style={{color:d>=30?'var(--loss)':d>=20?'var(--pre)':'var(--accent)'}}>
+          {isFinite(recovery)?fmtPct(recovery):'Impossible'}
+        </div>
+        <div className="rc-dd-hero-sub">
+          You lost {fmtINR(loss)} → need {fmtINR(loss + remaining * recovery/100)} total gains
+        </div>
+        <div className="rc-dd-zone" style={{color:zone.color}}>{zone.text}</div>
+      </div>
+
       <Results>
-        <Result label="Capital Lost" value={fmtINR(loss)} color="loss"/>
         <Result label="Capital Remaining" value={fmtINR(remaining)} color={d>50?'loss':'gain'}/>
-        <Result label="Recovery Required" value={isFinite(recovery)?fmtPct(recovery):'Infinity'} color="warn"
-          sub={`To return to ${fmtINR(cap)}`}/>
+        <Result label="Recovery Required" value={isFinite(recovery)?fmtPct(recovery):'Infinity'} color="warn" big/>
+        <Result label={`Winning trades needed (at ${rp}%)`} value={tradesNeeded>0?`~${tradesNeeded} wins`:'-'} color="accent"/>
       </Results>
-      <WhyMatters insight="A 33% drawdown needs a 50% gain just to get back to zero.">
-        <p>This is the Recovery Trap made personal. A 33% drawdown requires a 50% gain just to get back to zero. Set your max drawdown limit before trading and treat it as a hard stop.</p>
+
+      {/* Mini recovery curve */}
+      <div className="rc-dd-table-title">Drawdown vs recovery required</div>
+      <div className="rc-mini-table">
+        <div className="rc-mini-thead"><span>Drawdown</span><span>Recovery needed</span><span>Difficulty</span></div>
+        {points.map(p=>(
+          <div key={p.dd} className={`rc-mini-trow ${Math.abs(p.dd-d)<3?'rc-mini-trow-active':''}`}>
+            <span style={{color:p.dd>=30?'var(--loss)':p.dd>=20?'var(--pre)':'var(--text)'}}>{p.dd}%</span>
+            <span style={{color:p.dd>=30?'var(--loss)':'var(--text)'}}>{p.rec.toFixed(1)}%</span>
+            <span style={{fontSize:11,color:'var(--text3)'}}>{p.dd>=30?'Very hard':p.dd>=20?'Hard':p.dd>=10?'Manageable':'Easy'}</span>
+          </div>
+        ))}
+      </div>
+
+      <WhyMatters insight="Avoid drawdowns above 20% — recovery becomes exponential, not linear.">
+        <p>A 33% drawdown requires a 50% gain. A 50% drawdown requires a 100% gain. The math is not symmetric — losses compound faster than wins.</p>
+        <p>Set your max drawdown as a hard rule before you start trading. Many professionals stop trading at 15-20% drawdown and review their system.</p>
       </WhyMatters>
     </CalcCard>
   );
 }
 
-// ============================================================================== System Stats ──────────────────────────────────────────────────────────────
-
 function LossStreakCalc() {
   const [capital,setCapital]=useState('500000');
   const [rp,setRp]=useState('1');
   const [floor,setFloor]=useState('200000');
+  const [tradesPerDay,setTradesPerDay]=useState('2');
 
-  const cap=num(capital),rf=num(rp)/100,fl=num(floor);
+  const cap=num(capital),rf=num(rp)/100,fl=num(floor),tpd=num(tradesPerDay);
   const k=rf>0&&rf<1?Math.floor(Math.log(fl/cap)/Math.log(1-rf)):0;
   const after=n=>cap*Math.pow(1-rf,n);
-  const rows=[5,10,15,20,25,k].filter((v,i,a)=>v>0&&a.indexOf(v)===i).sort((a,b)=>a-b);
+  const daysToFloor=tpd>0?Math.ceil(k/tpd):0;
+  // Simplified table: 5, 10, 20, max only
+  const tableRows=[5,10,20,k>0?k:50].filter((v,i,a)=>v>0&&a.indexOf(v)===i).sort((a,b)=>a-b).slice(0,4);
+  const safeMsg=k>=50?'Mathematically strong':k>=20?'Reasonable resilience':k>=10?'Acceptable — tighten sizing':' Fragile — reduce risk';
+  const safeColor=k>=50?'var(--gain)':k>=20?'var(--accent)':k>=10?'var(--pre)':'var(--loss)';
 
   return (
-    <CalcCard title="Loss Streak Survival" desc="How many consecutive losses your system can sustain">
+    <CalcCard title="Loss Streak Survival" desc="Can your account survive a bad run?">
       <div className="rc-fields-grid">
         <Field label="Starting Capital" value={capital} onChange={setCapital} prefix="₹" step={10000}/>
         <Field label="Risk Per Trade" value={rp} onChange={setRp} suffix="%" step={0.1}/>
-        <Field label="Min Capital Floor" value={floor} onChange={setFloor} prefix="₹" step={10000} placeholder="Stop-trading threshold"/>
+        <Field label="Min Capital Floor" value={floor} onChange={setFloor} prefix="₹" step={10000} placeholder="Stop-trading level"/>
+        <Field label="Trades Per Day" value={tradesPerDay} onChange={setTradesPerDay} step={1}/>
       </div>
-      <Results>
-        <Result label="Losses Until Floor Breach" value={k>0?`${k} losses`:'-'}
-          color={k>=20?'gain':k>=10?'warn':'loss'}/>
-      </Results>
-      <Divider/>
-      <div className="rc-table-title">Capital after N consecutive losses</div>
+
+      {/* Hero */}
+      <div className="rc-streak-hero">
+        <div className="rc-streak-val" style={{color:safeColor}}>{k>0?k:'—'}</div>
+        <div className="rc-streak-label">consecutive losses you can survive</div>
+        <div className="rc-streak-verdict" style={{color:safeColor}}>{safeMsg}</div>
+        {tpd>0&&k>0&&<div className="rc-streak-sub">At {tpd} trades/day → {daysToFloor} days of losing streak</div>}
+      </div>
+
       <div className="rc-mini-table">
-        <div className="rc-mini-thead"><span>Losses</span><span>Capital Left</span><span>% Remaining</span></div>
-        {rows.slice(0,6).map(n=>{
-          const rem=after(n),pct=(rem/cap)*100;
+        <div className="rc-mini-thead"><span>After N losses</span><span>Capital left</span><span>Drawdown</span></div>
+        {tableRows.map(n=>{
+          const rem=after(n),pct=(rem/cap)*100,dd=100-pct;
+          const isMax=n===k;
           return (
-            <div key={n} className="rc-mini-trow" style={n===k?{background:'var(--loss-bg)'}:{}}>
-              <span>{n}</span>
+            <div key={n} className={`rc-mini-trow ${isMax?'rc-mini-trow-danger':''}`}
+              style={isMax?{background:'rgba(255,68,85,0.08)',borderLeft:'3px solid var(--loss)'}:{}}>
+              <span style={{fontWeight:isMax?700:400}}>{n}{isMax?' ⚠ floor':''}</span>
               <span style={{color:pct<50?'var(--loss)':'var(--text)'}}>{fmtINR(rem)}</span>
-              <span style={{color:pct<50?'var(--loss)':'var(--gain)'}}>{pct.toFixed(1)}%</span>
+              <span style={{color:dd>40?'var(--loss)':dd>25?'var(--pre)':'var(--gain)'}}>{dd.toFixed(1)}% down</span>
             </div>
           );
         })}
       </div>
-      <WhyMatters>
+
+      {num(rp)>1 && (
+        <div className="rc-suggestion-chip rc-chip-accent">
+          At 0.5% risk → {Math.floor(Math.log(num(floor)/num(capital))/Math.log(1-0.005))}+ losses survivable
+        </div>
+      )}
+
+      <WhyMatters insight="At 1% risk, 10 consecutive losses leaves 90% of capital intact.">
         <p>Every system has losing streaks. A 50% win rate system statistically produces 10+ consecutive losses in any given year. The question is whether your account can survive them.</p>
-        <p>At 1% risk, a 10-loss streak leaves 90.4% of capital. At 5%, the same streak leaves 59.9%. The difference is not strategy. It is sizing.</p>
+        <p>At 1% risk, a 10-loss streak leaves 90.4% of capital. At 5%, the same streak leaves 59.9%.</p>
       </WhyMatters>
     </CalcCard>
   );
@@ -1078,24 +1180,60 @@ function RiskOfRuinCalc() {
   const edge=w*r-(1-w);
   const base=w>0&&r>0?(1-w)/(w*r):1;
   const ror=edge>0&&base<1?Math.min(Math.pow(base,n)*100,100):100;
-  const warn=ror>20?'High ruin probability - adjust win rate or R:R':null;
+  const rorAt2=edge>0&&base<1?Math.min(Math.pow(base,50)*100,100):100; // at 2% risk = 50 units
+
+  const viable=edge>0;
+  const viableColor=viable?'var(--gain)':'var(--loss)';
+  const rorColor=ror<1?'var(--gain)':ror<10?'var(--accent)':ror<30?'var(--pre)':'var(--loss)';
+
+  // Probability bar: 0-100% mapped to green-red
+  const barPct=Math.min(ror,100);
 
   return (
-    <CalcCard title="Risk of Ruin" desc="Probability of account wipeout based on your system parameters">
+    <CalcCard title="Risk of Ruin" desc="Probability your account eventually hits zero">
       <div className="rc-fields-grid">
         <Field label="Win Rate" value={wr} onChange={setWr} suffix="%" step={1}/>
         <Field label="Avg R:R (reward per unit)" value={rr} onChange={setRr} step={0.1}/>
         <Field label="Risk Per Trade" value={rp} onChange={setRp} suffix="%" step={0.1}/>
         <Field label="Risk Units in Account" value={units} onChange={setUnits} step={10} note="= 100 / risk%"/>
       </div>
-      <Results warning={warn}>
-        <Result label="Edge Per Trade" value={fmtPct(edge*100)} color={edge>0?'gain':'loss'}/>
-        <Result label="Risk of Ruin" value={fmtPct(ror)} color={ror<5?'gain':ror<20?'warn':'loss'}/>
-        <Result label="System Viable" value={edge>0?'Yes - positive edge':'No - negative edge'} color={edge>0?'gain':'loss'}/>
+
+      {/* Hero: system verdict */}
+      <div className="rc-ruin-hero" style={{borderColor: viable?'rgba(0,200,150,0.3)':'rgba(255,68,85,0.3)'}}>
+        <div className="rc-ruin-verdict" style={{color:viableColor}}>
+          System {viable?'VIABLE':'NOT VIABLE'}: {viable?'positive edge':'negative edge'}
+        </div>
+        <div className="rc-ruin-edge">You earn {fmtPct(Math.abs(edge*100))} per trade on average ({edge>0?'profit':'loss'})</div>
+      </div>
+
+      {/* Probability bar */}
+      <div className="rc-ror-bar-wrap">
+        <div className="rc-ror-bar-label">
+          <span>Ruin probability</span>
+          <span style={{color:rorColor,fontWeight:700}}>{ror<0.1?'Near 0%':fmtPct(ror)}</span>
+        </div>
+        <div className="rc-ror-bar-track">
+          <div className="rc-ror-bar-fill" style={{
+            width:`${barPct}%`,
+            background: ror<10?'var(--gain)':ror<30?'var(--pre)':'var(--loss)'
+          }}/>
+        </div>
+        {ror<1&&<div style={{fontSize:11,color:'var(--text3)'}}>Near zero, not truly impossible. Good sizing is still required.</div>}
+      </div>
+
+      <Results>
+        <Result label="Edge Per Trade" value={fmtPct(edge*100)} color={edge>0?'gain':'loss'} big/>
+        <Result label="Risk of Ruin (current sizing)" value={ror<0.1?'< 0.1%':fmtPct(ror)} color={rorColor}/>
+        {riskF<2&&<Result label="Risk of Ruin at 2% sizing" value={rorAt2<0.1?'< 0.1%':fmtPct(rorAt2)} color={rorAt2>ror?'warn':'accent'}/>}
       </Results>
+
+      <div className="rc-suggestion-chip rc-chip-warn" style={{marginTop:0}}>
+        Good system + bad sizing = ruin. Edge without discipline fails.
+      </div>
+
       <WhyMatters insight="Even a profitable system goes bust with aggressive sizing.">
         <p>Risk of Ruin is the probability your account eventually hits zero. A negative-edge system will always reach 0%. The only question is when.</p>
-        <p>Even with positive edge, too much risk per trade pushes ruin probability toward 100%. This is the mathematical proof that sizing matters more than strategy.</p>
+        <p>Even with positive edge, too much risk per trade pushes ruin probability toward 100%.</p>
       </WhyMatters>
     </CalcCard>
   );
@@ -1105,30 +1243,55 @@ function WinRateCalc() {
   const [rr,setRr]=useState('2');
   const r=num(rr);
   const minWin=r>0?(1/(1+r))*100:100;
-  const rows=[0.5,1,1.5,2,2.5,3,4,5].map(v=>({rr:v,mw:(1/(1+v))*100}));
-  const diff=v=>v<35?'Easy':v<45?'Reasonable':v<55?'Difficult':'Very hard';
+  const winsIn=Math.round(100/minWin);
+  const reverseRR=0.5; // at 50% winrate, min R:R needed
+  const minRR50=(1/0.5)-1; // = 1.0
+
+  const ease=minWin<35?{text:'Easy — very achievable system',color:'var(--gain)'}:
+             minWin<45?{text:'Reasonable — most traders can do this',color:'var(--accent)'}:
+             minWin<55?{text:'Difficult — requires strong setup quality',color:'var(--pre)'}:
+             {text:'Very hard — reconsider your R:R',color:'var(--loss)'};
+
+  // Focused table: ±2 around current R:R
+  const allRRs=[0.5,1,1.5,2,2.5,3,4,5];
+  const nearby=allRRs.filter(v=>Math.abs(v-r)<=1.5||v===r).slice(0,6);
 
   return (
-    <CalcCard title="Win Rate Required" desc="Minimum win rate needed to stay profitable at any R:R">
-      <Field label="Your R:R Ratio (reward per unit risk)" value={rr} onChange={setRr} step={0.1} placeholder="e.g. 2 for 2:1"/>
-      <Results>
-        <Result label="Minimum Win Rate" value={fmtPct(minWin)} color={minWin<40?'gain':minWin<50?'accent':'warn'}/>
-        <Result label="Formula" value={`1 / (1 + ${r}) = ${minWin.toFixed(1)}%`} color="accent"/>
-      </Results>
-      <Divider/>
-      <div className="rc-table-title">R:R vs minimum win rate to break even</div>
-      <div className="rc-mini-table">
-        <div className="rc-mini-thead"><span>R:R</span><span>Min Win Rate</span><span>Difficulty</span></div>
-        {rows.map(row=>(
-          <div key={row.rr} className={`rc-mini-trow ${Math.abs(row.rr-r)<0.01?'rc-mini-trow-active':''}`}>
-            <span>1:{row.rr}</span>
-            <span style={{color:row.mw<40?'var(--gain)':row.mw>55?'var(--loss)':'var(--text)'}}>{row.mw.toFixed(1)}%</span>
-            <span style={{color:'var(--text3)',fontSize:'11px'}}>{diff(row.mw)}</span>
-          </div>
-        ))}
+    <CalcCard title="Win Rate Required" desc="At your R:R, how often must you win?">
+      <Field label="Your R:R Ratio (reward : risk)" value={rr} onChange={setRr} step={0.1} placeholder="e.g. 2 for 2:1"/>
+
+      {/* Hero */}
+      <div className="rc-winrate-hero">
+        <div className="rc-winrate-val" style={{color:minWin<40?'var(--gain)':minWin<50?'var(--accent)':'var(--pre)'}}>
+          {minWin.toFixed(1)}%
+        </div>
+        <div className="rc-winrate-label">minimum win rate to break even</div>
+        <div className="rc-winrate-trade">Win {Math.ceil(minWin)} out of 100 trades</div>
+        <div className="rc-winrate-ease" style={{color:ease.color}}>{ease.text}</div>
       </div>
-      <WhyMatters>
+
+      <div className="rc-suggestion-chip rc-chip-accent">
+        Most traders chase 70%+ win rate unnecessarily — R:R matters more
+      </div>
+
+      <div className="rc-mini-table" style={{marginTop:8}}>
+        <div className="rc-mini-thead"><span>R:R</span><span>Min Win Rate</span><span>Verdict</span></div>
+        {nearby.map(row=>{
+          const mw=(1/(1+row))*100;
+          const isActive=Math.abs(row-r)<0.01;
+          return (
+            <div key={row} className={`rc-mini-trow ${isActive?'rc-mini-trow-active':''}`}>
+              <span style={{fontWeight:isActive?700:400}}>1:{row}{isActive?' ◀':''}</span>
+              <span style={{color:mw<40?'var(--gain)':mw>55?'var(--loss)':'var(--text)',fontWeight:isActive?700:400}}>{mw.toFixed(1)}%</span>
+              <span style={{fontSize:11,color:'var(--text3)'}}>{mw<35?'Easy':mw<45?'Good':mw<55?'Hard':'Very hard'}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <WhyMatters insight="A 70% win rate with poor R:R loses money. R:R is the foundation.">
         <p>A 70% win rate with 0.5:1 R:R is a losing system. You would need to win 67 out of 100 just to break even. Build around R:R first. Win rate follows from good setups, not the reverse.</p>
+        <p>At 50% win rate, you need at least 1:1 R:R to break even. Most scalpers with 70%+ win rates are running 0.5:1 R:R and losing money slowly.</p>
       </WhyMatters>
     </CalcCard>
   );
@@ -1138,35 +1301,70 @@ function ExpectancyCalc() {
   const [wr,setWr]=useState('50');
   const [aw,setAw]=useState('');
   const [al,setAl]=useState('');
-  const [tr,setTr]=useState('100');
+  const [tr,setTr]=useState('20');
 
   const w=num(wr)/100,avgW=num(aw),avgL=num(al),trades=num(tr);
   const exp=w*avgW-(1-w)*avgL;
   const total=exp*trades;
-  const warn=exp<0?'Negative expectancy - this system loses money over time':null;
+  const monthly=exp*20; // ~20 trades/month assumption
+  const isPos=exp>0;
 
   return (
-    <CalcCard title="Expectancy Calculator" desc="Average profit per trade - the true measure of any system">
+    <CalcCard title="Expectancy Calculator" desc="Average profit per trade — the true measure of any system">
       <div className="rc-fields-grid">
         <Field label="Win Rate" value={wr} onChange={setWr} suffix="%" step={1}/>
-        <Field label="Avg Win Amount" value={aw} onChange={setAw} prefix="₹" step={100} placeholder="e.g. 2000"/>
-        <Field label="Avg Loss Amount" value={al} onChange={setAl} prefix="₹" step={100} placeholder="e.g. 1000"/>
-        <Field label="Number of Trades" value={tr} onChange={setTr} step={10}/>
+        <Field label="Avg Win (₹)" value={aw} onChange={setAw} prefix="₹" step={100} placeholder="e.g. 2000"/>
+        <Field label="Avg Loss (₹)" value={al} onChange={setAl} prefix="₹" step={100} placeholder="e.g. 1000"/>
+        <Field label="Trades per month" value={tr} onChange={setTr} step={5}/>
       </div>
-      <Results warning={warn}>
-        <Result label="Implied R:R" value={avgL>0?`1:${(avgW/avgL).toFixed(2)}`:'-'} color="accent"/>
-        <Result label="Expectancy Per Trade" value={aw&&al?fmtINR(exp):'-'} color={exp>0?'gain':'loss'}/>
-        <Result label={`Expected P&L (${tr} trades)`} value={aw&&al?fmtINR(total):'-'} color={total>0?'gain':'loss'}/>
-      </Results>
-      <WhyMatters insight="Your goal is not to win every trade — it is to have positive expectancy.">
-        <p>Expectancy tells you whether your system makes money. A +₹300 expectancy means each trade adds ₹300 on average over time, regardless of the individual outcome.</p>
+
+      {aw&&al&&(
+        <>
+          {/* Hero */}
+          <div className={`rc-exp-hero ${isPos?'rc-exp-pos':'rc-exp-neg'}`}>
+            <div className="rc-exp-hero-label">You earn per trade</div>
+            <div className="rc-exp-hero-val" style={{color:isPos?'var(--gain)':'var(--loss)'}}>
+              {isPos?'+':''}{fmtINR(exp)}
+            </div>
+            <div className="rc-exp-hero-sub">
+              {isPos?'Profitable system':'Losing system — fix R:R or win rate'}
+            </div>
+          </div>
+
+          {/* Win vs loss breakdown */}
+          <div className="rc-exp-breakdown">
+            <div className="rc-exp-side">
+              <div style={{color:'var(--gain)',fontWeight:700}}>{fmtPct(num(wr))}</div>
+              <div>Win {fmtINR(avgW)}</div>
+              <div style={{color:'var(--text3)',fontSize:11}}>= {fmtINR(w*avgW)} avg</div>
+            </div>
+            <div className="rc-exp-vs">vs</div>
+            <div className="rc-exp-side">
+              <div style={{color:'var(--loss)',fontWeight:700}}>{fmtPct(100-num(wr))}</div>
+              <div>Lose {fmtINR(avgL)}</div>
+              <div style={{color:'var(--text3)',fontSize:11}}>= {fmtINR((1-w)*avgL)} avg</div>
+            </div>
+          </div>
+
+          <Results warning={!isPos?'This system loses money over time — positive expectancy is the minimum bar':null}>
+            <Result label="Expectancy per trade" value={`${isPos?'+':''}${fmtINR(exp)}`} color={isPos?'gain':'loss'} big/>
+            <Result label={`Monthly (${tr} trades)`} value={`${isPos?'+':''}${fmtINR(total)}`} color={isPos?'gain':'loss'}/>
+            <Result label="Implied R:R" value={avgL>0?`1:${(avgW/avgL).toFixed(2)}`:'-'} color="accent"/>
+          </Results>
+
+          <div className="rc-suggestion-chip rc-chip-accent">
+            Positive expectancy = long-term profit. You can still lose 5 in a row.
+          </div>
+        </>
+      )}
+
+      <WhyMatters insight="You earn ₹X per trade on average — even losing runs can't change that long term.">
+        <p>Expectancy tells you whether your system makes money. A +₹300 expectancy means each trade adds ₹300 on average over time, regardless of individual outcomes.</p>
         <p>Your goal is not to win every trade. It is to have positive expectancy and take enough trades to let the math work.</p>
       </WhyMatters>
     </CalcCard>
   );
 }
-
-// ============================================================================== Sizing ────────────────────────────────────────────────────────────────────
 
 function VolatilityPositionCalc() {
   const [capital,setCapital]=useState('500000');
@@ -1182,31 +1380,51 @@ function VolatilityPositionCalc() {
   const qty=volStop>0?Math.floor(maxRisk/volStop):0;
   const lots=ls>0?Math.floor(qty/ls):0;
   const capUsed=qty*pr;
-  const warn=capUsed>cap*0.5&&qty>0&&pr>0?'Position uses over 50% of capital - consider reducing size':null;
+  const atrPct=pr>0&&at>0?(at/pr)*100:0;
+  const stopAmt=volStop;
+  const isHighVol=atrPct>3;
 
   return (
-    <CalcCard title="Volatility-Based Sizing (ATR)" desc="Adjusts position size based on actual price volatility">
+    <CalcCard title="Volatility-Based Sizing (ATR)" desc="Market is volatile → reduce size, not widen stop">
       <div className="rc-fields-grid">
         <Field label="Account Capital" value={capital} onChange={setCapital} prefix="₹" step={10000}/>
         <Field label="Risk Per Trade" value={rp} onChange={setRp} suffix="%" step={0.1}/>
         <Field label="ATR Value" value={atr} onChange={setAtr} prefix="₹" step={0.5} placeholder="e.g. 120"/>
-        <Field label="ATR Multiplier" value={mult} onChange={setMult} step={0.5} note="stop = ATR x mult"/>
+        <Field label="ATR Multiplier" value={mult} onChange={setMult} step={0.5} note="SL = ATR × mult"/>
         <Field label="Current Price" value={price} onChange={setPrice} prefix="₹" step={0.5} placeholder="e.g. 24500"/>
       </div>
       <Toggle options={['Equity','F&O Lots']} value={mode} onChange={setMode}/>
       {mode==='F&O Lots' && <Select label="Instrument" value={lotSize} onChange={setLotSize} options={LOT_SIZES}/>}
-      <Results warning={warn}>
-        <Result label="Volatility Stop (ATR x mult)" value={volStop>0?`₹${volStop.toFixed(2)}`:'-'} color="accent"/>
+
+      {/* Hero */}
+      {(qty>0||lots>0) && (
+        <div className="rc-atr-hero">
+          <div className="rc-atr-hero-label">Maximum position size</div>
+          <div className="rc-atr-hero-val" style={{color:qty>0?'var(--gain)':'var(--loss)'}}>
+            {mode==='F&O Lots'?`${lots} lot${lots!==1?'s':''} (${lots*ls} shares)`:`${qty} shares`}
+          </div>
+          {atrPct>0&&<div className="rc-atr-hero-sub">ATR = {atrPct.toFixed(1)}% move daily</div>}
+        </div>
+      )}
+
+      <Results warning={capUsed>cap*0.5&&qty>0&&pr>0?'Position uses over 50% of capital — consider reducing':null}>
+        <Result label={`Volatility SL (ATR × ${mult})`} value={volStop>0?`₹${volStop.toFixed(2)} per share`:'-'} color="accent"/>
         <Result label="Max Risk Budget" value={fmtINR(maxRisk)} color="loss"/>
         {mode==='F&O Lots'
-          ? <Result label="Max Lots" value={lots>0?`${lots} lots (${lots*ls} shares)`:'-'} color="gain"/>
-          : <Result label="Max Quantity" value={qty>0?`${qty} shares`:'-'} color="gain"/>}
-        {pr>0&&qty>0 && <Result label="Capital Deployed" value={fmtINR(capUsed)}
-          sub={`${((capUsed/cap)*100).toFixed(1)}% of capital`} color={capUsed>cap*0.5?'warn':'accent'}/>}
+          ? <Result label="Max Lots" value={lots>0?`${lots} lots (${lots*ls} shares)`:'-'} color="gain" big/>
+          : <Result label="Max Quantity" value={qty>0?`${qty} shares`:'-'} color="gain" big/>}
+        {pr>0&&qty>0 && <Result label="Capital Deployed" value={fmtINR(capUsed)} sub={`${((capUsed/cap)*100).toFixed(1)}% of capital`} color={capUsed>cap*0.5?'warn':'accent'}/>}
       </Results>
-      <WhyMatters>
+
+      {isHighVol && (
+        <div className="rc-suggestion-chip rc-chip-warn">
+          High ATR ({atrPct.toFixed(1)}%/day) → position inefficient. Consider skipping.
+        </div>
+      )}
+
+      <WhyMatters insight="High volatility means fewer shares — same risk, smaller position.">
         <p>A fixed 200-point stop on Nifty means very different things when ATR is 80 vs 300. Volatility-based sizing lets the market tell you where the stop goes, then you size down to fit the risk.</p>
-        <p>During high-volatility events like elections or RBI announcements, ATR expands and your position size should shrink. Same risk, fewer lots. Consistent, not conservative.</p>
+        <p>During high-volatility events like elections or RBI announcements, ATR expands and your position size should shrink. Same risk, fewer lots.</p>
       </WhyMatters>
     </CalcCard>
   );
@@ -1216,8 +1434,8 @@ function CapitalAllocationCalc() {
   const [capital,setCapital]=useState('500000');
   const [mode,setMode]=useState('Equal');
   const [positions,setPositions]=useState([
-    {name:'Trade 1',weight:'25',risk:'1'},{name:'Trade 2',weight:'25',risk:'1'},
-    {name:'Trade 3',weight:'25',risk:'1'},{name:'Trade 4',weight:'25',risk:'1'},
+    {name:'Nifty CE',weight:'25',risk:'1'},{name:'Bank Nifty PE',weight:'25',risk:'1'},
+    {name:'Stock trade',weight:'25',risk:'1'},{name:'',weight:'25',risk:'1'},
   ]);
 
   const cap=num(capital),n=positions.length;
@@ -1228,38 +1446,42 @@ function CapitalAllocationCalc() {
     return tw>0?cap*(num(p.weight)/tw):0;
   };
   const totalAlloc=positions.reduce((acc,p)=>acc+alloc(p),0);
+  const unalloc=cap-totalAlloc;
+  const isOver=totalAlloc>cap*1.01;
 
   return (
-    <CalcCard title="Capital Allocation" desc="Splits capital across trades by rule">
+    <CalcCard title="Capital Allocation" desc="Capital split ≠ risk split — know both">
       <Field label="Total Capital" value={capital} onChange={setCapital} prefix="₹" step={10000}/>
       <Toggle options={['Equal','By Risk %','Custom %']} value={mode} onChange={setMode}/>
       <div className="rc-leg-list">
         {positions.map((p,i)=>(
           <div key={i} className="rc-leg-row">
-            <input className="rc-mini-input" style={{flex:1}} value={p.name} placeholder="Name"
+            <input className="rc-mini-input" style={{flex:1}} value={p.name} placeholder={`Trade ${i+1}`}
               onChange={e=>setPositions(ps=>ps.map((x,j)=>j===i?{...x,name:e.target.value}:x))}/>
             {mode==='By Risk %' && <input className="rc-mini-input" type="number" value={p.risk} placeholder="Risk%"
-              onChange={e=>setPositions(ps=>ps.map((x,j)=>j===i?{...x,risk:e.target.value}:x))} style={{width:60}}/>}
+              onChange={e=>setPositions(ps=>ps.map((x,j)=>j===i?{...x,risk:e.target.value}:x))} style={{width:54}}/>}
             {mode==='Custom %' && <input className="rc-mini-input" type="number" value={p.weight} placeholder="Wt%"
-              onChange={e=>setPositions(ps=>ps.map((x,j)=>j===i?{...x,weight:e.target.value}:x))} style={{width:60}}/>}
+              onChange={e=>setPositions(ps=>ps.map((x,j)=>j===i?{...x,weight:e.target.value}:x))} style={{width:54}}/>}
             <span className="rc-alloc-val">{fmtINR(alloc(p))}</span>
-            {positions.length>1 && <button className="rc-leg-remove" onClick={()=>setPositions(ps=>ps.filter((_,j)=>j!==i))}>x</button>}
+            {positions.length>1 && <button className="rc-leg-remove" onClick={()=>setPositions(ps=>ps.filter((_,j)=>j!==i))}>×</button>}
           </div>
         ))}
-        <button className="rc-add-leg" onClick={()=>setPositions(p=>[...p,{name:`Trade ${p.length+1}`,weight:'25',risk:'1'}])}>+ Add Position</button>
+        <button className="rc-add-leg" onClick={()=>setPositions(p=>[...p,{name:'',weight:'25',risk:'1'}])}>+ Add Trade</button>
       </div>
-      <Results>
-        <Result label="Total Allocated" value={fmtINR(totalAlloc)} color="accent"/>
-        <Result label="Unallocated" value={fmtINR(cap-totalAlloc)} color={cap-totalAlloc>=0?'gain':'loss'}/>
+      <Results warning={isOver?'Over-allocating capital — total exceeds 100%':null}>
+        <Result label="Total Allocated" value={fmtINR(totalAlloc)} color={isOver?'loss':'accent'} big/>
+        <Result label="Unallocated" value={unalloc>=0?fmtINR(unalloc):'Over by '+fmtINR(-unalloc)} color={unalloc>=0?'gain':'loss'}/>
       </Results>
-      <WhyMatters>
+      <div className="rc-suggestion-chip rc-chip-warn">
+        4 Nifty trades ≠ diversification. Correlation = concentrated risk.
+      </div>
+      <WhyMatters insight="Capital split is not risk split — you need to know both.">
         <p>"I have ₹5L to trade" is not a plan. "I am allocating ₹1.25L to 4 non-correlated setups with max 1% risk each" is a plan.</p>
+        <p>Always check whether your trades are correlated. 4 Nifty-linked positions move together — that is not diversification, it is concentration with extra steps.</p>
       </WhyMatters>
     </CalcCard>
   );
 }
-
-// ============================================================================== NEW: Gap Risk Calculator ──────────────────────────────────────────────────
 
 function GapRiskCalc() {
   const [entry,setEntry]=useState('');
@@ -1269,39 +1491,63 @@ function GapRiskCalc() {
   const [dir,setDir]=useState('Long');
 
   const ent=num(entry),stop=num(sl),gap=num(gapPct),q=num(qty);
+  const slPct=ent>0&&stop>0?Math.abs(ent-stop)/ent*100:0;
+  const badSL=ent>0&&stop>0&&slPct>15;
   const gapExit=dir==='Long'?ent*(1-gap/100):ent*(1+gap/100);
   const slLoss=Math.abs(ent-stop)*q;
   const gapLoss=Math.abs(ent-gapExit)*q;
   const slippage=gapLoss-slLoss;
   const gapMult=slLoss>0?gapLoss/slLoss:0;
-  const warn=gapMult>2?`Gap could cause ${gapMult.toFixed(1)}x your planned SL loss`:null;
+  const gapMove=ent>0?ent*gap/100:0;
+  const safeQty=gapLoss>0&&q>0?Math.floor(q*10000/gapLoss):0; // qty to cap gap loss at 10k
 
   return (
-    <CalcCard title="Gap Risk Calculator" desc="Estimate loss if price gaps through your stop loss">
-      <Toggle options={['Long','Short']} value={dir} onChange={setDir}/>
+    <CalcCard title="Gap Risk Calculator" desc="Your stop loss can fail overnight — this shows what really happens">
+      <DirToggle value={dir} onChange={setDir}/>
       <div className="rc-fields-grid">
         <Field label="Entry Price" value={entry} onChange={setEntry} prefix="₹" step={0.05} placeholder="e.g. 24500"/>
         <Field label="Stop Loss Price" value={sl} onChange={setSl} prefix="₹" step={0.05} placeholder="e.g. 24300"/>
-        <Field label="Expected Gap" value={gapPct} onChange={setGapPct} suffix="%" step={0.5} placeholder="e.g. 3"/>
+        <Field label="Gap Size" value={gapPct} onChange={setGapPct} suffix="%" step={0.5} placeholder="e.g. 3"/>
         <Field label="Quantity" value={qty} onChange={setQty} step={1} placeholder="e.g. 50"/>
       </div>
-      <Results warning={warn}>
-        <Result label="Planned Exit (SL)" value={stop>0?`₹${stop.toFixed(2)}`:'-'} color="accent"/>
-        <Result label="Actual Exit (After Gap)" value={gapExit>0?`₹${gapExit.toFixed(2)}`:'-'} color="loss"/>
+
+      {badSL && (
+        <div className="rc-suggestion-chip rc-chip-warn">⚠ SL is {slPct.toFixed(1)}% from entry — check inputs</div>
+      )}
+
+      {gapLoss>0 && (
+        <div className="rc-gap-hero">
+          <div className="rc-gap-hero-label">Actual gap loss (stop fails)</div>
+          <div className="rc-gap-hero-val" style={{color:'var(--loss)'}}>{fmtINR(gapLoss)}</div>
+          {gapMult>1&&<div className="rc-gap-hero-mult">{gapMult.toFixed(1)}× your planned SL loss of {fmtINR(slLoss)}</div>}
+          {gapMove>0&&<div className="rc-gap-hero-sub">{gap}% gap = ₹{gapMove.toFixed(0)} move against you</div>}
+        </div>
+      )}
+
+      <Results>
         <Result label="Planned SL Loss" value={slLoss>0?fmtINR(slLoss):'-'} color="accent"/>
-        <Result label="Actual Gap Loss" value={gapLoss>0?fmtINR(gapLoss):'-'} color="loss"/>
-        <Result label="Extra Slippage" value={slippage>0?fmtINR(slippage):'-'} color="warn"
-          sub={gapMult>0?`${gapMult.toFixed(1)}x your planned SL loss`:''}/>
+        <Result label="Actual Gap Loss" value={gapLoss>0?fmtINR(gapLoss):'-'} color="loss" big/>
+        <Result label="Extra slippage vs plan" value={slippage>0?fmtINR(slippage):'-'} color="warn"
+          sub={gapMult>0?`${gapMult.toFixed(1)}× planned risk`:''}/>
       </Results>
-      <WhyMatters>
-        <p>Stop losses do not protect you from gaps. If Nifty closes at 24,500 and opens next day at 24,200, your SL at 24,300 is never triggered - you exit at 24,200.</p>
-        <p>Overnight positions carry gap risk. This is especially relevant around earnings, RBI policy, budget, and global events. Size positions accordingly, not just based on intraday stop distance.</p>
+
+      {q>0&&gapLoss>10000&&(
+        <div className="rc-suggestion-chip rc-chip-accent">
+          To cap gap loss at ₹10,000 → reduce qty to {Math.floor(10000/gapLoss*q)} shares
+        </div>
+      )}
+
+      <div className="rc-suggestion-chip rc-chip-warn">
+        Overnight positions: results, RBI, global events can gap 3–8%
+      </div>
+
+      <WhyMatters insight="Stop losses do not protect overnight positions. Size for worst-case gaps.">
+        <p>If Nifty closes at 24,500 and opens next day at 24,200, your SL at 24,300 is never triggered — you exit at 24,200. The SL did not fail; it simply was not there when the market opened.</p>
+        <p>Size overnight positions at 30-50% of normal. The gap risk is the position risk, not the SL distance.</p>
       </WhyMatters>
     </CalcCard>
   );
 }
-
-// ============================================================================== NEW: Leverage Risk Calculator ─────────────────────────────────────────────
 
 function LeverageRiskCalc() {
   const [capital,setCapital]=useState('500000');
@@ -1311,44 +1557,65 @@ function LeverageRiskCalc() {
   const cap=num(capital),pos=num(posSize),marg=num(margin);
   const leverage=marg>0?pos/marg:pos>0?pos/cap:0;
   const marginPct=cap>0?(marg>0?marg/cap:pos/cap)*100:0;
-  const riskClass=leverage>10?'Extreme':leverage>5?'High':leverage>3?'Aggressive':leverage>1?'Moderate':'Safe';
-  const riskColor=leverage>10?'loss':leverage>5?'warn':leverage>3?'warn':leverage>1?'accent':'gain';
-  const moveTo0=leverage>0?fmtPct(100/leverage):'-';
+  const wipeoutPct=leverage>0?100/leverage:0;
+  const pnlOn10pct=pos*0.10;
+  const riskClass=leverage>10?{text:'EXTREME — danger zone',color:'var(--loss)'}:
+                  leverage>5?{text:'HIGH — reduce immediately',color:'var(--loss)'}:
+                  leverage>3?{text:'AGGRESSIVE — monitor closely',color:'var(--pre)'}:
+                  leverage>1?{text:'MODERATE — acceptable',color:'var(--accent)'}:
+                  {text:'SAFE — well managed',color:'var(--gain)'};
+  const commonMove5=wipeoutPct>0&&wipeoutPct<5;
 
   return (
-    <CalcCard title="Leverage Risk Calculator" desc="Effective exposure relative to capital and risk classification">
+    <CalcCard title="Leverage Risk Calculator" desc="Leverage decides survival, not accuracy">
       <div className="rc-fields-grid">
         <Field label="Account Capital" value={capital} onChange={setCapital} prefix="₹" step={10000}/>
         <Field label="Total Position Size" value={posSize} onChange={setPosSize} prefix="₹" step={10000} placeholder="e.g. 1500000"/>
         <Field label="Margin Used" value={margin} onChange={setMargin} prefix="₹" step={1000} placeholder="Actual margin blocked"/>
       </div>
+
+      {/* Hero: wipeout move */}
+      {leverage>0 && (
+        <div className="rc-lev-hero" style={{borderColor: leverage>5?'rgba(255,68,85,0.3)':'rgba(74,158,255,0.3)'}}>
+          <div className="rc-lev-hero-label">Move to wipe your account</div>
+          <div className="rc-lev-hero-val" style={{color:commonMove5?'var(--loss)':leverage>3?'var(--pre)':'var(--gain)'}}>
+            {fmtPct(wipeoutPct)}
+          </div>
+          {commonMove5 && <div className="rc-lev-hero-warn">A 5% Nifty move happens regularly — you are at risk</div>}
+          {!commonMove5 && <div className="rc-lev-hero-sub">A {fmtPct(wipeoutPct)} move would zero your account</div>}
+        </div>
+      )}
+
       <Results>
-        <Result label="Effective Leverage" value={leverage>0?`${leverage.toFixed(1)}x`:'-'} color={riskColor}/>
-        <Result label="Risk Classification" value={riskClass} color={riskColor}/>
-        <Result label="Capital at Margin" value={fmtPct(marginPct)} color="accent"/>
-        <Result label="Move to Wipe Out Capital" value={moveTo0} color="loss"
-          sub="% move that would wipe account at this leverage"/>
+        <Result label="Effective Leverage" value={leverage>0?`${leverage.toFixed(1)}x`:'-'} color={leverage>5?'loss':leverage>3?'warn':'gain'} big/>
+        <Result label="Classification" value={riskClass.text} color={leverage>5?'loss':leverage>3?'warn':leverage>1?'accent':'gain'}/>
+        <Result label="10% move P&L impact" value={pos>0?`±${fmtINR(pnlOn10pct)}`:'-'} color="accent"/>
+        <Result label="Benchmark: pro traders" value="Stay under 3x" color="accent"/>
       </Results>
+
       <div className="rc-leverage-legend">
         {[
-          {label:'Safe',     range:'1-3x',  color:'var(--gain)'},
-          {label:'Moderate', range:'3-5x',  color:'var(--accent)'},
+          {label:'Safe',range:'<3x',color:'var(--gain)'},
+          {label:'Moderate',range:'3-5x',color:'var(--accent)'},
           {label:'Aggressive',range:'5-10x',color:'var(--pre)'},
-          {label:'Extreme',  range:'10x+',  color:'var(--loss)'},
+          {label:'Extreme',range:'10x+',color:'var(--loss)'},
         ].map(l=>(
-          <div key={l.label} className="rc-leverage-chip" style={{borderColor:l.color}}>
+          <div key={l.label} className="rc-leverage-chip"
+            style={{borderColor:l.color,background:leverage>0&&((l.label==='Safe'&&leverage<=3)||(l.label==='Moderate'&&leverage>3&&leverage<=5)||(l.label==='Aggressive'&&leverage>5&&leverage<=10)||(l.label==='Extreme'&&leverage>10))?`rgba(0,0,0,0.2)`:undefined}}>
             <span style={{color:l.color,fontWeight:700}}>{l.label}</span>
             <span className="rc-leverage-range">{l.range}</span>
           </div>
         ))}
       </div>
-      <WhyMatters>
-        <p>Leverage amplifies both gains and losses. At 10x leverage, a 10% move against you wipes your entire account. Most retail F&O traders are at 5-15x without realising it.</p>
-        <p>The "move to wipe out" number is the most important one here. If a 5% Nifty move (which happens regularly) can wipe your account, your leverage is too high.</p>
+
+      <WhyMatters insight="Leverage decides survival. A 10% move at 10x = 100% loss.">
+        <p>Most retail F&O traders are at 5-15x leverage without realising it. The "move to wipe out" number is the most important metric — if Nifty regularly moves 5%, and your wipeout is at 5%, you have no safety margin.</p>
+        <p>Professional traders rarely go above 3x. Not because they lack capital, but because position survival matters more than maximising exposure.</p>
       </WhyMatters>
     </CalcCard>
   );
 }
+
 
 // ==============================================================================
 // GLOSSARY

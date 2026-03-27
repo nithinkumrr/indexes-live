@@ -4741,3 +4741,82 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .rc-lots-hero-label { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
 .rc-lots-hero-val { font-size: 32px; font-weight: 800; font-family: var(--mono); }
 .rc-lots-hero-sub { font-size: 12px; color: var(--text3); font-family: var(--mono); margin-top: 4px; }
+
+/* ── Margin Utilization ── */
+.rc-util-hero { text-align: center; padding: 20px 16px; background: var(--bg0); border: 1px solid var(--border); border-radius: 8px; }
+.rc-util-pct { font-size: 36px; font-weight: 800; font-family: var(--mono); }
+.rc-util-label { font-size: 11px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px; margin: 4px 0; }
+.rc-util-rating { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.rc-util-sub { font-size: 11px; color: var(--text3); }
+.rc-preview-row { display: flex; align-items: center; gap: 10px; }
+.rc-preview-val { font-size: 14px; font-weight: 700; font-family: var(--mono); white-space: nowrap; }
+
+/* ── Portfolio risk ── */
+.rc-port-hero { padding: 16px; border-radius: 8px; border: 1px solid; background: rgba(0,0,0,0.1); }
+.rc-port-val { font-size: 20px; font-weight: 800; font-family: var(--mono); margin-bottom: 6px; }
+.rc-port-verdict { font-size: 13px; font-weight: 700; }
+
+/* ── Drawdown ── */
+.rc-dd-slider-row { display: flex; flex-direction: column; gap: 6px; }
+.rc-dd-slider { width: 100%; accent-color: var(--accent); cursor: pointer; }
+.rc-dd-hero { padding: 20px 16px; border-radius: 8px; border: 1px solid; text-align: center; }
+.rc-dd-hero-label { font-size: 11px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.rc-dd-hero-val { font-size: 32px; font-weight: 800; font-family: var(--mono); margin-bottom: 4px; }
+.rc-dd-hero-sub { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+.rc-dd-zone { font-size: 12px; font-weight: 700; }
+.rc-dd-table-title { font-size: 10px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; margin-bottom: 4px; }
+
+/* ── Loss streak ── */
+.rc-streak-hero { text-align: center; padding: 20px 16px; background: var(--bg0); border: 1px solid var(--border); border-radius: 8px; }
+.rc-streak-val { font-size: 48px; font-weight: 800; font-family: var(--mono); line-height: 1; }
+.rc-streak-label { font-size: 12px; color: var(--text3); margin: 6px 0 4px; font-family: var(--mono); }
+.rc-streak-verdict { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.rc-streak-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.rc-mini-trow-danger { font-weight: 700; }
+
+/* ── Risk of ruin ── */
+.rc-ruin-hero { padding: 16px; border-radius: 8px; border: 1px solid; background: rgba(0,0,0,0.1); text-align: center; }
+.rc-ruin-verdict { font-size: 16px; font-weight: 800; font-family: var(--mono); margin-bottom: 6px; }
+.rc-ruin-edge { font-size: 12px; color: var(--text2); }
+.rc-ror-bar-wrap { display: flex; flex-direction: column; gap: 6px; padding: 8px 0; }
+.rc-ror-bar-label { display: flex; justify-content: space-between; font-size: 12px; font-family: var(--mono); color: var(--text2); }
+.rc-ror-bar-track { height: 10px; background: var(--bg2); border-radius: 5px; overflow: hidden; border: 1px solid var(--border); }
+.rc-ror-bar-fill { height: 100%; border-radius: 5px; transition: width 0.3s ease; }
+
+/* ── Win rate ── */
+.rc-winrate-hero { text-align: center; padding: 20px 16px; background: var(--bg0); border: 1px solid var(--border); border-radius: 8px; }
+.rc-winrate-val { font-size: 40px; font-weight: 800; font-family: var(--mono); }
+.rc-winrate-label { font-size: 11px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px; margin: 6px 0 4px; }
+.rc-winrate-trade { font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+.rc-winrate-ease { font-size: 12px; font-weight: 700; }
+
+/* ── Expectancy ── */
+.rc-exp-hero { text-align: center; padding: 16px; border-radius: 8px; border: 1px solid; }
+.rc-exp-pos { background: rgba(0,200,150,0.06); border-color: rgba(0,200,150,0.3); }
+.rc-exp-neg { background: rgba(255,68,85,0.06); border-color: rgba(255,68,85,0.3); }
+.rc-exp-hero-label { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.rc-exp-hero-val { font-size: 28px; font-weight: 800; font-family: var(--mono); margin-bottom: 4px; }
+.rc-exp-hero-sub { font-size: 12px; color: var(--text2); }
+.rc-exp-breakdown { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; background: var(--bg0); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.rc-exp-side { display: flex; flex-direction: column; gap: 3px; font-size: 12px; text-align: center; }
+.rc-exp-vs { color: var(--text3); font-size: 11px; font-family: var(--mono); text-align: center; }
+
+/* ── ATR hero ── */
+.rc-atr-hero { text-align: center; padding: 16px; background: rgba(0,200,150,0.06); border: 1px solid rgba(0,200,150,0.2); border-radius: 8px; }
+.rc-atr-hero-label { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.rc-atr-hero-val { font-size: 26px; font-weight: 800; font-family: var(--mono); margin-bottom: 4px; }
+.rc-atr-hero-sub { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+
+/* ── Gap risk hero ── */
+.rc-gap-hero { text-align: center; padding: 16px; background: rgba(255,68,85,0.06); border: 1px solid rgba(255,68,85,0.3); border-radius: 8px; }
+.rc-gap-hero-label { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.rc-gap-hero-val { font-size: 28px; font-weight: 800; font-family: var(--mono); color: var(--loss); margin-bottom: 4px; }
+.rc-gap-hero-mult { font-size: 13px; font-weight: 700; color: var(--pre); margin-bottom: 3px; }
+.rc-gap-hero-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+/* ── Leverage hero ── */
+.rc-lev-hero { text-align: center; padding: 16px; border: 1px solid; border-radius: 8px; background: rgba(0,0,0,0.1); }
+.rc-lev-hero-label { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.rc-lev-hero-val { font-size: 32px; font-weight: 800; font-family: var(--mono); margin-bottom: 4px; }
+.rc-lev-hero-warn { font-size: 12px; color: var(--loss); font-weight: 700; }
+.rc-lev-hero-sub { font-size: 12px; color: var(--text3); }
