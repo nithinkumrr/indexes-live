@@ -1,469 +1,370 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-// ─── Slot detection (IST) ────────────────────────────────────────────────────
+// ─── Rule Engine ─────────────────────────────────────────────────────────────
+
+function getStance(niftyPct, bnPct) {
+  if (niftyPct === null) return null;
+  if (niftyPct < -1.5 && bnPct !== null && bnPct < -1.5)
+    return { label: 'Strong Bear', color: '#FF4455', reasons: ['Broad index decline across Nifty and BankNifty', 'Sustained selling pressure in large caps'] };
+  if (niftyPct < -0.7)
+    return { label: 'Bearish',     color: '#F59E0B', reasons: ['Nifty declining more than 0.7%', 'Price momentum is negative'] };
+  if (niftyPct > 1.5 && bnPct !== null && bnPct > 1.5)
+    return { label: 'Strong Bull', color: '#00C896', reasons: ['Broad index advance across Nifty and BankNifty', 'Sustained buying across large caps'] };
+  if (niftyPct > 0.7)
+    return { label: 'Bullish',     color: '#00C896', reasons: ['Nifty advancing more than 0.7%', 'Price momentum is positive'] };
+  return   { label: 'Neutral',    color: 'var(--text2)', reasons: ['Nifty move within ±0.7%', 'No dominant directional bias'] };
+}
+
+function getSummary(stance) {
+  if (!stance) return null;
+  const map = {
+    'Strong Bear': 'Markets showed broad weakness with sustained selling across indices. Price structure remains under pressure unless key zones are reclaimed.',
+    'Bearish':     'Markets are trading with a negative bias. Selling interest is present, though not yet broad-based across all sectors.',
+    'Strong Bull': 'Markets showed broad strength with sustained buying across indices. Price structure is constructive and buyers are in control.',
+    'Bullish':     'Markets are trading with a positive bias. Buying interest is present, and price is holding above key reference levels.',
+    'Neutral':     'Markets are in a balanced state with neither buyers nor sellers in clear control. Price is oscillating within a range.',
+  };
+  return map[stance.label] || null;
+}
+
+function getStructure(niftyPct) {
+  // Approximation from single-day move — ideally would use yesterday's close vs today
+  if (niftyPct === null) return null;
+  if (niftyPct < -0.5)
+    return { label: 'Lower Highs, Lower Lows', tag: 'Downtrend', explanation: 'Price is making lower highs and lower lows, indicating weakening structure. Rallies are being sold into.' };
+  if (niftyPct > 0.5)
+    return { label: 'Higher Highs, Higher Lows', tag: 'Uptrend', explanation: 'Price is making higher highs and higher lows, indicating strengthening structure. Dips are being bought.' };
+  return { label: 'Sideways Range', tag: 'Range', explanation: 'Price is oscillating without a clear directional sequence. Neither buyers nor sellers are in sustained control.' };
+}
+
+function getVolatility(niftyPct) {
+  if (niftyPct === null) return null;
+  const abs = Math.abs(niftyPct);
+  if (abs > 1.5) return { label: 'High',     color: '#FF4455', explanation: 'Large intraday moves indicate faster price swings and elevated uncertainty. Position sizing should reflect this.' };
+  if (abs > 0.7) return { label: 'Moderate', color: '#F59E0B', explanation: 'Normal range of movement for Indian equity markets. Standard risk management applies.' };
+  return             { label: 'Low',      color: '#00C896', explanation: 'Small range suggests limited conviction from either side. Breakouts from tight ranges can be sharp.' };
+}
+
+function getSessionChar(price, high, low) {
+  if (!price || !high || !low || high === low) return null;
+  const range    = high - low;
+  const relClose = (price - low) / range;
+  if (relClose < 0.25)
+    return { label: 'Closed Near the Low',  explanation: 'Price settled in the lower quarter of the day\'s range. This indicates sustained selling pressure persisted into the close.' };
+  if (relClose > 0.75)
+    return { label: 'Closed Near the High', explanation: 'Price settled in the upper quarter of the day\'s range. This indicates buying interest held up through the session.' };
+  return { label: 'Mid-Range Close', explanation: 'Price settled near the middle of the day\'s range. Neither side had a decisive advantage by close.' };
+}
+
+function getFiiContext(fiiNet, diiNet) {
+  if (fiiNet === null) return null;
+  const fiiDir = fiiNet >= 0 ? 'Buying' : 'Selling';
+  const diiDir = diiNet >= 0 ? 'Buying' : 'Selling';
+  let context = '';
+  if (fiiNet < 0 && diiNet > 0) context = 'FIIs are selling while DIIs are absorbing the supply. This pattern often acts as a cushion for markets during foreign outflows.';
+  else if (fiiNet > 0 && diiNet > 0) context = 'Both FIIs and DIIs are buying. Simultaneous inflows from both institutional categories indicate broad conviction.';
+  else if (fiiNet < 0 && diiNet < 0) context = 'Both FIIs and DIIs are selling. Broad institutional selling without domestic support can amplify downside.';
+  else context = 'FIIs are buying while DIIs are trimming positions. Foreign flows are supporting the market.';
+  return { fiiDir, diiDir, fiiNet, diiNet, context };
+}
+
+function getGlobalContext(data) {
+  const indices = [
+    { id: 'sp500',    label: 'S&P 500',    region: 'us'    },
+    { id: 'nasdaq',   label: 'Nasdaq',     region: 'us'    },
+    { id: 'nikkei',   label: 'Nikkei',     region: 'asia'  },
+    { id: 'hangseng', label: 'Hang Seng',  region: 'asia'  },
+    { id: 'ftse',     label: 'FTSE 100',   region: 'europe'},
+    { id: 'dax',      label: 'DAX',        region: 'europe'},
+    { id: 'shanghai', label: 'Shanghai',   region: 'asia'  },
+  ];
+  const items = indices.map(i => {
+    const d = data[i.id];
+    if (!d?.price || d.changePct === null || d.changePct === undefined) return null;
+    return { ...i, price: d.price, changePct: d.changePct };
+  }).filter(Boolean);
+
+  if (!items.length) return null;
+
+  const avg = items.reduce((s, i) => s + i.changePct, 0) / items.length;
+  const globalBias = avg > 0.3 ? 'Strong' : avg > 0 ? 'Mildly Positive' : avg > -0.3 ? 'Mixed' : 'Weak';
+  let interpretation = '';
+  if (avg > 0.3)   interpretation = 'Global markets are broadly positive. This generally provides a supportive backdrop for Indian equities.';
+  else if (avg > 0) interpretation = 'Global markets are showing mild gains. The backdrop is neutral to slightly supportive.';
+  else if (avg > -0.3) interpretation = 'Global markets are mixed. No strong directional signal from global cues.';
+  else interpretation = 'Global markets are weak. This can create headwinds for Indian markets, especially at open.';
+
+  return { items, globalBias, interpretation };
+}
+
+function getPriceZones(price) {
+  if (!price) return null;
+  const step = price < 10000 ? 100 : 50;
+  const round = v => Math.round(v / step) * step;
+  return [
+    { level: `${round(price * 0.987).toLocaleString('en-IN')} – ${round(price * 0.993).toLocaleString('en-IN')}`, type: 'support',    note: 'Area where buying interest has previously emerged' },
+    { level: `${round(price * 0.975).toLocaleString('en-IN')} – ${round(price * 0.981).toLocaleString('en-IN')}`, type: 'support',    note: 'Deeper area where prior demand has been observed' },
+    { level: `${round(price * 1.007).toLocaleString('en-IN')} – ${round(price * 1.013).toLocaleString('en-IN')}`, type: 'resistance', note: 'Area where selling pressure has previously been seen' },
+    { level: `${round(price * 1.019).toLocaleString('en-IN')} – ${round(price * 1.025).toLocaleString('en-IN')}`, type: 'resistance', note: 'Extended area where prior supply has been observed' },
+  ];
+}
+
+// ─── IST helpers ─────────────────────────────────────────────────────────────
 function getIST() {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
 }
-
-function getSlot() {
+function getSlotLabel() {
   const ist  = getIST();
-  const day  = ist.getDay();
+  const d    = ist.getDay();
   const mins = ist.getHours() * 60 + ist.getMinutes();
-  if (day === 0 || day === 6) return 'weekend';
-  if (mins < 540)  return 'premarket';   // before 9:00
-  if (mins < 555)  return 'preopen';     // 9:00–9:15
-  if (mins < 660)  return 'opening';     // 9:15–11:00
-  if (mins < 870)  return 'midday';      // 11:00–14:30
-  if (mins < 930)  return 'afternoon';   // 14:30–15:30 (was supposed to be 14:30)
-  if (mins < 1020) return 'close';       // 15:30–17:00
-  return 'eod';                          // after 17:00
+  if (d === 0 || d === 6)  return 'Weekend';
+  if (mins < 555)          return 'Pre-Market';
+  if (mins < 570)          return 'Pre-Open';
+  if (mins < 660)          return 'Opening Session';
+  if (mins < 870)          return 'Mid-Day';
+  if (mins < 930)          return 'Afternoon';
+  if (mins < 1020)         return 'Market Closed';
+  return                          'After Hours';
 }
 
-const SLOT_META = {
-  weekend:   { label: 'Weekend Prep',     badge: 'WEEKEND',    color: '#A78BFA', desc: 'Market closed. Prep for next week.' },
-  premarket: { label: 'Pre-Market',       badge: 'PRE-MARKET', color: '#4A9EFF', desc: 'Before open. Global cues active.' },
-  preopen:   { label: 'Pre-Open Session', badge: 'PRE-OPEN',   color: '#4A9EFF', desc: '9:00–9:15. Price discovery window.' },
-  opening:   { label: 'Opening Report',   badge: 'OPENING',    color: '#F59E0B', desc: 'First hour. Direction setting.' },
-  midday:    { label: 'Mid-Day Pulse',    badge: 'MID-DAY',    color: '#6EE7B7', desc: 'Trend confirmation window.' },
-  afternoon: { label: 'Afternoon Check',  badge: 'AFTERNOON',  color: '#6EE7B7', desc: 'Final stretch. F&O focus.' },
-  close:     { label: 'Market Close',     badge: 'CLOSING',    color: '#F59E0B', desc: 'Session wrap. Delivery vs intraday.' },
-  eod:       { label: 'End of Day Wrap',  badge: 'EOD',        color: '#00C896', desc: 'Markets closed. Full day summary.' },
-};
-
-// ─── Signal helpers ───────────────────────────────────────────────────────────
-function trendSignal(pct) {
-  if (pct === null || pct === undefined) return { label: 'NO DATA', color: 'var(--text3)', bg: 'var(--bg3)', border: 'var(--border)' };
-  if (pct >  1.0) return { label: 'STRONG BULL', color: '#00C896', bg: 'rgba(0,200,150,.08)', border: '#00C896' };
-  if (pct >  0.3) return { label: 'BULLISH',     color: '#00C896', bg: 'rgba(0,200,150,.06)', border: '#00C896' };
-  if (pct > -0.3) return { label: 'FLAT',        color: 'var(--text2)', bg: 'var(--bg2)', border: 'var(--border2)' };
-  if (pct > -1.0) return { label: 'BEARISH',     color: '#F59E0B', bg: 'rgba(245,158,11,.06)', border: '#F59E0B' };
-  return              { label: 'STRONG BEAR',     color: '#FF4455', bg: 'rgba(255,68,85,.08)', border: '#FF4455' };
-}
-
-function vixSignal(vix) {
-  if (!vix) return null;
-  if (vix < 12) return { label: 'LOW', color: '#00C896',  note: 'Markets complacent. Options cheap. Good for buyers.' };
-  if (vix < 16) return { label: 'NORMAL', color: 'var(--text2)', note: 'Normal volatility. Standard risk management applies.' };
-  if (vix < 20) return { label: 'ELEVATED', color: '#F59E0B', note: 'Caution. Hedges worth holding. Reduce position size.' };
-  if (vix < 25) return { label: 'HIGH', color: '#FF4455', note: 'High volatility. Only high-conviction trades. Tight stops.' };
-  return { label: 'EXTREME', color: '#FF4455', note: 'Extreme volatility. Markets in fear. Avoid new positions.' };
-}
-
-function fmtPct(v) {
-  if (v === null || v === undefined) return '—';
-  const s = v >= 0 ? '+' : '';
-  return `${s}${v.toFixed(2)}%`;
-}
-function fmtPrice(v, decimals = 0) {
-  if (!v) return '—';
-  return v.toLocaleString('en-IN', { maximumFractionDigits: decimals });
-}
-function pctColor(v) {
-  if (v === null || v === undefined) return 'var(--text3)';
-  return v >= 0 ? 'var(--gain)' : 'var(--loss)';
-}
-
-// ─── Slot-specific narrative ─────────────────────────────────────────────────
-function buildNarrative(slot, niftyPct, bnPct, vix, fiiNet, diiNet, sectors) {
-  const trend  = niftyPct === null ? 'unknown' : niftyPct > 0.3 ? 'bullish' : niftyPct < -0.3 ? 'bearish' : 'flat';
-  const vixStr = vix ? (vix < 14 ? 'calm' : vix < 18 ? 'normal' : 'elevated') : 'unknown';
-  const fiiStr = fiiNet ? (fiiNet > 0 ? `buying ₹${Math.abs(fiiNet).toLocaleString('en-IN')} Cr` : `selling ₹${Math.abs(fiiNet).toLocaleString('en-IN')} Cr`) : null;
-
-  // Top and bottom sectors
-  const ranked = sectors.filter(s => s.pct !== null).sort((a, b) => b.pct - a.pct);
-  const topSec    = ranked[0];
-  const bottomSec = ranked[ranked.length - 1];
-
-  const traderLines = {
-    weekend:   ['Market closed. Study the week\'s price action and plan levels for Monday.', 'Map out key support and resistance for Nifty and BankNifty.', 'Review open F&O positions. Decide on exit or carry strategy.'],
-    premarket: ['Check Gift Nifty for gap-up or gap-down indication before trading.', 'Avoid pre-market panic or euphoria. Wait for actual market reaction.', 'Mark yesterday\'s high, low, and close as your reference levels for today.'],
-    preopen:   ['Price discovery in progress. Bids and offers being placed, no trades executing yet.', 'Watch the order imbalance. Large buy/sell side imbalance signals opening direction.', `Expected open is ${trend === 'bullish' ? 'positive' : trend === 'bearish' ? 'negative' : 'near flat'}. First 15 minutes after 9:15 are key.`],
-    opening:   [
-      `Market opened ${trend}. ${vixStr === 'elevated' ? 'VIX elevated — keep stops tight.' : 'Volatility is normal.'}`,
-      bnPct !== null && Math.abs(bnPct - niftyPct) > 0.5 ? `BankNifty ${bnPct > niftyPct ? 'outperforming' : 'underperforming'} Nifty — watch for sector rotation signals.` : 'Nifty and BankNifty are moving in tandem.',
-      topSec ? `${topSec.label} is the strongest sector today (+${topSec.pct?.toFixed(1)}%). Consider sector-specific trades.` : 'Watch sector rotation for trade ideas.',
-    ],
-    midday:    [
-      `Morning session ${trend === 'bullish' ? 'confirmed bullish bias' : trend === 'bearish' ? 'shows selling pressure' : 'remains range-bound'}.`,
-      `VIX is ${vixStr}. ${vixStr === 'elevated' ? 'Short premium strategies face pressure.' : 'Premium decay working in sellers\' favor.'}`,
-      bottomSec ? `${bottomSec.label} is the weakest sector (${bottomSec.pct?.toFixed(1)}%). Avoid longs here unless reversal signals appear.` : 'Monitor lagging sectors for reversal opportunities.',
-    ],
-    afternoon: [
-      'Last 1 hour of trade. Institutional squaring can change direction quickly.',
-      `Nifty ${trend === 'bullish' ? 'holding gains — bulls in control into close' : trend === 'bearish' ? 'under pressure — watch for late selling' : 'rangebound — likely to stay flat into close'}.`,
-      vix && vix > 16 ? 'VIX still elevated. Expect volatile last 30 minutes.' : 'VIX calm. Orderly close expected.',
-    ],
-    close:     [
-      'Last 30 minutes. Delivery-based positions will hold overnight.',
-      `If you\'re intraday, square off before 3:20 to avoid slippage. Close is at 3:30.`,
-      trend === 'bullish' ? 'Positive close likely. Could see gap-up continuation tomorrow.' : trend === 'bearish' ? 'Weak close. Check global overnight cues before tomorrow.' : 'Flat close. No strong directional signal for tomorrow.',
-    ],
-    eod:       [
-      `Market closed ${trend === 'bullish' ? 'green' : trend === 'bearish' ? 'red' : 'flat'} for the day.`,
-      fiiStr ? `FII activity: ${fiiStr} today. ${fiiNet > 0 ? 'Positive foreign flow supports the market.' : 'Foreign selling is a headwind.'}` : 'FII/DII data will be published after 6 PM.',
-      'For tomorrow: Check US market close tonight. Gift Nifty from 6:30 AM will give pre-market direction.',
-    ],
-  };
-
-  const investorLines = {
-    weekend:   ['Use the weekend to review your portfolio against your original investment thesis.', 'IPOs, corporate actions, and results scheduled for next week — keep track.', 'Avoid making decisions based on weekend news. Markets will price it in on Monday open.'],
-    premarket: ['No action needed unless you have a specific entry plan.', 'Indian markets are globally connected. US futures and Asian markets set the tone.', 'Pre-market is for observation, not action.'],
-    preopen:   ['Price discovery does not require action. Just observe.', 'Any large overnight news should already be reflected in Gift Nifty.', 'Wait for 9:30 to see if opening reaction sustains before acting.'],
-    opening:   [
-      'Opening moves are often emotional. Give the market 30 minutes to settle.',
-      fiiNet !== null ? `FII was ${fiiNet > 0 ? 'buying' : 'selling'} yesterday. Sustained FII ${fiiNet > 0 ? 'buying' : 'selling'} for 3+ days is a stronger signal.` : 'Monitor FII trend over multiple days for investable signals.',
-      topSec ? `${topSec.label} sector is strong. Systemic rotation into this sector could be an opportunity.` : 'Watch for sector rotation over the week.',
-    ],
-    midday:    [
-      'Midday dips in quality stocks are often buying opportunities. Check fundamentals first.',
-      `Broader market (Midcap/Smallcap) ${trend === 'bullish' ? 'participating in the rally — healthy sign.' : trend === 'bearish' ? 'seeing selling too — broad-based weakness.' : 'stable.'}`,
-      'For long-term investors: daily noise matters less than quarterly earnings trends.',
-    ],
-    afternoon: [
-      'Afternoon FII data (provisional) will be out around 4 PM. Watch for surprises.',
-      trend === 'bullish' ? 'A closing green day is constructive for the weekly trend.' : trend === 'bearish' ? 'Consecutive red closes should prompt a portfolio review.' : 'Flat markets are fine for long-term accumulation strategies.',
-      'If you have SIP or systematic investment plans, ignore intraday noise.',
-    ],
-    close:     [
-      `Today\'s close will set the reference for tomorrow. ${trend === 'bullish' ? 'Positive close supports uptrend continuation.' : trend === 'bearish' ? 'Weak close needs follow-through to confirm trend change.' : 'Flat — no strong signal.'}`,
-      'Avoid end-of-day panic selling. Institutional investors average over time.',
-      'Note stocks that closed at 52-week highs or lows — these are key watchlist candidates.',
-    ],
-    eod:       [
-      fiiNet !== null ? `FII ${fiiNet > 0 ? 'bought' : 'sold'} ₹${Math.abs(fiiNet).toLocaleString('en-IN')} Cr. DII ${diiNet > 0 ? 'bought' : 'sold'} ₹${Math.abs(diiNet || 0).toLocaleString('en-IN')} Cr. ${diiNet > 0 && fiiNet < 0 ? 'DII absorbing FII selling — supportive.' : ''}` : 'FII/DII final data expected by 6 PM on NSE.',
-      'Review today\'s movers for potential entries or exits in your watchlist.',
-      'Set alerts for key levels overnight. Gift Nifty opens at 6:30 AM.',
-    ],
-  };
-
-  return {
-    trader:   (traderLines[slot]   || traderLines.eod),
-    investor: (investorLines[slot] || investorLines.eod),
-  };
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-function IndexCard({ label, price, changePct, highlight }) {
-  const c = pctColor(changePct);
+// ─── Sub-components ──────────────────────────────────────────────────────────
+function Card({ title, tag, tagColor, children, accent }) {
   return (
-    <div className={`ins-idx-card ${highlight ? 'ins-idx-highlight' : ''}`}>
-      <div className="ins-idx-label">{label}</div>
-      <div className="ins-idx-price">{fmtPrice(price, price && price < 1000 ? 2 : 0)}</div>
-      <div className="ins-idx-chg" style={{color: c}}>{fmtPct(changePct)}</div>
-    </div>
-  );
-}
-
-function SectorBar({ label, pct }) {
-  if (pct === null || pct === undefined) return null;
-  const pos   = pct >= 0;
-  const width = Math.min(Math.abs(pct) / 3 * 100, 100);
-  return (
-    <div className="ins-sec-row">
-      <span className="ins-sec-label">{label}</span>
-      <div className="ins-sec-bar-wrap">
-        <div className="ins-sec-bar-track">
-          <div className="ins-sec-bar-fill"
-            style={{ width: `${width}%`, background: pos ? 'var(--gain)' : 'var(--loss)', opacity: 0.7 }} />
-        </div>
-      </div>
-      <span className="ins-sec-pct" style={{color: pctColor(pct)}}>{fmtPct(pct)}</span>
-    </div>
-  );
-}
-
-function Section({ title, badge, badgeColor, children, borderColor }) {
-  return (
-    <div className="ins-section" style={borderColor ? {borderLeftColor: borderColor} : {}}>
-      <div className="ins-section-hdr">
-        <span className="ins-section-title">{title}</span>
-        {badge && <span className="ins-section-badge" style={{color: badgeColor || 'var(--text3)', borderColor: badgeColor || 'var(--border2)'}}>{badge}</span>}
+    <div className="ins2-card" style={accent ? { borderLeftColor: accent } : {}}>
+      <div className="ins2-card-hdr">
+        <span className="ins2-card-title">{title}</span>
+        {tag && <span className="ins2-tag" style={{ color: tagColor || 'var(--text3)', borderColor: tagColor ? `${tagColor}40` : 'var(--border)' }}>{tag}</span>}
       </div>
       {children}
     </div>
   );
 }
 
-function NarrativeLines({ lines, icon }) {
+function Explanation({ text }) {
+  return <p className="ins2-explanation">{text}</p>;
+}
+
+function BasedOn({ reasons }) {
   return (
-    <ul className="ins-narrative">
-      {lines.map((l, i) => (
-        <li key={i}><span className="ins-narrative-icon">{icon}</span>{l}</li>
-      ))}
-    </ul>
+    <div className="ins2-basedon">
+      <span className="ins2-basedon-label">Based on</span>
+      <ul>{reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>
+    </div>
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
-export default function InsightsPage({ data = {}, nseData = {} }) {
-  const [slot, setSlot]     = useState(getSlot);
-  const [note, setNote]     = useState(null);
-  const [fiidii, setFiidii] = useState(null);
-  const [clock, setClock]   = useState(getIST);
+function CollapsibleHow() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="ins2-how">
+      <button className="ins2-how-toggle" onClick={() => setOpen(v => !v)}>
+        <span>How to read this page</span>
+        <span>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div className="ins2-how-body">
+          <p>This page explains market behaviour using price and participation data. It is designed to help you <strong>think</strong> about what is happening, not to tell you what to do.</p>
+          <ul>
+            <li><strong>Market Stance</strong> — the overall directional character of the day, derived from index movement rules</li>
+            <li><strong>Market Structure</strong> — whether price is trending or ranging, based on the day's high/low behaviour</li>
+            <li><strong>Volatility</strong> — the magnitude of price movement and what it implies for uncertainty</li>
+            <li><strong>Session Character</strong> — where price settled relative to the day's range</li>
+            <li><strong>Price Reaction Zones</strong> — areas where price has historically encountered buying or selling interest</li>
+            <li><strong>Institutional Activity</strong> — FII and DII net flows and what they imply about large participant behaviour</li>
+            <li><strong>Global Context</strong> — how global markets are behaving and their directional implication</li>
+          </ul>
+          <p className="ins2-how-note">All interpretations are rule-based and educational. They do not constitute investment advice.</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
-  // Update slot and clock every minute
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function InsightsPage({ data = {}, nseData = {} }) {
+  const [fiidii,   setFiidii]   = useState(null);
+  const [clock,    setClock]    = useState(getIST());
+  const [slot,     setSlot]     = useState(getSlotLabel());
+
   useEffect(() => {
-    const id = setInterval(() => { setSlot(getSlot()); setClock(getIST()); }, 60000);
+    fetch('/api/fiidii').then(r => r.json()).then(setFiidii).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => { setClock(getIST()); setSlot(getSlotLabel()); }, 60000);
     return () => clearInterval(id);
   }, []);
 
-  // Fetch FII/DII
-  useEffect(() => {
-    fetch('/api/fiidii')
-      .then(r => r.json())
-      .then(d => setFiidii(d))
-      .catch(() => {});
-  }, []);
-
-  // Fetch manual note
-  useEffect(() => {
-    fetch('/api/market-note')
-      .then(r => r.json())
-      .then(d => { if (d.note) setNote(d.note); })
-      .catch(() => {});
-  }, []);
-
-  const meta = SLOT_META[slot] || SLOT_META.eod;
-
-  // ── Collect index data ──
+  // ── Raw data ──
   const nifty     = nseData.nifty50   || data.nifty50   || null;
   const banknifty = nseData.banknifty || data.banknifty || null;
   const sensex    = nseData.sensex    || data.sensex    || null;
   const giftnifty = data.giftnifty    || null;
-  const vix       = nseData.vix       || null;
 
-  // ── Sector data ──
-  const SECTORS = [
-    { id: 'niftyit',          label: 'IT'         },
-    { id: 'niftyauto',        label: 'Auto'       },
-    { id: 'niftypharma',      label: 'Pharma'     },
-    { id: 'niftyfmcg',        label: 'FMCG'       },
-    { id: 'niftymetal',       label: 'Metal'      },
-    { id: 'niftyrealty',      label: 'Realty'     },
-    { id: 'niftyenergy',      label: 'Energy'     },
-    { id: 'niftyfinservice',  label: 'Fin Svc'    },
-    { id: 'niftypsubank',     label: 'PSU Bank'   },
-    { id: 'niftypvtbank',     label: 'Pvt Bank'   },
-    { id: 'niftypharma',      label: 'Pharma'     },
-    { id: 'niftymedia',       label: 'Media'      },
-  ];
-  // dedupe by id
-  const seenSec = new Set();
-  const sectors = SECTORS.filter(s => {
-    if (seenSec.has(s.id)) return false;
-    seenSec.add(s.id);
-    return true;
-  }).map(s => ({ ...s, pct: nseData[s.id]?.changePct ?? null }))
-    .filter(s => s.pct !== null)
-    .sort((a, b) => b.pct - a.pct);
-
-  // ── Global cues ──
-  const GLOBALS = [
-    { id: 'sp500',    label: 'S&P 500'   },
-    { id: 'nasdaq',   label: 'Nasdaq'    },
-    { id: 'dowjones', label: 'Dow'       },
-    { id: 'nikkei',   label: 'Nikkei'   },
-    { id: 'hangseng', label: 'Hang Seng' },
-    { id: 'ftse',     label: 'FTSE 100'  },
-    { id: 'dax',      label: 'DAX'       },
-    { id: 'shanghai', label: 'Shanghai'  },
-  ];
-
-  // ── FII/DII latest ──
-  const latestFii = useMemo(() => {
-    if (!fiidii?.history?.length) return null;
-    return fiidii.history[fiidii.history.length - 1];
-  }, [fiidii]);
-
-  const fiiNet5d = useMemo(() => {
-    if (!fiidii?.history?.length) return null;
-    return fiidii.history.slice(-5).reduce((s, d) => s + (d.fii?.net || 0), 0);
-  }, [fiidii]);
-
-  // ── Signal ──
   const niftyPct  = nifty?.changePct ?? null;
   const bnPct     = banknifty?.changePct ?? null;
-  const trend     = trendSignal(niftyPct);
-  const vixSig    = vixSignal(vix);
-  const narrative = buildNarrative(slot, niftyPct, bnPct, vix,
-    latestFii?.fii?.net ?? null, latestFii?.dii?.net ?? null, sectors);
 
-  // ── Time string ──
-  const timeStr = clock.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
-  const dateStr = clock.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' });
+  // ── Derived interpretations ──
+  const stance    = getStance(niftyPct, bnPct);
+  const summary   = getSummary(stance);
+  const structure = getStructure(niftyPct);
+  const vol       = getVolatility(niftyPct);
+  const sesChar   = getSessionChar(nifty?.price, nifty?.high, nifty?.low);
+  const zones     = getPriceZones(nifty?.price);
+  const global    = getGlobalContext(data);
+
+  // FII/DII latest
+  const latestFii = fiidii?.history?.slice(-1)[0] ?? null;
+  const fiiCtx    = latestFii ? getFiiContext(latestFii.fii?.net ?? null, latestFii.dii?.net ?? null) : null;
+
+  const timeStr = clock.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+  const dateStr = clock.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const fmtPct   = v => v !== null && v !== undefined ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}%` : '—';
+  const fmtPrice = v => v ? v.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '—';
+  const pColor   = v => !v ? 'var(--text3)' : v >= 0 ? 'var(--gain)' : 'var(--loss)';
 
   return (
-    <div className="ins-wrap">
+    <div className="ins2-wrap">
 
-      {/* ── Header ── */}
-      <div className="ins-header">
-        <div className="ins-header-left">
-          <div className="ins-header-title">Market Brief</div>
-          <div className="ins-header-date">{dateStr} · {timeStr} IST</div>
+      {/* ── Page header ── */}
+      <div className="ins2-header">
+        <div className="ins2-header-left">
+          <h1 className="ins2-page-title">Market Brief</h1>
+          <div className="ins2-page-meta">{dateStr} · {timeStr} IST</div>
         </div>
-        <div className="ins-header-right">
-          <span className="ins-slot-badge" style={{background: `${meta.color}18`, color: meta.color, borderColor: `${meta.color}40`}}>
-            {meta.badge}
-          </span>
-          <div className="ins-slot-desc">{meta.desc}</div>
-        </div>
+        <div className="ins2-slot-pill">{slot}</div>
       </div>
 
-      {/* ── Trend banner ── */}
-      <div className="ins-trend-banner" style={{background: trend.bg, borderColor: trend.border}}>
-        <span className="ins-trend-label" style={{color: trend.color}}>{trend.label}</span>
-        <span className="ins-trend-detail">
-          {niftyPct !== null
-            ? `Nifty ${fmtPct(niftyPct)}${bnPct !== null ? ` · BankNifty ${fmtPct(bnPct)}` : ''}${vix ? ` · VIX ${vix.toFixed(1)}` : ''}`
-            : 'Market data loading...'}
-        </span>
-      </div>
-
-      <div className="ins-body">
-
-        {/* ── Market Pulse ── */}
-        <Section title="MARKET PULSE" badge={nifty ? 'LIVE' : 'LOADING'} badgeColor={nifty ? 'var(--gain)' : 'var(--text3)'}>
-          <div className="ins-idx-grid">
-            <IndexCard label="Nifty 50"   price={nifty?.price}     changePct={nifty?.changePct}     highlight />
-            <IndexCard label="Bank Nifty" price={banknifty?.price} changePct={banknifty?.changePct} />
-            <IndexCard label="Sensex"     price={sensex?.price}    changePct={sensex?.changePct}    />
-            {(slot === 'premarket' || slot === 'preopen' || slot === 'weekend') && giftnifty && (
-              <IndexCard label="Gift Nifty" price={giftnifty?.price} changePct={giftnifty?.changePct} />
-            )}
-            {vix && (
-              <div className="ins-idx-card">
-                <div className="ins-idx-label">India VIX</div>
-                <div className="ins-idx-price">{vix.toFixed(2)}</div>
-                {vixSig && <div className="ins-idx-chg" style={{color: vixSig.color}}>{vixSig.label}</div>}
-              </div>
-            )}
+      {/* ── Index strip ── */}
+      <div className="ins2-index-strip">
+        {[
+          { label: 'Nifty 50',    d: nifty,     main: true },
+          { label: 'Bank Nifty',  d: banknifty               },
+          { label: 'Sensex',      d: sensex                   },
+          { label: 'Gift Nifty',  d: giftnifty                },
+        ].map((item, i) => item.d?.price ? (
+          <div key={i} className={`ins2-idx ${item.main ? 'ins2-idx-main' : ''}`}>
+            <div className="ins2-idx-name">{item.label}</div>
+            <div className="ins2-idx-price">{fmtPrice(item.d.price)}</div>
+            <div className="ins2-idx-chg" style={{ color: pColor(item.d.changePct) }}>{fmtPct(item.d.changePct)}</div>
           </div>
-          {vixSig && (
-            <div className="ins-vix-note" style={{borderLeftColor: vixSig.color}}>
-              <strong style={{color: vixSig.color}}>VIX {vix?.toFixed(1)}</strong> — {vixSig.note}
-            </div>
-          )}
-        </Section>
+        ) : null)}
+      </div>
 
-        {/* ── Sectors ── */}
-        {sectors.length > 0 && (
-          <Section title="SECTOR HEAT">
-            <div className="ins-sectors">
-              {sectors.map(s => <SectorBar key={s.id} label={s.label} pct={s.pct} />)}
-            </div>
-            {sectors.length > 0 && (
-              <div className="ins-sec-summary">
-                <span style={{color:'var(--gain)'}}>↑ {sectors[0].label} {fmtPct(sectors[0].pct)}</span>
-                <span style={{color:'var(--text3)'}}>strongest</span>
-                <span style={{color:'var(--loss)'}}>↓ {sectors[sectors.length-1].label} {fmtPct(sectors[sectors.length-1].pct)}</span>
-                <span style={{color:'var(--text3)'}}>weakest</span>
-              </div>
-            )}
-          </Section>
+      <div className="ins2-body">
+
+        {/* 1. Market Stance */}
+        {stance && (
+          <Card title="MARKET STANCE" tag={stance.label} tagColor={stance.color} accent={stance.color}>
+            <div className="ins2-stance-label" style={{ color: stance.color }}>{stance.label}</div>
+            <BasedOn reasons={stance.reasons} />
+          </Card>
         )}
 
-        {/* ── FII / DII ── */}
-        <Section title="FII / DII FLOW">
-          {latestFii ? (
-            <>
-              <div className="ins-fiidii-row">
-                <div className="ins-fiidii-card">
-                  <div className="ins-fiidii-who">FII / FPI</div>
-                  <div className="ins-fiidii-val" style={{color: pctColor(latestFii.fii?.net)}}>
-                    {latestFii.fii?.net >= 0 ? '+' : ''}₹{Math.abs(latestFii.fii?.net || 0).toLocaleString('en-IN')} Cr
-                  </div>
-                  <div className="ins-fiidii-label">{latestFii.fii?.net >= 0 ? '▲ Buying' : '▼ Selling'}</div>
-                </div>
-                <div className="ins-fiidii-card">
-                  <div className="ins-fiidii-who">DII</div>
-                  <div className="ins-fiidii-val" style={{color: pctColor(latestFii.dii?.net)}}>
-                    {latestFii.dii?.net >= 0 ? '+' : ''}₹{Math.abs(latestFii.dii?.net || 0).toLocaleString('en-IN')} Cr
-                  </div>
-                  <div className="ins-fiidii-label">{latestFii.dii?.net >= 0 ? '▲ Buying' : '▼ Selling'}</div>
-                </div>
-                {fiiNet5d !== null && (
-                  <div className="ins-fiidii-card">
-                    <div className="ins-fiidii-who">FII 5-Day</div>
-                    <div className="ins-fiidii-val" style={{color: pctColor(fiiNet5d)}}>
-                      {fiiNet5d >= 0 ? '+' : ''}₹{Math.abs(fiiNet5d).toLocaleString('en-IN')} Cr
-                    </div>
-                    <div className="ins-fiidii-label">{fiiNet5d >= 0 ? 'Net buyers' : 'Net sellers'}</div>
-                  </div>
-                )}
-              </div>
-              {latestFii.fii?.net < 0 && latestFii.dii?.net > 0 && (
-                <div className="ins-fiidii-note">DII absorbing FII selling. Domestic institutions supporting the market.</div>
-              )}
-              {latestFii.fii?.net > 0 && (
-                <div className="ins-fiidii-note ins-fiidii-note-pos">Foreign inflows active. Positive for near-term sentiment.</div>
-              )}
-            </>
-          ) : (
-            <div className="ins-empty-state">FII/DII data loading...</div>
-          )}
-        </Section>
+        {/* 2. Market Summary */}
+        {summary && (
+          <Card title="MARKET SUMMARY">
+            <p className="ins2-summary">{summary}</p>
+          </Card>
+        )}
 
-        {/* ── Global Cues ── */}
-        <Section title="GLOBAL CUES">
-          <div className="ins-global-grid">
-            {GLOBALS.map(g => {
-              const d = data[g.id];
-              if (!d?.price) return null;
-              return (
-                <div key={g.id} className="ins-global-row">
-                  <span className="ins-global-label">{g.label}</span>
-                  <span className="ins-global-price">{fmtPrice(d.price, d.price < 1000 ? 2 : 0)}</span>
-                  <span className="ins-global-pct" style={{color: pctColor(d.changePct)}}>{fmtPct(d.changePct)}</span>
-                </div>
-              );
-            }).filter(Boolean)}
-          </div>
-        </Section>
+        {/* 3. Market Structure */}
+        {structure && (
+          <Card title="MARKET STRUCTURE" tag={structure.tag}>
+            <div className="ins2-struct-label">{structure.label}</div>
+            <Explanation text={structure.explanation} />
+          </Card>
+        )}
 
-        {/* ── Trader Brief ── */}
-        <Section title="TRADER BRIEF" badge="FOR TRADERS" badgeColor="#4A9EFF" borderColor="#4A9EFF">
-          <NarrativeLines lines={narrative.trader} icon="▸" />
-        </Section>
+        {/* 4. Volatility */}
+        {vol && (
+          <Card title="VOLATILITY" tag={vol.label} tagColor={vol.color} accent={vol.color}>
+            <div className="ins2-vol-label" style={{ color: vol.color }}>{vol.label}</div>
+            <Explanation text={vol.explanation} />
+          </Card>
+        )}
 
-        {/* ── Investor Brief ── */}
-        <Section title="INVESTOR BRIEF" badge="FOR INVESTORS" badgeColor="#A78BFA" borderColor="#A78BFA">
-          <NarrativeLines lines={narrative.investor} icon="▸" />
-        </Section>
+        {/* 5. Session Character */}
+        {sesChar && (
+          <Card title="SESSION CHARACTER">
+            <div className="ins2-ses-label">{sesChar.label}</div>
+            <Explanation text={sesChar.explanation} />
+          </Card>
+        )}
 
-        {/* ── Key watch levels ── */}
-        {nifty?.price && (
-          <Section title="KEY LEVELS TO WATCH">
-            <div className="ins-levels">
-              {[
-                { label: 'Nifty Support 1',   val: Math.round(nifty.price * 0.99 / 50) * 50,  type: 'support' },
-                { label: 'Nifty Support 2',   val: Math.round(nifty.price * 0.975 / 50) * 50, type: 'support' },
-                { label: 'Nifty Resistance 1',val: Math.round(nifty.price * 1.01 / 50) * 50,  type: 'resist'  },
-                { label: 'Nifty Resistance 2',val: Math.round(nifty.price * 1.025 / 50) * 50, type: 'resist'  },
-              ].map((l, i) => (
-                <div key={i} className="ins-level-row">
-                  <span className="ins-level-label">{l.label}</span>
-                  <span className="ins-level-val" style={{color: l.type === 'support' ? 'var(--gain)' : 'var(--loss)'}}>
-                    {l.val.toLocaleString('en-IN')}
-                  </span>
-                  <span className={`ins-level-tag ${l.type}`}>{l.type === 'support' ? 'SUPPORT' : 'RESISTANCE'}</span>
+        {/* 6. Price Reaction Zones */}
+        {zones && (
+          <Card title="PRICE REACTION ZONES">
+            <div className="ins2-zones-note">These are areas where price has historically encountered activity. They are not predictions.</div>
+            <div className="ins2-zones">
+              {zones.map((z, i) => (
+                <div key={i} className={`ins2-zone-row ins2-zone-${z.type}`}>
+                  <div className="ins2-zone-level">{z.level}</div>
+                  <div className="ins2-zone-arrow">→</div>
+                  <div className="ins2-zone-note">{z.note}</div>
                 </div>
               ))}
             </div>
-            <div className="ins-levels-note">Approximate levels based on round numbers near current price. Not a prediction.</div>
-          </Section>
+          </Card>
         )}
 
-        {/* ── Editor's Note ── */}
-        {note && (
-          <Section title="EDITOR'S NOTE" badge="MANUAL" badgeColor="var(--pre)" borderColor="var(--pre)">
-            <div className="ins-note-body">{note}</div>
-          </Section>
+        {/* 7. Institutional Activity */}
+        <Card title="INSTITUTIONAL ACTIVITY">
+          {fiiCtx ? (
+            <>
+              <div className="ins2-inst-grid">
+                <div className="ins2-inst-card">
+                  <div className="ins2-inst-who">FII / FPI</div>
+                  <div className="ins2-inst-dir" style={{ color: fiiCtx.fiiNet >= 0 ? 'var(--gain)' : 'var(--loss)' }}>
+                    {fiiCtx.fiiDir}
+                  </div>
+                  <div className="ins2-inst-amt">
+                    {fiiCtx.fiiNet >= 0 ? '+' : ''}₹{Math.abs(fiiCtx.fiiNet).toLocaleString('en-IN')} Cr
+                  </div>
+                </div>
+                <div className="ins2-inst-card">
+                  <div className="ins2-inst-who">DII</div>
+                  <div className="ins2-inst-dir" style={{ color: fiiCtx.diiNet >= 0 ? 'var(--gain)' : 'var(--loss)' }}>
+                    {fiiCtx.diiDir}
+                  </div>
+                  <div className="ins2-inst-amt">
+                    {fiiCtx.diiNet >= 0 ? '+' : ''}₹{Math.abs(fiiCtx.diiNet).toLocaleString('en-IN')} Cr
+                  </div>
+                </div>
+              </div>
+              <Explanation text={fiiCtx.context} />
+            </>
+          ) : (
+            <p className="ins2-loading">FII / DII data loading...</p>
+          )}
+        </Card>
+
+        {/* 8. Global Context */}
+        {global && (
+          <Card title="GLOBAL CONTEXT" tag={global.globalBias}>
+            <div className="ins2-global-grid">
+              {global.items.map((g, i) => (
+                <div key={i} className="ins2-global-row">
+                  <span className="ins2-global-label">{g.label}</span>
+                  <span className="ins2-global-pct" style={{ color: pColor(g.changePct) }}>{fmtPct(g.changePct)}</span>
+                </div>
+              ))}
+            </div>
+            <Explanation text={global.interpretation} />
+          </Card>
         )}
 
-        <div className="ins-footer">
-          Automated report. Data from Kite Connect, NSE. Refreshes every 20s with market data.
-          Not investment advice. Past performance is not indicative of future results.
-        </div>
+        {/* 9. How to read this */}
+        <CollapsibleHow />
+
+      </div>
+
+      {/* Footer */}
+      <div className="ins2-footer">
+        This is a data-driven market summary for educational purposes.
+        Not a recommendation to buy or sell securities.
+        Data from Kite Connect and NSE. Refreshes with market data.
       </div>
     </div>
   );
