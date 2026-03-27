@@ -346,13 +346,42 @@ const INDEX_LOTS = [
   { sym:'SENSEX50',  name:'Sensex 50',       lot:75,  exchange:'BSE', expiry:'Thu Monthly',approxPrice:26000, color:'#00C896' },
 ];
 
+// Full MCX commodity lot sizes
 const COMMODITY_LOTS = [
-  { name:'Gold',        lot:'1 kg',       margin:'8.25%',  tick:'₹1',  plPerTick:'₹100' },
-  { name:'Gold Mini',   lot:'100 gm',     margin:'8.25%',  tick:'₹1',  plPerTick:'₹10' },
-  { name:'Silver',      lot:'30 kg',      margin:'17.25%', tick:'₹1',  plPerTick:'₹30' },
-  { name:'Crude Oil',   lot:'100 bbl',    margin:'34.25%', tick:'₹1',  plPerTick:'₹100' },
-  { name:'Natural Gas', lot:'1250 MMBTU', margin:'24.50%', tick:'10p', plPerTick:'₹125' },
+  // Gold family
+  { name:'Gold',        sym:'GOLD',       lot:'1 kg',        unit:'KGS',   margin:'8.25%',  plPerTick:'₹100', tickSize:'₹1',   category:'Precious Metals' },
+  { name:'Gold Mini',   sym:'GOLDM',      lot:'100 gm',      unit:'GRMS',  margin:'8.25%',  plPerTick:'₹10',  tickSize:'₹1',   category:'Precious Metals' },
+  { name:'Gold Ten',    sym:'GOLDTEN',    lot:'10 gm',       unit:'GRMS',  margin:'8.25%',  plPerTick:'₹1',   tickSize:'₹1',   category:'Precious Metals' },
+  { name:'Gold Guinea', sym:'GOLDGUINEA', lot:'8 gm',        unit:'GRMS',  margin:'8.25%',  plPerTick:'₹1',   tickSize:'₹1',   category:'Precious Metals' },
+  { name:'Gold Petal',  sym:'GOLDPETAL',  lot:'1 gm',        unit:'GRMS',  margin:'8.25%',  plPerTick:'₹1',   tickSize:'₹1',   category:'Precious Metals' },
+  // Silver family
+  { name:'Silver',      sym:'SILVER',     lot:'30 kg',       unit:'KGS',   margin:'17.25%', plPerTick:'₹30',  tickSize:'₹1',   category:'Precious Metals' },
+  { name:'Silver Mini', sym:'SILVERM',    lot:'5 kg',        unit:'KGS',   margin:'17.25%', plPerTick:'₹5',   tickSize:'₹1',   category:'Precious Metals' },
+  { name:'Silver Micro',sym:'SILVERMIC',  lot:'1 kg',        unit:'KGS',   margin:'17.25%', plPerTick:'₹1',   tickSize:'₹1',   category:'Precious Metals' },
+  // Energy
+  { name:'Crude Oil',   sym:'CRUDEOIL',   lot:'100 bbl',     unit:'BBL',   margin:'34.25%', plPerTick:'₹100', tickSize:'₹1',   category:'Energy' },
+  { name:'Crude Mini',  sym:'CRUDEOILM',  lot:'10 bbl',      unit:'BBL',   margin:'34.25%', plPerTick:'₹10',  tickSize:'₹1',   category:'Energy' },
+  { name:'Nat Gas',     sym:'NATURALGAS', lot:'1250 MMBTU',  unit:'MMBTU', margin:'24.50%', plPerTick:'₹125', tickSize:'10p',  category:'Energy' },
+  { name:'Nat Gas Mini',sym:'NATGASMINI', lot:'250 MMBTU',   unit:'MMBTU', margin:'24.50%', plPerTick:'₹25',  tickSize:'10p',  category:'Energy' },
+  // Base Metals
+  { name:'Copper',      sym:'COPPER',     lot:'2500 kg',     unit:'KGS',   margin:'5.00%',  plPerTick:'₹25',  tickSize:'₹0.05',category:'Base Metals' },
+  { name:'Aluminium',   sym:'ALUMINIUM',  lot:'5 MT',        unit:'MT',    margin:'5.00%',  plPerTick:'₹5',   tickSize:'₹0.05',category:'Base Metals' },
+  { name:'Alum Mini',   sym:'ALUMINI',    lot:'1 MT',        unit:'MT',    margin:'5.00%',  plPerTick:'₹1',   tickSize:'₹0.05',category:'Base Metals' },
+  { name:'Zinc',        sym:'ZINC',       lot:'5 MT',        unit:'MT',    margin:'5.00%',  plPerTick:'₹25',  tickSize:'₹0.05',category:'Base Metals' },
+  { name:'Zinc Mini',   sym:'ZINCMINI',   lot:'1 MT',        unit:'MT',    margin:'5.00%',  plPerTick:'₹5',   tickSize:'₹0.05',category:'Base Metals' },
+  { name:'Lead',        sym:'LEAD',       lot:'5 MT',        unit:'MT',    margin:'5.00%',  plPerTick:'₹25',  tickSize:'₹0.05',category:'Base Metals' },
+  { name:'Lead Mini',   sym:'LEADMINI',   lot:'1 MT',        unit:'MT',    margin:'5.00%',  plPerTick:'₹5',   tickSize:'₹0.05',category:'Base Metals' },
+  { name:'Nickel',      sym:'NICKEL',     lot:'250 kg',      unit:'KGS',   margin:'5.00%',  plPerTick:'₹25',  tickSize:'₹0.10',category:'Base Metals' },
+  // Agri
+  { name:'Mentha Oil',  sym:'MENTHAOIL',  lot:'360 kg',      unit:'KGS',   margin:'5.00%',  plPerTick:'₹36',  tickSize:'₹0.10',category:'Agri' },
+  { name:'Cotton',      sym:'COTTON',     lot:'25 bales',    unit:'BALES', margin:'5.00%',  plPerTick:'₹25',  tickSize:'₹10',  category:'Agri' },
+  { name:'Cotton Oil',  sym:'COTTONOIL',  lot:'5 MT',        unit:'MT',    margin:'5.00%',  plPerTick:'₹50',  tickSize:'₹1',   category:'Agri' },
+  { name:'Kapas',       sym:'KAPAS',      lot:'4 MT',        unit:'MT',    margin:'5.00%',  plPerTick:'₹40',  tickSize:'₹1',   category:'Agri' },
+  // Steel
+  { name:'Steel Rebar', sym:'STEELREBAR', lot:'5 MT',        unit:'MT',    margin:'5.00%',  plPerTick:'₹25',  tickSize:'₹0.50',category:'Metals' },
 ];
+
+const COMMOD_CATEGORIES = ['All', 'Precious Metals', 'Energy', 'Base Metals', 'Agri', 'Metals'];
 
 function LotSizePanel() {
   const [move, setMove] = useState('100');
@@ -361,6 +390,20 @@ function LotSizePanel() {
   const m = parseFloat(move) || 0;
   const pnl = m * sel.lot;
   const exposure = sel.approxPrice * sel.lot;
+
+  const [commodMove, setCommodMove] = useState('10');
+  const [selectedCommod, setSelectedCommod] = useState(0);
+  const [commodCat, setCommodCat] = useState('All');
+
+  const filteredCommodities = commodCat === 'All'
+    ? COMMODITY_LOTS
+    : COMMODITY_LOTS.filter(c => c.category === commodCat);
+  const selCommod = COMMODITY_LOTS[selectedCommod] || COMMODITY_LOTS[0];
+  const cm = parseFloat(commodMove) || 0;
+  // P&L = move * lot quantity (for ₹/unit commodities, tick-based)
+  const tickVal = parseFloat(selCommod.plPerTick?.replace('₹','')) || 0;
+  const tickSz = parseFloat(selCommod.tickSize?.replace('₹','').replace('p','0.1')) || 1;
+  const commodPnl = tickSz > 0 ? (cm / tickSz) * tickVal : 0;
 
   return (
     <div className="ref-panel">
@@ -403,19 +446,58 @@ function LotSizePanel() {
         </div>
       </div>
 
-      <div className="ref-lot-section">Commodity Futures</div>
-      <div className="ref-commod-table">
-        <div className="ref-commod-hdr">
-          <span>Product</span><span>Lot</span><span>Margin</span><span>P&L / tick</span>
-        </div>
-        {COMMODITY_LOTS.map(c => (
-          <div key={c.name} className="ref-commod-row">
-            <span className="ref-commod-name">{c.name}</span>
-            <span>{c.lot}</span>
-            <span>{c.margin}</span>
-            <span className="ref-commod-pl">{c.plPerTick}</span>
+      {/* Commodity section */}
+      <div className="ref-lot-section-hdr">
+        <span className="ref-lot-section">Commodity</span>
+        <span className="ref-lot-sub">MCX</span>
+      </div>
+
+      {/* Commodity calculator */}
+      <div className="ref-lot-calc ref-commod-calc">
+        <div className="ref-lot-calc-hdr">P&L Calculator · {selCommod.name}</div>
+        <div className="ref-lot-calc-row">
+          <div className="ref-lot-calc-field">
+            <label>Price move (₹)</label>
+            <input type="number" value={commodMove} onChange={e => setCommodMove(e.target.value)} className="ref-input"/>
           </div>
+          <div className="ref-lot-calc-result">
+            <div className="ref-lot-pnl" style={{ color: commodPnl >= 0 ? 'var(--gain)' : 'var(--loss)' }}>
+              ₹{Math.abs(Math.round(commodPnl)).toLocaleString('en-IN')}
+            </div>
+            <div className="ref-lot-pnl-label">P&L · {selCommod.lot}</div>
+          </div>
+        </div>
+        <div className="ref-lot-exposure">
+          Tick: {selCommod.tickSize} = {selCommod.plPerTick} · Margin ~{selCommod.margin}
+        </div>
+      </div>
+
+      {/* Category filter */}
+      <div className="ref-commod-filter">
+        {COMMOD_CATEGORIES.map(c => (
+          <button key={c}
+            className={`ref-commod-filter-btn ${commodCat === c ? 'active' : ''}`}
+            onClick={() => setCommodCat(c)}>{c}</button>
         ))}
+      </div>
+
+      {/* Scrollable commodity table */}
+      <div className="ref-commod-scroll">
+        <div className="ref-commod-table">
+          <div className="ref-commod-hdr">
+            <span>Product</span><span>Lot</span><span>Margin</span><span>₹/tick</span>
+          </div>
+          {filteredCommodities.map(c => (
+            <div key={c.sym}
+              className={`ref-commod-row ${COMMODITY_LOTS.indexOf(c) === selectedCommod ? 'ref-commod-selected' : ''}`}
+              onClick={() => setSelectedCommod(COMMODITY_LOTS.indexOf(c))}>
+              <span className="ref-commod-name">{c.name}</span>
+              <span className="ref-commod-lot">{c.lot}</span>
+              <span>{c.margin}</span>
+              <span className="ref-commod-pl">{c.plPerTick}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
