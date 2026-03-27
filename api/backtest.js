@@ -23,6 +23,10 @@ function bsPrice(spot, strike, dteYears, vix, type) {
   return Math.max(0.05, blackScholes(spot, strike, Math.max(0.0001, dteYears), vix / 100, 0.065, type));
 }
 
+// ── Index config ──────────────────────────────────────────────────────────────
+const STRIKE_STEPS = { NIFTY: 50, BANKNIFTY: 100, FINNIFTY: 50, MIDCPNIFTY: 25 };
+const LOT_SIZES    = { NIFTY: 65, BANKNIFTY: 30,  FINNIFTY: 60, MIDCPNIFTY: 120 };
+
 // ── Expiry schedule — complete accurate history ───────────────────────────────
 // Sources: NSE circulars
 //
@@ -464,7 +468,7 @@ export default async function handler(req, res) {
 
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:v15:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v16:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) return res.json({ ...( typeof cached === 'string' ? JSON.parse(cached) : cached ), cached: true });
