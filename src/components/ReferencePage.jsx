@@ -1,176 +1,232 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
-// ── Today logic (no API) ──────────────────────────────────────────────────────
+// ── Holiday calendar (NSE/BSE trading holidays 2026) ─────────────────────────
+const HOLIDAYS_2026 = [
+  { date: '2026-01-15', name: 'Municipal Corporation Elections (Maharashtra)', exchange: 'NSE BSE' },
+  { date: '2026-01-26', name: 'Republic Day', exchange: 'NSE BSE MCX' },
+  { date: '2026-03-03', name: 'Holi', exchange: 'NSE BSE' },
+  { date: '2026-03-26', name: 'Shri Ram Navami', exchange: 'NSE BSE' },
+  { date: '2026-03-31', name: 'Shri Mahavir Jayanti', exchange: 'NSE BSE' },
+  { date: '2026-04-03', name: 'Good Friday', exchange: 'NSE BSE MCX' },
+  { date: '2026-04-14', name: 'Dr. Baba Saheb Ambedkar Jayanti', exchange: 'NSE BSE' },
+  { date: '2026-05-01', name: 'Maharashtra Day', exchange: 'NSE BSE' },
+  { date: '2026-05-28', name: 'Bakri Eid', exchange: 'NSE BSE' },
+  { date: '2026-06-26', name: 'Moharram', exchange: 'NSE BSE' },
+  { date: '2026-09-14', name: 'Ganesh Chaturthi', exchange: 'NSE BSE' },
+  { date: '2026-10-02', name: 'Mahatma Gandhi Jayanti', exchange: 'NSE BSE MCX' },
+  { date: '2026-10-20', name: 'Dussehra', exchange: 'NSE BSE' },
+  { date: '2026-11-10', name: 'Diwali-Balipratipada', exchange: 'NSE BSE' },
+  { date: '2026-11-24', name: 'Prakash Gurpurb Sri Guru Nanak Dev', exchange: 'NSE BSE' },
+  { date: '2026-12-25', name: 'Christmas', exchange: 'NSE BSE MCX' },
+];
+
+const SETTLEMENT_HOLIDAYS = [
+  { date: '2026-02-19', name: 'Chhatrapati Shivaji Maharaj Jayanti' },
+  { date: '2026-03-19', name: 'Gudhi Padwa' },
+  { date: '2026-04-01', name: 'Annual Bank Closing' },
+  { date: '2026-08-26', name: 'Id-E-Milad' },
+];
+
+function isHoliday(dateStr) {
+  return HOLIDAYS_2026.some(h => h.date === dateStr);
+}
+function isSettlement(dateStr) {
+  return SETTLEMENT_HOLIDAYS.some(h => h.date === dateStr);
+}
+function getHolidayName(dateStr) {
+  return HOLIDAYS_2026.find(h => h.date === dateStr)?.name || null;
+}
+function dateToStr(dt) {
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+
+// Advance date past holidays (skip weekends + holidays)
+function nextTradingDay(dt, steps = 1) {
+  let d = new Date(dt);
+  let moved = 0;
+  while (moved < steps) {
+    d.setDate(d.getDate() - 1);
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6) continue;
+    if (isHoliday(dateToStr(d))) continue;
+    moved++;
+  }
+  return d;
+}
+
+// Get next Nifty expiry (Tuesday, skip holidays to Monday)
+function getNextNiftyExpiry(from = new Date()) {
+  let d = new Date(from);
+  // Find next Tuesday
+  const daysToTue = (2 - d.getDay() + 7) % 7 || 7;
+  d.setDate(d.getDate() + daysToTue);
+  // If holiday, move to prior Monday (or Friday if Monday is also holiday)
+  while (isHoliday(dateToStr(d)) || d.getDay() === 0 || d.getDay() === 6) {
+    d.setDate(d.getDate() - 1);
+  }
+  return d;
+}
+
+// ── Today logic ───────────────────────────────────────────────────────────────
 function getTodayInfo() {
   const now = new Date();
-  const day = now.getDay(); // 0=Sun,1=Mon,...,6=Sat
-  const date = now.getDate();
-  const month = now.getMonth();
-  const year = now.getFullYear();
-
-  // Last Tuesday of month = monthly expiry
-  function lastTuesdayOfMonth(y, m) {
-    const last = new Date(y, m + 1, 0); // last day of month
-    const diff = (last.getDay() - 2 + 7) % 7;
-    return new Date(y, m, last.getDate() - diff);
-  }
-
-  const lastTue = lastTuesdayOfMonth(year, month);
-  const isLastTuesday = day === 2 && date === lastTue.getDate();
-  const isNiftyWeekly = day === 2; // Tuesday
-  const isSensexWeekly = day === 5; // Friday
-  const isBankNiftyWeekly = day === 3; // Wednesday
-  const isExpiryDay = isNiftyWeekly || isSensexWeekly || isBankNiftyWeekly;
-
-  // Days to next Nifty weekly (Tuesday)
-  const daysToTue = (2 - day + 7) % 7 || 7;
-  const isExpiryWeek = daysToTue <= 2;
-
+  const todayStr = dateToStr(now);
+  const dow = now.getDay();
   const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-  let expiryType = null;
-  let expiryName = null;
-  if (isLastTuesday) { expiryType = 'monthly'; expiryName = 'Nifty Monthly Expiry'; }
-  else if (isNiftyWeekly) { expiryType = 'weekly'; expiryName = 'Nifty Weekly Expiry'; }
-  else if (isSensexWeekly) { expiryType = 'weekly'; expiryName = 'Sensex Weekly Expiry'; }
-  else if (isBankNiftyWeekly) { expiryType = 'weekly'; expiryName = 'Bank Nifty Weekly Expiry'; }
+  const isMarketHoliday = isHoliday(todayStr);
+  const isSettlementHoliday = isSettlement(todayStr);
+  const holidayName = getHolidayName(todayStr);
 
-  let riskLevel, action, subAction;
-  if (isExpiryDay && expiryType === 'monthly') {
-    riskLevel = 'EXTREME'; action = 'Avoid new positions after 1 PM'; subAction = 'Gamma and theta spike near monthly expiry';
-  } else if (isExpiryDay) {
-    riskLevel = 'HIGH'; action = 'Avoid new positions after 2 PM'; subAction = 'Theta decay is fastest today';
+  // Next Nifty expiry (holiday-adjusted)
+  const nextExpiry = getNextNiftyExpiry(now);
+  const daysToExpiry = Math.ceil((nextExpiry - now) / 86400000);
+  const isExpiryToday = daysToExpiry <= 0 || dateToStr(nextExpiry) === todayStr;
+  const isExpiryWeek = daysToExpiry <= 3 && daysToExpiry > 0;
+
+  // Check if next expiry is monthly (last Tuesday of month)
+  function lastTuesdayOfMonth(y, m) {
+    const last = new Date(y, m + 1, 0);
+    const diff = (last.getDay() - 2 + 7) % 7;
+    let d = new Date(y, m, last.getDate() - diff);
+    while (isHoliday(dateToStr(d))) d.setDate(d.getDate() - 1);
+    return d;
+  }
+  const lastTue = lastTuesdayOfMonth(nextExpiry.getFullYear(), nextExpiry.getMonth());
+  const isMonthlyExpiry = dateToStr(nextExpiry) === dateToStr(lastTue);
+
+  let riskLevel, action, subAction, expiryNote;
+  if (isMarketHoliday) {
+    riskLevel = 'HOLIDAY'; action = 'Market closed today';
+    subAction = holidayName || 'National holiday';
+    expiryNote = null;
+  } else if (isExpiryToday && isMonthlyExpiry) {
+    riskLevel = 'EXTREME'; action = 'Monthly expiry. Avoid new positions after 1 PM';
+    subAction = 'Gamma and theta spike. Exits before close.';
+    expiryNote = 'Nifty Monthly Expiry today';
+  } else if (isExpiryToday) {
+    riskLevel = 'HIGH'; action = 'Expiry day. Avoid new positions after 2 PM';
+    subAction = 'Theta decay is fastest today. Close or roll by 3:20 PM.';
+    expiryNote = 'Nifty Weekly Expiry today';
   } else if (isExpiryWeek) {
-    riskLevel = 'ELEVATED'; action = 'Prefer selling premium'; subAction = 'You are in expiry week, time decay accelerates';
-  } else if (day === 1 || day === 5) {
-    riskLevel = 'MODERATE'; action = 'Normal trading rules apply'; subAction = 'No major expiry pressure today';
+    riskLevel = 'ELEVATED'; action = 'Expiry week. Prefer selling premium.';
+    subAction = `${daysToExpiry} day${daysToExpiry > 1 ? 's' : ''} to expiry. Decay accelerating.`;
+    expiryNote = isMonthlyExpiry ? 'Nifty Monthly Expiry this week' : 'Nifty Weekly Expiry this week';
   } else {
-    riskLevel = 'NORMAL'; action = 'Standard position sizing applies'; subAction = 'Mid-week, moderate theta decay';
+    riskLevel = 'NORMAL'; action = 'Standard position sizing applies.';
+    subAction = `${daysToExpiry} days to next Nifty expiry.`;
+    expiryNote = null;
   }
 
+  const expiryDateFmt = nextExpiry.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short' });
+
   return {
-    dayName: dayNames[day], date, month: monthNames[month], year,
-    isExpiryDay, expiryType, expiryName, isExpiryWeek,
-    riskLevel, action, subAction, daysToTue,
+    dayName: dayNames[dow], date: now.getDate(),
+    month: monthNames[now.getMonth()], year: now.getFullYear(),
+    riskLevel, action, subAction, expiryNote,
+    nextExpiryDate: expiryDateFmt,
+    daysToExpiry, isMonthlyExpiry,
+    isMarketHoliday, holidayName,
+    isSettlementHoliday,
   };
 }
 
-// ── Upcoming expiries ─────────────────────────────────────────────────────────
+// ── Upcoming expiries (holiday-adjusted) ─────────────────────────────────────
 function getUpcomingExpiries() {
   const now = new Date();
   const expiries = [];
+  let cursor = new Date(now);
+  cursor.setDate(cursor.getDate() + 1); // start from tomorrow
 
-  for (let m = 0; m < 3; m++) {
-    const yr = now.getFullYear() + Math.floor((now.getMonth() + m) / 12);
-    const mo = (now.getMonth() + m) % 12;
+  for (let i = 0; i < 60; i++) { // scan next 60 days
+    const dow = cursor.getDay();
+    const str = dateToStr(cursor);
 
-    // Nifty Weekly: every Tuesday
-    const firstDay = new Date(yr, mo, 1);
-    const firstTue = (2 - firstDay.getDay() + 7) % 7 + 1;
-    for (let d = firstTue; d <= new Date(yr, mo + 1, 0).getDate(); d += 7) {
-      const dt = new Date(yr, mo, d);
-      if (dt >= now) {
-        // Last Tuesday = monthly
-        const nextTue = new Date(yr, mo, d + 7);
-        const isMonthly = nextTue.getMonth() !== mo;
-        expiries.push({ date: dt, label: isMonthly ? 'Nifty Monthly' : 'Nifty Weekly', type: isMonthly ? 'monthly' : 'weekly', exchange: 'NSE' });
+    if (dow === 0 || dow === 6) { cursor.setDate(cursor.getDate() + 1); continue; }
+
+    // Tuesday = Nifty weekly. If holiday, it would have moved, skip
+    if (dow === 2 && !isHoliday(str)) {
+      // Last Tuesday of month?
+      function lastTueOfMonth(y, m) {
+        const last = new Date(y, m + 1, 0);
+        const diff = (last.getDay() - 2 + 7) % 7;
+        let d = new Date(y, m, last.getDate() - diff);
+        while (isHoliday(dateToStr(d))) d.setDate(d.getDate() - 1);
+        return d;
       }
+      const lt = lastTueOfMonth(cursor.getFullYear(), cursor.getMonth());
+      const isMonthly = dateToStr(cursor) === dateToStr(lt);
+      expiries.push({ date: new Date(cursor), label: isMonthly ? 'Nifty Monthly' : 'Nifty Weekly', type: isMonthly ? 'monthly' : 'weekly' });
+    }
+    // Friday = Sensex weekly. If holiday, moved to Thursday
+    if (dow === 5 && !isHoliday(str)) {
+      expiries.push({ date: new Date(cursor), label: 'Sensex Weekly', type: 'weekly' });
+    }
+    if (dow === 4 && isHoliday(dateToStr(new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1)))) {
+      expiries.push({ date: new Date(cursor), label: 'Sensex Weekly', type: 'weekly', shifted: true });
     }
 
-    // Sensex Weekly: every Friday
-    const firstFri = (5 - firstDay.getDay() + 7) % 7 + 1;
-    for (let d = firstFri; d <= new Date(yr, mo + 1, 0).getDate(); d += 7) {
-      const dt = new Date(yr, mo, d);
-      if (dt >= now) {
-        expiries.push({ date: dt, label: 'Sensex Weekly', type: 'weekly', exchange: 'BSE' });
-      }
-    }
+    cursor.setDate(cursor.getDate() + 1);
+    if (expiries.length >= 20) break;
   }
-
-  // Sort and return next 16
-  return expiries.sort((a, b) => a.date - b.date).slice(0, 18);
+  return expiries.slice(0, 18);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function daysAway(dt) {
   const diff = Math.ceil((dt - new Date()) / 86400000);
-  if (diff === 0) return 'Today';
+  if (diff <= 0) return 'Today';
   if (diff === 1) return 'Tomorrow';
   return `${diff}d away`;
 }
-
 function fmtDate(dt) {
   const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${days[dt.getDay()]}, ${dt.getDate()} ${months[dt.getMonth()]}`;
 }
-
 function fmtMonth(dt) {
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   return `${months[dt.getMonth()]} ${dt.getFullYear()}`;
 }
 
-// ── INDEX LOT DATA ────────────────────────────────────────────────────────────
-const INDEX_LOTS = [
-  { sym:'NIFTY', name:'Nifty 50', lot:65, exchange:'NSE', expiry:'Tue Weekly', approxPrice:24500, color:'#4A9EFF' },
-  { sym:'BANKNIFTY', name:'Bank Nifty', lot:30, exchange:'NSE', expiry:'Wed Weekly', approxPrice:52000, color:'#F59E0B' },
-  { sym:'FINNIFTY', name:'Fin Nifty', lot:60, exchange:'NSE', expiry:'Tue Weekly', approxPrice:23000, color:'#00C896' },
-  { sym:'MIDCPNIFTY', name:'Midcap Select', lot:120, exchange:'NSE', expiry:'Mon Monthly', approxPrice:12000, color:'#A78BFA' },
-  { sym:'NIFTYNXT50', name:'Nifty Next 50', lot:25, exchange:'NSE', expiry:'Tue Monthly', approxPrice:68000, color:'#FF6B6B' },
-  { sym:'SENSEX', name:'Sensex', lot:20, exchange:'BSE', expiry:'Fri Weekly', approxPrice:81000, color:'#4A9EFF' },
-  { sym:'BANKEX', name:'Bankex', lot:30, exchange:'BSE', expiry:'Mon Weekly', approxPrice:58000, color:'#F59E0B' },
-  { sym:'SENSEX50', name:'Sensex 50', lot:75, exchange:'BSE', expiry:'Thu Monthly', approxPrice:26000, color:'#00C896' },
-];
-
-const COMMODITY_LOTS = [
-  { name:'Gold', lot:'1 kg', margin:'8.25%', tickPL:'₹100/tick', note:'Futures' },
-  { name:'Gold Mini', lot:'100 gm', margin:'8.25%', tickPL:'₹10/tick', note:'Futures' },
-  { name:'Silver', lot:'30 kg', margin:'17.25%', tickPL:'₹30/tick', note:'Futures' },
-  { name:'Crude Oil', lot:'100 barrels', margin:'34.25%', tickPL:'₹100/tick', note:'Futures' },
-  { name:'Natural Gas', lot:'1250 MMBTU', margin:'24.50%', tickPL:'₹125/tick', note:'Futures' },
-];
-
-// ════════════════════════════════════════════════════════════
-// COMPONENTS
-// ════════════════════════════════════════════════════════════
+// ── COMPONENTS ────────────────────────────────────────────────────────────────
 
 function TodayBar() {
   const t = getTodayInfo();
   const riskColors = {
-    EXTREME: '#FF4455', HIGH: '#FF4455', ELEVATED: '#F59E0B', MODERATE: '#4A9EFF', NORMAL: '#00C896'
+    EXTREME: '#FF4455', HIGH: '#FF4455', ELEVATED: '#F59E0B',
+    NORMAL: '#00C896', HOLIDAY: '#A78BFA'
   };
   const riskBg = {
-    EXTREME: 'rgba(255,68,85,0.1)', HIGH: 'rgba(255,68,85,0.08)', ELEVATED: 'rgba(245,158,11,0.08)',
-    MODERATE: 'rgba(74,158,255,0.06)', NORMAL: 'rgba(0,200,150,0.06)'
+    EXTREME: 'rgba(255,68,85,0.1)', HIGH: 'rgba(255,68,85,0.08)',
+    ELEVATED: 'rgba(245,158,11,0.08)', NORMAL: 'rgba(0,200,150,0.06)',
+    HOLIDAY: 'rgba(167,139,250,0.08)'
   };
   const color = riskColors[t.riskLevel];
-  const bg = riskBg[t.riskLevel];
 
   return (
-    <div className="ref-today-bar" style={{ background: bg, borderColor: color + '40' }}>
+    <div className="ref-today-bar" style={{ background: riskBg[t.riskLevel], borderColor: color + '40' }}>
       <div className="ref-today-left">
         <div className="ref-today-eyebrow">Today's Trading Context</div>
         <div className="ref-today-main">
           {t.dayName}, {t.date} {t.month}
-          {t.expiryName && <span className="ref-today-expiry" style={{ color }}> · {t.expiryName}</span>}
+          {t.expiryNote && <span className="ref-today-expiry" style={{ color }}> · {t.expiryNote}</span>}
+          {t.isMarketHoliday && <span className="ref-today-expiry" style={{ color }}> · Market Closed</span>}
         </div>
         <div className="ref-today-action">{t.action}</div>
         <div className="ref-today-sub">{t.subAction}</div>
+        {t.isSettlementHoliday && (
+          <div className="ref-today-settle">Settlement holiday today · deliveries delayed · trading continues normally</div>
+        )}
       </div>
       <div className="ref-today-right">
         <div className="ref-risk-tag" style={{ color, borderColor: color + '60', background: color + '18' }}>
           {t.riskLevel} RISK
         </div>
-        {t.isExpiryDay && (
-          <div className="ref-today-theta">Theta decay highest today</div>
-        )}
-        {!t.isExpiryDay && t.isExpiryWeek && (
-          <div className="ref-today-theta">{t.daysToTue}d to Nifty expiry</div>
-        )}
-        {!t.isExpiryDay && !t.isExpiryWeek && (
-          <div className="ref-today-theta">{t.daysToTue}d to next Nifty expiry</div>
-        )}
+        <div className="ref-today-theta">
+          {t.isMarketHoliday ? t.holidayName : `Next expiry: ${t.nextExpiryDate} (${t.daysToExpiry}d)`}
+        </div>
       </div>
     </div>
   );
@@ -178,7 +234,6 @@ function TodayBar() {
 
 function ExpiryCalendar() {
   const expiries = getUpcomingExpiries();
-  // Group by month
   const byMonth = {};
   expiries.forEach(e => {
     const k = fmtMonth(e.date);
@@ -190,9 +245,9 @@ function ExpiryCalendar() {
     <div className="ref-panel">
       <div className="ref-panel-hdr">
         <div className="ref-panel-title">Expiry Calendar</div>
-        <div className="ref-panel-sub">Next 3 months · holiday-adjusted</div>
+        <div className="ref-panel-sub">Holiday-adjusted · 2026</div>
       </div>
-      <div className="ref-insight-line">Most losses happen on expiry day. Plan before, not during.</div>
+      <div className="ref-insight-line">31 Mar (Mahavir Jayanti) is a holiday. Nifty expiry moved to Mon 30 Mar.</div>
       <div className="ref-cal-cols">
         {Object.entries(byMonth).slice(0, 3).map(([month, items]) => (
           <div key={month} className="ref-cal-col">
@@ -200,14 +255,13 @@ function ExpiryCalendar() {
             {items.map((e, i) => {
               const away = daysAway(e.date);
               const isToday = away === 'Today';
-              const isTomorrow = away === 'Tomorrow';
               return (
                 <div key={i} className={`ref-cal-row ${isToday ? 'ref-cal-today' : ''}`}>
                   <span className="ref-cal-date">{fmtDate(e.date)}</span>
                   <span className={`ref-cal-label ${e.type === 'monthly' ? 'ref-cal-monthly' : 'ref-cal-weekly'}`}>
                     {e.label}
                   </span>
-                  <span className="ref-cal-away" style={{ color: isToday ? '#FF4455' : isTomorrow ? '#F59E0B' : 'var(--text3)' }}>
+                  <span className="ref-cal-away" style={{ color: isToday ? '#FF4455' : away === 'Tomorrow' ? '#F59E0B' : 'var(--text3)' }}>
                     {away}
                   </span>
                 </div>
@@ -219,6 +273,86 @@ function ExpiryCalendar() {
     </div>
   );
 }
+
+function HolidayCalendar() {
+  const now = new Date();
+  const upcoming = HOLIDAYS_2026.filter(h => new Date(h.date) >= now).slice(0, 12);
+  const upcomingSettlement = SETTLEMENT_HOLIDAYS.filter(h => new Date(h.date) >= now).slice(0, 4);
+
+  function fmtHolDate(str) {
+    const d = new Date(str);
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+  }
+  function daysUntil(str) {
+    const diff = Math.ceil((new Date(str) - now) / 86400000);
+    if (diff <= 0) return 'Today';
+    if (diff === 1) return '1d';
+    return `${diff}d`;
+  }
+
+  return (
+    <div className="ref-panel">
+      <div className="ref-panel-hdr">
+        <div className="ref-panel-title">Holiday Calendar 2026</div>
+        <div className="ref-panel-sub">NSE / BSE</div>
+      </div>
+
+      <div className="ref-holiday-list">
+        {upcoming.map(h => {
+          const d = daysUntil(h.date);
+          const isClose = parseInt(d) <= 7 && d !== 'Today';
+          const isToday = d === 'Today';
+          return (
+            <div key={h.date} className={`ref-holiday-row ${isToday ? 'ref-holiday-today' : ''}`}>
+              <span className="ref-holiday-date">{fmtHolDate(h.date)}</span>
+              <span className="ref-holiday-name">{h.name}</span>
+              <span className="ref-holiday-away" style={{ color: isToday ? '#FF4455' : isClose ? '#F59E0B' : 'var(--text3)' }}>{d}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {upcomingSettlement.length > 0 && (
+        <>
+          <div className="ref-holiday-section-hdr">Settlement Holidays</div>
+          <div className="ref-settle-box">
+            <div className="ref-settle-what">Market trades normally. Depositories closed. Stock transfers and deliveries are delayed by one day.</div>
+            <div className="ref-holiday-list" style={{marginTop: 8}}>
+              {upcomingSettlement.map(h => (
+                <div key={h.date} className="ref-holiday-row">
+                  <span className="ref-holiday-date">{fmtHolDate(h.date)}</span>
+                  <span className="ref-holiday-name">{h.name}</span>
+                  <span className="ref-holiday-away" style={{color:'var(--accent)'}}>{daysUntil(h.date)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+const INDEX_LOTS = [
+  { sym:'NIFTY',     name:'Nifty 50',       lot:65,  exchange:'NSE', expiry:'Tue Weekly', approxPrice:24500, color:'#4A9EFF' },
+  { sym:'BANKNIFTY', name:'Bank Nifty',      lot:30,  exchange:'NSE', expiry:'Wed Weekly', approxPrice:52000, color:'#F59E0B' },
+  { sym:'FINNIFTY',  name:'Fin Nifty',       lot:60,  exchange:'NSE', expiry:'Tue Weekly', approxPrice:23000, color:'#00C896' },
+  { sym:'MIDCPNIFTY',name:'Midcap Select',   lot:120, exchange:'NSE', expiry:'Mon Monthly',approxPrice:12000, color:'#A78BFA' },
+  { sym:'NIFTYNXT50',name:'Nifty Next 50',   lot:25,  exchange:'NSE', expiry:'Tue Monthly',approxPrice:68000, color:'#FF6B6B' },
+  { sym:'SENSEX',    name:'Sensex',          lot:20,  exchange:'BSE', expiry:'Fri Weekly', approxPrice:81000, color:'#4A9EFF' },
+  { sym:'BANKEX',    name:'Bankex',          lot:30,  exchange:'BSE', expiry:'Mon Weekly', approxPrice:58000, color:'#F59E0B' },
+  { sym:'SENSEX50',  name:'Sensex 50',       lot:75,  exchange:'BSE', expiry:'Thu Monthly',approxPrice:26000, color:'#00C896' },
+];
+
+const COMMODITY_LOTS = [
+  { name:'Gold',        lot:'1 kg',       margin:'8.25%',  tick:'₹1',  plPerTick:'₹100' },
+  { name:'Gold Mini',   lot:'100 gm',     margin:'8.25%',  tick:'₹1',  plPerTick:'₹10' },
+  { name:'Silver',      lot:'30 kg',      margin:'17.25%', tick:'₹1',  plPerTick:'₹30' },
+  { name:'Crude Oil',   lot:'100 bbl',    margin:'34.25%', tick:'₹1',  plPerTick:'₹100' },
+  { name:'Natural Gas', lot:'1250 MMBTU', margin:'24.50%', tick:'10p', plPerTick:'₹125' },
+];
 
 function LotSizePanel() {
   const [move, setMove] = useState('100');
@@ -236,7 +370,6 @@ function LotSizePanel() {
       </div>
       <div className="ref-insight-line ref-insight-warn">1 lot is never small. Know the exposure before you trade.</div>
 
-      {/* Index grid */}
       <div className="ref-lot-grid">
         {INDEX_LOTS.map((l, i) => (
           <button key={l.sym}
@@ -251,7 +384,6 @@ function LotSizePanel() {
         ))}
       </div>
 
-      {/* Mini calculator */}
       <div className="ref-lot-calc">
         <div className="ref-lot-calc-hdr">{sel.name} · {sel.lot} shares per lot</div>
         <div className="ref-lot-calc-row">
@@ -267,17 +399,21 @@ function LotSizePanel() {
           </div>
         </div>
         <div className="ref-lot-exposure">
-          Approx exposure: ₹{(exposure / 100000).toFixed(1)}L per lot at ₹{sel.approxPrice.toLocaleString('en-IN')}
+          Exposure: ~₹{(exposure / 100000).toFixed(1)}L per lot at ₹{sel.approxPrice.toLocaleString('en-IN')}
         </div>
       </div>
 
-      {/* Commodity table */}
       <div className="ref-lot-section">Commodity Futures</div>
-      <div className="ref-mini-table">
-        <div className="ref-mini-thead"><span>Product</span><span>Lot Size</span><span>Margin</span><span>₹/tick</span></div>
+      <div className="ref-commod-table">
+        <div className="ref-commod-hdr">
+          <span>Product</span><span>Lot</span><span>Margin</span><span>P&L / tick</span>
+        </div>
         {COMMODITY_LOTS.map(c => (
-          <div key={c.name} className="ref-mini-trow">
-            <span>{c.name}</span><span>{c.lot}</span><span>{c.margin}</span><span>{c.tickPL}</span>
+          <div key={c.name} className="ref-commod-row">
+            <span className="ref-commod-name">{c.name}</span>
+            <span>{c.lot}</span>
+            <span>{c.margin}</span>
+            <span className="ref-commod-pl">{c.plPerTick}</span>
           </div>
         ))}
       </div>
@@ -287,23 +423,20 @@ function LotSizePanel() {
 
 function ThetaPanel() {
   const [mode, setMode] = useState('Weekly');
-  // Static decay data points: days to expiry → % value remaining
   const weekly = [
-    { d: 7, v: 100 }, { d: 6, v: 88 }, { d: 5, v: 75 }, { d: 4, v: 62 },
-    { d: 3, v: 50 }, { d: 2, v: 36 }, { d: 1, v: 20 }, { d: 0, v: 0 },
+    {d:7,v:100},{d:6,v:88},{d:5,v:75},{d:4,v:62},
+    {d:3,v:50},{d:2,v:36},{d:1,v:20},{d:0,v:0},
   ];
   const monthly = [
-    { d: 30, v: 100 }, { d: 25, v: 92 }, { d: 20, v: 82 }, { d: 15, v: 70 },
-    { d: 10, v: 56 }, { d: 7, v: 44 }, { d: 4, v: 28 }, { d: 1, v: 10 }, { d: 0, v: 0 },
+    {d:30,v:100},{d:25,v:92},{d:20,v:82},{d:15,v:70},
+    {d:10,v:56},{d:7,v:44},{d:4,v:28},{d:1,v:10},{d:0,v:0},
   ];
   const pts = mode === 'Weekly' ? weekly : monthly;
   const maxD = pts[0].d;
-  const W = 260, H = 120;
-
+  const W = 260, H = 130;
   const toX = d => ((maxD - d) / maxD) * (W - 20) + 10;
-  const toY = v => H - (v / 100) * (H - 10) - 5;
-
-  const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${toX(p.d)},${toY(p.v)}`).join(' ');
+  const toY = v => H - (v / 100) * (H - 14) - 6;
+  const pathD = pts.map((p, i) => `${i===0?'M':'L'}${toX(p.d)},${toY(p.v)}`).join(' ');
   const areaD = pathD + ` L${toX(0)},${H} L${toX(maxD)},${H} Z`;
 
   return (
@@ -312,11 +445,11 @@ function ThetaPanel() {
         <div className="ref-panel-title">Theta Decay Curve</div>
         <div className="ref-toggle-row">
           {['Weekly','Monthly'].map(m => (
-            <button key={m} className={`ref-toggle-btn ${mode === m ? 'active' : ''}`} onClick={() => setMode(m)}>{m}</button>
+            <button key={m} className={`ref-toggle-btn ${mode===m?'active':''}`} onClick={()=>setMode(m)}>{m}</button>
           ))}
         </div>
       </div>
-      <div className="ref-insight-line ref-insight-warn">70% of decay happens in last 7 days. Time works against buyers.</div>
+      <div className="ref-insight-line ref-insight-warn">70% of decay happens in the last 7 days. Time works against buyers.</div>
       <svg viewBox={`0 0 ${W} ${H}`} className="ref-theta-svg">
         <defs>
           <linearGradient id="thetaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -324,32 +457,23 @@ function ThetaPanel() {
             <stop offset="100%" stopColor="#F59E0B" stopOpacity="0"/>
           </linearGradient>
         </defs>
-        {/* Grid lines */}
         {[25,50,75].map(v => (
-          <line key={v} x1={10} y1={toY(v)} x2={W-10} y2={toY(v)}
-            stroke="rgba(255,255,255,0.06)" strokeWidth="1"/>
+          <line key={v} x1={10} y1={toY(v)} x2={W-10} y2={toY(v)} stroke="rgba(255,255,255,0.06)" strokeWidth="1"/>
         ))}
-        {/* Area fill */}
         <path d={areaD} fill="url(#thetaGrad)"/>
-        {/* Curve */}
-        <path d={pathD} fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        {/* 7-day marker for monthly */}
+        <path d={pathD} fill="none" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
         {mode === 'Monthly' && (
           <line x1={toX(7)} y1={0} x2={toX(7)} y2={H} stroke="rgba(255,68,85,0.4)" strokeWidth="1" strokeDasharray="3,3"/>
         )}
-        {/* Labels */}
-        <text x={12} y={H-2} fill="rgba(255,255,255,0.3)" fontSize="9" fontFamily="monospace">{maxD}d</text>
-        <text x={W/2-10} y={H-2} fill="rgba(255,255,255,0.3)" fontSize="9" fontFamily="monospace">Halfway</text>
-        <text x={W-28} y={H-2} fill="rgba(255,255,255,0.3)" fontSize="9" fontFamily="monospace">Expiry</text>
+        <text x={12} y={H-3} fill="rgba(255,255,255,0.3)" fontSize="10" fontFamily="monospace">{maxD}d</text>
+        <text x={W-40} y={H-3} fill="rgba(255,255,255,0.3)" fontSize="10" fontFamily="monospace">Expiry</text>
       </svg>
       <div className="ref-theta-legend">
         <div className="ref-theta-leg-item"><span style={{color:'#F59E0B'}}>●</span> Decay is non-linear, speeds up near expiry</div>
         <div className="ref-theta-leg-item"><span style={{color:'#FF4455'}}>●</span> Last 7 days: sharpest drop, sellers benefit</div>
         <div className="ref-theta-leg-item"><span style={{color:'#4A9EFF'}}>●</span> Far-dated options decay slowly</div>
       </div>
-      <div className="ref-theta-example">
-        Example: ₹100 premium → ₹60 at halfway → ₹20 near expiry → ₹0 at expiry
-      </div>
+      <div className="ref-theta-example">Example: ₹100 premium at 30d → ₹60 at 15d → ₹20 near expiry → ₹0</div>
     </div>
   );
 }
@@ -357,9 +481,9 @@ function ThetaPanel() {
 function IVPanel() {
   const [state, setState] = useState('Normal');
   const states = {
-    Low: { color: '#00C896', label: 'Options are cheap', action: 'Buyers have edge', insight: 'Low IV = low premiums = options cheap to buy. Buyers benefit when IV expands later.', badge: 'BUY ZONE' },
-    Normal: { color: '#4A9EFF', label: 'Fairly priced', action: 'Both strategies viable', insight: 'Normal IV = fair pricing. Neither buyers nor sellers have a structural edge.', badge: 'NEUTRAL' },
-    High: { color: '#FF4455', label: 'Options are expensive', action: 'Sellers have edge', insight: 'High IV = elevated premiums = options expensive to buy. Sellers benefit when IV contracts.', badge: 'SELL ZONE' },
+    Low:    { color:'#00C896', label:'Options are cheap',    action:'Buyers have edge',           insight:'Low IV means premiums are cheap. Buy when IV is low, before it expands.', badge:'BUY ZONE' },
+    Normal: { color:'#4A9EFF', label:'Fairly priced',        action:'Both strategies viable',     insight:'Normal IV means fair pricing. No structural edge for buyers or sellers.', badge:'NEUTRAL' },
+    High:   { color:'#FF4455', label:'Options are expensive', action:'Sellers have edge',          insight:'High IV means premiums are elevated. Sellers benefit when IV contracts back.', badge:'SELL ZONE' },
   };
   const s = states[state];
 
@@ -368,17 +492,15 @@ function IVPanel() {
       <div className="ref-panel-hdr">
         <div className="ref-panel-title">Implied Volatility Guide</div>
       </div>
-      <div className="ref-insight-line">IV affects option pricing, not direction. High IV ≠ market falling.</div>
-      <div className="ref-toggle-row" style={{ marginBottom: 12 }}>
+      <div className="ref-insight-line">IV affects option pricing, not direction. High IV is not the same as market falling.</div>
+      <div className="ref-toggle-row" style={{marginBottom:12}}>
         {Object.keys(states).map(k => (
-          <button key={k} className={`ref-toggle-btn ${state === k ? 'active' : ''}`}
-            style={state === k ? { '--toggle-active': states[k].color } : {}}
-            onClick={() => setState(k)}>{k} IV</button>
+          <button key={k} className={`ref-toggle-btn ${state===k?'active':''}`} onClick={()=>setState(k)}>{k} IV</button>
         ))}
       </div>
-      <div className="ref-iv-card" style={{ borderColor: s.color + '40', background: s.color + '0D' }}>
-        <div className="ref-iv-badge" style={{ color: s.color, borderColor: s.color + '60', background: s.color + '20' }}>{s.badge}</div>
-        <div className="ref-iv-label" style={{ color: s.color }}>{s.label}</div>
+      <div className="ref-iv-card" style={{borderColor:s.color+'40',background:s.color+'0D'}}>
+        <div className="ref-iv-badge" style={{color:s.color,borderColor:s.color+'60',background:s.color+'20'}}>{s.badge}</div>
+        <div className="ref-iv-label" style={{color:s.color}}>{s.label}</div>
         <div className="ref-iv-action">{s.action}</div>
         <div className="ref-iv-insight">{s.insight}</div>
       </div>
@@ -389,54 +511,52 @@ function IVPanel() {
 function CheatSheets() {
   return (
     <div className="ref-cheat-row">
-      {/* R:R cheat sheet */}
       <div className="ref-panel ref-panel-half">
         <div className="ref-panel-hdr">
           <div className="ref-panel-title">R:R Win Rate Cheat Sheet</div>
         </div>
         <div className="ref-insight-line">You don't need high accuracy to make money.</div>
-        <div className="ref-mini-table">
-          <div className="ref-mini-thead"><span>R:R</span><span>Min Win Rate</span><span>Win 1 in N</span></div>
+        <div className="ref-mini-table ref-mini-table-3">
+          <div className="ref-mini-thead-3"><span>R:R</span><span>Min Win Rate</span><span>Win 1 in N</span></div>
           {[
-            { rr:'1:1', wr:'50%', n:'2 trades', highlight: false },
-            { rr:'1:2', wr:'33%', n:'3 trades', highlight: true },
-            { rr:'1:3', wr:'25%', n:'4 trades', highlight: false },
-            { rr:'1:4', wr:'20%', n:'5 trades', highlight: false },
-            { rr:'1:5', wr:'17%', n:'6 trades', highlight: false },
+            {rr:'1:1', wr:'50%', n:'2 trades', hl:false},
+            {rr:'1:2', wr:'33%', n:'3 trades', hl:true},
+            {rr:'1:3', wr:'25%', n:'4 trades', hl:false},
+            {rr:'1:4', wr:'20%', n:'5 trades', hl:false},
+            {rr:'1:5', wr:'17%', n:'6 trades', hl:false},
           ].map(r => (
-            <div key={r.rr} className={`ref-mini-trow ${r.highlight ? 'ref-row-highlight' : ''}`}>
-              <span style={{ fontWeight: r.highlight ? 700 : 400, color: r.highlight ? '#4A9EFF' : 'var(--text)' }}>{r.rr}{r.highlight ? ' ◀' : ''}</span>
-              <span style={{ color: r.highlight ? '#00C896' : 'var(--text)' }}>{r.wr}</span>
-              <span style={{ color: 'var(--text2)' }}>{r.n}</span>
+            <div key={r.rr} className={`ref-mini-trow-3 ${r.hl?'ref-row-highlight':''}`}>
+              <span style={{fontWeight:r.hl?700:400,color:r.hl?'#4A9EFF':'var(--text)'}}>{r.rr}{r.hl?' ◀':''}</span>
+              <span style={{color:r.hl?'#00C896':'var(--text)'}}>{r.wr}</span>
+              <span style={{color:'var(--text2)'}}>{r.n}</span>
             </div>
           ))}
         </div>
-        <div className="ref-cheat-insight">1:2 R:R means 1 win covers 2 losses. Sustainable without high accuracy.</div>
+        <div className="ref-cheat-insight">At 1:2 R:R, 1 win covers 2 losses. Profitable without high accuracy.</div>
       </div>
 
-      {/* Leverage cheat sheet */}
       <div className="ref-panel ref-panel-half">
         <div className="ref-panel-hdr">
           <div className="ref-panel-title">Leverage Wipeout Table</div>
         </div>
         <div className="ref-insight-line ref-insight-warn">Leverage kills accounts, not bad trades.</div>
-        <div className="ref-mini-table">
-          <div className="ref-mini-thead"><span>Leverage</span><span>Wipeout Move</span><span>Safety</span></div>
+        <div className="ref-mini-table ref-mini-table-3">
+          <div className="ref-mini-thead-3"><span>Leverage</span><span>Wipeout</span><span>Safety</span></div>
           {[
-            { lev:'2x', wipe:'50%', safe:'Very safe', color:'var(--gain)' },
-            { lev:'3x', wipe:'33%', safe:'Safe', color:'var(--gain)' },
-            { lev:'5x', wipe:'20%', safe:'Risky', color:'var(--pre)' },
-            { lev:'10x', wipe:'10%', safe:'Dangerous', color:'var(--loss)', highlight: true },
-            { lev:'15x', wipe:'6.7%', safe:'Extreme', color:'var(--loss)' },
+            {lev:'2x', wipe:'50%', safe:'Very safe', color:'var(--gain)'},
+            {lev:'3x', wipe:'33%', safe:'Safe',      color:'var(--gain)'},
+            {lev:'5x', wipe:'20%', safe:'Risky',     color:'var(--pre)'},
+            {lev:'10x',wipe:'10%', safe:'Danger', color:'var(--loss)', hl:true},
+            {lev:'15x',wipe:'6.7%',safe:'Extreme',   color:'var(--loss)'},
           ].map(r => (
-            <div key={r.lev} className={`ref-mini-trow ${r.highlight ? 'ref-row-highlight-red' : ''}`}>
-              <span style={{ fontWeight: r.highlight ? 700 : 400, color: r.color }}>{r.lev}{r.highlight ? ' ⚠' : ''}</span>
-              <span style={{ color: r.color }}>{r.wipe}</span>
-              <span style={{ fontSize: 11, color: r.color }}>{r.safe}</span>
+            <div key={r.lev} className={`ref-mini-trow-3 ${r.hl?'ref-row-highlight-red':''}`}>
+              <span style={{fontWeight:r.hl?700:400,color:r.color}}>{r.lev}{r.hl?' ⚠':''}</span>
+              <span style={{color:r.color}}>{r.wipe}</span>
+              <span style={{fontSize:12,color:r.color}}>{r.safe}</span>
             </div>
           ))}
         </div>
-        <div className="ref-cheat-insight">At 10x leverage, a 10% Nifty move wipes your account. 10% happens.</div>
+        <div className="ref-cheat-insight">At 10x leverage, a 10% Nifty move wipes your account. 10% happens regularly.</div>
       </div>
     </div>
   );
@@ -448,26 +568,26 @@ function GapRiskReference() {
       <div className="ref-panel-hdr">
         <div className="ref-panel-title">Gap Risk Reference</div>
       </div>
-      <div className="ref-insight-line ref-insight-warn">Stop loss does not work overnight. Gaps skip your SL price entirely.</div>
-      <div className="ref-mini-table">
-        <div className="ref-mini-thead"><span>Gap Size</span><span>SL loss multiplier</span><span>When it happens</span></div>
+      <div className="ref-insight-line ref-insight-warn">Stop loss does not work overnight. Gaps skip your SL entirely.</div>
+      <div className="ref-mini-table ref-mini-table-3">
+        <div className="ref-mini-thead-3"><span>Gap</span><span>SL multiplier</span><span>Trigger</span></div>
         {[
-          { gap:'1%', mult:'1–2×', when:'Common' },
-          { gap:'2%', mult:'2–4×', when:'Results, global cues' },
-          { gap:'3%', mult:'3–6×', when:'RBI, budget, war' },
-          { gap:'5%', mult:'5–10×', when:'Black swan events' },
-          { gap:'8%+', mult:'8×+', when:'Circuit breaker events' },
+          {gap:'1%', mult:'1-2x',  when:'Common daily'},
+          {gap:'2%', mult:'2-4x',  when:'Results, global cues'},
+          {gap:'3%', mult:'3-6x',  when:'RBI, budget'},
+          {gap:'5%', mult:'5-10x', when:'Black swan'},
+          {gap:'8%+',mult:'8x+',   when:'Circuit events'},
         ].map(r => (
-          <div key={r.gap} className="ref-mini-trow">
-            <span style={{ color: 'var(--loss)', fontWeight: 600 }}>{r.gap}</span>
-            <span style={{ color: 'var(--pre)' }}>{r.mult}</span>
-            <span style={{ fontSize: 11, color: 'var(--text3)' }}>{r.when}</span>
+          <div key={r.gap} className="ref-mini-trow-3">
+            <span style={{color:'var(--loss)',fontWeight:600}}>{r.gap}</span>
+            <span style={{color:'var(--pre)'}}>{r.mult}</span>
+            <span style={{fontSize:12,color:'var(--text3)'}}>{r.when}</span>
           </div>
         ))}
       </div>
       <div className="ref-gap-actions">
-        <div className="ref-gap-action">Before RBI / Budget / Results: reduce overnight size by 50%+</div>
-        <div className="ref-gap-action">Intraday only: close all positions before market close on event days</div>
+        <div className="ref-gap-action">Before RBI / Budget / Results: cut overnight size by 50%+</div>
+        <div className="ref-gap-action">On event days: close all intraday positions before market close</div>
       </div>
     </div>
   );
@@ -475,29 +595,31 @@ function GapRiskReference() {
 
 function TodayPlaybook() {
   const t = getTodayInfo();
-
-  let marketType, strategy, riskLevel, tips;
-  if (t.isExpiryDay && t.expiryType === 'monthly') {
-    marketType = 'Monthly Expiry Day'; strategy = 'Exit existing short positions early'; riskLevel = 'Extreme';
-    tips = ['Gamma risk is maximum today', 'Avoid new positions after 1 PM', 'Spreads safer than naked options', 'Expect sharp intraday moves'];
-  } else if (t.isExpiryDay) {
-    marketType = 'Weekly Expiry Day'; strategy = 'Sell premium with tight stops'; riskLevel = 'High';
-    tips = ['Theta decay is fastest today', 'Avoid new long option buys after 2 PM', 'Sell OTM options if trend is clear', 'Close positions before 3:20 PM'];
-  } else if (t.isExpiryWeek) {
-    marketType = 'Expiry Week'; strategy = 'Prefer selling premium'; riskLevel = 'Elevated';
-    tips = ['Time decay accelerating', 'Selling strategies have edge', 'Keep position sizes moderate', `${t.daysToTue} day${t.daysToTue > 1 ? 's' : ''} to Nifty expiry`];
+  let marketType, strategy, tips;
+  if (t.isMarketHoliday) {
+    marketType = 'Market Holiday'; strategy = 'No trading today';
+    tips = [t.holidayName || 'Market closed', 'Use today to review open positions', 'Plan entries for next trading day', 'No SL orders needed'];
+  } else if (t.riskLevel === 'EXTREME') {
+    marketType = 'Monthly Expiry Day'; strategy = 'Exit, do not enter';
+    tips = ['Maximum gamma risk', 'Avoid new positions after 1 PM', 'Spreads only if entering', 'Close all before 3:20 PM'];
+  } else if (t.riskLevel === 'HIGH') {
+    marketType = 'Weekly Expiry Day'; strategy = 'Sell premium with tight exits';
+    tips = ['Theta decay is fastest today', 'Avoid buying after 2 PM', 'OTM selling works if trend is clear', 'Roll or close by 3:20 PM'];
+  } else if (t.riskLevel === 'ELEVATED') {
+    marketType = 'Expiry Week'; strategy = 'Prefer selling premium';
+    tips = ['Decay accelerating this week', 'Selling strategies have edge', 'Keep position sizes moderate', `${t.daysToExpiry} days to expiry`];
   } else {
-    marketType = 'Normal Trading Day'; strategy = 'Standard risk rules apply'; riskLevel = 'Normal';
-    tips = ['No major expiry pressure', 'Both buying and selling viable', 'Follow your system rules', 'Maintain position sizing discipline'];
+    marketType = 'Normal Trading Day'; strategy = 'Standard rules apply';
+    tips = ['No major expiry pressure', 'Both buying and selling viable', 'Follow your system rules', 'Standard position sizing'];
   }
 
-  const riskColor = { Extreme: '#FF4455', High: '#FF4455', Elevated: '#F59E0B', Normal: '#00C896' }[riskLevel];
+  const riskColor = { EXTREME:'#FF4455', HIGH:'#FF4455', ELEVATED:'#F59E0B', NORMAL:'#00C896', HOLIDAY:'#A78BFA' }[t.riskLevel];
 
   return (
     <div className="ref-panel ref-playbook">
       <div className="ref-panel-hdr">
         <div className="ref-panel-title">Today's Playbook</div>
-        <div className="ref-panel-sub">Rule-based · No prediction</div>
+        <div className="ref-panel-sub">Rule-based</div>
       </div>
       <div className="ref-playbook-grid">
         <div className="ref-playbook-row">
@@ -506,17 +628,17 @@ function TodayPlaybook() {
         </div>
         <div className="ref-playbook-row">
           <span className="ref-playbook-lbl">Strategy</span>
-          <span className="ref-playbook-val" style={{ color: '#4A9EFF' }}>{strategy}</span>
+          <span className="ref-playbook-val" style={{color:'#4A9EFF'}}>{strategy}</span>
         </div>
         <div className="ref-playbook-row">
           <span className="ref-playbook-lbl">Risk level</span>
-          <span className="ref-playbook-val" style={{ color: riskColor, fontWeight: 700 }}>{riskLevel}</span>
+          <span className="ref-playbook-val" style={{color:riskColor,fontWeight:700}}>{t.riskLevel}</span>
         </div>
       </div>
       <div className="ref-playbook-tips">
         {tips.map((tip, i) => (
           <div key={i} className="ref-playbook-tip">
-            <span style={{ color: riskColor }}>→</span> {tip}
+            <span style={{color:riskColor}}>→</span> {tip}
           </div>
         ))}
       </div>
@@ -524,32 +646,22 @@ function TodayPlaybook() {
   );
 }
 
-// ════════════════════════════════════════════════════════════
-// MAIN PAGE
-// ════════════════════════════════════════════════════════════
-
+// ── MAIN ──────────────────────────────────────────────────────────────────────
 export default function ReferencePage() {
   return (
     <div className="ref-page">
-      {/* TOP: Today bar */}
       <TodayBar />
-
-      {/* MAIN GRID */}
       <div className="ref-main-grid">
-        {/* LEFT COLUMN: Theta + IV */}
         <div className="ref-col ref-col-left">
           <ThetaPanel />
           <IVPanel />
           <GapRiskReference />
         </div>
-
-        {/* CENTER: Expiry calendar */}
         <div className="ref-col ref-col-center">
           <ExpiryCalendar />
+          <HolidayCalendar />
           <CheatSheets />
         </div>
-
-        {/* RIGHT COLUMN: Lot sizes + Playbook */}
         <div className="ref-col ref-col-right">
           <TodayPlaybook />
           <LotSizePanel />
