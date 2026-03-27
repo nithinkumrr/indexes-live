@@ -80,16 +80,13 @@ const ALL_STRATEGIES = STRATEGY_GROUPS.flatMap(g => g.strategies.map(s => ({ ...
 
 // ── Parameters ──────────────────────────────────────────────────────────────
 const INDICES = [
-  // NSE
-  { id: 'NIFTY',      label: 'Nifty 50',          lot: 65,  exchange: 'NSE' },
-  { id: 'BANKNIFTY',  label: 'Bank Nifty',         lot: 30,  exchange: 'NSE' },
-  { id: 'FINNIFTY',   label: 'Fin Nifty',          lot: 60,  exchange: 'NSE' },
-  { id: 'MIDCPNIFTY', label: 'Midcap Select',      lot: 120, exchange: 'NSE' },
-  { id: 'NIFTYNXT50', label: 'Nifty Next 50',      lot: 25,  exchange: 'NSE' },
-  // BSE
-  { id: 'SENSEX',     label: 'Sensex',             lot: 20,  exchange: 'BSE' },
-  { id: 'BANKEX',     label: 'Bankex',             lot: 30,  exchange: 'BSE' },
-  { id: 'SENSEX50',   label: 'Sensex 50',          lot: 75,  exchange: 'BSE' },
+  // NSE — have real bhav data
+  { id: 'NIFTY',      label: 'Nifty 50',      lot: 65,  exchange: 'NSE', minYear: 2016 },
+  { id: 'BANKNIFTY',  label: 'Bank Nifty',    lot: 30,  exchange: 'NSE', minYear: 2016 },
+  { id: 'FINNIFTY',   label: 'Fin Nifty',     lot: 60,  exchange: 'NSE', minYear: 2021 },
+  { id: 'MIDCPNIFTY', label: 'Midcap Select', lot: 120, exchange: 'NSE', minYear: 2023 },
+  // BSE — have real bhav data
+  { id: 'SENSEX',     label: 'Sensex',        lot: 20,  exchange: 'BSE', minYear: 2016 },
 ];
 
 const EXPIRY_TYPES = [
@@ -97,8 +94,7 @@ const EXPIRY_TYPES = [
   { id: 'monthly', label: 'Monthly' },
 ];
 
-const ENTRY_TIMES = ['09:20', '10:00', '11:00', '12:00', '14:00'];
-const EXIT_TIMES  = ['15:15', '14:00', '12:00', 'next_open'];
+
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const fmtCr = n => {
@@ -268,8 +264,6 @@ export default function Backtest({ data }) {
   const [params,     setParams]      = useState({
     index:      'NIFTY',
     expiry:     'weekly',
-    entryTime:  '09:20',
-    exitTime:   '15:15',
     dte:        0,
     lots:       1,
     strikePct:  0,    // ATM=0, OTM=1,2...
@@ -340,7 +334,11 @@ export default function Backtest({ data }) {
           {/* Index */}
           <div className="bt-param-group">
             <label>Index</label>
-            <select className="bt-select" value={params.index} onChange={e => p('index', e.target.value)}>
+            <select className="bt-select" value={params.index} onChange={e => {
+              const idx = INDICES.find(i => i.id === e.target.value);
+              p('index', e.target.value);
+              if (idx && params.fromYear < idx.minYear) p('fromYear', idx.minYear);
+            }}>
               <optgroup label="NSE">
                 {INDICES.filter(i => i.exchange === 'NSE').map(idx => (
                   <option key={idx.id} value={idx.id}>{idx.label} (lot {idx.lot})</option>
@@ -365,19 +363,6 @@ export default function Backtest({ data }) {
             </div>
           </div>
 
-          {/* Entry/Exit time */}
-          <div className="bt-param-group">
-            <label>Entry</label>
-            <select className="bt-select" value={params.entryTime} onChange={e => p('entryTime', e.target.value)}>
-              {ENTRY_TIMES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div className="bt-param-group">
-            <label>Exit</label>
-            <select className="bt-select" value={params.exitTime} onChange={e => p('exitTime', e.target.value)}>
-              {EXIT_TIMES.map(t => <option key={t} value={t}>{t === 'next_open' ? 'Next Open' : t}</option>)}
-            </select>
-          </div>
 
           {/* DTE */}
           <div className="bt-param-group">
@@ -437,13 +422,17 @@ export default function Backtest({ data }) {
           <div className="bt-param-group">
             <label>From</label>
             <select className="bt-select" value={params.fromYear} onChange={e => p('fromYear', +e.target.value)}>
-              {[2016,2017,2018,2019,2020,2021,2022,2023,2024,2025].map(y => <option key={y} value={y}>{y}</option>)}
+              {[2016,2017,2018,2019,2020,2021,2022,2023,2024,2025]
+                .filter(y => y >= (INDICES.find(i => i.id === params.index)?.minYear ?? 2016))
+                .map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
           <div className="bt-param-group">
             <label>To</label>
             <select className="bt-select" value={params.toYear} onChange={e => p('toYear', +e.target.value)}>
-              {[2017,2018,2019,2020,2021,2022,2023,2024,2025,2026].filter(y => y > params.fromYear).map(y => <option key={y} value={y}>{y}</option>)}
+              {[2017,2018,2019,2020,2021,2022,2023,2024,2025,2026]
+                .filter(y => y > params.fromYear)
+                .map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
 
@@ -567,7 +556,7 @@ export default function Backtest({ data }) {
             {activeTab === 'trades'   && <TradeList results={results} />}
 
             <div className="bt-disclaimer">
-              Entry premiums use NSE EOD settlement prices (2016–present). Exit values are calculated at expiry using intrinsic value — accurate for strategies held to expiry (~80–85% accuracy). Intraday stop-loss and target levels are estimated. For educational reference only. Past performance does not guarantee future results. Not investment advice.
+              ⚠ Entry premiums use NSE EOD settlement prices (2016–present). Exit values are calculated at expiry using intrinsic value — accurate for strategies held to expiry (~80–85% accuracy). Intraday stop-loss and target levels are estimated. For educational reference only. Past performance does not guarantee future results. Not investment advice.
             </div>
           </div>
         )}
