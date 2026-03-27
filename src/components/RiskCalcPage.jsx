@@ -191,10 +191,12 @@ function StartHere({ onSelectCalc }) {
   ];
 
   return (
-    <div className="rc-section" id="start">
-      <div className="rc-section-eyebrow">Not sure where to begin?</div>
-      <div className="rc-section-title">Start here</div>
-      <div className="rc-section-sub">Pick your trader type and jump straight to the right calculator.</div>
+    <div>
+      <div className="rc-start-header">
+        <div className="rc-start-eyebrow">Not sure where to begin?</div>
+        <div className="rc-start-title">Start here</div>
+        <div className="rc-start-sub">Pick your trader type and jump straight to the right calculator.</div>
+      </div>
       <div className="rc-start-grid">
         {paths.map(p => (
           <button key={p.type} className="rc-start-card" onClick={() => onSelectCalc(p.calc)}>
@@ -1053,9 +1055,9 @@ const TABS = [
 function PageNav({ activeSection, onNav }) {
   const sections = [
     { id:'start',      label:'Start Here' },
+    { id:'calculators',label:'Calculators' },
     { id:'recovery',   label:'Recovery Trap' },
     { id:'principles', label:'5 Laws' },
-    { id:'calculators',label:'Calculators' },
     { id:'glossary',   label:'Glossary' },
   ];
   return (
@@ -1085,7 +1087,7 @@ export default function RiskCalcPage() {
 
   // Scroll-spy: track which section is in view
   useEffect(() => {
-    const ids = ['start','recovery','principles','calculators','glossary'];
+    const ids = ['start','calculators','recovery','principles','glossary'];
     const observer = new IntersectionObserver(entries => {
       entries.forEach(e => {
         if (e.isIntersecting) setActiveSection(e.target.id);
@@ -1118,19 +1120,17 @@ export default function RiskCalcPage() {
       {/* Sticky section nav */}
       <PageNav activeSection={activeSection} onNav={scrollTo}/>
 
-      {/* Hero */}
-      <RiskHero/>
+      {/* TOP ROW: Hero (left 50%) + Start Here (right 50%) */}
+      <div className="rc-top-row" id="start">
+        <div className="rc-top-left">
+          <RiskHero/>
+        </div>
+        <div className="rc-top-right">
+          <StartHere onSelectCalc={handleStartHereSelect}/>
+        </div>
+      </div>
 
-      {/* Start Here */}
-      <StartHere onSelectCalc={handleStartHereSelect}/>
-
-      {/* Recovery Trap */}
-      <RecoveryTrap/>
-
-      {/* Five Laws */}
-      <TheFiveLaws/>
-
-      {/* Calculators */}
+      {/* Calculators — immediately below the top row */}
       <div className="rc-section" id="calculators" ref={calcRef}>
         <div className="rc-section-eyebrow">17 calculators across 6 categories</div>
         <div className="rc-section-title">Risk Calculators</div>
@@ -1139,7 +1139,6 @@ export default function RiskCalcPage() {
           as the most impactful starting points. Each calculator includes a "Why this matters" section.
         </div>
 
-        {/* Sticky calc tab bar */}
         <div className="rc-calc-tab-wrap">
           <div className="rc-tab-bar">
             {TABS.map(t=>(
@@ -1156,6 +1155,12 @@ export default function RiskCalcPage() {
           {tab?.calcs.map((Calc,i)=><Calc key={i}/>)}
         </div>
       </div>
+
+      {/* Recovery Trap */}
+      <RecoveryTrap/>
+
+      {/* Five Laws */}
+      <TheFiveLaws/>
 
       {/* Glossary */}
       <RiskGlossary/>
