@@ -9,41 +9,46 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Copy bhav_options via direct Postgres
+      - name: Install psql
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Create table in new DB
         env:
-          OLD_CONN: "postgresql://postgres:${{ secrets.OLD_DB_PASS }}@db.axobtyzujcbckkbsakpb.supabase.co:5432/postgres"
-          NEW_CONN: "postgresql://postgres:${{ secrets.NEW_DB_PASS }}@db.fffgbfvxxixpkxxcfejd.supabase.co:5432/postgres"
+          PGPASSWORD: ${{ secrets.NEW_DB_PASS }}
         run: |
-          echo "Creating table in new DB..."
-          psql "$NEW_CONN" <<'SQL'
-          CREATE TABLE IF NOT EXISTS bhav_options (
-            id      BIGSERIAL PRIMARY KEY,
-            date    DATE    NOT NULL,
-            symbol  TEXT    NOT NULL,
-            expiry  DATE    NOT NULL,
-            strike  NUMERIC NOT NULL,
-            type    TEXT    NOT NULL,
-            open    NUMERIC,
-            high    NUMERIC,
-            low     NUMERIC,
-            close   NUMERIC,
-            settle  NUMERIC,
-            oi      BIGINT,
-            volume  BIGINT,
-            UNIQUE (date, symbol, expiry, strike, type)
-          );
-          CREATE INDEX IF NOT EXISTS idx_bhav_lookup ON bhav_options (symbol, date, expiry, strike, type);
-          CREATE INDEX IF NOT EXISTS idx_bhav_date ON bhav_options (date);
-          SQL
+          psql -h db.fffgbfvxxixpkxxcfejd.supabase.co -U postgres -d postgres -c "
+            CREATE TABLE IF NOT EXISTS bhav_options (
+              id BIGSERIAL PRIMARY KEY,
+              date DATE NOT NULL,
+              symbol TEXT NOT NULL,
+              expiry DATE NOT NULL,
+              strike NUMERIC NOT NULL,
+              type TEXT NOT NULL,
+              open NUMERIC, high NUMERIC, low NUMERIC,
+              close NUMERIC, settle NUMERIC,
+              oi BIGINT, volume BIGINT,
+              UNIQUE (date, symbol, expiry, strike, type)
+            );
+            CREATE INDEX IF NOT EXISTS idx_bhav_lookup ON bhav_options (symbol, date, expiry, strike, type);
+            CREATE INDEX IF NOT EXISTS idx_bhav_date ON bhav_options (date);
+          "
 
-          echo "Dumping from old DB and restoring to new DB..."
-          pg_dump "$OLD_CONN" \
-            --table=bhav_options \
-            --data-only \
-            --no-owner \
-            --no-privileges \
-            | psql "$NEW_CONN"
+      - name: Dump and restore
+        run: |
+          PGPASSWORD=${{ secrets.OLD_DB_PASS }} pg_dump \
+            -h db.axobtyzujcbckkbsakpb.supabase.co \
+            -U postgres -d postgres \
+            --table=bhav_options --data-only --no-owner --no-privileges \
+            -f /tmp/bhav_dump.sql
+          echo "Dump done. Restoring..."
+          PGPASSWORD=${{ secrets.NEW_DB_PASS }} psql \
+            -h db.fffgbfvxxixpkxxcfejd.supabase.co \
+            -U postgres -d postgres \
+            -f /tmp/bhav_dump.sql
 
-          echo "Verifying row count..."
-          psql "$NEW_CONN" -c "SELECT COUNT(*) as total_rows FROM bhav_options;"
-          psql "$NEW_CONN" -c "SELECT MIN(date) as from_date, MAX(date) as to_date FROM bhav_options;"
+      - name: Verify
+        env:
+          PGPASSWORD: ${{ secrets.NEW_DB_PASS }}
+        run: |
+          psql -h db.fffgbfvxxixpkxxcfejd.supabase.co -U postgres -d postgres \
+            -c "SELECT COUNT(*) FROM bhav_options;"
