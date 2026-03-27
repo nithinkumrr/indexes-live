@@ -274,8 +274,8 @@ export default function Backtest({ data }) {
     lots:       1,
     strikePct:  0,    // ATM=0, OTM=1,2...
     width:      1,    // spread width in strikes (for spreads)
-    fromYear:   2020,
-    toYear:     2025,
+    fromYear:   2016,
+    toYear:     2026,
     slPct:      null, // stop loss %
     tpPct:      null, // take profit %
   });
@@ -402,6 +402,8 @@ export default function Backtest({ data }) {
               <option value={1}>1 OTM</option>
               <option value={2}>2 OTM</option>
               <option value={3}>3 OTM</option>
+              <option value={4}>4 OTM</option>
+              <option value={5}>5 OTM</option>
             </select>
           </div>
 
@@ -435,13 +437,13 @@ export default function Backtest({ data }) {
           <div className="bt-param-group">
             <label>From</label>
             <select className="bt-select" value={params.fromYear} onChange={e => p('fromYear', +e.target.value)}>
-              {[2018,2019,2020,2021,2022,2023,2024,2025].map(y => <option key={y} value={y}>{y}</option>)}
+              {[2016,2017,2018,2019,2020,2021,2022,2023,2024,2025].map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
           <div className="bt-param-group">
             <label>To</label>
             <select className="bt-select" value={params.toYear} onChange={e => p('toYear', +e.target.value)}>
-              {[2020,2021,2022,2023,2024,2025,2026].map(y => <option key={y} value={y}>{y}</option>)}
+              {[2017,2018,2019,2020,2021,2022,2023,2024,2025,2026].filter(y => y > params.fromYear).map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
 

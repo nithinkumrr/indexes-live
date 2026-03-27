@@ -180,49 +180,65 @@ async function getVIXHistory(fromYear, toYear) {
 }
 
 
-// ── Bulk fetch all bhav premiums for entire date range in one query ───────────
+// ── Bulk fetch bhav premiums for date range — ATM strikes only ────────────────
 async function fetchAllBhavPremiums(index, fromYear, toYear) {
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
     if (!supabaseUrl || !supabaseKey) return null;
 
-    const cacheKey = `bhav:bulk:${index}:${fromYear}:${toYear}`;
+    const cacheKey = `bhav:v2:${index}:${fromYear}:${toYear}`;
     try {
       const cached = await kv.get(cacheKey);
       if (cached) return typeof cached === 'string' ? JSON.parse(cached) : cached;
     } catch (_) {}
 
-    // Fetch all OPTIDX rows for this index and date range in one shot
-    // Supabase REST limits to 1000 rows — use range headers to paginate
     const fromDate = `${fromYear}-01-01`;
     const toDate   = `${toYear}-12-31`;
-    const baseUrl  = `${supabaseUrl}/rest/v1/bhav_options?select=date,expiry,strike,type,close,settle&symbol=eq.${index}&date=gte.${fromDate}&date=lte.${toDate}&order=date.asc`;
 
-    let allRows = [];
-    let offset  = 0;
-    const pageSize = 1000;
-
-    while (true) {
-      const r = await fetch(`${baseUrl}&limit=${pageSize}&offset=${offset}`, {
+    // First get count to know how many pages we need
+    const countR = await fetch(
+      `${supabaseUrl}/rest/v1/bhav_options?select=id&symbol=eq.${index}&date=gte.${fromDate}&date=lte.${toDate}&limit=1`,
+      {
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${supabaseKey}`,
-          'Range-Unit': 'items',
+          Prefer: 'count=exact',
+          Range: '0-0',
         },
-      });
-      if (!r.ok) break;
-      const rows = await r.json();
-      if (!rows || rows.length === 0) break;
-      allRows = allRows.concat(rows);
-      if (rows.length < pageSize) break;
-      offset += pageSize;
+      }
+    );
+    const contentRange = countR.headers.get('content-range') || '';
+    const totalRows = parseInt(contentRange.split('/')[1] || '0');
+
+    if (totalRows === 0) return null;
+
+    // Fetch all pages in parallel (max 10 concurrent)
+    const pageSize = 1000;
+    const totalPages = Math.ceil(totalRows / pageSize);
+    const baseUrl = `${supabaseUrl}/rest/v1/bhav_options?select=date,expiry,strike,type,close,settle&symbol=eq.${index}&date=gte.${fromDate}&date=lte.${toDate}&order=date.asc`;
+
+    const CONCURRENCY = 10;
+    let allRows = [];
+
+    for (let batch = 0; batch < totalPages; batch += CONCURRENCY) {
+      const promises = [];
+      for (let p = batch; p < Math.min(batch + CONCURRENCY, totalPages); p++) {
+        promises.push(
+          fetch(`${baseUrl}&limit=${pageSize}&offset=${p * pageSize}`, {
+            headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+          }).then(r => r.json())
+        );
+      }
+      const results = await Promise.all(promises);
+      for (const rows of results) {
+        if (Array.isArray(rows)) allRows = allRows.concat(rows);
+      }
     }
 
     if (allRows.length === 0) return null;
 
-    // Build nested map: date -> expiry -> strike+type -> price
-    // We want: for each trade date, the nearest expiry's premiums
+    // Build nested map: date -> expiry -> "strikeType" -> price
     const byDate = {};
     for (const row of allRows) {
       const price = row.close || row.settle;
@@ -515,12 +531,12 @@ export default async function handler(req, res) {
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
   const { strategy, index = 'NIFTY', expiry = 'weekly', dte = 0, lots = 1,
-          strikePct = 0, width = 1, fromYear = 2020, toYear = 2025,
+          strikePct = 0, width = 1, fromYear = 2016, toYear = 2026,
           slPct = null, tpPct = null } = body;
 
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:v7:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v8:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) {
