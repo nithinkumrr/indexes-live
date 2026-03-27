@@ -187,7 +187,7 @@ async function fetchAllBhavPremiums(index, fromYear, toYear) {
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
     if (!supabaseUrl || !supabaseKey) return null;
 
-    const cacheKey = `bhav:v2:${index}:${fromYear}:${toYear}`;
+    const cacheKey = `bhav:v3:${index}:${fromYear}:${toYear}`;
     try {
       const cached = await kv.get(cacheKey);
       if (cached) return typeof cached === 'string' ? JSON.parse(cached) : cached;
@@ -238,14 +238,18 @@ async function fetchAllBhavPremiums(index, fromYear, toYear) {
 
     if (allRows.length === 0) return null;
 
-    // Build nested map: date -> expiry -> "strikeType" -> price
+    // Build nested map: date -> expiry -> "strikeType" -> {open, settle}
     const byDate = {};
     for (const row of allRows) {
-      const price = row.close || row.settle;
-      if (!price) continue;
+      const entryPrice = row.open || row.close || row.settle;
+      const exitPrice  = row.settle || row.close;
+      if (!entryPrice && !exitPrice) continue;
       if (!byDate[row.date]) byDate[row.date] = {};
       if (!byDate[row.date][row.expiry]) byDate[row.date][row.expiry] = {};
-      byDate[row.date][row.expiry][`${row.strike}${row.type}`] = price;
+      byDate[row.date][row.expiry][`${row.strike}${row.type}`] = {
+        open:   entryPrice,
+        settle: exitPrice,
+      };
     }
 
     try { await kv.set(cacheKey, JSON.stringify(byDate), { ex: 24 * 60 * 60 }); } catch (_) {}
@@ -275,15 +279,25 @@ function getBhavPremiumsFromMap(bhavMap, index, dateStr, atm, step, strikePct) {
   }
   if (!strikes) return null;
 
-  const atmC  = strikes[`${atm}CE`]                          ?? null;
-  const atmP  = strikes[`${atm}PE`]                          ?? null;
-  const otm1C = strikes[`${atm + step * (strikePct + 1)}CE`] ?? null;
-  const otm1P = strikes[`${atm - step * (strikePct + 1)}PE`] ?? null;
-  const otm2C = strikes[`${atm + step * (strikePct + 2)}CE`] ?? null;
-  const otm2P = strikes[`${atm - step * (strikePct + 2)}PE`] ?? null;
+  const get = (strike, type) => {
+    const row = strikes[`${strike}${type}`];
+    return row ? { entry: row.open, exit: row.settle } : null;
+  };
 
-  if (atmC === null && atmP === null) return null;
-  return { atmC, atmP, otm1C, otm1P, otm2C, otm2P, source: 'bhav' };
+  const atmC  = get(atm,                          'CE');
+  const atmP  = get(atm,                          'PE');
+  const otm1C = get(atm + step * (strikePct + 1), 'CE');
+  const otm1P = get(atm - step * (strikePct + 1), 'PE');
+  const otm2C = get(atm + step * (strikePct + 2), 'CE');
+  const otm2P = get(atm - step * (strikePct + 2), 'PE');
+
+  if (!atmC && !atmP) return null;
+  return {
+    atmC:  atmC?.entry,  atmP:  atmP?.entry,
+    otm1C: otm1C?.entry, otm1P: otm1P?.entry,
+    otm2C: otm2C?.entry, otm2P: otm2P?.entry,
+    source: 'bhav',
+  };
 }
 
 // ── Expiry logic ─────────────────────────────────────────────────────────────
@@ -536,7 +550,7 @@ export default async function handler(req, res) {
 
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:v8:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v9:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) {

@@ -85,8 +85,7 @@ const INDICES = [
   { id: 'BANKNIFTY',  label: 'Bank Nifty',    lot: 30,  exchange: 'NSE', minYear: 2016 },
   { id: 'FINNIFTY',   label: 'Fin Nifty',     lot: 60,  exchange: 'NSE', minYear: 2021 },
   { id: 'MIDCPNIFTY', label: 'Midcap Select', lot: 120, exchange: 'NSE', minYear: 2023 },
-  // BSE — have real bhav data
-  { id: 'SENSEX',     label: 'Sensex',        lot: 20,  exchange: 'BSE', minYear: 2016 },
+  // BSE indices removed — SENSEX options are on BSE exchange, not in NSE bhav data
 ];
 
 const EXPIRY_TYPES = [
@@ -339,16 +338,9 @@ export default function Backtest({ data }) {
               p('index', e.target.value);
               if (idx && params.fromYear < idx.minYear) p('fromYear', idx.minYear);
             }}>
-              <optgroup label="NSE">
-                {INDICES.filter(i => i.exchange === 'NSE').map(idx => (
-                  <option key={idx.id} value={idx.id}>{idx.label} (lot {idx.lot})</option>
-                ))}
-              </optgroup>
-              <optgroup label="BSE">
-                {INDICES.filter(i => i.exchange === 'BSE').map(idx => (
-                  <option key={idx.id} value={idx.id}>{idx.label} (lot {idx.lot})</option>
-                ))}
-              </optgroup>
+              {INDICES.map(idx => (
+                <option key={idx.id} value={idx.id}>{idx.label} (lot {idx.lot})</option>
+              ))}
             </select>
           </div>
 
@@ -363,6 +355,22 @@ export default function Backtest({ data }) {
             </div>
           </div>
 
+          {/* Static entry/exit time info */}
+          <div className="bt-param-group">
+            <label>Entry</label>
+            <span className="bt-time-chip">Open (9:15)</span>
+          </div>
+          <div className="bt-param-group">
+            <label>Exit</label>
+            <span className="bt-time-chip">Settlement (15:30)</span>
+          </div>
+
+
+          {/* DTE */}
+          <div className="bt-param-group">
+            <label>Time</label>
+            <span className="bt-time-label">09:20 → 15:15</span>
+          </div>
 
           {/* DTE */}
           <div className="bt-param-group">

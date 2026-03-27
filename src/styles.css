@@ -3419,6 +3419,16 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   border-radius: 4px; outline: none; min-width: 80px;
 }
 .bt-input { width: 60px; }
+.bt-time-label {
+  font-size: 11px; font-family: var(--mono);
+  color: var(--text2); background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 3px 8px; border-radius: 4px;
+  white-space: nowrap; letter-spacing: 0.3px;
+}
+
+.bt-time-chip { font-size: 11px; color: var(--text2); background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; white-space: nowrap; }
+
 .bt-run-btn {
   font-family: var(--mono); font-size: 12px; font-weight: 700;
   background: var(--accent); color: #000; border: none;
