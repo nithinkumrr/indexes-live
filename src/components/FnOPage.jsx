@@ -1747,7 +1747,7 @@ export default function FnOPage({ data = {} }) {
   const TABS = [
     { id: 'overview',   label: 'Overview',   sub: 'VIX · expiry · pivots',    icon: '◎' },
     { id: 'strategy',   label: 'Strategy',   sub: '30+ option strategies',     icon: '⚡' },
-    { id: 'backtest',   label: 'Backtest',   sub: 'test before you trade',     icon: '↺' },
+    { id: 'backtest',   label: 'Learn',      sub: 'understand every strategy',    icon: '📚' },
     { id: 'calculator', label: 'Calculator', sub: 'Black-Scholes · sizing',    icon: '∑' },
     { id: 'reference',  label: 'Reference',  sub: 'events · seasonality',      icon: '☰' },
   ];

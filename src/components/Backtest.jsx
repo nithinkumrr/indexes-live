@@ -1,668 +1,476 @@
 // src/components/Backtest.jsx
-// Full strategy backtester — 28 strategies, NSE indices
-import { useState, useCallback } from 'react';
+// Strategy Education Cards — learn every options strategy with Nifty examples
+import { useState } from 'react';
 
-// ── Strategy definitions ────────────────────────────────────────────────────
+// ── Strategy definitions with full educational content ───────────────────────
 const STRATEGY_GROUPS = [
   {
     group: 'SINGLE LEG',
     color: '#4A9EFF',
     strategies: [
-      { id: 'long_call',   label: 'Long Call',   legs: 1, type: 'debit',  outlook: 'Bullish' },
-      { id: 'long_put',    label: 'Long Put',    legs: 1, type: 'debit',  outlook: 'Bearish' },
-      { id: 'short_call',  label: 'Short Call',  legs: 1, type: 'credit', outlook: 'Neutral/Bearish' },
-      { id: 'short_put',   label: 'Short Put',   legs: 1, type: 'credit', outlook: 'Neutral/Bullish' },
+      {
+        id: 'long_call', label: 'Long Call', legs: 1, type: 'debit', outlook: 'Bullish',
+        risk: 'Limited', reward: 'Unlimited', difficulty: 'Beginner',
+        tagline: 'Bet on a rally with limited risk.',
+        when: 'When you expect Nifty to rise sharply before expiry. Best when VIX is low so premiums are cheap.',
+        how: 'Buy 1 ATM or OTM call option. You pay a premium upfront. If Nifty rises above your strike, you profit. If it falls or stays flat, you lose only the premium paid.',
+        example: { spot: 22000, legs: [{ action: 'BUY', type: 'CE', strike: 22000, premium: 150 }], maxProfit: 'Unlimited above 22150', maxLoss: '₹150 × 65 = ₹9,750', breakeven: '22150' },
+        tips: ['Buy when IV is below 15 for cheaper entry', 'Avoid buying on expiry day — time decay kills value fast', 'Exit at 50% profit rather than holding to expiry'],
+        payoffType: 'long_call',
+      },
+      {
+        id: 'long_put', label: 'Long Put', legs: 1, type: 'debit', outlook: 'Bearish',
+        risk: 'Limited', reward: 'High', difficulty: 'Beginner',
+        tagline: 'Profit from a market fall.',
+        when: 'When you expect Nifty to fall before expiry. Great as portfolio insurance during uncertain times.',
+        how: 'Buy 1 put option. You pay a premium. If Nifty falls below your strike, the put gains value. If Nifty rises, you lose only the premium.',
+        example: { spot: 22000, legs: [{ action: 'BUY', type: 'PE', strike: 22000, premium: 140 }], maxProfit: 'Up to ₹22000 × 65 (if Nifty goes to 0)', maxLoss: '₹140 × 65 = ₹9,100', breakeven: '21860' },
+        tips: ['Buy puts before major events like budget, elections, RBI policy', 'Deep OTM puts are cheaper but need a bigger fall', 'Rolling down: if Nifty falls, sell your put and buy a lower strike'],
+        payoffType: 'long_put',
+      },
+      {
+        id: 'short_call', label: 'Short Call', legs: 1, type: 'credit', outlook: 'Neutral/Bearish',
+        risk: 'Unlimited', reward: 'Limited', difficulty: 'Intermediate',
+        tagline: 'Collect premium when markets are flat or falling.',
+        when: 'When you expect Nifty to stay below a certain level. High VIX means higher premiums = better income.',
+        how: 'Sell 1 call option and collect premium. If Nifty stays below your strike at expiry, you keep the entire premium. If Nifty rises above strike, losses are theoretically unlimited.',
+        example: { spot: 22000, legs: [{ action: 'SELL', type: 'CE', strike: 22200, premium: 90 }], maxProfit: '₹90 × 65 = ₹5,850', maxLoss: 'Unlimited above 22290', breakeven: '22290' },
+        tips: ['Sell OTM calls — gives more room before the trade goes wrong', 'Always keep a mental stop loss at 2x the premium collected', 'Best on Thursday expiry day when time decay is fastest'],
+        payoffType: 'short_call',
+      },
+      {
+        id: 'short_put', label: 'Short Put', legs: 1, type: 'credit', outlook: 'Neutral/Bullish',
+        risk: 'High', reward: 'Limited', difficulty: 'Intermediate',
+        tagline: 'Get paid to buy Nifty at a lower price.',
+        when: 'When you expect Nifty to stay above a level. You are comfortable buying Nifty if it falls to your strike.',
+        how: 'Sell 1 put option and collect premium. If Nifty stays above your strike, you keep the full premium. If Nifty falls below, you face losses — but you were willing to own it at that level.',
+        example: { spot: 22000, legs: [{ action: 'SELL', type: 'PE', strike: 21800, premium: 85 }], maxProfit: '₹85 × 65 = ₹5,525', maxLoss: 'Up to ₹21715 × 65 (Nifty to 0)', breakeven: '21715' },
+        tips: ['Sell puts below strong support levels', 'Naked short puts require large margin — check before entering', 'Great strategy in bull markets when support holds'],
+        payoffType: 'short_put',
+      },
     ],
   },
   {
     group: 'VOLATILITY',
     color: '#F59E0B',
     strategies: [
-      { id: 'long_straddle',   label: 'Long Straddle',   legs: 2, type: 'debit',  outlook: 'High vol' },
-      { id: 'short_straddle',  label: 'Short Straddle',  legs: 2, type: 'credit', outlook: 'Low vol' },
-      { id: 'long_strangle',   label: 'Long Strangle',   legs: 2, type: 'debit',  outlook: 'High vol' },
-      { id: 'short_strangle',  label: 'Short Strangle',  legs: 2, type: 'credit', outlook: 'Low vol' },
-      { id: 'long_guts',       label: 'Long Guts',       legs: 2, type: 'debit',  outlook: 'High vol' },
-      { id: 'short_guts',      label: 'Short Guts',      legs: 2, type: 'credit', outlook: 'Low vol' },
+      {
+        id: 'long_straddle', label: 'Long Straddle', legs: 2, type: 'debit', outlook: 'High vol',
+        risk: 'Limited', reward: 'Unlimited', difficulty: 'Intermediate',
+        tagline: 'Profit from a big move in either direction.',
+        when: 'Before major events — budget, RBI policy, election results, earnings. You expect a big move but do not know which way.',
+        how: 'Buy 1 ATM call and 1 ATM put at the same strike. Pay premium for both. Profit if Nifty moves sharply up or down. Lose if Nifty stays near the strike.',
+        example: { spot: 22000, legs: [{ action: 'BUY', type: 'CE', strike: 22000, premium: 150 }, { action: 'BUY', type: 'PE', strike: 22000, premium: 140 }], maxProfit: 'Unlimited on either side', maxLoss: '₹290 × 65 = ₹18,850', breakeven: 'Below 21710 or above 22290' },
+        tips: ['Enter 2-3 days before the event, not on the day', 'Exit just before or just after the event announcement', 'If IV is already very high, the move may already be priced in'],
+        payoffType: 'long_straddle',
+      },
+      {
+        id: 'short_straddle', label: 'Short Straddle', legs: 2, type: 'credit', outlook: 'Low vol',
+        risk: 'Unlimited', reward: 'Limited', difficulty: 'Advanced',
+        tagline: 'Collect premium when you expect no big move.',
+        when: 'In sideways markets with high VIX. Works best when Nifty is range-bound and expected to expire near current levels.',
+        how: 'Sell 1 ATM call and 1 ATM put at the same strike. Collect premium from both. If Nifty expires exactly at your strike, both options expire worthless and you keep everything.',
+        example: { spot: 22000, legs: [{ action: 'SELL', type: 'CE', strike: 22000, premium: 150 }, { action: 'SELL', type: 'PE', strike: 22000, premium: 140 }], maxProfit: '₹290 × 65 = ₹18,850', maxLoss: 'Unlimited on either side', breakeven: 'Below 21710 or above 22290' },
+        tips: ['Most popular among professional traders on expiry Thursday/Tuesday', 'Keep strict stop loss — exit if Nifty moves more than 1% from strike', 'Collect more premium closer to expiry (faster time decay)'],
+        payoffType: 'short_straddle',
+      },
+      {
+        id: 'long_strangle', label: 'Long Strangle', legs: 2, type: 'debit', outlook: 'High vol',
+        risk: 'Limited', reward: 'Unlimited', difficulty: 'Intermediate',
+        tagline: 'Cheaper than straddle — needs a bigger move.',
+        when: 'Before big events when you expect a large move but want to pay less premium than a straddle.',
+        how: 'Buy 1 OTM call and 1 OTM put. Both are cheaper than ATM options. Needs a bigger move to profit but costs less to enter.',
+        example: { spot: 22000, legs: [{ action: 'BUY', type: 'CE', strike: 22200, premium: 90 }, { action: 'BUY', type: 'PE', strike: 21800, premium: 85 }], maxProfit: 'Unlimited beyond either strike', maxLoss: '₹175 × 65 = ₹11,375', breakeven: 'Below 21625 or above 22375' },
+        tips: ['Choose strikes 1-2% OTM for a good risk-reward balance', 'Cheaper entry than straddle but needs a stronger move to profit', 'Exit one side if the move starts to capture profit early'],
+        payoffType: 'long_strangle',
+      },
+      {
+        id: 'short_strangle', label: 'Short Strangle', legs: 2, type: 'credit', outlook: 'Low vol',
+        risk: 'Unlimited', reward: 'Limited', difficulty: 'Advanced',
+        tagline: 'Wider range than straddle — more room to breathe.',
+        when: 'When you expect Nifty to stay within a range. More forgiving than short straddle since strikes are farther from spot.',
+        how: 'Sell 1 OTM call and 1 OTM put. Collect premium from both. Profit if Nifty stays between your two strikes at expiry.',
+        example: { spot: 22000, legs: [{ action: 'SELL', type: 'CE', strike: 22200, premium: 90 }, { action: 'SELL', type: 'PE', strike: 21800, premium: 85 }], maxProfit: '₹175 × 65 = ₹11,375', maxLoss: 'Unlimited beyond either side', breakeven: 'Below 21625 or above 22375' },
+        tips: ['Preferred over short straddle for lower risk of early adjustment', 'Wider the strikes, lower the premium but more safety margin', 'Monitor carefully if Nifty approaches either short strike'],
+        payoffType: 'short_strangle',
+      },
     ],
   },
   {
     group: 'VERTICAL SPREADS',
     color: '#00C896',
     strategies: [
-      { id: 'bull_call_spread', label: 'Bull Call Spread', legs: 2, type: 'debit',  outlook: 'Bullish' },
-      { id: 'bear_call_spread', label: 'Bear Call Spread', legs: 2, type: 'credit', outlook: 'Bearish' },
-      { id: 'bull_put_spread',  label: 'Bull Put Spread',  legs: 2, type: 'credit', outlook: 'Bullish' },
-      { id: 'bear_put_spread',  label: 'Bear Put Spread',  legs: 2, type: 'debit',  outlook: 'Bearish' },
+      {
+        id: 'bull_call_spread', label: 'Bull Call Spread', legs: 2, type: 'debit', outlook: 'Bullish',
+        risk: 'Limited', reward: 'Limited', difficulty: 'Intermediate',
+        tagline: 'Defined risk bullish bet — cheaper than buying a call.',
+        when: 'When you are moderately bullish. You want upside but not willing to pay full call premium.',
+        how: 'Buy 1 lower strike call and sell 1 higher strike call. The sold call reduces your cost. Maximum profit if Nifty closes above the higher strike at expiry.',
+        example: { spot: 22000, legs: [{ action: 'BUY', type: 'CE', strike: 22000, premium: 150 }, { action: 'SELL', type: 'CE', strike: 22200, premium: 90 }], maxProfit: '(200 - 60) × 65 = ₹9,100', maxLoss: '₹60 × 65 = ₹3,900', breakeven: '22060' },
+        tips: ['Net debit is 150 - 90 = ₹60 per unit', 'Best when you have a clear target for Nifty', 'Width of spread (200 pts here) caps your profit but also reduces cost'],
+        payoffType: 'bull_call_spread',
+      },
+      {
+        id: 'bear_call_spread', label: 'Bear Call Spread', legs: 2, type: 'credit', outlook: 'Bearish',
+        risk: 'Limited', reward: 'Limited', difficulty: 'Intermediate',
+        tagline: 'Profit from stagnation or a fall — with defined risk.',
+        when: 'When you expect Nifty to stay below a level or fall. Safer than naked short call.',
+        how: 'Sell 1 lower strike call and buy 1 higher strike call. Collect net premium. Profit if Nifty stays below the sold strike.',
+        example: { spot: 22000, legs: [{ action: 'SELL', type: 'CE', strike: 22200, premium: 90 }, { action: 'BUY', type: 'CE', strike: 22400, premium: 45 }], maxProfit: '₹45 × 65 = ₹2,925', maxLoss: '(200 - 45) × 65 = ₹10,075', breakeven: '22245' },
+        tips: ['Net credit = 90 - 45 = ₹45', 'The bought call caps your loss if Nifty rallies hard', 'Good near resistance levels when rally expected to stall'],
+        payoffType: 'bear_call_spread',
+      },
+      {
+        id: 'bull_put_spread', label: 'Bull Put Spread', legs: 2, type: 'credit', outlook: 'Bullish',
+        risk: 'Limited', reward: 'Limited', difficulty: 'Intermediate',
+        tagline: 'Get paid to be bullish with defined downside.',
+        when: 'When you expect Nifty to stay above a support level. Most popular credit spread for bullish traders.',
+        how: 'Sell 1 higher strike put and buy 1 lower strike put. Collect net premium. Profit if Nifty stays above the sold put strike.',
+        example: { spot: 22000, legs: [{ action: 'SELL', type: 'PE', strike: 21800, premium: 85 }, { action: 'BUY', type: 'PE', strike: 21600, premium: 50 }], maxProfit: '₹35 × 65 = ₹2,275', maxLoss: '(200 - 35) × 65 = ₹10,725', breakeven: '21765' },
+        tips: ['Net credit = 85 - 50 = ₹35', 'Place strikes below strong support levels for safety', 'The most used strategy by professional F&O traders in India'],
+        payoffType: 'bull_put_spread',
+      },
+      {
+        id: 'bear_put_spread', label: 'Bear Put Spread', legs: 2, type: 'debit', outlook: 'Bearish',
+        risk: 'Limited', reward: 'Limited', difficulty: 'Intermediate',
+        tagline: 'Cheap bearish position with capped upside.',
+        when: 'When you expect a moderate fall in Nifty. Cheaper than buying a put outright.',
+        how: 'Buy 1 higher strike put and sell 1 lower strike put. The sold put reduces your cost. Maximum profit if Nifty falls below the lower strike.',
+        example: { spot: 22000, legs: [{ action: 'BUY', type: 'PE', strike: 22000, premium: 140 }, { action: 'SELL', type: 'PE', strike: 21800, premium: 85 }], maxProfit: '(200 - 55) × 65 = ₹9,425', maxLoss: '₹55 × 65 = ₹3,575', breakeven: '21945' },
+        tips: ['Net debit = 140 - 85 = ₹55', 'Good for hedging a long Nifty position', 'Wider spread = more potential profit but higher cost'],
+        payoffType: 'bear_put_spread',
+      },
     ],
   },
   {
     group: 'IRON STRATS',
     color: '#A78BFA',
     strategies: [
-      { id: 'short_iron_condor',    label: 'Short Iron Condor',    legs: 4, type: 'credit', outlook: 'Neutral' },
-      { id: 'long_iron_condor',     label: 'Long Iron Condor',     legs: 4, type: 'debit',  outlook: 'High vol' },
-      { id: 'short_iron_butterfly', label: 'Short Iron Butterfly', legs: 4, type: 'credit', outlook: 'Neutral' },
-      { id: 'long_iron_butterfly',  label: 'Long Iron Butterfly',  legs: 4, type: 'debit',  outlook: 'High vol' },
+      {
+        id: 'short_iron_condor', label: 'Short Iron Condor', legs: 4, type: 'credit', outlook: 'Neutral',
+        risk: 'Limited', reward: 'Limited', difficulty: 'Advanced',
+        tagline: 'The professional range-trading strategy.',
+        when: 'When you expect Nifty to stay within a range. High VIX helps because you collect more premium.',
+        how: 'Sell OTM call, buy further OTM call. Sell OTM put, buy further OTM put. Four legs total. Profit if Nifty stays within the sold strikes range.',
+        example: { spot: 22000, legs: [{ action: 'SELL', type: 'CE', strike: 22300, premium: 70 }, { action: 'BUY', type: 'CE', strike: 22500, premium: 35 }, { action: 'SELL', type: 'PE', strike: 21700, premium: 65 }, { action: 'BUY', type: 'PE', strike: 21500, premium: 35 }], maxProfit: '₹65 × 65 = ₹4,225', maxLoss: '(200 - 65) × 65 = ₹8,775', breakeven: 'Below 21635 or above 22365' },
+        tips: ['Net credit = 70 - 35 + 65 - 35 = ₹65', 'Best strategy for consistent monthly income generation', 'Adjust one side if Nifty threatens to breach a short strike'],
+        payoffType: 'short_iron_condor',
+      },
+      {
+        id: 'long_iron_condor', label: 'Long Iron Condor', legs: 4, type: 'debit', outlook: 'High vol',
+        risk: 'Limited', reward: 'Limited', difficulty: 'Advanced',
+        tagline: 'Bet on a breakout beyond a range.',
+        when: 'When you expect Nifty to make a big move beyond a range but want to limit cost. Opposite of short iron condor.',
+        how: 'Buy OTM call, sell further OTM call. Buy OTM put, sell further OTM put. Profit if Nifty moves beyond either outer strike.',
+        example: { spot: 22000, legs: [{ action: 'BUY', type: 'CE', strike: 22300, premium: 70 }, { action: 'SELL', type: 'CE', strike: 22500, premium: 35 }, { action: 'BUY', type: 'PE', strike: 21700, premium: 65 }, { action: 'SELL', type: 'PE', strike: 21500, premium: 35 }], maxProfit: '(200 - 65) × 65 = ₹8,775', maxLoss: '₹65 × 65 = ₹4,225', breakeven: 'Below 21635 or above 22365' },
+        tips: ['Net debit = ₹65 — defined cost', 'Less common than short iron condor in practice', 'Good before high-volatility events when direction is uncertain'],
+        payoffType: 'long_iron_condor',
+      },
+      {
+        id: 'short_iron_butterfly', label: 'Short Iron Butterfly', legs: 4, type: 'credit', outlook: 'Neutral',
+        risk: 'Limited', reward: 'Limited', difficulty: 'Advanced',
+        tagline: 'Maximum reward if Nifty pins at your strike.',
+        when: 'When you expect Nifty to close very close to current levels. Narrower than iron condor but higher reward.',
+        how: 'Sell ATM call and ATM put. Buy OTM call and OTM put as protection. Very high premium collected if Nifty pins at the ATM strike.',
+        example: { spot: 22000, legs: [{ action: 'SELL', type: 'CE', strike: 22000, premium: 150 }, { action: 'SELL', type: 'PE', strike: 22000, premium: 140 }, { action: 'BUY', type: 'CE', strike: 22300, premium: 70 }, { action: 'BUY', type: 'PE', strike: 21700, premium: 65 }], maxProfit: '₹155 × 65 = ₹10,075', maxLoss: '(300 - 155) × 65 = ₹9,425', breakeven: 'Below 21845 or above 22155' },
+        tips: ['Net credit = 150 + 140 - 70 - 65 = ₹155', 'Higher reward than iron condor but tighter range', 'Expiry day strategy — works when Nifty is pinned near a round number'],
+        payoffType: 'short_iron_butterfly',
+      },
+      {
+        id: 'long_iron_butterfly', label: 'Long Iron Butterfly', legs: 4, type: 'debit', outlook: 'High vol',
+        risk: 'Limited', reward: 'Limited', difficulty: 'Advanced',
+        tagline: 'Low-cost bet on a breakout.',
+        when: 'When you expect a sharp move from current levels but want defined risk. Opposite of short iron butterfly.',
+        how: 'Buy ATM call and put. Sell OTM call and put. Profit if Nifty moves sharply beyond the OTM sold strikes.',
+        example: { spot: 22000, legs: [{ action: 'BUY', type: 'CE', strike: 22000, premium: 150 }, { action: 'BUY', type: 'PE', strike: 22000, premium: 140 }, { action: 'SELL', type: 'CE', strike: 22300, premium: 70 }, { action: 'SELL', type: 'PE', strike: 21700, premium: 65 }], maxProfit: '(300 - 155) × 65 = ₹9,425', maxLoss: '₹155 × 65 = ₹10,075', breakeven: 'Below 21845 or above 22155' },
+        tips: ['Net debit = ₹155', 'Cheaper than buying a straddle with defined downside', 'Enter before events when big moves expected'],
+        payoffType: 'long_iron_butterfly',
+      },
     ],
   },
   {
     group: 'BUTTERFLY',
     color: '#EC4899',
     strategies: [
-      { id: 'long_call_butterfly',  label: 'Long Call Butterfly',  legs: 3, type: 'debit',  outlook: 'Neutral' },
-      { id: 'short_call_butterfly', label: 'Short Call Butterfly', legs: 3, type: 'credit', outlook: 'High vol' },
-      { id: 'long_put_butterfly',   label: 'Long Put Butterfly',   legs: 3, type: 'debit',  outlook: 'Neutral' },
-      { id: 'short_put_butterfly',  label: 'Short Put Butterfly',  legs: 3, type: 'credit', outlook: 'High vol' },
-    ],
-  },
-  {
-    group: 'CONDOR',
-    color: '#F97316',
-    strategies: [
-      { id: 'long_call_condor',  label: 'Long Call Condor',  legs: 4, type: 'debit',  outlook: 'Neutral' },
-      { id: 'short_call_condor', label: 'Short Call Condor', legs: 4, type: 'credit', outlook: 'High vol' },
-      { id: 'long_put_condor',   label: 'Long Put Condor',   legs: 4, type: 'debit',  outlook: 'Neutral' },
-      { id: 'short_put_condor',  label: 'Short Put Condor',  legs: 4, type: 'credit', outlook: 'High vol' },
+      {
+        id: 'long_call_butterfly', label: 'Long Call Butterfly', legs: 3, type: 'debit', outlook: 'Neutral',
+        risk: 'Limited', reward: 'Limited', difficulty: 'Advanced',
+        tagline: 'Low-cost bet on Nifty pinning at a price.',
+        when: 'When you strongly believe Nifty will close at a specific level. Very cheap to enter.',
+        how: 'Buy 1 lower call, sell 2 middle calls, buy 1 higher call. All calls, equidistant strikes. Maximum profit exactly at the middle strike.',
+        example: { spot: 22000, legs: [{ action: 'BUY', type: 'CE', strike: 21800, premium: 230 }, { action: 'SELL', type: 'CE', strike: 22000, premium: 150 }, { action: 'SELL', type: 'CE', strike: 22000, premium: 150 }, { action: 'BUY', type: 'CE', strike: 22200, premium: 90 }], maxProfit: '(200 - 20) × 65 = ₹11,700', maxLoss: '₹20 × 65 = ₹1,300', breakeven: '21820 to 22180' },
+        tips: ['Net debit = 230 - 150 - 150 + 90 = ₹20 — very cheap', 'Highest reward-to-risk ratio but needs very precise prediction', 'Works well near round numbers like 22000 or 22500 that attract pin risk'],
+        payoffType: 'long_call_butterfly',
+      },
+      {
+        id: 'long_put_butterfly', label: 'Long Put Butterfly', legs: 3, type: 'debit', outlook: 'Neutral',
+        risk: 'Limited', reward: 'Limited', difficulty: 'Advanced',
+        tagline: 'Same as call butterfly — using puts instead.',
+        when: 'When you expect Nifty to close at a specific level. Put version gives same payoff as call butterfly.',
+        how: 'Buy 1 higher put, sell 2 middle puts, buy 1 lower put. All puts, equidistant strikes.',
+        example: { spot: 22000, legs: [{ action: 'BUY', type: 'PE', strike: 22200, premium: 200 }, { action: 'SELL', type: 'PE', strike: 22000, premium: 140 }, { action: 'SELL', type: 'PE', strike: 22000, premium: 140 }, { action: 'BUY', type: 'PE', strike: 21800, premium: 85 }], maxProfit: '(200 - 5) × 65 = ₹12,675', maxLoss: '₹5 × 65 = ₹325', breakeven: '21805 to 22195' },
+        tips: ['Very cheap debit — often under ₹10 per unit', 'Nearly identical payoff to call butterfly due to put-call parity', 'Exit at 50-70% of max profit rather than waiting for exact pin'],
+        payoffType: 'long_put_butterfly',
+      },
     ],
   },
   {
     group: 'SYNTHETIC',
     color: '#06B6D4',
     strategies: [
-      { id: 'synthetic_long',  label: 'Synthetic Long',  legs: 2, type: 'debit',  outlook: 'Bullish' },
-      { id: 'synthetic_short', label: 'Synthetic Short', legs: 2, type: 'credit', outlook: 'Bearish' },
+      {
+        id: 'synthetic_long', label: 'Synthetic Long', legs: 2, type: 'debit', outlook: 'Bullish',
+        risk: 'High', reward: 'Unlimited', difficulty: 'Advanced',
+        tagline: 'Act like you own Nifty futures — at lower margin.',
+        when: 'When you are strongly bullish and want futures-like exposure without actually buying futures.',
+        how: 'Buy 1 ATM call and sell 1 ATM put at the same strike. Behaves like owning Nifty futures. Profit if Nifty rises, loss if it falls.',
+        example: { spot: 22000, legs: [{ action: 'BUY', type: 'CE', strike: 22000, premium: 150 }, { action: 'SELL', type: 'PE', strike: 22000, premium: 140 }], maxProfit: 'Unlimited above 22010', maxLoss: 'Unlimited below 22010', breakeven: '22010' },
+        tips: ['Net debit is only ₹10 — nearly free position', 'Same payoff as Nifty futures but different margin requirement', 'Use when futures roll cost is high near expiry'],
+        payoffType: 'synthetic_long',
+      },
+      {
+        id: 'synthetic_short', label: 'Synthetic Short', legs: 2, type: 'credit', outlook: 'Bearish',
+        risk: 'High', reward: 'High', difficulty: 'Advanced',
+        tagline: 'Act like you are short Nifty futures.',
+        when: 'When you are strongly bearish. Creates short futures exposure using options.',
+        how: 'Sell 1 ATM call and buy 1 ATM put at the same strike. Behaves like shorting Nifty futures.',
+        example: { spot: 22000, legs: [{ action: 'SELL', type: 'CE', strike: 22000, premium: 150 }, { action: 'BUY', type: 'PE', strike: 22000, premium: 140 }], maxProfit: 'Unlimited below 21990', maxLoss: 'Unlimited above 21990', breakeven: '21990' },
+        tips: ['Net credit of ₹10 received', 'Useful when you want to avoid futures position limits', 'Requires good margin management as losses are unlimited on upside'],
+        payoffType: 'synthetic_short',
+      },
     ],
   },
 ];
 
 const ALL_STRATEGIES = STRATEGY_GROUPS.flatMap(g => g.strategies.map(s => ({ ...s, groupColor: g.color, group: g.group })));
 
-// ── Parameters ──────────────────────────────────────────────────────────────
-const INDICES = [
-  // NSE — have real bhav data
-  { id: 'NIFTY',      label: 'Nifty 50',      lot: 65,  exchange: 'NSE', minYear: 2016 },
-  { id: 'BANKNIFTY',  label: 'Bank Nifty',    lot: 30,  exchange: 'NSE', minYear: 2016 },
-  { id: 'FINNIFTY',   label: 'Fin Nifty',     lot: 60,  exchange: 'NSE', minYear: 2021 },
-  { id: 'MIDCPNIFTY', label: 'Midcap Select', lot: 120, exchange: 'NSE', minYear: 2023 },
-  // BSE indices removed — SENSEX options are on BSE exchange, not in NSE bhav data
-];
+// ── Payoff diagram SVG ────────────────────────────────────────────────────────
+function PayoffDiagram({ type, spot = 22000 }) {
+  const W = 320, H = 120, PAD = 20;
+  const innerW = W - PAD * 2;
+  const innerH = H - PAD * 2;
+  const midX = PAD + innerW / 2;
+  const midY = PAD + innerH / 2;
 
-const EXPIRY_TYPES = [
-  { id: 'weekly',  label: 'Weekly'  },
-  { id: 'monthly', label: 'Monthly' },
-];
+  // Generate payoff points based on strategy type
+  const points = [];
+  const prices = Array.from({ length: 100 }, (_, i) => spot * 0.88 + i * spot * 0.24 / 99);
 
-
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const fmtCr = n => {
-  if (n == null) return '-';
-  const abs = Math.abs(n), sign = n >= 0 ? '+' : '-';
-  if (abs >= 100000) return `${sign}₹${(abs/100000).toFixed(2)}L`;
-  if (abs >= 1000)   return `${sign}₹${(abs/1000).toFixed(1)}K`;
-  return `${sign}₹${abs.toFixed(0)}`;
-};
-const fmtPct = n => n == null ? '-' : `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`;
-
-// ── Calendar Heatmap ─────────────────────────────────────────────────────────
-function CalendarHeatmap({ results }) {
-  if (!results?.daily?.length) return null;
-
-  const byMonth = {};
-  results.daily.forEach(d => {
-    const key = d.date.slice(0, 7);
-    if (!byMonth[key]) byMonth[key] = { total: 0, days: [], wins: 0, losses: 0 };
-    byMonth[key].total += d.pnl;
-    byMonth[key].days.push(d);
-    if (d.pnl >= 0) byMonth[key].wins++; else byMonth[key].losses++;
-  });
-
-  const months = Object.keys(byMonth).sort();
-  const maxAbs  = Math.max(...months.map(m => Math.abs(byMonth[m].total)));
-
-  return (
-    <div className="bt-cal-wrap">
-      <div className="bt-section-title">MONTHLY PERFORMANCE</div>
-      <div className="bt-cal-grid">
-        {months.map(m => {
-          const mb = byMonth[m];
-          const pct = maxAbs > 0 ? mb.total / maxAbs : 0;
-          const gain = mb.total >= 0;
-          const intensity = Math.abs(pct);
-          const bg = gain
-            ? `rgba(0,200,150,${0.1 + intensity * 0.5})`
-            : `rgba(255,68,85,${0.1 + intensity * 0.5})`;
-          const [yr, mo] = m.split('-');
-          const label = new Date(+yr, +mo - 1, 1).toLocaleString('en-IN', { month: 'short', year: '2-digit' });
-          return (
-            <div key={m} className="bt-cal-month" style={{ background: bg }} title={`${label}: ${fmtCr(mb.total)}`}>
-              <div className="bt-cal-label">{label}</div>
-              <div className={`bt-cal-val ${gain ? 'gain' : 'loss'}`}>{fmtCr(mb.total)}</div>
-              <div className="bt-cal-wr">{mb.wins}W {mb.losses}L</div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ── Day of Week Breakdown ─────────────────────────────────────────────────────
-function DayBreakdown({ results }) {
-  if (!results?.daily?.length) return null;
-  const DAYS = ['Mon','Tue','Wed','Thu','Fri'];
-  const byDay = {};
-  DAYS.forEach(d => byDay[d] = { total: 0, count: 0, wins: 0 });
-  results.daily.forEach(d => {
-    const day = DAYS[new Date(d.date).getDay() - 1];
-    if (!day) return;
-    byDay[day].total += d.pnl;
-    byDay[day].count++;
-    if (d.pnl >= 0) byDay[day].wins++;
-  });
-  const maxAbs = Math.max(...DAYS.map(d => Math.abs(byDay[d].total)));
-  return (
-    <div className="bt-day-wrap">
-      <div className="bt-section-title">DAY OF WEEK</div>
-      <div className="bt-day-grid">
-        {DAYS.map(d => {
-          const b = byDay[d], gain = b.total >= 0;
-          const barH = maxAbs > 0 ? Math.abs(b.total / maxAbs) * 80 : 0;
-          const wr = b.count > 0 ? Math.round((b.wins / b.count) * 100) : 0;
-          return (
-            <div key={d} className="bt-day-col">
-              <div className="bt-day-total" style={{ color: gain ? 'var(--gain)' : 'var(--loss)' }}>{fmtCr(b.total)}</div>
-              <div className="bt-day-bar-wrap">
-                <div className="bt-day-bar" style={{ height: barH, background: gain ? 'rgba(0,200,150,0.7)' : 'rgba(255,68,85,0.7)' }} />
-              </div>
-              <div className="bt-day-name">{d}</div>
-              <div className="bt-day-wr">{wr}%</div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ── Stats Grid ───────────────────────────────────────────────────────────────
-function StatsGrid({ results }) {
-  if (!results) return null;
-  const s = results.stats;
-  const stats = [
-    { label: 'Total P&L',      val: fmtCr(s.totalPnl),     color: s.totalPnl >= 0 ? 'var(--gain)' : 'var(--loss)', big: true },
-    { label: 'Win Rate',       val: `${s.winRate.toFixed(1)}%`, color: s.winRate >= 50 ? 'var(--gain)' : 'var(--loss)' },
-    { label: 'Total Trades',   val: s.totalTrades },
-    { label: 'Winning Trades', val: s.wins,        color: 'var(--gain)' },
-    { label: 'Losing Trades',  val: s.losses,      color: 'var(--loss)' },
-    { label: 'Avg Win',        val: fmtCr(s.avgWin),  color: 'var(--gain)' },
-    { label: 'Avg Loss',       val: fmtCr(s.avgLoss), color: 'var(--loss)' },
-    { label: 'Best Trade',     val: fmtCr(s.bestTrade),  color: 'var(--gain)' },
-    { label: 'Worst Trade',    val: fmtCr(s.worstTrade), color: 'var(--loss)' },
-    { label: 'Max Drawdown',   val: fmtCr(s.maxDrawdown), color: 'var(--loss)' },
-    { label: 'Profit Factor',  val: s.profitFactor?.toFixed(2) },
-    { label: 'Sharpe Ratio',   val: s.sharpe?.toFixed(2) },
-    { label: 'Avg P&L/Trade',  val: fmtCr(s.avgPnl) },
-    { label: 'Win Streak',     val: `${s.winStreak}d`,  color: 'var(--gain)' },
-    { label: 'Loss Streak',    val: `${s.lossStreak}d`, color: 'var(--loss)' },
-    { label: 'Expectancy',     val: fmtCr(s.expectancy) },
-  ];
-  return (
-    <div className="bt-stats-grid">
-      {stats.map(st => (
-        <div key={st.label} className={`bt-stat-item ${st.big ? 'bt-stat-big' : ''}`}>
-          <div className="bt-stat-label">{st.label}</div>
-          <div className="bt-stat-val" style={{ color: st.color }}>{st.val ?? '-'}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Trade List ───────────────────────────────────────────────────────────────
-function TradeList({ results }) {
-  const [show, setShow] = useState(false);
-  if (!results?.daily?.length) return null;
-  const trades = [...results.daily].reverse().slice(0, show ? 1000 : 20);
-  return (
-    <div className="bt-trades-wrap">
-      <div className="bt-section-title">TRADE LOG</div>
-      <div className="bt-trades-table">
-        <div className="bt-trade-hdr">
-          <span>Date</span><span>Day</span><span>DTE</span><span>Entry</span><span>Exit</span><span>P&L</span>
-        </div>
-        {trades.map((t, i) => {
-          const gain = t.pnl >= 0;
-          const d = new Date(t.date);
-          const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
-          return (
-            <div key={i} className={`bt-trade-row ${gain ? 'bt-tr-win' : 'bt-tr-loss'}`}>
-              <span>{t.date}</span>
-              <span>{day}</span>
-              <span>{t.dte ?? '-'}</span>
-              <span>₹{t.entryPremium?.toFixed(0) ?? '-'}</span>
-              <span>₹{t.exitPremium?.toFixed(0) ?? '-'}</span>
-              <span className={gain ? 'gain' : 'loss'} style={{ fontWeight: 700 }}>{fmtCr(t.pnl)}</span>
-            </div>
-          );
-        })}
-      </div>
-      {results.daily.length > 20 && (
-        <button className="bt-show-more" onClick={() => setShow(!show)}>
-          {show ? 'Show less' : `Show all ${results.daily.length} trades`}
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ── Main Backtest Component ──────────────────────────────────────────────────
-// ── How It Works Panel ───────────────────────────────────────────────────────
-function HowItWorks({ results, params }) {
-  const [open, setOpen] = useState(true);
-
-  return (
-    <div className="bt-hiw">
-      <button className="bt-hiw-toggle" onClick={() => setOpen(o => !o)}>
-        <span>ⓘ How this backtest works and what it tells you</span>
-        <span>{open ? '▲' : '▼'}</span>
-      </button>
-
-      {open && (
-        <div className="bt-hiw-body">
-
-          <div className="bt-hiw-section bt-hiw-full">
-            <div className="bt-hiw-title">📊 What is this backtest actually telling you?</div>
-            <div className="bt-hiw-text">
-              This is not an exact P&L calculator. Think of it as a <b>strategy scorecard</b> across 10 years of real NSE market data.<br/><br/>
-              It answers questions like: Does this strategy make money over time? How often does it win? How bad can the losses get? How did it hold up during COVID, rate hike cycles, or a strong bull run?<br/><br/>
-              Use it to <b>compare strategies</b> and <b>understand risk</b>. Do not use it to predict exact rupee returns from your next trade.
-            </div>
-          </div>
-
-          <div className="bt-hiw-section">
-            <div className="bt-hiw-title">💰 What price is used for entry?</div>
-            <div className="bt-hiw-text">
-              We use the <b>closing price of the option on the entry day</b>.<br/><br/>
-              NSE publishes end-of-day data called bhav copy. This includes open, high, low, close and settlement price for every option contract. We do not have minute-by-minute prices as that data is only available from paid providers.<br/><br/>
-              <b>Why closing price?</b> Imagine you are sitting at home at 3:30 PM. You check the option chain and decide to sell a straddle. The price you are looking at right now is the closing price. That is your reference point. When you come in next morning, the option typically opens within 2 to 5% of that price unless there was major overnight news.<br/><br/>
-              The 9:15 AM opening auction also has very low volume and around 30 to 40% of strikes have zero trades at that moment. Closing price is available for every strike, every day.
-            </div>
-          </div>
-
-          <div className="bt-hiw-section">
-            <div className="bt-hiw-title">🏁 What price is used for exit?</div>
-            <div className="bt-hiw-text">
-              Exit uses the <b>official NSE settlement price at 3:30 PM on expiry day</b>.<br/><br/>
-              This is the exact price NSE uses to settle all F&O contracts. It is published officially and is 100% accurate. No estimation here.
-            </div>
-          </div>
-
-          <div className="bt-hiw-section">
-            <div className="bt-hiw-title">🎯 How accurate are the results?</div>
-            <div className="bt-hiw-text">
-              <b>Strategy direction: very reliable.</b> If the backtest shows a strategy was profitable over 10 years, that pattern is almost certainly real. Win rates and loss streaks are statistically meaningful across 300 plus trades.<br/><br/>
-              <b>Exact P&L: 80 to 85% accurate</b> for strategies held to expiry. The main source of error is the gap between the previous day close and your actual execution price next morning.<br/><br/>
-              <b>Stop-loss and target results: 60 to 70% accurate</b> as we cannot know if SL or TP was hit intraday without tick data.
-            </div>
-          </div>
-
-          <div className="bt-hiw-section">
-            <div className="bt-hiw-title">⚠ What is not captured</div>
-            <div className="bt-hiw-text">
-              Brokerage, STT, exchange charges and GST<br/>
-              Slippage: your actual fill may differ from the closing price<br/>
-              Gap risk: if markets open significantly different from previous close<br/>
-              Liquidity: deep OTM strikes may be hard to trade at quoted prices<br/>
-              Extreme events: circuit breakers, holidays, corporate actions
-            </div>
-          </div>
-
-          <div className="bt-hiw-section">
-            <div className="bt-hiw-title">📅 Data coverage</div>
-            <div className="bt-hiw-text">
-              NIFTY and BANKNIFTY: Jan 2016 to Mar 2026 (10 years)<br/>
-              FINNIFTY: Jan 2021 to Mar 2026<br/>
-              MIDCPNIFTY: Jan 2022 to Mar 2026<br/>
-              Source: NSE official bhav copy. Updated daily on trading days.
-            </div>
-          </div>
-
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-export default function Backtest({ data }) {
-  const [selected,   setSelected]   = useState(null);
-  const [params,     setParams]      = useState({
-    index:      'NIFTY',
-    expiry:     'weekly',
-    dte:        0,
-    lots:       1,
-    strikePct:  0,    // ATM=0, OTM=1,2...
-    width:      1,    // spread width in strikes (for spreads)
-    fromYear:   2016,
-    fromMonth:  1,
-    toYear:     2026,
-    toMonth:    3,
-    slPct:      null, // stop loss %
-    tpPct:      null, // take profit %
-  });
-  const [results,    setResults]     = useState(null);
-  const [loading,    setLoading]     = useState(false);
-  const [error,      setError]       = useState(null);
-  const [activeTab,  setActiveTab]   = useState('summary');
-
-  const strategy = ALL_STRATEGIES.find(s => s.id === selected);
-
-  const runBacktest = useCallback(async () => {
-    if (!selected) return;
-    setLoading(true);
-    setError(null);
-    setResults(null);
-    try {
-      const r = await fetch('/api/backtest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          strategy: selected,
-          ...params,
-          fromDate: `${params.fromYear}-${String(params.fromMonth||1).padStart(2,'0')}-01`,
-          toDate:   `${params.toYear}-${String(params.toMonth||12).padStart(2,'0')}-31`,
-        }),
-      });
-      const d = await r.json();
-      if (d.error) setError(d.error);
-      else setResults(d);
-    } catch(e) {
-      setError(e.message);
+  function pnl(price) {
+    const d = price - spot;
+    switch (type) {
+      case 'long_call':   return Math.max(0, d) - spot * 0.007;
+      case 'long_put':    return Math.max(0, -d) - spot * 0.006;
+      case 'short_call':  return spot * 0.004 - Math.max(0, d);
+      case 'short_put':   return spot * 0.004 - Math.max(0, -d);
+      case 'long_straddle':  return Math.max(Math.abs(d) - spot * 0.013, -spot * 0.013);
+      case 'short_straddle': return Math.min(spot * 0.013 - Math.abs(d), spot * 0.013);
+      case 'long_strangle':  return Math.max(Math.abs(d) - spot * 0.02, -spot * 0.008);
+      case 'short_strangle': return Math.min(spot * 0.008 - Math.max(0, Math.abs(d) - spot * 0.009), spot * 0.008);
+      case 'bull_call_spread': return Math.min(Math.max(d - (-spot*0.0), 0), spot * 0.009) - spot * 0.003;
+      case 'bear_call_spread': return spot * 0.002 - Math.min(Math.max(d - spot*0.009, 0), spot * 0.009);
+      case 'bull_put_spread':  return spot * 0.0016 - Math.min(Math.max(-d - spot*0.009, 0), spot * 0.009);
+      case 'bear_put_spread':  return Math.min(Math.max(-d - spot*0.0, 0), spot * 0.009) - spot * 0.0025;
+      case 'short_iron_condor': return Math.min(spot*0.003, spot*0.003 - Math.max(0, Math.abs(d) - spot*0.014));
+      case 'long_iron_condor':  return Math.min(Math.max(Math.abs(d) - spot*0.014, 0) - spot*0.003, spot*0.006);
+      case 'short_iron_butterfly': return Math.min(spot*0.007 - Math.abs(d), spot*0.007);
+      case 'long_iron_butterfly':  return Math.min(Math.max(Math.abs(d) - spot*0.007, 0), spot*0.007) - spot*0.007;
+      case 'long_call_butterfly':  return Math.max(Math.min(d + spot*0.009, spot*0.009) - Math.max(d - spot*0.009, 0), -spot*0.001) - spot*0.001;
+      case 'long_put_butterfly':   return Math.max(Math.min(-d + spot*0.009, spot*0.009) - Math.max(-d - spot*0.009, 0), -spot*0.001) - spot*0.001;
+      case 'synthetic_long':  return d * 0.5;
+      case 'synthetic_short': return -d * 0.5;
+      default: return 0;
     }
-    setLoading(false);
-  }, [selected, params]);
+  }
 
-  const p = (key, val) => setParams(prev => ({ ...prev, [key]: val }));
+  const pnlVals = prices.map(p => pnl(p));
+  const maxP = Math.max(...pnlVals);
+  const minP = Math.min(...pnlVals);
+  const range = Math.max(Math.abs(maxP), Math.abs(minP)) * 2.2 || 1;
+
+  const toX = (price) => PAD + ((price - prices[0]) / (prices[prices.length - 1] - prices[0])) * innerW;
+  const toY = (p)     => midY - (p / range) * innerH;
+
+  const path = prices.map((price, i) => `${i === 0 ? 'M' : 'L'} ${toX(price).toFixed(1)} ${toY(pnlVals[i]).toFixed(1)}`).join(' ');
+
+  // Zero line
+  const zeroY = toY(0);
+
+  // Color gradient: above zero = green, below = red
+  const gradId = `g-${type}`;
 
   return (
-    <div className="bt-wrap">
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 110, display: 'block' }}>
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#00C896" stopOpacity="0.15" />
+          <stop offset="50%" stopColor="#00C896" stopOpacity="0.05" />
+          <stop offset="100%" stopColor="#ff4444" stopOpacity="0.1" />
+        </linearGradient>
+      </defs>
+      {/* Zero line */}
+      <line x1={PAD} y1={zeroY} x2={W - PAD} y2={zeroY} stroke="rgba(255,255,255,0.15)" strokeWidth="1" strokeDasharray="4,4" />
+      {/* Spot line */}
+      <line x1={midX} y1={PAD} x2={midX} y2={H - PAD} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+      {/* Payoff curve fill */}
+      <path d={`${path} L ${toX(prices[prices.length-1])} ${zeroY} L ${toX(prices[0])} ${zeroY} Z`} fill={`url(#${gradId})`} />
+      {/* Payoff curve */}
+      <path d={path} fill="none" stroke="#00C896" strokeWidth="2" strokeLinejoin="round" />
+      {/* Labels */}
+      <text x={PAD + 2} y={H - PAD - 3} fill="rgba(255,255,255,0.3)" fontSize="9" fontFamily="monospace">Loss</text>
+      <text x={PAD + 2} y={PAD + 10} fill="rgba(255,255,255,0.3)" fontSize="9" fontFamily="monospace">Profit</text>
+      <text x={midX - 10} y={H - 3} fill="rgba(255,255,255,0.3)" fontSize="9" fontFamily="monospace">ATM</text>
+    </svg>
+  );
+}
 
-      {/* ── Left panel: Strategy selector ── */}
-      <div className="bt-left">
-        <div className="bt-panel-title">SELECT STRATEGY</div>
+// ── Strategy Card ─────────────────────────────────────────────────────────────
+function StrategyCard({ strategy, groupColor }) {
+  const s = strategy;
+  const isCredit = s.type === 'credit';
+  const diffColor = s.difficulty === 'Beginner' ? '#00C896' : s.difficulty === 'Intermediate' ? '#F59E0B' : '#FF6B6B';
+
+  return (
+    <div className="edu-card">
+      {/* Header */}
+      <div className="edu-card-header">
+        <div>
+          <div className="edu-card-title" style={{ color: groupColor }}>{s.label}</div>
+          <div className="edu-card-tagline">{s.tagline}</div>
+        </div>
+        <div className="edu-card-badges">
+          <span className="edu-badge" style={{ background: isCredit ? 'rgba(0,200,150,0.15)', color: '#00C896', border: '1px solid rgba(0,200,150,0.3)' }}>
+            {isCredit ? 'Credit' : 'Debit'}
+          </span>
+          <span className="edu-badge" style={{ background: 'rgba(255,255,255,0.05)', color: diffColor, border: `1px solid ${diffColor}40` }}>
+            {s.difficulty}
+          </span>
+          <span className="edu-badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text2)', border: '1px solid var(--border)' }}>
+            {s.legs} {s.legs === 1 ? 'Leg' : 'Legs'}
+          </span>
+        </div>
+      </div>
+
+      {/* Quick stats */}
+      <div className="edu-stats-row">
+        <div className="edu-stat">
+          <div className="edu-stat-label">Outlook</div>
+          <div className="edu-stat-val" style={{ color: groupColor }}>{s.outlook}</div>
+        </div>
+        <div className="edu-stat">
+          <div className="edu-stat-label">Max Risk</div>
+          <div className="edu-stat-val" style={{ color: '#FF6B6B' }}>{s.risk}</div>
+        </div>
+        <div className="edu-stat">
+          <div className="edu-stat-label">Max Reward</div>
+          <div className="edu-stat-val" style={{ color: '#00C896' }}>{s.reward}</div>
+        </div>
+      </div>
+
+      {/* Body grid */}
+      <div className="edu-body">
+        {/* Left col */}
+        <div className="edu-left">
+          <div className="edu-section">
+            <div className="edu-section-title">📍 When to use</div>
+            <div className="edu-section-text">{s.when}</div>
+          </div>
+
+          <div className="edu-section">
+            <div className="edu-section-title">⚙ How it works</div>
+            <div className="edu-section-text">{s.how}</div>
+          </div>
+
+          <div className="edu-section">
+            <div className="edu-section-title">💡 Pro tips</div>
+            <ul className="edu-tips">
+              {s.tips.map((t, i) => <li key={i}>{t}</li>)}
+            </ul>
+          </div>
+        </div>
+
+        {/* Right col */}
+        <div className="edu-right">
+          {/* Payoff diagram */}
+          <div className="edu-section">
+            <div className="edu-section-title">📈 Payoff at expiry</div>
+            <div className="edu-payoff-wrap">
+              <PayoffDiagram type={s.payoffType} />
+            </div>
+          </div>
+
+          {/* Nifty example */}
+          <div className="edu-section">
+            <div className="edu-section-title">🔢 Nifty example (spot: 22,000)</div>
+            <div className="edu-example">
+              {/* Legs */}
+              <div className="edu-legs">
+                {s.example.legs.filter((l, i, arr) => {
+                  // deduplicate same strike+type sells (butterfly)
+                  const key = `${l.action}${l.type}${l.strike}`;
+                  const prev = arr.slice(0, i).find(p => `${p.action}${p.type}${p.strike}` === key);
+                  return !prev;
+                }).map((leg, i) => (
+                  <div key={i} className="edu-leg">
+                    <span className={`edu-leg-action ${leg.action === 'BUY' ? 'buy' : 'sell'}`}>{leg.action}</span>
+                    <span className="edu-leg-detail">{leg.strike} {leg.type}</span>
+                    <span className="edu-leg-premium">₹{leg.premium}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Results */}
+              <div className="edu-result-row">
+                <span className="edu-result-label">Max Profit</span>
+                <span className="edu-result-val gain">{s.example.maxProfit}</span>
+              </div>
+              <div className="edu-result-row">
+                <span className="edu-result-label">Max Loss</span>
+                <span className="edu-result-val loss">{s.example.maxLoss}</span>
+              </div>
+              <div className="edu-result-row">
+                <span className="edu-result-label">Breakeven</span>
+                <span className="edu-result-val">{s.example.breakeven}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
+export default function Backtest() {
+  const [selected, setSelected] = useState('short_straddle');
+  const strategy = ALL_STRATEGIES.find(s => s.id === selected);
+  const group    = STRATEGY_GROUPS.find(g => g.strategies.some(s => s.id === selected));
+
+  return (
+    <div className="edu-wrap">
+      {/* Left: strategy list */}
+      <div className="edu-sidebar">
+        <div className="edu-sidebar-label">SELECT STRATEGY</div>
         {STRATEGY_GROUPS.map(g => (
-          <div key={g.group} className="bt-group">
-            <div className="bt-group-label" style={{ color: g.color }}>{g.group}</div>
+          <div key={g.group}>
+            <div className="edu-group-label" style={{ color: g.color }}>{g.group}</div>
             {g.strategies.map(s => (
-              <button key={s.id}
-                className={`bt-strat-btn ${selected === s.id ? 'bt-strat-active' : ''}`}
-                style={selected === s.id ? { borderColor: g.color, color: g.color, background: `${g.color}10` } : {}}
-                onClick={() => { setSelected(s.id); setResults(null); setError(null); }}>
-                {s.label}
-                <span className={`bt-strat-type ${s.type === 'credit' ? 'bt-credit' : 'bt-debit'}`}>
-                  {s.type}
-                </span>
+              <button
+                key={s.id}
+                className={`edu-strat-btn ${selected === s.id ? 'edu-strat-active' : ''}`}
+                style={selected === s.id ? { borderColor: g.color, color: g.color, background: `${g.color}12` } : {}}
+                onClick={() => setSelected(s.id)}
+              >
+                <span>{s.label}</span>
+                <span className={`edu-type-tag ${s.type}`}>{s.type}</span>
               </button>
             ))}
           </div>
         ))}
       </div>
 
-      {/* ── Right panel: Params + Results ── */}
-      <div className="bt-right">
-
-        {/* ── Parameters ── */}
-        <div className="bt-params-bar">
-          {/* Index */}
-          <div className="bt-param-group">
-            <label>Index</label>
-            <select className="bt-select" value={params.index} onChange={e => {
-              const idx = INDICES.find(i => i.id === e.target.value);
-              p('index', e.target.value);
-              if (idx && params.fromYear < idx.minYear) p('fromYear', idx.minYear);
-            }}>
-              {INDICES.map(idx => (
-                <option key={idx.id} value={idx.id}>{idx.label} (lot {idx.lot})</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Expiry */}
-          <div className="bt-param-group">
-            <label>Expiry</label>
-            <div className="bt-seg">
-              {EXPIRY_TYPES.map(e => (
-                <button key={e.id} className={`bt-seg-btn ${params.expiry === e.id ? 'bt-seg-active' : ''}`}
-                  onClick={() => p('expiry', e.id)}>{e.label}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Static entry/exit time info */}
-          <div className="bt-param-group">
-            <label>Entry</label>
-            <span className="bt-time-chip">Close (prev day)</span>
-          </div>
-          <div className="bt-param-group">
-            <label>Exit</label>
-            <span className="bt-time-chip">Settlement (15:30)</span>
-          </div>
-
-          {/* DTE */}
-          <div className="bt-param-group">
-            <label>DTE</label>
-            <select className="bt-select" value={params.dte} onChange={e => p('dte', +e.target.value)}>
-              {[0,1,2,3,4,5,7,10,14].map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </div>
-
-          {/* Lots */}
-          <div className="bt-param-group">
-            <label>Lots</label>
-            <input className="bt-input" type="number" min={1} max={50} value={params.lots}
-              onChange={e => p('lots', +e.target.value)} />
-          </div>
-
-          {/* Strike */}
-          <div className="bt-param-group">
-            <label>Strike</label>
-            <select className="bt-select" value={params.strikePct} onChange={e => p('strikePct', +e.target.value)}>
-              <option value={0}>ATM</option>
-              <option value={1}>1 OTM</option>
-              <option value={2}>2 OTM</option>
-              <option value={3}>3 OTM</option>
-              <option value={4}>4 OTM</option>
-              <option value={5}>5 OTM</option>
-            </select>
-          </div>
-
-          {/* Width (for spreads/condors) */}
-          {strategy?.legs >= 4 && (
-            <div className="bt-param-group">
-              <label>Width</label>
-              <select className="bt-select" value={params.width} onChange={e => p('width', +e.target.value)}>
-                {[1,2,3,4,5].map(w => <option key={w} value={w}>{w} strikes</option>)}
-              </select>
-            </div>
-          )}
-
-          {/* SL / TP */}
-          <div className="bt-param-group">
-            <label>Stop Loss</label>
-            <select className="bt-select" value={params.slPct ?? ''} onChange={e => p('slPct', e.target.value ? +e.target.value : null)}>
-              <option value="">None</option>
-              {[20,30,50,75,100].map(v => <option key={v} value={v}>{v}%</option>)}
-            </select>
-          </div>
-          <div className="bt-param-group">
-            <label>Target</label>
-            <select className="bt-select" value={params.tpPct ?? ''} onChange={e => p('tpPct', e.target.value ? +e.target.value : null)}>
-              <option value="">None</option>
-              {[25,50,75,100].map(v => <option key={v} value={v}>{v}%</option>)}
-            </select>
-          </div>
-
-          {/* Date range */}
-          <div className="bt-param-group">
-            <label>From</label>
-            <input
-              type="month"
-              className="bt-select"
-              value={`${params.fromYear}-${String(params.fromMonth || 1).padStart(2,'0')}`}
-              min={`${INDICES.find(i => i.id === params.index)?.minYear ?? 2016}-01`}
-              max="2026-03"
-              onChange={e => {
-                const [y, m] = e.target.value.split('-');
-                p('fromYear', +y);
-                p('fromMonth', +m);
-              }}
-            />
-          </div>
-          <div className="bt-param-group">
-            <label>To</label>
-            <input
-              type="month"
-              className="bt-select"
-              value={`${params.toYear}-${String(params.toMonth || 12).padStart(2,'0')}`}
-              min={`${params.fromYear}-${String((params.fromMonth||1)+1).padStart(2,'0')}`}
-              max="2026-03"
-              onChange={e => {
-                const [y, m] = e.target.value.split('-');
-                p('toYear', +y);
-                p('toMonth', +m);
-              }}
-            />
-          </div>
-
-          {/* Run button */}
-          <button className={`bt-run-btn ${!selected ? 'bt-run-disabled' : ''}`}
-            disabled={!selected || loading} onClick={runBacktest}>
-            {loading ? '...' : '▶ Run Backtest'}
-          </button>
-        </div>
-
-        {/* ── Results ── */}
-        {!selected && !results && (
-          <div className="bt-empty">
-            <div className="bt-empty-icon">📊</div>
-            <div className="bt-empty-title">Select a strategy to begin</div>
-            <div className="bt-empty-sub">Choose from 28 strategies on the left, configure parameters above, then run</div>
-          </div>
-        )}
-
-        {selected && !results && !loading && !error && (
-          <div className="bt-empty">
-            <div className="bt-empty-icon" style={{ color: strategy?.groupColor }}>
-              {strategy?.label}
-            </div>
-            <div className="bt-empty-title">{strategy?.outlook} · {strategy?.legs}-leg {strategy?.type}</div>
-            <div className="bt-empty-sub">Configure parameters above and click Run Backtest</div>
-            <div className="bt-empty-note">
-              Uses NSE EOD settlement prices (2016–present) for entry premiums<br/>
-              Exit values calculated at expiry. Intraday SL/TP levels are estimated. Not financial advice.
-            </div>
-          </div>
-        )}
-
-        {loading && (
-          <div className="bt-loading-wrap">
-            <div className="bt-loading-spinner" />
-            <div className="bt-loading-text">Running backtest...</div>
-            <div className="bt-loading-sub">Fetching NSE data · Computing {params.expiry} {params.index} {strategy?.label}</div>
-          </div>
-        )}
-
-        {error && (
-          <div className="bt-error">
-            <div className="bt-error-icon">⚠</div>
-            <div>{error}</div>
-          </div>
-        )}
-
-        {results && (
-          <div className="bt-results">
-            {/* Results header */}
-            <div className="bt-results-hdr">
-              <div className="bt-results-title">
-                <span style={{ color: strategy?.groupColor }}>{strategy?.label}</span>
-                <span className="bt-results-meta">{params.index} · {params.expiry} · {params.fromYear}/{String(params.fromMonth||1).padStart(2,'0')} to {params.toYear}/{String(params.toMonth||12).padStart(2,'0')}</span>
-              </div>
-              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                {results.dataSource && (
-                  <span style={{ fontFamily:'var(--mono)', fontSize:9, padding:'2px 8px', borderRadius:3,
-                    background: results.dataSource === 'nse_bhav' ? 'rgba(0,200,150,0.15)' : 'rgba(245,158,11,0.15)',
-                    color: results.dataSource === 'nse_bhav' ? '#00C896' : '#F59E0B',
-                    border: `1px solid ${results.dataSource === 'nse_bhav' ? 'rgba(0,200,150,0.3)' : 'rgba(245,158,11,0.3)'}`,
-                  }}>
-                    {results.dataSource === 'nse_bhav' 
-                      ? `✓ NSE Real Data (${results.bhavCoverage}% coverage)` 
-                      : '⚠ Black-Scholes Estimate'}
-                  </span>
-                )}
-                <div className="bt-results-pnl" style={{ color: results.stats.totalPnl >= 0 ? 'var(--gain)' : 'var(--loss)' }}>
-                  {fmtCr(results.stats.totalPnl)}
-                </div>
-              </div>
-            </div>
-
-            {/* Quick stats bar */}
-            <div className="bt-quick-stats">
-              <div className="bt-qs-item">
-                <span className="bt-qs-l">Win Rate</span>
-                <span className={`bt-qs-v ${results.stats.winRate >= 50 ? 'gain' : 'loss'}`}>{results.stats.winRate.toFixed(1)}%</span>
-              </div>
-              <div className="bt-qs-sep" />
-              <div className="bt-qs-item">
-                <span className="bt-qs-l">Trades</span>
-                <span className="bt-qs-v">{results.stats.totalTrades}</span>
-              </div>
-              <div className="bt-qs-sep" />
-              <div className="bt-qs-item">
-                <span className="bt-qs-l">Avg/Trade</span>
-                <span className={`bt-qs-v ${results.stats.avgPnl >= 0 ? 'gain' : 'loss'}`}>{fmtCr(results.stats.avgPnl)}</span>
-              </div>
-              <div className="bt-qs-sep" />
-              <div className="bt-qs-item">
-                <span className="bt-qs-l">Max DD</span>
-                <span className="bt-qs-v loss">{fmtCr(results.stats.maxDrawdown)}</span>
-              </div>
-              <div className="bt-qs-sep" />
-              <div className="bt-qs-item">
-                <span className="bt-qs-l">Profit Factor</span>
-                <span className={`bt-qs-v ${results.stats.profitFactor >= 1 ? 'gain' : 'loss'}`}>{results.stats.profitFactor?.toFixed(2)}</span>
-              </div>
-              <div className="bt-qs-sep" />
-              <div className="bt-qs-item">
-                <span className="bt-qs-l">Sharpe</span>
-                <span className={`bt-qs-v ${results.stats.sharpe >= 0 ? 'gain' : 'loss'}`}>{results.stats.sharpe?.toFixed(2)}</span>
-              </div>
-            </div>
-
-            {/* Result tabs */}
-            <div className="bt-result-tabs">
-              {['summary','calendar','days','trades'].map(t => (
-                <button key={t} className={`bt-rt-btn ${activeTab === t ? 'bt-rt-active' : ''}`}
-                  onClick={() => setActiveTab(t)}>
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
-                </button>
-              ))}
-            </div>
-
-            {activeTab === 'summary'  && <StatsGrid results={results} />}
-            {activeTab === 'calendar' && <CalendarHeatmap results={results} />}
-            {activeTab === 'days'     && <DayBreakdown results={results} />}
-            {activeTab === 'trades'   && <TradeList results={results} />}
-
-            {/* How this works panel */}
-            <HowItWorks results={results} params={params} />
-
-            <div className="bt-disclaimer">
-              ⚠ Results are based on NSE bhav copy data. Entry uses closing price on the trade date as a realistic estimate of execution price. Exit uses the official NSE settlement price on expiry day. Accuracy is 80 to 85% for strategies held to expiry. Stop-loss and target results are estimated as intraday tick data is not available. Brokerage, STT and slippage are not included. For educational reference only. Past performance does not guarantee future results. Not investment advice.
-            </div>
-          </div>
-        )}
+      {/* Right: education card */}
+      <div className="edu-content">
+        {strategy && <StrategyCard strategy={strategy} groupColor={group?.color || '#4A9EFF'} />}
       </div>
     </div>
   );
