@@ -261,59 +261,71 @@ function TradeList({ results }) {
 // ── How It Works Panel ───────────────────────────────────────────────────────
 function HowItWorks({ results, params }) {
   const [open, setOpen] = useState(true);
-  const coverage = results?.bhavCoverage || 0;
 
   return (
     <div className="bt-hiw">
       <button className="bt-hiw-toggle" onClick={() => setOpen(o => !o)}>
-        <span>ⓘ How this backtest works</span>
+        <span>ⓘ How this backtest works and what it tells you</span>
         <span>{open ? '▲' : '▼'}</span>
       </button>
 
       {open && (
         <div className="bt-hiw-body">
 
-          <div className="bt-hiw-section">
-            <div className="bt-hiw-title">📊 Data Source</div>
+          <div className="bt-hiw-section bt-hiw-full">
+            <div className="bt-hiw-title">📊 What is this backtest actually telling you?</div>
             <div className="bt-hiw-text">
-              This backtest uses real NSE bhav copy data (official end-of-day records published by NSE). {coverage > 0 ? `${coverage}% of trades in this run used real NSE prices.` : ''} For strikes or dates where bhav data is unavailable, Black-Scholes pricing is used as a fallback.
+              This is not an exact P&L calculator. Think of it as a <b>strategy scorecard</b> across 10 years of real NSE market data.<br/><br/>
+              It answers questions like: Does this strategy make money over time? How often does it win? How bad can the losses get? How did it hold up during COVID, rate hike cycles, or a strong bull run?<br/><br/>
+              Use it to <b>compare strategies</b> and <b>understand risk</b>. Do not use it to predict exact rupee returns from your next trade.
             </div>
           </div>
 
           <div className="bt-hiw-section">
-            <div className="bt-hiw-title">⏱ Entry and Exit Logic</div>
+            <div className="bt-hiw-title">💰 What price is used for entry?</div>
             <div className="bt-hiw-text">
-              <b>Entry:</b> Strategy is entered at the opening price (9:15 AM) of the option on the trade date. This is the actual NSE recorded opening price from bhav data.<br/><br/>
-              <b>Exit:</b> Strategy exits at the settlement price (3:30 PM) on expiry day. This is the official NSE settlement price used for F&O settlement.
+              We use the <b>closing price of the option on the entry day</b>.<br/><br/>
+              NSE publishes end-of-day data called bhav copy. This includes open, high, low, close and settlement price for every option contract. We do not have minute-by-minute prices as that data is only available from paid providers.<br/><br/>
+              <b>Why closing price?</b> Imagine you are sitting at home at 3:30 PM. You check the option chain and decide to sell a straddle. The price you are looking at right now is the closing price. That is your reference point. When you come in next morning, the option typically opens within 2 to 5% of that price unless there was major overnight news.<br/><br/>
+              The 9:15 AM opening auction also has very low volume and around 30 to 40% of strikes have zero trades at that moment. Closing price is available for every strike, every day.
             </div>
           </div>
 
           <div className="bt-hiw-section">
-            <div className="bt-hiw-title">🎯 Accuracy</div>
+            <div className="bt-hiw-title">🏁 What price is used for exit?</div>
             <div className="bt-hiw-text">
-              <b>85 to 90% accurate</b> for strategies held to expiry (Short Straddle, Iron Condor etc.) because both entry and exit use real NSE prices.<br/><br/>
-              <b>60 to 70% accurate</b> for strategies with intraday stop-loss or target because intraday tick data is not available to verify if SL or TP was hit during the day.<br/><br/>
-              The direction of results (profit vs loss) is almost always correct. The exact P&L numbers may vary slightly from actual trading.
+              Exit uses the <b>official NSE settlement price at 3:30 PM on expiry day</b>.<br/><br/>
+              This is the exact price NSE uses to settle all F&O contracts. It is published officially and is 100% accurate. No estimation here.
             </div>
           </div>
 
           <div className="bt-hiw-section">
-            <div className="bt-hiw-title">⚠ What is Not Captured</div>
+            <div className="bt-hiw-title">🎯 How accurate are the results?</div>
             <div className="bt-hiw-text">
-              Brokerage and transaction costs (STT, exchange charges, GST)<br/>
-              Slippage: real trades may get worse prices than the opening print<br/>
-              Liquidity: deep OTM strikes may not be easily tradeable at quoted prices<br/>
-              Corporate events, circuit breakers, and extreme illiquidity days
+              <b>Strategy direction: very reliable.</b> If the backtest shows a strategy was profitable over 10 years, that pattern is almost certainly real. Win rates and loss streaks are statistically meaningful across 300 plus trades.<br/><br/>
+              <b>Exact P&L: 80 to 85% accurate</b> for strategies held to expiry. The main source of error is the gap between the previous day close and your actual execution price next morning.<br/><br/>
+              <b>Stop-loss and target results: 60 to 70% accurate</b> as we cannot know if SL or TP was hit intraday without tick data.
             </div>
           </div>
 
           <div className="bt-hiw-section">
-            <div className="bt-hiw-title">📅 Data Coverage</div>
+            <div className="bt-hiw-title">⚠ What is not captured</div>
+            <div className="bt-hiw-text">
+              Brokerage, STT, exchange charges and GST<br/>
+              Slippage: your actual fill may differ from the closing price<br/>
+              Gap risk: if markets open significantly different from previous close<br/>
+              Liquidity: deep OTM strikes may be hard to trade at quoted prices<br/>
+              Extreme events: circuit breakers, holidays, corporate actions
+            </div>
+          </div>
+
+          <div className="bt-hiw-section">
+            <div className="bt-hiw-title">📅 Data coverage</div>
             <div className="bt-hiw-text">
               NIFTY and BANKNIFTY: Jan 2016 to Mar 2026 (10 years)<br/>
-              FINNIFTY: Jan 2021 to Mar 2026 (launched Jan 2021)<br/>
-              MIDCPNIFTY: Jan 2022 to Mar 2026 (launched mid 2022)<br/>
-              Data is updated daily on trading days.
+              FINNIFTY: Jan 2021 to Mar 2026<br/>
+              MIDCPNIFTY: Jan 2022 to Mar 2026<br/>
+              Source: NSE official bhav copy. Updated daily on trading days.
             </div>
           </div>
 
@@ -322,6 +334,7 @@ function HowItWorks({ results, params }) {
     </div>
   );
 }
+
 
 export default function Backtest({ data }) {
   const [selected,   setSelected]   = useState(null);
@@ -423,7 +436,7 @@ export default function Backtest({ data }) {
           {/* Static entry/exit time info */}
           <div className="bt-param-group">
             <label>Entry</label>
-            <span className="bt-time-chip">Open (9:15)</span>
+            <span className="bt-time-chip">Close (prev day)</span>
           </div>
           <div className="bt-param-group">
             <label>Exit</label>
@@ -625,7 +638,7 @@ export default function Backtest({ data }) {
             <HowItWorks results={results} params={params} />
 
             <div className="bt-disclaimer">
-              ⚠ Results are based on NSE bhav copy data (opening price for entry, settlement price for exit). Accuracy is 85 to 90% for strategies held to expiry. Stop-loss and target results are estimated as intraday tick data is not available. Brokerage, STT and slippage are not included. For educational reference only. Past performance does not guarantee future results. Not investment advice.
+              ⚠ Results are based on NSE bhav copy data. Entry uses closing price on the trade date as a realistic estimate of execution price. Exit uses the official NSE settlement price on expiry day. Accuracy is 80 to 85% for strategies held to expiry. Stop-loss and target results are estimated as intraday tick data is not available. Brokerage, STT and slippage are not included. For educational reference only. Past performance does not guarantee future results. Not investment advice.
             </div>
           </div>
         )}

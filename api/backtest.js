@@ -187,7 +187,7 @@ async function fetchAllBhavPremiums(index, fromYear, toYear) {
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
     if (!supabaseUrl || !supabaseKey) return null;
 
-    const cacheKey = `bhav:v5:${index}:${fromYear}:${toYear}`;
+    const cacheKey = `bhav:v6:${index}:${fromYear}:${toYear}`;
     try {
       const cached = await kv.get(cacheKey);
       if (cached) return typeof cached === 'string' ? JSON.parse(cached) : cached;
@@ -238,11 +238,13 @@ async function fetchAllBhavPremiums(index, fromYear, toYear) {
 
     if (allRows.length === 0) return null;
 
-    // Build nested map: date -> expiry -> "strikeType" -> {open, settle}
+    // Build nested map: date -> expiry -> "strikeType" -> {entry, exit}
+    // Entry = close price (most realistic for EOD backtesting)
+    // Exit  = settle price (official NSE settlement)
     const byDate = {};
     for (const row of allRows) {
-      const entryPrice = row.open || row.close || row.settle;
-      const exitPrice  = row.settle || row.close;
+      const entryPrice = row.close || row.settle;  // close is most realistic entry
+      const exitPrice  = row.settle || row.close;  // settle is official exit
       if (!entryPrice && !exitPrice) continue;
       if (!byDate[row.date]) byDate[row.date] = {};
       if (!byDate[row.date][row.expiry]) byDate[row.date][row.expiry] = {};
@@ -281,7 +283,7 @@ function getBhavPremiumsFromMap(bhavMap, index, dateStr, atm, step, strikePct) {
 
   const get = (strike, type) => {
     const row = strikes[`${strike}${type}`];
-    return row ? { entry: row.open || row.close || row.settle, exit: row.settle || row.close } : null;
+    return row ? { entry: row.close || row.settle, exit: row.settle || row.close } : null;
   };
 
   const atmC  = get(atm,                          'CE');
@@ -550,7 +552,7 @@ export default async function handler(req, res) {
 
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:v11:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v12:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) {
