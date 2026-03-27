@@ -2519,10 +2519,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   border-right: 1px solid var(--border);
   overflow: hidden;
 }
+.sentiment-bubble-side {
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+.sentiment-bubble-label {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 2px;
@@ -2532,7 +2534,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-  flex: 1;
+.sentiment-bubble-scroll { flex: 1;
   overflow-y: auto;
   padding: 0 4px;
 }
@@ -2548,10 +2550,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   }
 }
 
-  display: grid; grid-template-columns: repeat(3, 1fr);
+.fii-grid { display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 0; border-top: 1px solid var(--border);
 }
-  padding: 14px 16px; border-right: 1px solid var(--border);
+.fii-cell { padding: 14px 16px; border-right: 1px solid var(--border);
   display: flex; flex-direction: column; align-items: center;
   text-align: center; gap: 3px;
 }
@@ -2565,50 +2567,50 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 @media (max-width: 600px) {
 }
 
-  grid-template-columns: 1fr !important;
+.fii-grid-mobile { grid-template-columns: 1fr !important;
   border-top: none !important;
   height: 100%;
 }
-  border-right: none !important;
+.fii-cell-last { border-right: none !important;
   border-bottom: 1px solid var(--border);
   padding: 14px 16px;
   flex: 1;
 }
-  border-bottom: none;
+.fii-cell-no-border { border-bottom: none;
 }
-  font-size: 22px;
+.fii-val { font-size: 22px;
 }
-  font-size: 9px;
+.fii-lbl-sm { font-size: 9px;
   margin-bottom: 4px;
 }
-  font-size: 10px;
+.fii-lbl-md { font-size: 10px;
   margin-bottom: 4px;
 }
-  flex-direction: row;
+.fii-row { flex-direction: row;
   gap: 8px;
 }
-  font-size: 18px;
+.fii-big-val { font-size: 18px;
 }
 
 /* Panel itself fills height */
+.fii-panel { display: flex;
+  flex-direction: column;
+}
+.fii-panel-inner { flex: 1;
   display: flex;
   flex-direction: column;
 }
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-  flex: 1;
+.fii-panel-body { flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-  font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
+.fii-mono-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
   font-weight: 700; color: var(--text3);
   padding: 16px 20px 10px; border-bottom: 1px solid var(--border);
 }
 
-  display: flex; gap: 14px; font-family: var(--mono); font-size: 10px; color: var(--text3);
+.fii-legend { display: flex; gap: 14px; font-family: var(--mono); font-size: 10px; color: var(--text3);
 }
 
 /* ── Sentiment page: 60% bubble + 40% FII/DII ───────────────────────────── */
@@ -2656,31 +2658,31 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 }
 
 /* Header with India flag */
-  font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
+.india-flag-header { font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
   color: var(--text3); padding: 12px 0 8px;
   text-align: center;
 }
 
 /* Chart header centered */
-  display: flex; align-items: center; justify-content: center;
+.chart-header-centered { display: flex; align-items: center; justify-content: center;
   gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
 }
 
 /* Totals row centered */
-  display: flex; align-items: center; justify-content: center;
+.fii-totals-row { display: flex; align-items: center; justify-content: center;
   gap: 0; margin-top: 10px; padding: 10px 0 4px;
   border-top: 1px solid var(--border);
 }
-  display: flex; flex-direction: column; align-items: center;
+.fii-totals-cell { display: flex; flex-direction: column; align-items: center;
   gap: 3px; padding: 0 20px; flex: 1; text-align: center;
 }
 
 /* Cards row centered, compact */
-  display: grid; grid-template-columns: repeat(3, 1fr);
+.fii-cards-row { display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 0; border-top: 1px solid var(--border);
   margin-top: 0;
 }
-  padding: 14px 16px; border-right: 1px solid var(--border);
+.fii-card-cell { padding: 14px 16px; border-right: 1px solid var(--border);
   display: flex; flex-direction: column; align-items: center;
   text-align: center; gap: 3px;
 }
@@ -4317,7 +4319,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
    RISK CALCULATOR PAGE
    ════════════════════════════════════════════════════════════════════════════ */
 
-.rc-page { max-width: 1100px; margin: 0 auto; padding: 24px 24px 80px; display: flex; flex-direction: column; gap: 0; }
+.rc-page { width: 100%; padding: 24px 32px 80px; display: flex; flex-direction: column; gap: 0; box-sizing: border-box; }
 
 /* Tab bar */
 .rc-tab-bar { display: flex; gap: 4px; padding: 4px; background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 24px; }
@@ -4343,7 +4345,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .rc-hero { padding: 28px 0 8px; }
 .rc-hero-eyebrow { font-size: 9px; font-family: var(--mono); color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
 .rc-hero-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-.rc-hero-body { font-size: 14px; color: var(--text2); line-height: 1.7; max-width: 60ch; margin-bottom: 16px; }
+.rc-hero-body { font-size: 14px; color: var(--text2); line-height: 1.7; max-width: 80ch; margin-bottom: 16px; }
 .rc-hero-content { display: flex; flex-direction: column; gap: 8px; }
 .rc-hero-stats { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 8px; }
 
