@@ -180,67 +180,94 @@ async function getVIXHistory(fromYear, toYear) {
 }
 
 
-// ── Lookup real premium from Supabase bhav_options table ─────────────────────
-async function getBhavPremiums(index, dateStr, atm, step, strikePct) {
+// ── Bulk fetch all bhav premiums for entire date range in one query ───────────
+async function fetchAllBhavPremiums(index, fromYear, toYear) {
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
     if (!supabaseUrl || !supabaseKey) return null;
 
-    // Find nearest expiry for this date
-    const d = new Date(dateStr);
-    const EXPIRY_DOW = { NIFTY: 4, BANKNIFTY: 3, FINNIFTY: 4, MIDCPNIFTY: 4, SENSEX: 5 };
-    const dow = EXPIRY_DOW[index] ?? 4;
-    const exp = new Date(d);
-    exp.setDate(exp.getDate() + 1);
-    while (exp.getDay() !== dow) exp.setDate(exp.getDate() + 1);
-    // Try up to 4 weekly expiries ahead in case nearest has no data
-    const expiries = [];
-    for (let i = 0; i < 4; i++) {
-      const e = new Date(exp);
-      e.setDate(e.getDate() + i * 7);
-      expiries.push(e.toISOString().slice(0, 10));
+    const cacheKey = `bhav:bulk:${index}:${fromYear}:${toYear}`;
+    try {
+      const cached = await kv.get(cacheKey);
+      if (cached) return typeof cached === 'string' ? JSON.parse(cached) : cached;
+    } catch (_) {}
+
+    // Fetch all OPTIDX rows for this index and date range in one shot
+    // Supabase REST limits to 1000 rows — use range headers to paginate
+    const fromDate = `${fromYear}-01-01`;
+    const toDate   = `${toYear}-12-31`;
+    const baseUrl  = `${supabaseUrl}/rest/v1/bhav_options?select=date,expiry,strike,type,close,settle&symbol=eq.${index}&date=gte.${fromDate}&date=lte.${toDate}&order=date.asc`;
+
+    let allRows = [];
+    let offset  = 0;
+    const pageSize = 1000;
+
+    while (true) {
+      const r = await fetch(`${baseUrl}&limit=${pageSize}&offset=${offset}`, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+          'Range-Unit': 'items',
+        },
+      });
+      if (!r.ok) break;
+      const rows = await r.json();
+      if (!rows || rows.length === 0) break;
+      allRows = allRows.concat(rows);
+      if (rows.length < pageSize) break;
+      offset += pageSize;
     }
 
-    const strikes = [
-      atm,
-      atm + step * (strikePct + 1),
-      atm - step * (strikePct + 1),
-      atm + step * (strikePct + 2),
-      atm - step * (strikePct + 2),
-    ];
+    if (allRows.length === 0) return null;
 
-    const url = `${supabaseUrl}/rest/v1/bhav_options?select=strike,type,close,settle&symbol=eq.${index}&date=eq.${dateStr}&strike=in.(${strikes.join(',')})&expiry=in.(${expiries.join(',')})&order=expiry.asc`;
-
-    const r = await fetch(url, {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-    });
-
-    if (!r.ok) return null;
-    const rows = await r.json();
-    if (!rows || rows.length === 0) return null;
-
-    // Build lookup: strike+type -> close price
-    const map = {};
-    for (const row of rows) {
-      const k = `${row.strike}${row.type}`;
-      if (!map[k]) map[k] = row.close || row.settle || null;
+    // Build nested map: date -> expiry -> strike+type -> price
+    // We want: for each trade date, the nearest expiry's premiums
+    const byDate = {};
+    for (const row of allRows) {
+      const price = row.close || row.settle;
+      if (!price) continue;
+      if (!byDate[row.date]) byDate[row.date] = {};
+      if (!byDate[row.date][row.expiry]) byDate[row.date][row.expiry] = {};
+      byDate[row.date][row.expiry][`${row.strike}${row.type}`] = price;
     }
 
-    const atmC  = map[`${atm}CE`]  ?? null;
-    const atmP  = map[`${atm}PE`]  ?? null;
-    const otm1C = map[`${atm + step * (strikePct + 1)}CE`] ?? null;
-    const otm1P = map[`${atm - step * (strikePct + 1)}PE`] ?? null;
-    const otm2C = map[`${atm + step * (strikePct + 2)}CE`] ?? null;
-    const otm2P = map[`${atm - step * (strikePct + 2)}PE`] ?? null;
-
-    if (atmC === null && atmP === null) return null;
-
-    return { atmC, atmP, otm1C, otm1P, otm2C, otm2P, source: 'bhav' };
+    try { await kv.set(cacheKey, JSON.stringify(byDate), { ex: 24 * 60 * 60 }); } catch (_) {}
+    return byDate;
   } catch (_) { return null; }
+}
+
+function getBhavPremiumsFromMap(bhavMap, index, dateStr, atm, step, strikePct) {
+  if (!bhavMap || !bhavMap[dateStr]) return null;
+
+  const dateData = bhavMap[dateStr];
+
+  // Find nearest expiry that has data
+  const EXPIRY_DOW = { NIFTY: 4, BANKNIFTY: 3, FINNIFTY: 4, MIDCPNIFTY: 4, SENSEX: 5 };
+  const dow = EXPIRY_DOW[index] ?? 4;
+  const d   = new Date(dateStr);
+  const exp = new Date(d);
+  exp.setDate(exp.getDate() + 1);
+  while (exp.getDay() !== dow) exp.setDate(exp.getDate() + 1);
+
+  let strikes = null;
+  for (let i = 0; i < 4; i++) {
+    const e = new Date(exp);
+    e.setDate(e.getDate() + i * 7);
+    const expStr = e.toISOString().slice(0, 10);
+    if (dateData[expStr]) { strikes = dateData[expStr]; break; }
+  }
+  if (!strikes) return null;
+
+  const atmC  = strikes[`${atm}CE`]                          ?? null;
+  const atmP  = strikes[`${atm}PE`]                          ?? null;
+  const otm1C = strikes[`${atm + step * (strikePct + 1)}CE`] ?? null;
+  const otm1P = strikes[`${atm - step * (strikePct + 1)}PE`] ?? null;
+  const otm2C = strikes[`${atm + step * (strikePct + 2)}CE`] ?? null;
+  const otm2P = strikes[`${atm - step * (strikePct + 2)}PE`] ?? null;
+
+  if (atmC === null && atmP === null) return null;
+  return { atmC, atmP, otm1C, otm1P, otm2C, otm2P, source: 'bhav' };
 }
 
 // ── Expiry logic ─────────────────────────────────────────────────────────────
@@ -493,7 +520,7 @@ export default async function handler(req, res) {
 
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:v6:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v7:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) {
@@ -503,9 +530,10 @@ export default async function handler(req, res) {
   } catch (_) {}
 
   try {
-    const [priceData, vixData] = await Promise.all([
+    const [priceData, vixData, bhavMap] = await Promise.all([
       getHistoricalData(index, fromYear, toYear),
       getVIXHistory(fromYear, toYear),
+      fetchAllBhavPremiums(index, fromYear, toYear),
     ]);
 
     const lotSize  = LOT_SIZES[index] || 75;
@@ -548,7 +576,7 @@ export default async function handler(req, res) {
 
       // Try real bhav premiums for entry day
       const atmStrike = Math.round(entrySpot / step) * step;
-      const realPremiums = await getBhavPremiums(index, entryDay.date, atmStrike, step, strikePct);
+      const realPremiums = getBhavPremiumsFromMap(bhavMap, index, entryDay.date, atmStrike, step, strikePct);
 
       const { pnl, entryPremium, exitPremium } = calcPnlV2(
         strategy, entrySpot, exitSpot, vix, dteUsed, lots, lotSize, strikePct, width, slPct, tpPct, realPremiums
