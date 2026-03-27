@@ -433,13 +433,6 @@ export default function Backtest({ data }) {
             <span className="bt-time-chip">Settlement (15:30)</span>
           </div>
 
-
-          {/* DTE */}
-          <div className="bt-param-group">
-            <label>Time</label>
-            <span className="bt-time-label">09:20 → 15:15</span>
-          </div>
-
           {/* DTE */}
           <div className="bt-param-group">
             <label>DTE</label>
