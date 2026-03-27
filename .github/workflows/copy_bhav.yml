@@ -1,0 +1,49 @@
+name: Copy bhav_options to indexes-live
+
+on:
+  workflow_dispatch:
+
+jobs:
+  copy-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Copy bhav_options via direct Postgres
+        env:
+          OLD_CONN: "postgresql://postgres:${{ secrets.OLD_DB_PASS }}@db.axobtyzujcbckkbsakpb.supabase.co:5432/postgres"
+          NEW_CONN: "postgresql://postgres:${{ secrets.NEW_DB_PASS }}@db.fffgbfvxxixpkxxcfejd.supabase.co:5432/postgres"
+        run: |
+          echo "Creating table in new DB..."
+          psql "$NEW_CONN" <<'SQL'
+          CREATE TABLE IF NOT EXISTS bhav_options (
+            id      BIGSERIAL PRIMARY KEY,
+            date    DATE    NOT NULL,
+            symbol  TEXT    NOT NULL,
+            expiry  DATE    NOT NULL,
+            strike  NUMERIC NOT NULL,
+            type    TEXT    NOT NULL,
+            open    NUMERIC,
+            high    NUMERIC,
+            low     NUMERIC,
+            close   NUMERIC,
+            settle  NUMERIC,
+            oi      BIGINT,
+            volume  BIGINT,
+            UNIQUE (date, symbol, expiry, strike, type)
+          );
+          CREATE INDEX IF NOT EXISTS idx_bhav_lookup ON bhav_options (symbol, date, expiry, strike, type);
+          CREATE INDEX IF NOT EXISTS idx_bhav_date ON bhav_options (date);
+          SQL
+
+          echo "Dumping from old DB and restoring to new DB..."
+          pg_dump "$OLD_CONN" \
+            --table=bhav_options \
+            --data-only \
+            --no-owner \
+            --no-privileges \
+            | psql "$NEW_CONN"
+
+          echo "Verifying row count..."
+          psql "$NEW_CONN" -c "SELECT COUNT(*) as total_rows FROM bhav_options;"
+          psql "$NEW_CONN" -c "SELECT MIN(date) as from_date, MAX(date) as to_date FROM bhav_options;"
