@@ -4371,17 +4371,21 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 /* ── Sticky page nav ── */
 .rc-page-nav {
   position: sticky; top: 0; z-index: 80;
-  background: var(--bg0); border-bottom: 1px solid var(--border);
+  background: rgba(10,10,15,0.95); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
   padding: 0 32px;
 }
-.rc-page-nav-inner { display: flex; gap: 0; overflow-x: auto; }
+.rc-page-nav-inner { display: flex; gap: 4px; overflow-x: auto; padding: 6px 0; }
 .rc-page-nav-btn {
-  padding: 12px 18px; background: none; border: none; border-bottom: 2px solid transparent;
-  color: var(--text3); font-size: 12px; font-family: var(--mono); cursor: pointer; white-space: nowrap;
-  transition: all 0.1s;
+  padding: 8px 20px; background: none; border: none; border-radius: 6px;
+  color: var(--text3); font-size: 13px; font-weight: 500; font-family: var(--mono);
+  cursor: pointer; white-space: nowrap; transition: all 0.15s; letter-spacing: 0.3px;
 }
-.rc-page-nav-btn:hover { color: var(--text); }
-.rc-page-nav-active { color: var(--accent) !important; border-bottom-color: var(--accent) !important; }
+.rc-page-nav-btn:hover { color: var(--text); background: var(--bg2); }
+.rc-page-nav-active {
+  color: var(--text) !important; background: var(--bg2) !important;
+  box-shadow: 0 0 0 1px var(--accent); font-weight: 700 !important;
+}
 
 /* ── Top row: Hero left + Start Here right ── */
 .rc-top-row {
@@ -4478,13 +4482,15 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .rc-recovery-note { font-size: 13px; color: var(--text2); line-height: 1.7; padding-top: 12px; }
 
 /* ── Laws ── */
-.rc-laws-grid { display: flex; flex-direction: column; gap: 12px; }
-.rc-law-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; }
-.rc-law-num { font-size: 11px; font-family: var(--mono); letter-spacing: 2px; margin-bottom: 6px; font-weight: 700; }
-.rc-law-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-.rc-law-body { font-size: 14px; color: var(--text2); line-height: 1.75; margin-bottom: 12px; }
-.rc-law-eg-label { font-size: 10px; font-family: var(--mono); color: var(--text3); letter-spacing: 0.5px; font-weight: 700; }
-.rc-law-example { background: rgba(0,0,0,0.2); border-radius: 6px; padding: 12px 14px; font-size: 13px; color: var(--text2); line-height: 1.65; border: 1px solid var(--border); margin-top: 8px; }
+.rc-laws-grid { display: flex; flex-direction: column; gap: 16px; }
+.rc-law-card { border: 1px solid; border-radius: 10px; padding: 28px 32px; }
+.rc-law-num-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.rc-law-num { font-size: 13px; font-family: var(--mono); letter-spacing: 3px; font-weight: 800; flex-shrink: 0; }
+.rc-law-num-line { height: 1px; flex: 1; opacity: 0.4; }
+.rc-law-title { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 10px; line-height: 1.2; }
+.rc-law-body { font-size: 15px; color: rgba(255,255,255,0.75); line-height: 1.8; margin-bottom: 16px; }
+.rc-law-eg-label { font-size: 10px; font-family: var(--mono); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
+.rc-law-example { background: rgba(0,0,0,0.25); border-radius: 6px; padding: 14px 16px; font-size: 13px; color: var(--text2); line-height: 1.7; border: 1px solid rgba(255,255,255,0.06); }
 
 /* ── Calc tabs ── */
 .rc-calc-tab-wrap { margin-bottom: 24px; }

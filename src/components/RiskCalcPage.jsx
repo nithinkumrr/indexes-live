@@ -86,7 +86,7 @@ function Results({ children, warning }) {
 function Divider() { return <div className="rc-divider" />; }
 
 function WhyMatters({ insight, children }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   return (
     <div className="rc-why">
       {insight && <div className="rc-why-insight">💡 {insight}</div>}
@@ -99,7 +99,7 @@ function WhyMatters({ insight, children }) {
   );
 }
 
-// Binary direction toggle — Long=green, Short=red
+// Binary direction toggle, Long=green, Short=red
 function DirToggle({ value, onChange }) {
   return (
     <div className="rc-dir-toggle">
@@ -142,7 +142,7 @@ function LegRow({ children }) {
 }
 
 // ==============================================================================
-// SECTION 1 - HERO
+// SECTION 1 HERO
 // ==============================================================================
 
 function RiskHero() {
@@ -176,7 +176,7 @@ function RiskHero() {
 }
 
 // ==============================================================================
-// SECTION 2 - START HERE
+// SECTION 2 START HERE
 // ==============================================================================
 
 function StartHere({ onSelectCalc }) {
@@ -239,7 +239,7 @@ function StartHere({ onSelectCalc }) {
 }
 
 // ==============================================================================
-// SECTION 3 - RECOVERY TRAP
+// SECTION 3 RECOVERY TRAP
 // ==============================================================================
 
 function RecoveryTrap() {
@@ -259,7 +259,7 @@ function RecoveryTrap() {
       </div>
 
       <div className="rc-recovery-takeaway">
-        A 50% loss requires a <strong>100% gain</strong> just to recover. That is not a setback - it is a trap.
+        A 50% loss requires a <strong>100% gain</strong> just to recover. That is not a setback it is a trap.
       </div>
 
       <div className="rc-recovery-grid">
@@ -288,31 +288,36 @@ function RecoveryTrap() {
       </div>
       <div className="rc-recovery-note">
         A 33% drawdown requires a 50% gain just to get back to zero. You have not made a single rupee yet.
-        Set your max drawdown limit before you start trading - and treat it as a hard stop.
+        Set your max drawdown limit before you start trading and treat it as a hard stop.
       </div>
     </div>
   );
 }
 
 // ==============================================================================
-// SECTION 4 - FIVE LAWS
+// SECTION 4 FIVE LAWS
 // ==============================================================================
 
 function TheFiveLaws() {
   const laws = [
-    { num:'01', color:'var(--loss)',   title:'Risk first, reward second',
+    { num:'01', color:'#FF4455', bg:'rgba(255,68,85,0.08)', border:'rgba(255,68,85,0.25)',
+      title:'Risk first, reward second',
       body:'Before thinking about profit, know exactly how much you will lose if you are wrong. The target is optional. The stop loss is not.',
-      example:'Nifty trade at 24,500 - define ₹5,000 max risk first. Quantity, stop and target all flow from that number.' },
-    { num:'02', color:'var(--accent)', title:'Sizing is your only real decision',
+      example:'Nifty trade at 24,500: define ₹5,000 max risk first. Quantity, stop and target all flow from that number.' },
+    { num:'02', color:'#4A9EFF', bg:'rgba(74,158,255,0.08)', border:'rgba(74,158,255,0.25)',
+      title:'Sizing is your only real decision',
       body:'Two traders with identical strategies but different position sizing will have completely different outcomes. One survives a 10-trade losing streak. The other does not.',
       example:'At 5% risk per trade, 14 losses cuts capital by 50%. At 1%, you need 69 losses. Same trades. Different survival.' },
-    { num:'03', color:'var(--gain)',   title:'Win rate alone means nothing',
+    { num:'03', color:'#00C896', bg:'rgba(0,200,150,0.08)', border:'rgba(0,200,150,0.25)',
+      title:'Win rate alone means nothing',
       body:'A 70% win rate with poor R:R loses money. A 35% win rate with 3:1 R:R makes excellent returns. Expectancy is the only real measure.',
-      example:'35% wins x ₹3,000 avg gain minus 65% losses x ₹1,000 avg loss = +₹400 per trade. Profitable at 35%.' },
-    { num:'04', color:'var(--pre)',    title:'Preserve capital to stay in the game',
+      example:'35% wins × ₹3,000 gain minus 65% losses × ₹1,000 loss = +₹400 per trade. Profitable at 35%.' },
+    { num:'04', color:'#F59E0B', bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.25)',
+      title:'Preserve capital to stay in the game',
       body:'You cannot profit on days you have no capital. Risk management exists to keep you alive long enough for your edge to compound.',
       example:'A 40% loss needs a 66.7% gain to recover. A 20% loss needs only 25%. Discipline always wins the math.' },
-    { num:'05', color:'var(--india)',  title:'Consistency beats home runs',
+    { num:'05', color:'#A78BFA', bg:'rgba(167,139,250,0.08)', border:'rgba(167,139,250,0.25)',
+      title:'Consistency beats home runs',
       body:'One catastrophic trade can erase months of careful work. The market rewards system and patience, not bravado.',
       example:'10 trades at +₹2,000 each = ₹20,000 carefully built. One revenge trade at -₹18,000 wipes it. Without risk rules, this repeats.' },
   ];
@@ -323,12 +328,16 @@ function TheFiveLaws() {
       <div className="rc-section-sub">Not textbook rules. Patterns observed across thousands of trading outcomes.</div>
       <div className="rc-laws-grid">
         {laws.map(l => (
-          <div key={l.num} className="rc-law-card">
-            <div className="rc-law-num" style={{ color: l.color }}>{l.num}</div>
-            <div className="rc-law-title">{l.title}</div>
+          <div key={l.num} className="rc-law-card" style={{background: l.bg, borderColor: l.border}}>
+            <div className="rc-law-num-row">
+              <span className="rc-law-num" style={{ color: l.color }}>{l.num}</span>
+              <div className="rc-law-num-line" style={{background: l.border}}/>
+            </div>
+            <div className="rc-law-title" style={{color: 'var(--text)'}}>{l.title}</div>
             <div className="rc-law-body">{l.body}</div>
             <div className="rc-law-example">
-              <span className="rc-law-eg-label">Example - </span>{l.example}
+              <span className="rc-law-eg-label" style={{color: l.color}}>Example</span>
+              <span> {l.example}</span>
             </div>
           </div>
         ))}
@@ -446,7 +455,7 @@ function PositionSizeCalc() {
       )}
 
       <WhyMatters insight="Risking 1% means 100 consecutive losses to wipe your account.">
-        <p>Most traders decide quantity from gut feel. That is the same as having no stop loss - your actual risk is undefined.</p>
+        <p>Most traders decide quantity from gut feel. That is the same as having no stop loss your actual risk is undefined.</p>
         <p>Fix your max loss first, then derive quantity. A ₹5L account risking 1% = ₹5,000 per trade. SL 200 points away = 25 shares, not more.</p>
         <p>The difference between 1% and 5% risk per trade is not 5x profit. It is the difference between surviving 10 losses in a row and not.</p>
       </WhyMatters>
@@ -466,11 +475,11 @@ function MaxLossCalc() {
   const dailyPct=(perDay/cap)*100;
   const remaining=Math.max(0,perDay-lost);
   const tradesLeft=perTrade>0?Math.floor(remaining/perTrade):0;
-  const warn=dailyPct>5?`${dailyPct.toFixed(1)}% daily risk is very aggressive — most pros cap at 2-3%`:
-             dailyPct>3?`${dailyPct.toFixed(1)}% daily risk — consider reducing`:null;
+  const warn=dailyPct>5?`${dailyPct.toFixed(1)}% daily risk is very aggressive, most pros cap at 2-3%`:
+             dailyPct>3?`${dailyPct.toFixed(1)}% daily risk, consider reducing`:null;
 
   return (
-    <CalcCard priority title="Max Loss Per Trade" desc="Absolute rupee limit per trade — know your stop before you start">
+    <CalcCard priority title="Max Loss Per Trade" desc="Absolute rupee limit per trade, know your stop before you start">
       <div className="rc-fields-grid">
         <Field label="Account Capital" value={capital} onChange={setCapital} prefix="₹" step={10000}/>
         <Field label="Risk Per Trade" value={rp} onChange={setRp} suffix="%" step={0.1}/>
@@ -498,7 +507,7 @@ function MaxLossCalc() {
       </Results>
       <WhyMatters insight="A daily loss limit stops you trading on tilt after a bad start.">
         <p>A concrete rupee number is harder to violate than a percentage. "I will not lose more than ₹5,000 today" creates a real line.</p>
-        <p>Many professional traders stop the moment they hit their daily max - not because they cannot continue, but because decision quality degrades after losses. The market will be there tomorrow.</p>
+        <p>Many professional traders stop the moment they hit their daily max not because they cannot continue, but because decision quality degrades after losses. The market will be there tomorrow.</p>
       </WhyMatters>
     </CalcCard>
   );
@@ -556,12 +565,12 @@ function SLDistanceCalc() {
 
       {isTight && (
         <div className="rc-suggestion-chip rc-chip-warn">
-          ⚠ SL is very tight ({fmtPct(slPct)}) — may get triggered by noise
+          ⚠ SL is very tight ({fmtPct(slPct)}), may get triggered by noise
         </div>
       )}
       {isLoose && (
         <div className="rc-suggestion-chip rc-chip-warn">
-          ⚠ SL is wide ({fmtPct(slPct)}) — verify this is intentional
+          ⚠ SL is wide ({fmtPct(slPct)}), verify this is intentional
         </div>
       )}
 
@@ -603,18 +612,18 @@ function RRCalc() {
   const verdict=rr>=3?{text:'Excellent setup',color:'var(--gain)'}:
                 rr>=2?{text:'Good setup',color:'var(--gain)'}:
                 rr>=1.5?{text:'Acceptable',color:'var(--accent)'}:
-                rr>=1?{text:'Marginal — only with high win rate',color:'var(--pre)'}:
-                rr>0?{text:'Avoid — R:R too poor',color:'var(--loss)'}:null;
+                rr>=1?{text:'Marginal, only with high win rate',color:'var(--pre)'}:
+                rr>0?{text:'Avoid, R:R too poor',color:'var(--loss)'}:null;
 
   // Bar widths (cap risk at 100px, reward proportional)
   const barMax=100;
   const riskBar=barMax;
   const rewardBar=rr>0?Math.min(rr*barMax,300):0;
 
-  const warn=invalidSL?'SL is on wrong side of entry — check direction':
-             weirdSL?`SL is ${slPct.toFixed(1)}% from entry — verify this is correct`:
-             tightSL?'SL is less than 0.1% from entry — likely an input error':
-             rr>0&&rr<1?'R:R below 1:1 — needs very high win rate':null;
+  const warn=invalidSL?'SL is on wrong side of entry, check direction':
+             weirdSL?`SL is ${slPct.toFixed(1)}% from entry, verify this is correct`:
+             tightSL?'SL is less than 0.1% from entry, likely an input error':
+             rr>0&&rr<1?'R:R below 1:1, needs very high win rate':null;
 
   return (
     <CalcCard title="Risk Reward Ratio" desc="Visualise your trade setup before entering">
@@ -656,7 +665,7 @@ function RRCalc() {
       )}
 
       <WhyMatters insight="At 2:1 R:R you only need to win 34% of trades to break even.">
-        <p>A 2:1 R:R means you only need to be right 34% of the time to break even. Most retail traders chase win rates, not R:R — that is backwards.</p>
+        <p>A 2:1 R:R means you only need to be right 34% of the time to break even. Most retail traders chase win rates, not R:R, that is backwards.</p>
         <p>Never take a trade with R:R below 1.5:1 unless your win rate is consistently above 65%.</p>
       </WhyMatters>
     </CalcCard>
@@ -830,8 +839,8 @@ function BreakevenCalc() {
           )}
         </>
       )}
-      <WhyMatters insight="Premium is not just a cost — it is a hurdle price must clear before you profit.">
-        <p>The underlying does not just need to move in your direction — it needs to move past the breakeven just to not lose money.</p>
+      <WhyMatters insight="Premium is not just a cost, it is a hurdle price must clear before you profit.">
+        <p>The underlying does not just need to move in your direction, it needs to move past the breakeven just to not lose money.</p>
         <p>A ₹24,500 Nifty call at ₹150 premium needs Nifty at ₹24,650 at expiry just to break even. That is a 0.6% move before a single rupee of profit.</p>
       </WhyMatters>
     </CalcCard>
@@ -904,7 +913,7 @@ function MaxContractsCalc() {
       </div>
 
       <WhyMatters insight="Max loss = premium paid. Size so full loss stays within your risk budget.">
-        <p>For option buyers, max loss is the entire premium — not a stop loss estimate. The question is: how many lots can you buy such that if this expires worthless, you stay within your risk limit?</p>
+        <p>For option buyers, max loss is the entire premium, not a stop loss estimate. The question is: how many lots can you buy such that if this expires worthless, you stay within your risk limit?</p>
         <p>Buying 5 lots of a ₹150 Nifty call costs ₹48,750. On a ₹5L account that is 9.75% of capital on a single trade that can go to zero.</p>
       </WhyMatters>
     </CalcCard>
@@ -924,10 +933,10 @@ function MarginUtilCalc() {
   const pct=cap>0?(total/cap)*100:0;
   const freeCap=cap-total;
   const previewPct=newTrade?((total+num(newTrade))/cap)*100:0;
-  const rating=pct>80?{text:'DANGER — forced exit risk',color:'var(--loss)'}:
-               pct>60?{text:'HIGH — limit headroom',color:'var(--pre)'}:
-               pct>40?{text:'MODERATE — monitor',color:'var(--accent)'}:
-               {text:'HEALTHY — strong cushion',color:'var(--gain)'};
+  const rating=pct>80?{text:'DANGER, forced exit risk',color:'var(--loss)'}:
+               pct>60?{text:'HIGH, limit headroom',color:'var(--pre)'}:
+               pct>40?{text:'MODERATE, monitor',color:'var(--accent)'}:
+               {text:'HEALTHY, strong cushion',color:'var(--gain)'};
   const stressMoveNeeded=total>0?freeCap/total*100:Infinity;
   const stressLevel=stressMoveNeeded<10?'HIGH':stressMoveNeeded<25?'MEDIUM':'LOW';
   const stressColor=stressMoveNeeded<10?'var(--loss)':stressMoveNeeded<25?'var(--pre)':'var(--gain)';
@@ -972,7 +981,7 @@ function MarginUtilCalc() {
       </div>
 
       <WhyMatters insight="High utilization means broker can force-close your positions at the worst moment.">
-        <p>Margin utilization measures how much of your capital is locked as collateral. At 80%+, a sharp adverse move can trigger a margin call — your broker squares off positions automatically, often at the worst price.</p>
+        <p>Margin utilization measures how much of your capital is locked as collateral. At 80%+, a sharp adverse move can trigger a margin call, your broker squares off positions automatically, often at the worst price.</p>
         <p>Most professionals keep utilization under 50-60%. This leaves room to hold through volatility without being forced out by mechanics.</p>
       </WhyMatters>
     </CalcCard>
@@ -991,10 +1000,10 @@ function PortfolioRiskCalc() {
   const perTrade=positions.length>0?pct/positions.length:0;
   const maxSafe=cap>0?Math.floor(cap*0.03/Math.max(total/Math.max(positions.length,1),1)):0;
   const streak3=total*3;
-  const verdict=pct>8?{text:'Over-risked — reduce exposure now',color:'var(--loss)'}:
-                pct>5?{text:'Aggressive — monitor closely',color:'var(--pre)'}:
-                pct>3?{text:'Moderate — acceptable',color:'var(--accent)'}:
-                {text:'Safe — well within limits',color:'var(--gain)'};
+  const verdict=pct>8?{text:'Over-risked, reduce exposure now',color:'var(--loss)'}:
+                pct>5?{text:'Aggressive, monitor closely',color:'var(--pre)'}:
+                pct>3?{text:'Moderate, acceptable',color:'var(--accent)'}:
+                {text:'Safe, well within limits',color:'var(--gain)'};
 
   return (
     <CalcCard title="Portfolio Capital at Risk" desc="Total rupee exposure across all open trades">
@@ -1032,7 +1041,7 @@ function PortfolioRiskCalc() {
         </div>
       )}
 
-      <WhyMatters insight="Even 1% per trade becomes 8% total with 8 open positions — all correlated.">
+      <WhyMatters insight="Even 1% per trade becomes 8% total with 8 open positions, all correlated.">
         <p>Even if each trade risks 1%, having 8 open positions means 8% of capital is at risk simultaneously. In a market-wide move, all positions get hit at once.</p>
         <p>Keep total portfolio risk under 5%. A 3% rule means never more than 3 trades open at once at 1% risk each.</p>
       </WhyMatters>
@@ -1050,10 +1059,10 @@ function DrawdownCalc() {
   const loss=cap-remaining;
   const recovery=d<100?(d/(100-d))*100:Infinity;
   const tradesNeeded=r>0?Math.ceil(recovery/r):0;
-  const zone=d>=30?{text:'Very hard recovery — treat as red line',color:'var(--loss)'}:
-             d>=20?{text:'Serious drawdown — act now',color:'var(--pre)'}:
-             d>=10?{text:'Manageable — but address quickly',color:'var(--accent)'}:
-             {text:'Recoverable — stay disciplined',color:'var(--gain)'};
+  const zone=d>=30?{text:'Very hard recovery, treat as red line',color:'var(--loss)'}:
+             d>=20?{text:'Serious drawdown, act now',color:'var(--pre)'}:
+             d>=10?{text:'Manageable, but address quickly',color:'var(--accent)'}:
+             {text:'Recoverable, stay disciplined',color:'var(--gain)'};
 
   // Table for visual curve data
   const points=[5,10,15,20,25,30,40,50].map(v=>({dd:v,rec:(v/(100-v))*100}));
@@ -1100,8 +1109,8 @@ function DrawdownCalc() {
         ))}
       </div>
 
-      <WhyMatters insight="Avoid drawdowns above 20% — recovery becomes exponential, not linear.">
-        <p>A 33% drawdown requires a 50% gain. A 50% drawdown requires a 100% gain. The math is not symmetric — losses compound faster than wins.</p>
+      <WhyMatters insight="Avoid drawdowns above 20%, recovery becomes exponential, not linear.">
+        <p>A 33% drawdown requires a 50% gain. A 50% drawdown requires a 100% gain. The math is not symmetric, losses compound faster than wins.</p>
         <p>Set your max drawdown as a hard rule before you start trading. Many professionals stop trading at 15-20% drawdown and review their system.</p>
       </WhyMatters>
     </CalcCard>
@@ -1120,7 +1129,7 @@ function LossStreakCalc() {
   const daysToFloor=tpd>0?Math.ceil(k/tpd):0;
   // Simplified table: 5, 10, 20, max only
   const tableRows=[5,10,20,k>0?k:50].filter((v,i,a)=>v>0&&a.indexOf(v)===i).sort((a,b)=>a-b).slice(0,4);
-  const safeMsg=k>=50?'Mathematically strong':k>=20?'Reasonable resilience':k>=10?'Acceptable — tighten sizing':' Fragile — reduce risk';
+  const safeMsg=k>=50?'Mathematically strong':k>=20?'Reasonable resilience':k>=10?'Acceptable, tighten sizing':' Fragile, reduce risk';
   const safeColor=k>=50?'var(--gain)':k>=20?'var(--accent)':k>=10?'var(--pre)':'var(--loss)';
 
   return (
@@ -1134,7 +1143,7 @@ function LossStreakCalc() {
 
       {/* Hero */}
       <div className="rc-streak-hero">
-        <div className="rc-streak-val" style={{color:safeColor}}>{k>0?k:'—'}</div>
+        <div className="rc-streak-val" style={{color:safeColor}}>{k>0?k:','}</div>
         <div className="rc-streak-label">consecutive losses you can survive</div>
         <div className="rc-streak-verdict" style={{color:safeColor}}>{safeMsg}</div>
         {tpd>0&&k>0&&<div className="rc-streak-sub">At {tpd} trades/day → {daysToFloor} days of losing streak</div>}
@@ -1247,10 +1256,10 @@ function WinRateCalc() {
   const reverseRR=0.5; // at 50% winrate, min R:R needed
   const minRR50=(1/0.5)-1; // = 1.0
 
-  const ease=minWin<35?{text:'Easy — very achievable system',color:'var(--gain)'}:
-             minWin<45?{text:'Reasonable — most traders can do this',color:'var(--accent)'}:
-             minWin<55?{text:'Difficult — requires strong setup quality',color:'var(--pre)'}:
-             {text:'Very hard — reconsider your R:R',color:'var(--loss)'};
+  const ease=minWin<35?{text:'Easy, very achievable system',color:'var(--gain)'}:
+             minWin<45?{text:'Reasonable, most traders can do this',color:'var(--accent)'}:
+             minWin<55?{text:'Difficult, requires strong setup quality',color:'var(--pre)'}:
+             {text:'Very hard, reconsider your R:R',color:'var(--loss)'};
 
   // Focused table: ±2 around current R:R
   const allRRs=[0.5,1,1.5,2,2.5,3,4,5];
@@ -1271,7 +1280,7 @@ function WinRateCalc() {
       </div>
 
       <div className="rc-suggestion-chip rc-chip-accent">
-        Most traders chase 70%+ win rate unnecessarily — R:R matters more
+        Most traders chase 70%+ win rate unnecessarily, R:R matters more
       </div>
 
       <div className="rc-mini-table" style={{marginTop:8}}>
@@ -1310,7 +1319,7 @@ function ExpectancyCalc() {
   const isPos=exp>0;
 
   return (
-    <CalcCard title="Expectancy Calculator" desc="Average profit per trade — the true measure of any system">
+    <CalcCard title="Expectancy Calculator" desc="Average profit per trade, the true measure of any system">
       <div className="rc-fields-grid">
         <Field label="Win Rate" value={wr} onChange={setWr} suffix="%" step={1}/>
         <Field label="Avg Win (₹)" value={aw} onChange={setAw} prefix="₹" step={100} placeholder="e.g. 2000"/>
@@ -1327,7 +1336,7 @@ function ExpectancyCalc() {
               {isPos?'+':''}{fmtINR(exp)}
             </div>
             <div className="rc-exp-hero-sub">
-              {isPos?'Profitable system':'Losing system — fix R:R or win rate'}
+              {isPos?'Profitable system':'Losing system, fix R:R or win rate'}
             </div>
           </div>
 
@@ -1346,7 +1355,7 @@ function ExpectancyCalc() {
             </div>
           </div>
 
-          <Results warning={!isPos?'This system loses money over time — positive expectancy is the minimum bar':null}>
+          <Results warning={!isPos?'This system loses money over time, positive expectancy is the minimum bar':null}>
             <Result label="Expectancy per trade" value={`${isPos?'+':''}${fmtINR(exp)}`} color={isPos?'gain':'loss'} big/>
             <Result label={`Monthly (${tr} trades)`} value={`${isPos?'+':''}${fmtINR(total)}`} color={isPos?'gain':'loss'}/>
             <Result label="Implied R:R" value={avgL>0?`1:${(avgW/avgL).toFixed(2)}`:'-'} color="accent"/>
@@ -1358,7 +1367,7 @@ function ExpectancyCalc() {
         </>
       )}
 
-      <WhyMatters insight="You earn ₹X per trade on average — even losing runs can't change that long term.">
+      <WhyMatters insight="You earn ₹X per trade on average, even losing runs can't change that long term.">
         <p>Expectancy tells you whether your system makes money. A +₹300 expectancy means each trade adds ₹300 on average over time, regardless of individual outcomes.</p>
         <p>Your goal is not to win every trade. It is to have positive expectancy and take enough trades to let the math work.</p>
       </WhyMatters>
@@ -1407,7 +1416,7 @@ function VolatilityPositionCalc() {
         </div>
       )}
 
-      <Results warning={capUsed>cap*0.5&&qty>0&&pr>0?'Position uses over 50% of capital — consider reducing':null}>
+      <Results warning={capUsed>cap*0.5&&qty>0&&pr>0?'Position uses over 50% of capital, consider reducing':null}>
         <Result label={`Volatility SL (ATR × ${mult})`} value={volStop>0?`₹${volStop.toFixed(2)} per share`:'-'} color="accent"/>
         <Result label="Max Risk Budget" value={fmtINR(maxRisk)} color="loss"/>
         {mode==='F&O Lots'
@@ -1422,7 +1431,7 @@ function VolatilityPositionCalc() {
         </div>
       )}
 
-      <WhyMatters insight="High volatility means fewer shares — same risk, smaller position.">
+      <WhyMatters insight="High volatility means fewer shares, same risk, smaller position.">
         <p>A fixed 200-point stop on Nifty means very different things when ATR is 80 vs 300. Volatility-based sizing lets the market tell you where the stop goes, then you size down to fit the risk.</p>
         <p>During high-volatility events like elections or RBI announcements, ATR expands and your position size should shrink. Same risk, fewer lots.</p>
       </WhyMatters>
@@ -1450,7 +1459,7 @@ function CapitalAllocationCalc() {
   const isOver=totalAlloc>cap*1.01;
 
   return (
-    <CalcCard title="Capital Allocation" desc="Capital split ≠ risk split — know both">
+    <CalcCard title="Capital Allocation" desc="Capital split ≠ risk split, know both">
       <Field label="Total Capital" value={capital} onChange={setCapital} prefix="₹" step={10000}/>
       <Toggle options={['Equal','By Risk %','Custom %']} value={mode} onChange={setMode}/>
       <div className="rc-leg-list">
@@ -1468,16 +1477,16 @@ function CapitalAllocationCalc() {
         ))}
         <button className="rc-add-leg" onClick={()=>setPositions(p=>[...p,{name:'',weight:'25',risk:'1'}])}>+ Add Trade</button>
       </div>
-      <Results warning={isOver?'Over-allocating capital — total exceeds 100%':null}>
+      <Results warning={isOver?'Over-allocating capital, total exceeds 100%':null}>
         <Result label="Total Allocated" value={fmtINR(totalAlloc)} color={isOver?'loss':'accent'} big/>
         <Result label="Unallocated" value={unalloc>=0?fmtINR(unalloc):'Over by '+fmtINR(-unalloc)} color={unalloc>=0?'gain':'loss'}/>
       </Results>
       <div className="rc-suggestion-chip rc-chip-warn">
         4 Nifty trades ≠ diversification. Correlation = concentrated risk.
       </div>
-      <WhyMatters insight="Capital split is not risk split — you need to know both.">
+      <WhyMatters insight="Capital split is not risk split, you need to know both.">
         <p>"I have ₹5L to trade" is not a plan. "I am allocating ₹1.25L to 4 non-correlated setups with max 1% risk each" is a plan.</p>
-        <p>Always check whether your trades are correlated. 4 Nifty-linked positions move together — that is not diversification, it is concentration with extra steps.</p>
+        <p>Always check whether your trades are correlated. 4 Nifty-linked positions move together, that is not diversification, it is concentration with extra steps.</p>
       </WhyMatters>
     </CalcCard>
   );
@@ -1502,7 +1511,7 @@ function GapRiskCalc() {
   const safeQty=gapLoss>0&&q>0?Math.floor(q*10000/gapLoss):0; // qty to cap gap loss at 10k
 
   return (
-    <CalcCard title="Gap Risk Calculator" desc="Your stop loss can fail overnight — this shows what really happens">
+    <CalcCard title="Gap Risk Calculator" desc="Your stop loss can fail overnight, this shows what really happens">
       <DirToggle value={dir} onChange={setDir}/>
       <div className="rc-fields-grid">
         <Field label="Entry Price" value={entry} onChange={setEntry} prefix="₹" step={0.05} placeholder="e.g. 24500"/>
@@ -1512,7 +1521,7 @@ function GapRiskCalc() {
       </div>
 
       {badSL && (
-        <div className="rc-suggestion-chip rc-chip-warn">⚠ SL is {slPct.toFixed(1)}% from entry — check inputs</div>
+        <div className="rc-suggestion-chip rc-chip-warn">⚠ SL is {slPct.toFixed(1)}% from entry, check inputs</div>
       )}
 
       {gapLoss>0 && (
@@ -1542,7 +1551,7 @@ function GapRiskCalc() {
       </div>
 
       <WhyMatters insight="Stop losses do not protect overnight positions. Size for worst-case gaps.">
-        <p>If Nifty closes at 24,500 and opens next day at 24,200, your SL at 24,300 is never triggered — you exit at 24,200. The SL did not fail; it simply was not there when the market opened.</p>
+        <p>If Nifty closes at 24,500 and opens next day at 24,200, your SL at 24,300 is never triggered, you exit at 24,200. The SL did not fail; it simply was not there when the market opened.</p>
         <p>Size overnight positions at 30-50% of normal. The gap risk is the position risk, not the SL distance.</p>
       </WhyMatters>
     </CalcCard>
@@ -1559,11 +1568,11 @@ function LeverageRiskCalc() {
   const marginPct=cap>0?(marg>0?marg/cap:pos/cap)*100:0;
   const wipeoutPct=leverage>0?100/leverage:0;
   const pnlOn10pct=pos*0.10;
-  const riskClass=leverage>10?{text:'EXTREME — danger zone',color:'var(--loss)'}:
-                  leverage>5?{text:'HIGH — reduce immediately',color:'var(--loss)'}:
-                  leverage>3?{text:'AGGRESSIVE — monitor closely',color:'var(--pre)'}:
-                  leverage>1?{text:'MODERATE — acceptable',color:'var(--accent)'}:
-                  {text:'SAFE — well managed',color:'var(--gain)'};
+  const riskClass=leverage>10?{text:'EXTREME, danger zone',color:'var(--loss)'}:
+                  leverage>5?{text:'HIGH, reduce immediately',color:'var(--loss)'}:
+                  leverage>3?{text:'AGGRESSIVE, monitor closely',color:'var(--pre)'}:
+                  leverage>1?{text:'MODERATE, acceptable',color:'var(--accent)'}:
+                  {text:'SAFE, well managed',color:'var(--gain)'};
   const commonMove5=wipeoutPct>0&&wipeoutPct<5;
 
   return (
@@ -1581,7 +1590,7 @@ function LeverageRiskCalc() {
           <div className="rc-lev-hero-val" style={{color:commonMove5?'var(--loss)':leverage>3?'var(--pre)':'var(--gain)'}}>
             {fmtPct(wipeoutPct)}
           </div>
-          {commonMove5 && <div className="rc-lev-hero-warn">A 5% Nifty move happens regularly — you are at risk</div>}
+          {commonMove5 && <div className="rc-lev-hero-warn">A 5% Nifty move happens regularly, you are at risk</div>}
           {!commonMove5 && <div className="rc-lev-hero-sub">A {fmtPct(wipeoutPct)} move would zero your account</div>}
         </div>
       )}
@@ -1609,7 +1618,7 @@ function LeverageRiskCalc() {
       </div>
 
       <WhyMatters insight="Leverage decides survival. A 10% move at 10x = 100% loss.">
-        <p>Most retail F&O traders are at 5-15x leverage without realising it. The "move to wipe out" number is the most important metric — if Nifty regularly moves 5%, and your wipeout is at 5%, you have no safety margin.</p>
+        <p>Most retail F&O traders are at 5-15x leverage without realising it. The "move to wipe out" number is the most important metric, if Nifty regularly moves 5%, and your wipeout is at 5%, you have no safety margin.</p>
         <p>Professional traders rarely go above 3x. Not because they lack capital, but because position survival matters more than maximising exposure.</p>
       </WhyMatters>
     </CalcCard>
@@ -1631,7 +1640,7 @@ function RiskGlossary() {
     { term:'Position Sizing',   def:'How many shares, lots or contracts to trade. The most impactful variable in trading performance, more than entry timing, indicator choice or strategy.' },
     { term:'Risk of Ruin',      def:'Probability that your account eventually reaches zero given your win rate, R:R and risk per trade. Even a profitable system has ruin risk if sized too aggressively.' },
     { term:'ATR',               def:'Average True Range. Measures how much a security moves on average per session. Higher ATR = higher volatility. Used to set stops and size positions for current market conditions.' },
-    { term:'Kelly Criterion',   def:'Formula for optimal bet sizing: f = W - (1-W)/R where W = win rate and R = win/loss ratio. Most traders use half-Kelly to reduce variance. Full Kelly is mathematically optimal but psychologically brutal.' },
+    { term:'Kelly Criterion',   def:'Formula for optimal bet sizing: f = W (1-W)/R where W = win rate and R = win/loss ratio. Most traders use half-Kelly to reduce variance. Full Kelly is mathematically optimal but psychologically brutal.' },
     { term:'Margin Utilization',def:'% of available capital blocked in margin. High utilization increases forced liquidation risk. If markets move against you, the broker may square off positions automatically at the worst moment.' },
     { term:'Breakeven Price',   def:'Price at which a trade neither gains nor loses money. For options buyers: Strike +/- Premium. Your target must always be comfortably beyond breakeven, not just barely past it.' },
   ];
@@ -1754,7 +1763,7 @@ export default function RiskCalcPage() {
         </div>
       </div>
 
-      {/* Calculators — immediately below the top row */}
+      {/* Calculators, immediately below the top row */}
       <div className="rc-section" id="calculators" ref={calcRef}>
         <div className="rc-section-eyebrow">17 calculators across 6 categories</div>
         <div className="rc-section-title">Risk Calculators</div>
