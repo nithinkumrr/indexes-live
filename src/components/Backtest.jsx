@@ -339,7 +339,7 @@ function StrategyCard({ strategy, groupColor }) {
           <div className="edu-card-tagline">{s.tagline}</div>
         </div>
         <div className="edu-card-badges">
-          <span className="edu-badge" style={{ background: isCredit ? 'rgba(0,200,150,0.15)', color: '#00C896', border: '1px solid rgba(0,200,150,0.3)' }}>
+          <span className="edu-badge" style={{ background: isCredit ? 'rgba(0,200,150,0.15)' : 'rgba(255,107,107,0.15)', color: isCredit ? '#00C896' : '#FF6B6B', border: `1px solid ${isCredit ? 'rgba(0,200,150,0.3)' : 'rgba(255,107,107,0.3)'}` }}>
             {isCredit ? 'Credit' : 'Debit'}
           </span>
           <span className="edu-badge" style={{ background: 'rgba(255,255,255,0.05)', color: diffColor, border: `1px solid ${diffColor}40` }}>
@@ -471,6 +471,26 @@ export default function Backtest() {
       {/* Right: education card */}
       <div className="edu-content">
         {strategy && <StrategyCard strategy={strategy} groupColor={group?.color || '#4A9EFF'} />}
+
+        {/* Sensibull promo */}
+        <div className="edu-sensibull">
+          <div className="edu-sensibull-left">
+            <div className="edu-sensibull-logo">sensibull</div>
+            <div className="edu-sensibull-tag">India's #1 Options Trading Platform</div>
+          </div>
+          <div className="edu-sensibull-body">
+            <p>Ready to trade this strategy live? Sensibull lets you build, visualise and execute any options strategy directly from your Zerodha account — with live payoff charts, Greeks, and one-click order placement.</p>
+            <div className="edu-sensibull-features">
+              <span>📊 Live payoff charts</span>
+              <span>🔢 Greeks in real time</span>
+              <span>⚡ One-click execution</span>
+              <span>📅 Strategy builder</span>
+            </div>
+          </div>
+          <a href="https://sensibull.com" target="_blank" rel="noopener noreferrer" className="edu-sensibull-btn">
+            Try Sensibull Free →
+          </a>
+        </div>
       </div>
     </div>
   );
