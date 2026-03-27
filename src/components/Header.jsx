@@ -20,7 +20,7 @@ export default function Header({ lastUpdate, view, setView }) {
     { id: 'fno',       label: 'F&O',        icon: '📈', cls: '' },
     { id: 'gold',      label: 'Gold',       icon: '🥇', cls: 'tab-gold' },
     { id: 'ipo',       label: 'IPO',        icon: '🚀', cls: 'tab-teal' },
-    { id: 'blog',      label: 'Insights',   icon: '📝', cls: 'tab-purple' },
+    { id: 'insights',   label: 'Insights',   icon: '📝', cls: 'tab-purple' },
     { id: 'calc',      label: 'Risk',       icon: '🎯', cls: '' },
   ];
 

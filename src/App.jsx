@@ -20,6 +20,7 @@ const BubbleView   = lazy(() => import('./components/BubbleView'));
 const SentimentTop = lazy(() => import('./components/SentimentTop'));
 const IndiaHeatmap = lazy(() => import('./components/IndiaHeatmap'));
 const FiiDii       = lazy(() => import('./components/FiiDii'));
+const InsightsPage = lazy(() => import('./components/InsightsPage'));
 
 const HASH_MAP = {
   '':           'grid',
@@ -29,6 +30,8 @@ const HASH_MAP = {
   'gold':       'gold',
   'ipo':        'ipo',
   'calc':       'calc',
+  'insights':   'insights',
+  'blog':       'insights',
 };
 
 const VIEW_HASH = {
@@ -38,9 +41,10 @@ const VIEW_HASH = {
   'gold':      'gold',
   'ipo':       'ipo',
   'calc':      'calc',
+  'insights':  'insights',
 };
 
-const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc']);
+const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc', 'insights']);
 
 function getViewFromHash() {
   const hash = window.location.hash.replace('#/', '').replace('#', '').toLowerCase();
@@ -91,6 +95,7 @@ export default function App() {
           view === 'gold'      ? <GoldPage /> :
           view === 'ipo'       ? <IpoPage /> :
           view === 'calc'      ? <RiskCalcPage /> :
+          view === 'insights'  ? <InsightsPage data={data} nseData={nseData} /> :
           null
         ) : (
           <>
