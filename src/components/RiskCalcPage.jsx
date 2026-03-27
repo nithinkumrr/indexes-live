@@ -666,28 +666,120 @@ function RRCalc() {
 function BreakevenCalc() {
   const [strike,setStrike]=useState('');
   const [prem,setPrem]=useState('');
-  const [legs,setLegs]=useState([]);
+  const [spot,setSpot]=useState('');
+  const [legs,setLegs]=useState([{type:'call',action:'buy',strike:'',premium:'',qty:'1'}]);
   const [mode,setMode]=useState('Single Leg');
+  const [lotSize,setLotSize]=useState('65');
 
-  const str=num(strike),pr=num(prem);
+  const str=num(strike),pr=num(prem),sp=num(spot);
   const addLeg=()=>setLegs(l=>[...l,{type:'call',action:'buy',strike:'',premium:'',qty:'1'}]);
   const removeLeg=i=>setLegs(l=>l.filter((_,j)=>j!==i));
   const upd=(i,k,v)=>setLegs(l=>l.map((x,j)=>j===i?{...x,[k]:v}:x));
-  const netPrem=legs.reduce((acc,l)=>acc+(l.action==='buy'?-1:1)*num(l.premium)*num(l.qty),0);
+  const ls=num(lotSize);
+
+  // Multi-leg calculations
+  const netPremPerUnit=legs.reduce((acc,l)=>{
+    const sign=l.action==='buy'?-1:1;
+    return acc+sign*num(l.premium)*num(l.qty);
+  },0);
+  const isCredit=netPremPerUnit>0;
+  const netPremAbs=Math.abs(netPremPerUnit);
+  const totalCost=netPremAbs*ls;
+
+  // Detect strategy from legs
+  function detectStrategy(legs) {
+    const valid=legs.filter(l=>l.strike&&l.premium);
+    if(valid.length===2) {
+      const [a,b]=valid;
+      if(a.action==='buy'&&b.action==='buy'&&a.type==='call'&&b.type==='put'&&a.strike===b.strike) return 'Long Straddle';
+      if(a.action==='sell'&&b.action==='sell'&&a.type==='call'&&b.type==='put'&&a.strike===b.strike) return 'Short Straddle';
+      if(a.action==='buy'&&b.action==='buy'&&a.type==='call'&&b.type==='put') return 'Long Strangle';
+      if(a.action==='sell'&&b.action==='sell'&&a.type==='call'&&b.type==='put') return 'Short Strangle';
+      if(a.type==='call'&&b.type==='call'&&a.action==='buy'&&b.action==='sell') return 'Bull Call Spread';
+      if(a.type==='call'&&b.type==='call'&&a.action==='sell'&&b.action==='buy') return 'Bear Call Spread';
+      if(a.type==='put'&&b.type==='put'&&a.action==='buy'&&b.action==='sell') return 'Bear Put Spread';
+      if(a.type==='put'&&b.type==='put'&&a.action==='sell'&&b.action==='buy') return 'Bull Put Spread';
+    }
+    return null;
+  }
+
+  // Multi-leg breakevens (simplified for common strategies)
+  function getBreakevens(legs) {
+    const valid=legs.filter(l=>l.strike&&l.premium);
+    if(!valid.length) return [];
+    const net=legs.reduce((acc,l)=>{
+      const sign=l.action==='buy'?-1:1;
+      return acc+sign*num(l.premium)*num(l.qty);
+    },0); // positive=credit
+
+    // For straddle/strangle-type: 2 breakevens
+    const calls=valid.filter(l=>l.type==='call');
+    const puts=valid.filter(l=>l.type==='put');
+    if(calls.length===1&&puts.length===1) {
+      const cStrike=num(calls[0].strike),pStrike=num(puts[0].strike);
+      const atm=Math.max(cStrike,pStrike);
+      return [
+        { label:'Lower BE', price: Math.min(cStrike,pStrike)+net, dir:'below' },
+        { label:'Upper BE', price: Math.max(cStrike,pStrike)-net, dir:'above' },
+      ].filter(b=>b.price>0);
+    }
+    // For single-direction spreads
+    if(calls.length===2&&puts.length===0) {
+      const sorted=calls.sort((a,b)=>num(a.strike)-num(b.strike));
+      const lowerStrike=num(sorted[0].strike);
+      return [{ label:'Breakeven', price: lowerStrike+Math.abs(net), dir:'above' }];
+    }
+    if(calls.length===0&&puts.length===2) {
+      const sorted=puts.sort((a,b)=>num(b.strike)-num(a.strike));
+      const upperStrike=num(sorted[0].strike);
+      return [{ label:'Breakeven', price: upperStrike-Math.abs(net), dir:'below' }];
+    }
+    return [];
+  }
+
+  const breakevens=mode==='Multi-Leg'?getBreakevens(legs):[];
+  const strategy=mode==='Multi-Leg'?detectStrategy(legs):null;
+  const callBE=str>0&&pr>0?str+pr:0;
+  const putBE=str>0&&pr>0?str-pr:0;
+  const callMovePct=sp>0&&callBE>0?((callBE-sp)/sp)*100:str>0&&callBE>0?null:null;
+  const putMovePct=sp>0&&putBE>0?((sp-putBE)/sp)*100:null;
 
   return (
-    <CalcCard title="Break-even Price (Options)" desc="Exact breakeven for calls, puts and multi-leg strategies">
+    <CalcCard title="Break-even Price (Options)" desc="Where must price be at expiry for this trade to profit?">
       <Toggle options={['Single Leg','Multi-Leg']} value={mode} onChange={setMode}/>
       {mode==='Single Leg' ? (
         <>
           <div className="rc-fields-grid">
             <Field label="Strike Price" value={strike} onChange={setStrike} prefix="₹" step={50} placeholder="e.g. 24500"/>
             <Field label="Premium Paid" value={prem} onChange={setPrem} prefix="₹" step={0.5} placeholder="e.g. 120"/>
+            <Field label="Current Spot (optional)" value={spot} onChange={setSpot} prefix="₹" step={50} placeholder="e.g. 24500"/>
+            <Select label="Instrument (for lot cost)" value={lotSize} onChange={setLotSize} options={LOT_SIZES}/>
           </div>
-          <Results>
-            <Result label="Call Breakeven" value={str+pr>0?`₹${(str+pr).toFixed(2)}`:'-'} color="gain" sub="Strike + Premium"/>
-            <Result label="Put Breakeven"  value={str-pr>0?`₹${(str-pr).toFixed(2)}`:'-'} color="loss" sub="Strike - Premium"/>
-          </Results>
+
+          {callBE>0 && (
+            <div className="rc-be-block">
+              <div className="rc-be-row">
+                <div className="rc-be-side">
+                  <div className="rc-be-label">Call buyer profits above</div>
+                  <div className="rc-be-price" style={{color:'var(--gain)'}}>₹{callBE.toFixed(2)}</div>
+                  {sp>0 && <div className="rc-be-move">Needs +{((callBE-sp)/sp*100).toFixed(2)}% move</div>}
+                  <div className="rc-be-hint">You need Nifty above ₹{callBE.toFixed(0)} at expiry to profit</div>
+                </div>
+                <div className="rc-be-divider"/>
+                <div className="rc-be-side">
+                  <div className="rc-be-label">Put buyer profits below</div>
+                  <div className="rc-be-price" style={{color:'var(--loss)'}}>₹{putBE.toFixed(2)}</div>
+                  {sp>0 && <div className="rc-be-move">Needs -{((sp-putBE)/sp*100).toFixed(2)}% move</div>}
+                  <div className="rc-be-hint">You need Nifty below ₹{putBE.toFixed(0)} at expiry to profit</div>
+                </div>
+              </div>
+              <div className="rc-be-cost-row">
+                <span>Cost per lot</span>
+                <span style={{color:'var(--loss)',fontWeight:700}}>{fmtINR(pr*ls)}</span>
+                <span style={{color:'var(--text3)'}}>({ls} shares × ₹{pr})</span>
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <>
@@ -703,21 +795,43 @@ function BreakevenCalc() {
                 <input className="rc-mini-input" placeholder="Strike" type="number" value={l.strike} onChange={e=>upd(i,'strike',e.target.value)}/>
                 <input className="rc-mini-input" placeholder="Premium" type="number" value={l.premium} onChange={e=>upd(i,'premium',e.target.value)}/>
                 <input className="rc-mini-input" placeholder="Qty" type="number" value={l.qty} onChange={e=>upd(i,'qty',e.target.value)} style={{width:44}}/>
-                <button className="rc-leg-remove" onClick={()=>removeLeg(i)}>x</button>
+                <button className="rc-leg-remove" onClick={()=>removeLeg(i)}>×</button>
               </div>
             ))}
             <button className="rc-add-leg" onClick={addLeg}>+ Add Leg</button>
           </div>
-          {legs.length>0 && (
-            <Results>
-              <Result label="Net Premium" value={`₹${Math.abs(netPrem).toFixed(2)}`}
-                color={netPrem>=0?'gain':'loss'} sub={netPrem>=0?'Net Credit':'Net Debit'}/>
-            </Results>
+
+          {legs.length>0 && netPremAbs>0 && (
+            <>
+              {strategy && (
+                <div className={`rc-suggestion-chip ${isCredit?'rc-chip-gain':'rc-chip-accent'}`}>
+                  📊 Detected: {strategy}
+                </div>
+              )}
+
+              <div className={`rc-net-prem-hero ${isCredit?'rc-net-credit':'rc-net-debit'}`}>
+                <div className="rc-net-prem-label">{isCredit?'Net Credit Received':'Net Debit Paid'}</div>
+                <div className="rc-net-prem-val">₹{netPremAbs.toFixed(2)} per unit</div>
+                <div className="rc-net-prem-lot">₹{totalCost.toFixed(0)} per lot ({ls} shares)</div>
+              </div>
+
+              {breakevens.length>0 && (
+                <div className="rc-be-multi">
+                  {breakevens.map((b,i)=>(
+                    <div key={i} className="rc-be-multi-row">
+                      <span className="rc-be-multi-label">{b.label}</span>
+                      <span className="rc-be-multi-price">₹{b.price.toFixed(2)}</span>
+                      <span className="rc-be-multi-hint">profit if Nifty moves {b.dir} this</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </>
       )}
-      <WhyMatters insight="Premium is not just a cost — it is a hurdle you must clear first.">
-        <p>The underlying does not just need to move in your direction - it needs to move past the breakeven just to not lose money. Premium is a hurdle, not just a cost.</p>
+      <WhyMatters insight="Premium is not just a cost — it is a hurdle price must clear before you profit.">
+        <p>The underlying does not just need to move in your direction — it needs to move past the breakeven just to not lose money.</p>
         <p>A ₹24,500 Nifty call at ₹150 premium needs Nifty at ₹24,650 at expiry just to break even. That is a 0.6% move before a single rupee of profit.</p>
       </WhyMatters>
     </CalcCard>
@@ -729,36 +843,74 @@ function MaxContractsCalc() {
   const [rp,setRp]=useState('2');
   const [prem,setPrem]=useState('');
   const [lotSize,setLotSize]=useState('65');
+  const [traderMode,setTraderMode]=useState('Buyer');
   const [margin,setMargin]=useState('');
 
   const cap=num(capital),risk=num(rp),pr=num(prem),ls=num(lotSize),marg=num(margin);
-  const maxRisk=cap*risk/100, costPerLot=pr*ls;
-  const fromRisk=costPerLot>0?Math.floor(maxRisk/costPerLot):0;
-  const fromMargin=marg>0?Math.floor(cap/marg):0;
-  const maxLots=marg>0?Math.min(fromRisk,fromMargin):fromRisk;
+  const maxRisk=cap*risk/100;
+  const costPerLot=pr*ls;
+  const maxLots=traderMode==='Buyer'
+    ? (costPerLot>0?Math.floor(maxRisk/costPerLot):0)
+    : (marg>0?Math.floor(cap*0.8/marg):0); // sellers: 80% of capital in margin
+  const totalCost=maxLots*costPerLot;
+  const unusedRisk=maxRisk-totalCost;
+  const nextLotCost=(maxLots+1)*costPerLot;
+  const capitalUsedPct=cap>0?(totalCost/cap)*100:0;
 
   return (
-    <CalcCard title="Max Contracts Allowed" desc="Max lots based on premium and defined risk budget">
+    <CalcCard title="Max Contracts Allowed" desc="How many lots can you take within your risk budget?">
       <div className="rc-fields-grid">
         <Field label="Account Capital" value={capital} onChange={setCapital} prefix="₹" step={10000}/>
         <Field label="Risk Per Trade" value={rp} onChange={setRp} suffix="%" step={0.5}/>
         <Field label="Option Premium" value={prem} onChange={setPrem} prefix="₹" step={0.5} placeholder="e.g. 150"/>
         <Select label="Instrument" value={lotSize} onChange={setLotSize} options={LOT_SIZES}/>
-        <Field label="Margin Per Lot" value={margin} onChange={setMargin} prefix="₹" step={1000} placeholder="For sellers" note="optional"/>
       </div>
+
+      <Toggle options={['Buyer','Seller']} value={traderMode} onChange={setTraderMode}/>
+      {traderMode==='Seller' && (
+        <Field label="Margin Per Lot" value={margin} onChange={setMargin} prefix="₹" step={1000} placeholder="e.g. 80000"/>
+      )}
+
+      {/* Hero */}
+      <div className={`rc-lots-hero ${maxLots===0?'rc-lots-hero-zero':''}`}>
+        <div className="rc-lots-hero-label">You can take</div>
+        <div className="rc-lots-hero-val" style={{color:maxLots>0?'var(--gain)':'var(--loss)'}}>
+          {maxLots>0?`${maxLots} lot${maxLots>1?'s':''}`:costPerLot>0?'0 lots':'Enter premium'}
+        </div>
+        {maxLots>0&&costPerLot>0&&<div className="rc-lots-hero-sub">Total outflow: {fmtINR(totalCost)} ({capitalUsedPct.toFixed(2)}% of capital)</div>}
+      </div>
+
       <Results>
-        <Result label="Max Risk Budget" value={fmtINR(maxRisk)} color="loss"/>
+        <Result label="Risk Budget" value={fmtINR(maxRisk)} color="loss"/>
         <Result label="Cost Per Lot" value={costPerLot>0?fmtINR(costPerLot):'-'} color="accent"/>
-        <Result label="Max Lots" value={maxLots>0?`${maxLots} lots`:'-'} color="gain"
-          sub={maxLots>0?`Total outflow: ${fmtINR(maxLots*costPerLot)}`:''}/>
+        {maxLots>0 && <>
+          <Result label="Total Cost ({maxLots} lots)" value={fmtINR(totalCost)} color="loss" big/>
+          <Result label="Unused Risk" value={unusedRisk>0?fmtINR(unusedRisk):'-'}
+            color="gain" sub="budget remaining"/>
+          <Result label="Capital Used" value={fmtPct(capitalUsedPct)} color="accent"/>
+        </>}
+        {costPerLot>0 && (
+          <div className="rc-result-row" style={{background:'rgba(255,68,85,0.05)'}}>
+            <span className="rc-result-label">Next lot ({maxLots+1}) cost</span>
+            <span className="rc-result-val" style={{color:'var(--loss)'}}>
+              {fmtINR(nextLotCost)} → exceeds budget by {fmtINR(nextLotCost-maxRisk)}
+            </span>
+          </div>
+        )}
       </Results>
-      <WhyMatters>
-        <p>For option buyers, max loss is the entire premium. The question is not what your stop is - it is how many lots can you buy such that if this expires worthless, you are within your risk limit.</p>
+
+      <div className="rc-suggestion-chip rc-chip-warn" style={{marginTop:0}}>
+        Worst case: {fmtINR(totalCost)} loss if {maxLots} lot{maxLots!==1?'s':''} expire worthless
+      </div>
+
+      <WhyMatters insight="Max loss = premium paid. Size so full loss stays within your risk budget.">
+        <p>For option buyers, max loss is the entire premium — not a stop loss estimate. The question is: how many lots can you buy such that if this expires worthless, you stay within your risk limit?</p>
         <p>Buying 5 lots of a ₹150 Nifty call costs ₹48,750. On a ₹5L account that is 9.75% of capital on a single trade that can go to zero.</p>
       </WhyMatters>
     </CalcCard>
   );
 }
+
 
 // ============================================================================== Portfolio ─────────────────────────────────────────────────────────────────
 
