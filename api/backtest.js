@@ -180,32 +180,67 @@ async function getVIXHistory(fromYear, toYear) {
 }
 
 
-// ── Lookup real premium from bhav copy ───────────────────────────────────────
-async function getRealPremium(index, dateStr, strike, optType) {
-  try {
-    const data = await kv.get(`bhav:${index}:${dateStr}`);
-    if (!data) return null;
-    const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-    const key = `${strike}${optType}`;
-    return parsed[key]?.close || parsed[key] || null;
-  } catch (_) { return null; }
-}
-
+// ── Lookup real premium from Supabase bhav_options table ─────────────────────
 async function getBhavPremiums(index, dateStr, atm, step, strikePct) {
-  // Try to get real premiums from bhav copy
-  const keys = [
-    [atm,                     'CE'], [atm,                     'PE'],
-    [atm + step*(strikePct+1), 'CE'], [atm - step*(strikePct+1), 'PE'],
-    [atm + step*(strikePct+2), 'CE'], [atm - step*(strikePct+2), 'PE'],
-  ];
-  const results = await Promise.all(keys.map(([k, t]) => getRealPremium(index, dateStr, k, t)));
-  if (results.every(r => r === null)) return null; // no bhav data for this date
-  return {
-    atmC:  results[0], atmP:  results[1],
-    otm1C: results[2], otm1P: results[3],
-    otm2C: results[4], otm2P: results[5],
-    source: 'bhav',
-  };
+  try {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+    if (!supabaseUrl || !supabaseKey) return null;
+
+    // Find nearest expiry for this date
+    const d = new Date(dateStr);
+    const EXPIRY_DOW = { NIFTY: 4, BANKNIFTY: 3, FINNIFTY: 4, MIDCPNIFTY: 4, SENSEX: 5 };
+    const dow = EXPIRY_DOW[index] ?? 4;
+    const exp = new Date(d);
+    exp.setDate(exp.getDate() + 1);
+    while (exp.getDay() !== dow) exp.setDate(exp.getDate() + 1);
+    // Try up to 4 weekly expiries ahead in case nearest has no data
+    const expiries = [];
+    for (let i = 0; i < 4; i++) {
+      const e = new Date(exp);
+      e.setDate(e.getDate() + i * 7);
+      expiries.push(e.toISOString().slice(0, 10));
+    }
+
+    const strikes = [
+      atm,
+      atm + step * (strikePct + 1),
+      atm - step * (strikePct + 1),
+      atm + step * (strikePct + 2),
+      atm - step * (strikePct + 2),
+    ];
+
+    const url = `${supabaseUrl}/rest/v1/bhav_options?select=strike,type,close,settle&symbol=eq.${index}&date=eq.${dateStr}&strike=in.(${strikes.join(',')})&expiry=in.(${expiries.join(',')})&order=expiry.asc`;
+
+    const r = await fetch(url, {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+    });
+
+    if (!r.ok) return null;
+    const rows = await r.json();
+    if (!rows || rows.length === 0) return null;
+
+    // Build lookup: strike+type -> close price
+    const map = {};
+    for (const row of rows) {
+      const k = `${row.strike}${row.type}`;
+      if (!map[k]) map[k] = row.close || row.settle || null;
+    }
+
+    const atmC  = map[`${atm}CE`]  ?? null;
+    const atmP  = map[`${atm}PE`]  ?? null;
+    const otm1C = map[`${atm + step * (strikePct + 1)}CE`] ?? null;
+    const otm1P = map[`${atm - step * (strikePct + 1)}PE`] ?? null;
+    const otm2C = map[`${atm + step * (strikePct + 2)}CE`] ?? null;
+    const otm2P = map[`${atm - step * (strikePct + 2)}PE`] ?? null;
+
+    if (atmC === null && atmP === null) return null;
+
+    return { atmC, atmP, otm1C, otm1P, otm2C, otm2P, source: 'bhav' };
+  } catch (_) { return null; }
 }
 
 // ── Expiry logic ─────────────────────────────────────────────────────────────
@@ -458,7 +493,7 @@ export default async function handler(req, res) {
 
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:v5:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v6:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) {
