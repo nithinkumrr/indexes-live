@@ -187,7 +187,7 @@ async function fetchAllBhavPremiums(index, fromYear, toYear) {
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
     if (!supabaseUrl || !supabaseKey) return null;
 
-    const cacheKey = `bhav:v3:${index}:${fromYear}:${toYear}`;
+    const cacheKey = `bhav:v4:${index}:${fromYear}:${toYear}`;
     try {
       const cached = await kv.get(cacheKey);
       if (cached) return typeof cached === 'string' ? JSON.parse(cached) : cached;
@@ -216,9 +216,9 @@ async function fetchAllBhavPremiums(index, fromYear, toYear) {
     // Fetch all pages in parallel (max 10 concurrent)
     const pageSize = 1000;
     const totalPages = Math.ceil(totalRows / pageSize);
-    const baseUrl = `${supabaseUrl}/rest/v1/bhav_options?select=date,expiry,strike,type,close,settle&symbol=eq.${index}&date=gte.${fromDate}&date=lte.${toDate}&order=date.asc`;
+    const baseUrl = `${supabaseUrl}/rest/v1/bhav_options?select=date,expiry,strike,type,open,close,settle&symbol=eq.${index}&date=gte.${fromDate}&date=lte.${toDate}&order=date.asc`;
 
-    const CONCURRENCY = 10;
+    const CONCURRENCY = 5;
     let allRows = [];
 
     for (let batch = 0; batch < totalPages; batch += CONCURRENCY) {
@@ -550,7 +550,7 @@ export default async function handler(req, res) {
 
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:v9:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v10:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) {

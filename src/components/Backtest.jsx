@@ -260,8 +260,7 @@ function TradeList({ results }) {
 // ── Main Backtest Component ──────────────────────────────────────────────────
 // ── How It Works Panel ───────────────────────────────────────────────────────
 function HowItWorks({ results, params }) {
-  const [open, setOpen] = useState(false);
-  const isReal = results?.dataSource === 'nse_bhav';
+  const [open, setOpen] = useState(true);
   const coverage = results?.bhavCoverage || 0;
 
   return (
@@ -277,45 +276,43 @@ function HowItWorks({ results, params }) {
           <div className="bt-hiw-section">
             <div className="bt-hiw-title">📊 Data Source</div>
             <div className="bt-hiw-text">
-              {isReal
-                ? `This backtest used real NSE bhav copy data for ${coverage}% of trades. The remaining ${100 - coverage}% used Black-Scholes pricing where real data wasn't available (older dates or missing strikes).`
-                : 'This backtest used Black-Scholes mathematical pricing to estimate option premiums. No real market data was used.'}
+              This backtest uses real NSE bhav copy data (official end-of-day records published by NSE). {coverage > 0 ? `${coverage}% of trades in this run used real NSE prices.` : ''} For strikes or dates where bhav data is unavailable, Black-Scholes pricing is used as a fallback.
             </div>
           </div>
 
           <div className="bt-hiw-section">
-            <div className="bt-hiw-title">⏱ Entry & Exit Logic</div>
+            <div className="bt-hiw-title">⏱ Entry and Exit Logic</div>
             <div className="bt-hiw-text">
-              <b>Entry:</b> Strategy is entered at the <b>opening price (9:15 AM)</b> of the option on the trade date. This is the actual NSE recorded opening price from bhav data.<br/><br/>
-              <b>Exit:</b> Strategy exits at the <b>settlement price (3:30 PM)</b> on expiry day. This is the official NSE settlement price used for F&O settlement.
+              <b>Entry:</b> Strategy is entered at the opening price (9:15 AM) of the option on the trade date. This is the actual NSE recorded opening price from bhav data.<br/><br/>
+              <b>Exit:</b> Strategy exits at the settlement price (3:30 PM) on expiry day. This is the official NSE settlement price used for F&O settlement.
             </div>
           </div>
 
           <div className="bt-hiw-section">
             <div className="bt-hiw-title">🎯 Accuracy</div>
             <div className="bt-hiw-text">
-              <b>~85–90% accurate</b> for strategies held to expiry (Short Straddle, Iron Condor, etc.) — because both entry and exit use real NSE prices.<br/><br/>
-              <b>~60–70% accurate</b> for strategies with intraday stop-loss or target — because we don't have intraday tick data to know if SL/TP was hit during the day.<br/><br/>
-              The <b>direction</b> of results (profit vs loss) is almost always correct. The exact P&L numbers may vary slightly from real trading.
+              <b>85 to 90% accurate</b> for strategies held to expiry (Short Straddle, Iron Condor etc.) because both entry and exit use real NSE prices.<br/><br/>
+              <b>60 to 70% accurate</b> for strategies with intraday stop-loss or target because intraday tick data is not available to verify if SL or TP was hit during the day.<br/><br/>
+              The direction of results (profit vs loss) is almost always correct. The exact P&L numbers may vary slightly from actual trading.
             </div>
           </div>
 
           <div className="bt-hiw-section">
-            <div className="bt-hiw-title">⚠ What's Not Captured</div>
+            <div className="bt-hiw-title">⚠ What is Not Captured</div>
             <div className="bt-hiw-text">
-              • Brokerage and transaction costs (STT, exchange charges, GST)<br/>
-              • Slippage — real trades may get worse prices than the opening print<br/>
-              • Liquidity — deep OTM strikes may not be easily tradeable at quoted prices<br/>
-              • Corporate events, circuit breakers, and extreme illiquidity days
+              Brokerage and transaction costs (STT, exchange charges, GST)<br/>
+              Slippage: real trades may get worse prices than the opening print<br/>
+              Liquidity: deep OTM strikes may not be easily tradeable at quoted prices<br/>
+              Corporate events, circuit breakers, and extreme illiquidity days
             </div>
           </div>
 
           <div className="bt-hiw-section">
             <div className="bt-hiw-title">📅 Data Coverage</div>
             <div className="bt-hiw-text">
-              NIFTY & BANKNIFTY: Jan 2016 – Mar 2026 (10 years)<br/>
-              FINNIFTY: Jan 2021 – Mar 2026 (launched Jan 2021)<br/>
-              MIDCPNIFTY: Jan 2022 – Mar 2026 (launched mid 2022)<br/>
+              NIFTY and BANKNIFTY: Jan 2016 to Mar 2026 (10 years)<br/>
+              FINNIFTY: Jan 2021 to Mar 2026 (launched Jan 2021)<br/>
+              MIDCPNIFTY: Jan 2022 to Mar 2026 (launched mid 2022)<br/>
               Data is updated daily on trading days.
             </div>
           </div>
@@ -628,7 +625,7 @@ export default function Backtest({ data }) {
             <HowItWorks results={results} params={params} />
 
             <div className="bt-disclaimer">
-              ⚠ Entry premiums use NSE EOD settlement prices (2016–present). Exit values are calculated at expiry using intrinsic value — accurate for strategies held to expiry (~80–85% accuracy). Intraday stop-loss and target levels are estimated. For educational reference only. Past performance does not guarantee future results. Not investment advice.
+              ⚠ Results are based on NSE bhav copy data (opening price for entry, settlement price for exit). Accuracy is 85 to 90% for strategies held to expiry. Stop-loss and target results are estimated as intraday tick data is not available. Brokerage, STT and slippage are not included. For educational reference only. Past performance does not guarantee future results. Not investment advice.
             </div>
           </div>
         )}
