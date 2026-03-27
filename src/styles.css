@@ -4039,7 +4039,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 }
 .spc-legs-list {
   padding: 10px; display: flex; flex-direction: column;
-  gap: 8px; flex: 1; overflow-y: auto;
+  gap: 8px;
 }
 
 /* Leg card — rich, addictive entry */
