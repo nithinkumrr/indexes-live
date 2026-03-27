@@ -110,7 +110,7 @@ function getTodayInfo() {
     subAction = 'Theta decay is fastest today. Close or roll by 3:20 PM.';
     expiryNote = 'Nifty Weekly Expiry today';
   } else if (isExpiryWeek) {
-    riskLevel = 'ELEVATED'; action = 'Expiry week. Prefer selling premium.';
+    riskLevel = 'ELEVATED'; action = 'Expiry week. Time decay accelerates from here.';
     subAction = `${daysToExpiry} day${daysToExpiry > 1 ? 's' : ''} to expiry. Decay accelerating.`;
     expiryNote = isMonthlyExpiry ? 'Nifty Monthly Expiry this week' : 'Nifty Weekly Expiry this week';
   } else {
@@ -600,16 +600,16 @@ function TodayPlaybook() {
     marketType = 'Market Holiday'; strategy = 'No trading today';
     tips = [t.holidayName || 'Market closed', 'Use today to review open positions', 'Plan entries for next trading day', 'No SL orders needed'];
   } else if (t.riskLevel === 'EXTREME') {
-    marketType = 'Monthly Expiry Day'; strategy = 'Exit, do not enter';
+    marketType = 'Monthly Expiry Day'; strategy = 'High gamma risk, exits before close';
     tips = ['Maximum gamma risk', 'Avoid new positions after 1 PM', 'Spreads only if entering', 'Close all before 3:20 PM'];
   } else if (t.riskLevel === 'HIGH') {
-    marketType = 'Weekly Expiry Day'; strategy = 'Sell premium with tight exits';
+    marketType = 'Weekly Expiry Day'; strategy = 'Fastest theta decay of the week';
     tips = ['Theta decay is fastest today', 'Avoid buying after 2 PM', 'OTM selling works if trend is clear', 'Roll or close by 3:20 PM'];
   } else if (t.riskLevel === 'ELEVATED') {
-    marketType = 'Expiry Week'; strategy = 'Prefer selling premium';
-    tips = ['Decay accelerating this week', 'Selling strategies have edge', 'Keep position sizes moderate', `${t.daysToExpiry} days to expiry`];
+    marketType = 'Expiry Week'; strategy = 'Time decay accelerating this week';
+    tips = ['Decay accelerating this week', 'Selling strategies have statistical edge', 'Keep position sizes moderate', `${t.daysToExpiry} days to expiry`];
   } else {
-    marketType = 'Normal Trading Day'; strategy = 'Standard rules apply';
+    marketType = 'Normal Trading Day'; strategy = 'No structural bias from expiry';
     tips = ['No major expiry pressure', 'Both buying and selling viable', 'Follow your system rules', 'Standard position sizing'];
   }
 
@@ -627,8 +627,8 @@ function TodayPlaybook() {
           <span className="ref-playbook-val">{marketType}</span>
         </div>
         <div className="ref-playbook-row">
-          <span className="ref-playbook-lbl">Strategy</span>
-          <span className="ref-playbook-val" style={{color:'#4A9EFF'}}>{strategy}</span>
+          <span className="ref-playbook-lbl">Context</span>
+          <span className="ref-playbook-val" style={{color:'var(--text2)'}}>{strategy}</span>
         </div>
         <div className="ref-playbook-row">
           <span className="ref-playbook-lbl">Risk level</span>
@@ -641,6 +641,9 @@ function TodayPlaybook() {
             <span style={{color:riskColor}}>→</span> {tip}
           </div>
         ))}
+      </div>
+      <div className="ref-playbook-disclaimer">
+        Educational context only. Not investment advice. Always apply your own judgment.
       </div>
     </div>
   );
