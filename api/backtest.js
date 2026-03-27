@@ -187,7 +187,7 @@ async function fetchAllBhavPremiums(index, fromYear, toYear) {
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
     if (!supabaseUrl || !supabaseKey) return null;
 
-    const cacheKey = `bhav:v4:${index}:${fromYear}:${toYear}`;
+    const cacheKey = `bhav:v5:${index}:${fromYear}:${toYear}`;
     try {
       const cached = await kv.get(cacheKey);
       if (cached) return typeof cached === 'string' ? JSON.parse(cached) : cached;
@@ -281,7 +281,7 @@ function getBhavPremiumsFromMap(bhavMap, index, dateStr, atm, step, strikePct) {
 
   const get = (strike, type) => {
     const row = strikes[`${strike}${type}`];
-    return row ? { entry: row.open, exit: row.settle } : null;
+    return row ? { entry: row.open || row.close || row.settle, exit: row.settle || row.close } : null;
   };
 
   const atmC  = get(atm,                          'CE');
@@ -550,7 +550,7 @@ export default async function handler(req, res) {
 
   if (!strategy) return res.status(400).json({ error: 'strategy required' });
 
-  const cacheKey = `bt:v10:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
+  const cacheKey = `bt:v11:${strategy}:${index}:${expiry}:${dte}:${lots}:${strikePct}:${width}:${fromYear}:${toYear}:${slPct}:${tpPct}`;
   try {
     const cached = await kv.get(cacheKey);
     if (cached) {
