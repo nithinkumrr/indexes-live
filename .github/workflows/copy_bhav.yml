@@ -19,7 +19,7 @@ jobs:
             -h aws-0-ap-southeast-1.pooler.supabase.com \
             -U postgres.axobtyzujcbckkbsakpb \
             -d postgres \
-            -p 6543 \
+            -p 5432 \
             --table=bhav_options \
             --data-only \
             --no-owner \
