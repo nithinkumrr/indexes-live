@@ -1,7 +1,7 @@
 // api/ipo.js - IPO data from NSE + GMP from investorgain
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
+  res.setHeader('Cache-Control', 's-maxage=43200, stale-while-revalidate=86400');
 
   const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
 

@@ -1104,6 +1104,69 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .ipo-td          { font-size: 12px; color: var(--text2); padding: 10px 14px; border-bottom: 1px solid var(--border); }
 .ipo-source      { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 10px; }
 
+/* ── IPO Hub v2 ───────────────────────────────────────────────────────── */
+.ipo-calc-wrap   { padding: 4px 0 24px; }
+.ipo-calc-note   { font-family: var(--mono); font-size: 11px; color: var(--text3); background: var(--bg2); border-left: 3px solid var(--accent); border-radius: 0 var(--r) var(--r) 0; padding: 10px 14px; margin-bottom: 20px; line-height: 1.6; }
+.ipo-calc-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
+.ipo-calc-inputs,
+.ipo-calc-output { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px 20px; }
+.ipo-calc-section-title { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 14px; }
+.ipo-calc-field  { margin-bottom: 14px; }
+.ipo-calc-field label { display: block; font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 5px; }
+.ipo-calc-optional { font-size: 9px; color: var(--text3); opacity: .6; margin-left: 4px; }
+.ipo-calc-input  { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r); padding: 8px 12px; font-family: var(--mono); font-size: 14px; color: var(--text); outline: none; box-sizing: border-box; transition: border-color .15s; }
+.ipo-calc-input:focus { border-color: var(--accent); }
+.ipo-calc-gmp-input:focus { border-color: var(--gain); }
+.ipo-calc-hero   { background: var(--bg3); border-radius: var(--r); padding: 14px 16px; margin-bottom: 4px; }
+.ipo-calc-hero-label { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 4px; }
+.ipo-calc-hero-val   { font-family: var(--mono); font-size: 26px; font-weight: 800; color: var(--text); }
+.ipo-calc-divider    { height: 1px; background: var(--border); margin: 12px 0; }
+.ipo-calc-row    { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; }
+.ipo-calc-row span   { color: var(--text3); }
+.ipo-calc-row strong { font-size: 13px; font-weight: 700; }
+.ipo-calc-empty  { font-family: var(--mono); font-size: 12px; color: var(--text3); padding: 24px 0; text-align: center; }
+.ipo-calc-no-gmp { font-family: var(--mono); font-size: 11px; color: var(--text3); background: var(--bg3); border-radius: var(--r); padding: 12px; text-align: center; margin-top: 12px; }
+.ipo-calc-disclaimer { font-family: var(--mono); font-size: 10px; color: var(--text3); opacity: .7; }
+
+/* IPO cards v2 */
+.ipo2-list       { padding-bottom: 24px; }
+.ipo2-card       { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 12px; }
+.ipo2-card-top   { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.ipo2-card-name  { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); }
+.ipo2-card-meta  { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 3px; }
+.ipo2-card-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.ipo2-badge      { font-family: var(--mono); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+.ipo-badge-upcoming { background: rgba(74,158,255,.15); color: var(--accent); }
+.ipo-badge-open     { background: rgba(0,200,150,.15); color: var(--gain); }
+.ipo-badge-allot    { background: rgba(245,158,11,.15); color: var(--pre); }
+.ipo-badge-listed   { background: var(--bg3); color: var(--text3); }
+.ipo2-sme-badge  { font-family: var(--mono); font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 20px; background: rgba(167,139,250,.15); color: #A78BFA; }
+.ipo2-stats      { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.ipo2-stat       { display: flex; flex-direction: column; gap: 3px; }
+.ipo2-stat span  { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text3); text-transform: uppercase; }
+.ipo2-stat strong { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); }
+.ipo2-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ipo2-btn        { font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 7px 14px; border-radius: var(--r); border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); text-decoration: none; transition: all .15s; }
+.ipo2-btn:hover  { border-color: var(--accent); color: var(--accent); }
+.ipo2-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ipo2-btn-primary:hover { background: #3a8ef0; color: #fff; }
+.ipo2-update-note { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 8px; }
+.ipo2-update-note a { color: var(--accent); text-decoration: none; }
+.ipo2-update-note a:hover { text-decoration: underline; }
+
+/* Quick links grid */
+.ipo2-links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding-bottom: 24px; }
+.ipo2-link-card  { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 18px; text-decoration: none; transition: border-color .15s, background .15s; display: block; }
+.ipo2-link-card:hover { border-color: var(--border2); background: var(--bg3); }
+.ipo2-link-icon  { font-size: 20px; margin-bottom: 8px; }
+.ipo2-link-label { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.ipo2-link-desc  { font-family: var(--mono); font-size: 10px; color: var(--text3); line-height: 1.4; }
+
+@media (max-width: 600px) {
+  .ipo-calc-grid { grid-template-columns: 1fr; }
+  .ipo2-links-grid { grid-template-columns: 1fr 1fr; }
+}
+
 /* ── Brokerage Calculator ─────────────────────────────────────────────── */
 .bc-wrap         { padding: 24px 0; }
 .bc-title        { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
