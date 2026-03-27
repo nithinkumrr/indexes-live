@@ -32,12 +32,12 @@ const HASH_MAP = {
 };
 
 const VIEW_HASH = {
-  'grid':   'markets',
-  'bubble': 'sentiment',
-  'fno':    'fno',
-  'gold':   'gold',
-  'ipo':    'ipo',
-  'calc':   'calc',
+  'grid':      'markets',
+  'bubble':    'sentiment',
+  'fno':       'fno',
+  'gold':      'gold',
+  'ipo':       'ipo',
+  'calc':      'calc',
 };
 
 const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc']);
@@ -87,10 +87,10 @@ export default function App() {
 
       <Suspense fallback={<PageSpinner />}>
         {isFullPage ? (
-          view === 'fno'  ? <FnOPage data={data} nseData={nseData} /> :
-          view === 'gold' ? <GoldPage /> :
-          view === 'ipo'  ? <IpoPage /> :
-          view === 'calc' ? <RiskCalcPage /> :
+          view === 'fno'       ? <FnOPage data={data} nseData={nseData} /> :
+          view === 'gold'      ? <GoldPage /> :
+          view === 'ipo'       ? <IpoPage /> :
+          view === 'calc'      ? <RiskCalcPage /> :
           null
         ) : (
           <>

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Backtest from './Backtest';
 import StrategyPage from './StrategyPage';
+import ReferencePage from './ReferencePage';
 import Ticker from './Ticker';
 import { getNiftyExpiries } from '../utils/timezone';
 import { formatPrice } from '../utils/format';
@@ -1747,9 +1748,8 @@ export default function FnOPage({ data = {} }) {
   const TABS = [
     { id: 'overview',   label: 'Overview',   sub: 'VIX · expiry · pivots',    icon: '◎' },
     { id: 'strategy',   label: 'Strategy',   sub: '30+ option strategies',     icon: '⚡' },
-    { id: 'backtest',   label: 'Learn',      sub: 'understand every strategy',    icon: '📚' },
-    { id: 'calculator', label: 'Calculator', sub: 'Black-Scholes · sizing',    icon: '∑' },
-    { id: 'reference',  label: 'Reference',  sub: 'events · seasonality',      icon: '☰' },
+    { id: 'backtest',   label: 'Learn',      sub: 'understand every strategy',  icon: '◈' },
+    { id: 'reference',  label: 'Reference',  sub: 'expiry · lots · theta',     icon: '☰' },
   ];
 
   return (
@@ -1811,34 +1811,17 @@ export default function FnOPage({ data = {} }) {
         </div>
       )}
 
-      {/* ══ TAB: CALCULATOR ══════════════════════════════════════════════ */}
+      {/* TAB: LEARN */}
       {tab === 'backtest' && (
         <div className="fno-tab-content">
           <Backtest data={data} />
         </div>
       )}
 
-      {tab === 'calculator' && (
-        <div className="fno-tab-content">
-          <div className="fnos-calc-grid">
-            <BlackScholes data={data} />
-            <PositionSizer data={data} />
-          </div>
-          <div className="fnos-half-grid">
-            <ExpiryStats />
-            <VixSeasonality />
-          </div>
-        </div>
-      )}
-
-      {/* ══ TAB: REFERENCE ═══════════════════════════════════════════════ */}
+      {/* TAB: REFERENCE */}
       {tab === 'reference' && (
-        <div className="fno-tab-content">
-          <div className="fnos-ref-grid">
-            <ThetaDecayCurve />
-            <ExpiryCalendar holidays={holidays} holidayNames={holidayNames} />
-            <LotSizes />
-          </div>
+        <div className="fno-tab-content" style={{padding:0}}>
+          <ReferencePage />
         </div>
       )}
 
