@@ -972,42 +972,141 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .calc-freq-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
 @media(max-width:640px){ .calc-layout{grid-template-columns:1fr;} .calc-sidebar{flex-direction:row;flex-wrap:wrap;} }
 
-/* ── IPO ─────────────────────────────────────────────────────────────── */
-.ipo-wrap      { max-width:1100px; margin:0 auto; padding:24px 20px; }
-.ipo-header    { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
-.ipo-title     { font-family:var(--mono); font-size:20px; font-weight:700; color:var(--text); }
-.ipo-subtitle  { font-family:var(--mono); font-size:11px; color:var(--text3); margin-top:3px; }
-.ipo-disclaimer { font-family:var(--mono); font-size:10px; color:var(--pre); background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); border-radius:6px; padding:6px 12px; }
-.ipo-tabs      { display:flex; gap:4px; margin-bottom:20px; flex-wrap:wrap; }
-.ipo-tab-btn   { font-family:var(--mono); font-size:12px; font-weight:600; padding:8px 16px; border-radius:20px; border:1px solid var(--border2); background:var(--bg2); color:var(--text3); cursor:pointer; transition:all 0.15s; }
-.ipo-tab-btn:hover { color:var(--text); }
-.ipo-tab-active { background:var(--bg3)!important; color:var(--text)!important; border-color:var(--text2)!important; }
-.ipo-section   { }
-.ipo-section-note { font-family:var(--mono); font-size:11px; color:var(--text3); margin-bottom:14px; padding:10px 14px; background:var(--bg2); border-radius:var(--r); border-left:3px solid var(--accent); }
-.ipo-table     { width:100%; border-collapse:collapse; font-family:var(--mono); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; }
-.ipo-table th  { background:var(--bg3); font-size:11px; font-weight:700; color:var(--text2); padding:10px 14px; text-align:left; border-bottom:2px solid var(--border2); }
-.ipo-td-name   { font-size:13px; font-weight:700; color:var(--text); padding:10px 14px; border-bottom:1px solid var(--border); }
-.ipo-td        { font-size:12px; color:var(--text2); padding:10px 14px; border-bottom:1px solid var(--border); }
-.ipo-symbol    { font-family:var(--mono); font-size:11px; background:var(--bg3); padding:2px 8px; border-radius:4px; color:var(--accent); }
-.ipo-listed-badge { font-family:var(--mono); font-size:9px; background:rgba(0,200,150,0.1); color:var(--gain); border:1px solid rgba(0,200,150,0.2); border-radius:10px; padding:2px 8px; font-weight:700; }
-.ipo-cards     { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
-.ipo-card      { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r-lg); padding:18px; position:relative; }
-.ipo-card-open { border-top:3px solid var(--gain); }
-.ipo-card-badge { position:absolute; top:14px; right:14px; font-family:var(--mono); font-size:9px; font-weight:700; background:rgba(0,200,150,0.12); color:var(--gain); border-radius:10px; padding:3px 8px; letter-spacing:1px; }
-.ipo-card-name { font-family:var(--mono); font-size:14px; font-weight:700; color:var(--text); margin-bottom:12px; margin-right:60px; }
-.ipo-card-row  { display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; padding:5px 0; border-bottom:1px solid var(--border); color:var(--text3); }
-.ipo-card-row span:last-child { color:var(--text); font-weight:600; }
-.ipo-gmp       { display:flex; align-items:center; gap:6px; margin-top:10px; padding:8px 10px; border-radius:var(--r); }
-.ipo-gmp-pos   { background:rgba(0,200,150,0.08); }
-.ipo-gmp-neg   { background:rgba(255,68,85,0.08); }
-.ipo-gmp-label { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:1px; color:var(--text3); }
-.ipo-gmp-val   { font-family:var(--mono); font-size:15px; font-weight:800; }
-.ipo-gmp-pct   { font-family:var(--mono); font-size:11px; font-weight:600; }
-.ipo-gmp-pos .ipo-gmp-val, .ipo-gmp-pos .ipo-gmp-pct { color:var(--gain); }
-.ipo-gmp-neg .ipo-gmp-val, .ipo-gmp-neg .ipo-gmp-pct { color:var(--loss); }
-.ipo-empty     { font-family:var(--mono); font-size:13px; color:var(--text3); padding:40px; text-align:center; background:var(--bg2); border-radius:var(--r-lg); }
-.ipo-source    { font-family:var(--mono); font-size:10px; color:var(--text3); margin-top:12px; }
+/* ── IPO Decision Tool ───────────────────────────────────────────────────── */
+.ipo-wrap          { width:100%; box-sizing:border-box; padding-bottom:48px; }
 
+.ipo-header        { display:flex; justify-content:space-between; align-items:flex-start; padding:16px 16px 0; flex-wrap:wrap; gap:12px; }
+.ipo-header-left   { }
+.ipo-page-title    { font-family:var(--mono); font-size:18px; font-weight:800; color:var(--text); letter-spacing:-0.5px; }
+.ipo-page-sub      { font-family:var(--mono); font-size:11px; color:var(--text3); margin-top:3px; }
+.ipo-quick-links   { display:flex; flex-wrap:wrap; gap:6px; }
+.ipo-qlink         { display:flex; flex-direction:column; gap:1px; padding:6px 10px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); text-decoration:none; transition:border-color .15s; }
+.ipo-qlink:hover   { border-color:var(--accent); }
+.ipo-qlink-label   { font-family:var(--mono); font-size:10px; font-weight:700; color:var(--text2); }
+.ipo-qlink-hint    { font-family:var(--mono); font-size:9px; color:var(--accent); }
+
+/* Main 2-col layout */
+.ipo-main          { display:grid; grid-template-columns:1fr 1fr; gap:0; padding:14px 16px; align-items:start; border-bottom:1px solid var(--border); }
+.ipo-input-panel   { padding-right:16px; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:14px; }
+.ipo-output-panel  { padding-left:16px; display:flex; flex-direction:column; gap:14px; }
+.ipo-panel-title   { font-family:var(--mono); font-size:9px; font-weight:800; letter-spacing:1.5px; color:var(--text3); }
+
+/* Inputs */
+.ipo-field         { display:flex; flex-direction:column; gap:5px; }
+.ipo-field-row     { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ipo-label         { font-family:var(--mono); font-size:10px; font-weight:700; color:var(--text2); }
+.ipo-label-opt     { font-weight:400; color:var(--text3); font-size:9px; margin-left:4px; }
+.ipo-input         { font-family:var(--mono); font-size:14px; font-weight:700; color:var(--text); background:var(--bg3); border:1px solid var(--border); border-radius:var(--r); padding:9px 12px; outline:none; width:100%; box-sizing:border-box; transition:border-color .15s; }
+.ipo-input:focus   { border-color:var(--accent); }
+.ipo-input::placeholder { color:var(--text3); font-weight:400; }
+.ipo-field-hint    { font-family:var(--mono); font-size:10px; color:var(--text3); }
+.ipo-link          { color:var(--accent); text-decoration:none; }
+.ipo-link:hover    { text-decoration:underline; }
+
+/* Lot buttons */
+.ipo-lot-btns      { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.ipo-lot-btn       { font-family:var(--mono); font-size:12px; font-weight:700; padding:7px 14px; border-radius:var(--r); border:1px solid var(--border); background:var(--bg3); color:var(--text2); cursor:pointer; transition:all .15s; }
+.ipo-lot-btn:hover { border-color:var(--accent); color:var(--text); }
+.ipo-lot-btn-active { border-color:var(--accent); background:rgba(74,158,255,.1); color:var(--accent); }
+.ipo-lot-custom    { width:80px !important; font-size:13px !important; }
+.ipo-hint-warn     { color:#F59E0B !important; }
+
+/* GMP trend seg */
+.ipo-seg           { display:flex; gap:6px; }
+.ipo-seg-btn       { font-family:var(--mono); font-size:12px; font-weight:600; padding:7px 14px; border-radius:var(--r); border:1px solid var(--border); background:var(--bg3); color:var(--text2); cursor:pointer; flex:1; transition:all .15s; }
+.ipo-seg-btn:hover { border-color:var(--border2); }
+.ipo-seg-active    { border-color:var(--accent); background:rgba(74,158,255,.1); color:var(--accent); }
+
+/* Capital bar */
+.ipo-capital-bar   { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:10px 12px; background:var(--bg3); border-radius:var(--r-lg); border:1px solid var(--border); }
+.ipo-capital-item  { display:flex; flex-direction:column; gap:3px; }
+.ipo-cap-label     { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:1px; color:var(--text3); }
+.ipo-cap-val       { font-family:var(--mono); font-size:14px; font-weight:800; color:var(--text); }
+
+/* Output empty */
+.ipo-empty         { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 24px; gap:10px; text-align:center; }
+.ipo-empty-icon    { font-family:var(--mono); font-size:32px; color:var(--text3); }
+.ipo-empty-title   { font-family:var(--mono); font-size:14px; color:var(--text2); }
+.ipo-empty-sub     { font-family:var(--mono); font-size:11px; color:var(--text3); line-height:1.6; }
+
+/* Verdict */
+.ipo-out-name      { font-family:var(--mono); font-size:16px; font-weight:800; color:var(--text); }
+.ipo-verdict       { border:1px solid; border-radius:var(--r-lg); padding:14px 16px; }
+.ipo-verdict-tag   { font-family:var(--mono); font-size:14px; font-weight:800; letter-spacing:1px; margin-bottom:5px; }
+.ipo-verdict-text  { font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.5; }
+
+/* Output grid */
+.ipo-out-grid      { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.ipo-out-card      { background:var(--bg3); border:1px solid var(--border); border-radius:var(--r-lg); padding:11px 13px; }
+.ipo-out-label     { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:1px; color:var(--text3); margin-bottom:4px; }
+.ipo-out-val       { font-family:var(--mono); font-size:22px; font-weight:800; letter-spacing:-0.5px; line-height:1; margin-bottom:3px; color:var(--text); }
+.ipo-out-sub       { font-family:var(--mono); font-size:10px; color:var(--text3); }
+
+/* Scenarios */
+.ipo-scenarios     { display:flex; flex-direction:column; gap:8px; }
+.ipo-scen-title    { font-family:var(--mono); font-size:9px; font-weight:800; letter-spacing:1.5px; color:var(--text3); margin-bottom:4px; }
+.ipo-scen-grid     { display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px; }
+.ipo-scen          { border-radius:var(--r-lg); padding:11px 12px; border:1px solid; }
+.ipo-scen-bull     { background:rgba(0,200,150,.05); border-color:rgba(0,200,150,.2); }
+.ipo-scen-neutral  { background:var(--bg3); border-color:var(--border); }
+.ipo-scen-bear     { background:rgba(255,68,85,.05); border-color:rgba(255,68,85,.2); }
+.ipo-scen-label    { font-family:var(--mono); font-size:11px; font-weight:800; color:var(--text); margin-bottom:2px; }
+.ipo-scen-sub      { font-family:var(--mono); font-size:9px; color:var(--text3); margin-bottom:6px; }
+.ipo-scen-val      { font-family:var(--mono); font-size:18px; font-weight:800; letter-spacing:-0.5px; }
+
+/* Signals */
+.ipo-signals       { display:flex; flex-direction:column; gap:6px; }
+.ipo-sig-row       { display:flex; align-items:flex-start; gap:8px; }
+.ipo-sig-icon      { font-family:var(--mono); font-size:12px; font-weight:700; flex-shrink:0; margin-top:1px; }
+.ipo-sig-text      { font-family:var(--mono); font-size:12px; color:var(--text2); line-height:1.5; }
+
+/* Lot comparison */
+.ipo-lot-note      { display:flex; flex-direction:column; gap:6px; }
+.ipo-lot-compare   { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.ipo-lot-compare-item { background:var(--bg3); border-radius:var(--r); padding:10px 12px; border:1px solid var(--border); }
+.ipo-lot-compare-label { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:1px; color:var(--text3); margin-bottom:4px; }
+.ipo-lot-compare-val   { font-family:var(--mono); font-size:11px; color:var(--text2); line-height:1.5; }
+
+/* How to apply */
+.ipo-collapse-section { border-bottom:1px solid var(--border); }
+.ipo-collapse-toggle  { width:100%; display:flex; justify-content:space-between; align-items:center; padding:13px 16px; background:var(--bg2); border:none; cursor:pointer; font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--text3); transition:color .15s; }
+.ipo-collapse-toggle:hover { color:var(--text); }
+.ipo-collapse-chevron { font-size:10px; font-weight:400; }
+.ipo-steps-grid       { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:14px 16px; }
+.ipo-step             { display:flex; gap:10px; background:var(--bg2); border-radius:var(--r-lg); padding:12px 14px; border:1px solid var(--border); align-items:flex-start; }
+.ipo-step-n           { font-family:var(--mono); font-size:13px; font-weight:800; color:var(--accent); flex-shrink:0; min-width:18px; }
+.ipo-step-title       { font-family:var(--mono); font-size:12px; font-weight:700; color:var(--text); margin-bottom:3px; }
+.ipo-step-desc        { font-family:var(--mono); font-size:11px; color:var(--text2); line-height:1.5; }
+.ipo-allot-links      { display:flex; flex-direction:column; gap:6px; justify-content:flex-start; }
+.ipo-allot-title      { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:1.5px; color:var(--text3); margin-bottom:4px; }
+.ipo-allot-btn        { display:inline-block; font-family:var(--mono); font-size:11px; font-weight:700; color:var(--accent); padding:8px 12px; border:1px solid rgba(74,158,255,.25); border-radius:var(--r); text-decoration:none; background:rgba(74,158,255,.06); text-align:center; }
+.ipo-allot-btn:hover  { background:rgba(74,158,255,.12); }
+
+/* Playbook */
+.ipo-playbook         { padding:14px 16px; border-bottom:1px solid var(--border); }
+.ipo-playbook-title   { font-family:var(--mono); font-size:9px; font-weight:800; letter-spacing:1.5px; color:var(--text3); margin-bottom:10px; }
+.ipo-playbook-grid    { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.ipo-playbook-item    { display:flex; gap:10px; align-items:flex-start; background:var(--bg2); border-radius:var(--r-lg); padding:10px 13px; border:1px solid var(--border); }
+.ipo-playbook-icon    { font-size:14px; flex-shrink:0; }
+.ipo-playbook-text    { font-family:var(--mono); font-size:11px; color:var(--text2); line-height:1.6; }
+
+.ipo-footer           { font-family:var(--mono); font-size:10px; color:var(--text3); line-height:1.8; padding:12px 16px 0; opacity:.55; }
+
+@media(max-width:900px) {
+  .ipo-main           { grid-template-columns:1fr; }
+  .ipo-input-panel    { padding-right:0; border-right:none; border-bottom:1px solid var(--border); padding-bottom:16px; }
+  .ipo-output-panel   { padding-left:0; }
+  .ipo-steps-grid     { grid-template-columns:1fr 1fr; }
+  .ipo-playbook-grid  { grid-template-columns:1fr; }
+}
+@media(max-width:600px) {
+  .ipo-main           { padding:10px; }
+  .ipo-steps-grid     { grid-template-columns:1fr; }
+  .ipo-out-grid       { grid-template-columns:1fr 1fr; }
+  .ipo-scen-grid      { grid-template-columns:1fr; }
+  .ipo-capital-bar    { grid-template-columns:1fr 1fr; }
+  .ipo-quick-links    { display:none; }
+}
 /* ── Brokerage ───────────────────────────────────────────────────────── */
 .brok-wrap      { max-width:1200px; margin:0 auto; padding:24px 20px; }
 .brok-header    { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap; gap:12px; }

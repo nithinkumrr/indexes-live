@@ -1,408 +1,399 @@
 import { useState, useMemo, useEffect } from 'react';
 
-// ─── localStorage history ────────────────────────────────────────────────────
-function loadHistory() {
-  try { return JSON.parse(localStorage.getItem('ipo_calc_history') || '[]'); } catch { return []; }
-}
-function saveHistory(entry) {
-  try {
-    const h = loadHistory();
-    h.unshift(entry);
-    localStorage.setItem('ipo_calc_history', JSON.stringify(h.slice(0, 5)));
-  } catch {}
-}
-
-// ─── Decision engine ─────────────────────────────────────────────────────────
-function decide(returnPct, gmpTrend) {
-  let level = returnPct > 25 ? 2 : returnPct > 10 ? 1 : 0;
-  if (gmpTrend === 'rising')  level = Math.min(level + 1, 2);
-  if (gmpTrend === 'falling') level = Math.max(level - 1, 0);
-  return [
-    { tag: 'AVOID',   color: '#FF4455', bg: 'rgba(255,68,85,.1)',   icon: '🔴', line: 'Limited upside at current GMP. Capital better deployed elsewhere.' },
-    { tag: 'NEUTRAL', color: '#F59E0B', bg: 'rgba(245,158,11,.1)',  icon: '🟡', line: 'Moderate listing gains possible. Risk-reward is balanced.' },
-    { tag: 'APPLY',   color: '#00C896', bg: 'rgba(0,200,150,.1)',   icon: '🟢', line: 'Strong listing potential based on GMP. Watch for GMP volatility near listing.' },
-  ][level];
+// ── Decision engine ───────────────────────────────────────────────────────────
+function decide(returnPct, gmpTrend, subTimes, gmp) {
+  if (!gmp && gmp !== 0) return null;
+  let score = 0;
+  if (returnPct > 40)  score += 3;
+  else if (returnPct > 20) score += 2;
+  else if (returnPct > 8)  score += 1;
+  else if (returnPct <= 0) score -= 2;
+  if (gmpTrend === 'rising')  score += 1;
+  if (gmpTrend === 'falling') score -= 1;
+  if (subTimes > 100) score -= 1; // very high sub = low allotment
+  if (score >= 3)  return { tag:'STRONG APPLY',   color:'#00C896', bg:'rgba(0,200,150,.08)', border:'rgba(0,200,150,.3)', icon:'✔', verdict:'Strong GMP signal. High listing potential.' };
+  if (score >= 2)  return { tag:'APPLY',           color:'#00C896', bg:'rgba(0,200,150,.05)', border:'rgba(0,200,150,.2)', icon:'✔', verdict:'Good listing potential. Monitor GMP day before.' };
+  if (score >= 1)  return { tag:'APPLY IF AGGRESSIVE', color:'#F59E0B', bg:'rgba(245,158,11,.07)', border:'rgba(245,158,11,.25)', icon:'⚠', verdict:'Moderate upside. Worth applying if funds available.' };
+  if (score === 0) return { tag:'NEUTRAL',         color:'#F59E0B', bg:'rgba(245,158,11,.05)', border:'rgba(245,158,11,.2)', icon:'⚠', verdict:'Risk-reward balanced. No strong edge either way.' };
+  return { tag:'AVOID',  color:'#FF4455', bg:'rgba(255,68,85,.08)', border:'rgba(255,68,85,.3)', icon:'✖', verdict:'Limited or negative upside at current GMP. Skip.' };
 }
 
-function contextLine(returnPct, gmpTrend, issueSize) {
-  if (returnPct <= 0)  return 'GMP suggests a listing below issue price. High-risk application.';
-  if (gmpTrend === 'falling') return 'Falling GMP near listing is a warning sign. Consider reducing lots.';
-  if (returnPct > 40)  return 'Very high GMP-based return. Verify GMP is still valid — extreme premiums often compress.';
-  if (returnPct > 20)  return 'Good short-term listing gain expected. Best case for retail 1-lot players.';
-  return 'Moderate upside. Worth applying if funds are available and GMP is stable.';
+function getSignals(returnPct, gmpTrend, subTimes, gmp, lots) {
+  const signals = [];
+  if (gmp !== '' && gmp !== null && !isNaN(gmp)) {
+    if (returnPct > 40) signals.push({ type:'bull', text:'Strong GMP — high listing potential' });
+    else if (returnPct > 20) signals.push({ type:'bull', text:'Solid GMP — good listing expected' });
+    else if (returnPct > 0)  signals.push({ type:'warn', text:'Moderate GMP — limited pop expected' });
+    else if (returnPct <= 0) signals.push({ type:'bear', text:'Negative GMP — listing below issue price possible' });
+  }
+  if (gmpTrend === 'rising')  signals.push({ type:'bull', text:'GMP rising — momentum building' });
+  if (gmpTrend === 'falling') signals.push({ type:'bear', text:'Falling GMP near listing — warning sign' });
+  if (subTimes > 200) signals.push({ type:'bear', text:`Very high subscription (${subTimes}x) — very low allotment chance` });
+  else if (subTimes > 50) signals.push({ type:'warn', text:`High subscription (${subTimes}x) — allotment unlikely with multiple lots` });
+  else if (subTimes > 0 && subTimes < 5) signals.push({ type:'warn', text:`Low subscription (${subTimes}x) — demand weak, listing risk higher` });
+  if (lots > 1 && subTimes > 50) signals.push({ type:'warn', text:'Multiple lots with high subscription — 1 lot gives better allotment odds' });
+  return signals;
 }
 
-// ─── Quick links ─────────────────────────────────────────────────────────────
+function getAllotmentLabel(subTimes, lots) {
+  if (!subTimes) return null;
+  if (subTimes > 200) return { label:'Very Low', color:'#FF4455' };
+  if (subTimes > 100) return { label:'Low', color:'#FF4455' };
+  if (subTimes > 50)  return { label:'Low-Moderate', color:'#F59E0B' };
+  if (subTimes > 20)  return { label:'Moderate', color:'#F59E0B' };
+  if (subTimes > 5)   return { label:'Moderate-High', color:'#00C896' };
+  return { label:'Higher', color:'#00C896' };
+}
+
+// ── Apply steps ───────────────────────────────────────────────────────────────
 const STEPS = [
-  { step: '1', action: 'Find the IPO',        desc: 'See all open & upcoming IPOs',         url: 'https://zerodha.com/ipo/',                                                  cta: 'Open Kite IPO ↗' },
-  { step: '2', action: 'Check live GMP',      desc: 'Get today\'s grey market premium',     url: 'https://www.investorgain.com/report/live-ipo-gmp/331/',                    cta: 'InvestorGain ↗' },
-  { step: '3', action: 'Also check here',     desc: 'Second GMP source to cross-verify',    url: 'https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/',             cta: 'IPO Watch ↗' },
-  { step: '4', action: 'Paste GMP above',     desc: 'Enter details in calculator and decide', url: null,                                                                      cta: '↑ Use calculator' },
-  { step: '5', action: 'Check subscription',  desc: 'Live bidding data on NSE',             url: 'https://www.nseindia.com/market-data/all-upcoming-issues-ipo',             cta: 'NSE live ↗' },
-  { step: '6', action: 'Check allotment',     desc: 'KFintech registrar portal',            url: 'https://kosipo.kfintech.com/',                                             cta: 'KFintech ↗' },
-  { step: '7', action: 'Check allotment',     desc: 'Link Intime registrar portal',         url: 'https://linkintime.co.in/MIPO/Ipoallotment.html',                          cta: 'Link Intime ↗' },
+  { n:'1', title:'Open your broker app', desc:'Go to IPO section in your brokerage app or web platform.' },
+  { n:'2', title:'Select the IPO', desc:'Find the live IPO. Check that the issue is open — dates matter.' },
+  { n:'3', title:'Choose lot size', desc:'Retail minimum is 1 lot. Applying with 1 lot maximises allotment probability in oversubscribed IPOs.' },
+  { n:'4', title:'Enter bid price', desc:'Bid at the cut-off price (upper end of price band) to maximise allotment chance.' },
+  { n:'5', title:'Funds are blocked via UPI', desc:'Your UPI linked bank account will have funds blocked (not debited) until allotment.' },
+  { n:'6', title:'Allotment in ~5 days', desc:'Check allotment on KFintech or Link Intime registrar portals using your PAN or application number.' },
+  { n:'7', title:'Refund if not allotted', desc:'Funds unblocked within 1 day of allotment. Listed next trading day.' },
 ];
 
+// ── Playbook ──────────────────────────────────────────────────────────────────
 const PLAYBOOK = [
-  { icon: '⚡', text: 'High GMP does not guarantee a good listing. GMP is unofficial and can swing 30–50% in 24 hours.' },
-  { icon: '📦', text: 'Large issue sizes (₹3,000 Cr+) usually see smaller listing pops. More shares = more supply on day 1.' },
-  { icon: '📉', text: 'Falling GMP in the last 1–2 days before listing is a warning sign. Institutional selling pressure.' },
-  { icon: '🎯', text: 'Heavily oversubscribed IPOs mean low allotment probability for retail. 1-lot strategy maximises chances.' },
+  { icon:'⚡', text:'High GMP does not guarantee a good listing. GMP is unofficial and can swing 30-50% in 24 hours before listing.' },
+  { icon:'📦', text:'Large issues (Rs.3,000 Cr+) usually see smaller listing pops — more shares means more supply on day 1.' },
+  { icon:'📉', text:'Falling GMP in the final 1-2 days before listing is a strong warning sign. Smart money is exiting the grey market.' },
+  { icon:'🎯', text:'In oversubscribed IPOs, applying with 1 lot per family member maximises total allotment. Multiple lots do not help.' },
+  { icon:'💧', text:'Capital is locked for 5-7 days. Factor in opportunity cost especially during volatile markets.' },
+  { icon:'🧮', text:'The real return is on capital deployed, not listing gain. A Rs.500 gain on Rs.1.5 lakh blocked is only 0.33% in a week.' },
+  { icon:'📊', text:'QIB subscription is the leading indicator. High QIB demand (10x+) is the most reliable positive signal for listing.' },
+  { icon:'🔁', text:'Listing day is not the only exit. Some IPOs underperform on day 1 but re-rate 3-6 months post-listing as fundamentals show.' },
 ];
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-const fmt    = v => v?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) ?? '—';
-const fmtPct = v => v !== null && v !== undefined ? `${v >= 0 ? '+' : ''}${v.toFixed(1)}%` : '—';
+const QUICK_LINKS = [
+  { label:'Live GMP', href:'https://www.investorgain.com/report/live-ipo-gmp/331/', hint:'InvestorGain' },
+  { label:'GMP (verify)', href:'https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/', hint:'IPOWatch' },
+  { label:'NSE subscription', href:'https://www.nseindia.com/market-data/all-upcoming-issues-ipo', hint:'Live bid data' },
+  { label:'Allotment (KFin)', href:'https://kosipo.kfintech.com/', hint:'KFintech registrar' },
+  { label:'Allotment (Link)', href:'https://linkintime.co.in/MIPO/Ipoallotment.html', hint:'Link Intime registrar' },
+];
 
-const TABS = ['Calculator', 'How to Apply', 'IPO Playbook'];
+const fmt = v => v != null ? v.toLocaleString('en-IN',{maximumFractionDigits:0}) : '';
 
-// ─── Main Component ───────────────────────────────────────────────────────────
 export default function IpoPage() {
-  const [tab,       setTab]      = useState('Calculator');
-  const [price,     setPrice]    = useState('');
-  const [lotSize,   setLotSize]  = useState('');
-  const [lots,      setLots]     = useState('1');
-  const [gmp,       setGmp]      = useState('');
-  const [gmpMode,   setGmpMode]  = useState('base');      // conservative | base | aggressive
-  const [gmpTrend,  setGmpTrend] = useState('flat');      // rising | flat | falling
-  const [history,   setHistory]  = useState([]);
-  const [copied,    setCopied]   = useState(false);
+  const [name,      setName]      = useState('');
+  const [price,     setPrice]     = useState('');
+  const [lotSize,   setLotSize]   = useState('');
+  const [lots,      setLots]      = useState('1');
+  const [gmp,       setGmp]       = useState('');
+  const [gmpTrend,  setGmpTrend]  = useState('flat');
+  const [subTimes,  setSubTimes]  = useState('');
+  const [stepsOpen, setStepsOpen] = useState(false);
+  const [lotMode,   setLotMode]   = useState('1'); // '1' | 'custom'
 
-  useEffect(() => { setHistory(loadHistory()); }, []);
-
-  // ── Core calculations ──
   const calc = useMemo(() => {
     const p  = parseFloat(price);
     const ls = parseInt(lotSize);
     const n  = parseInt(lots) || 1;
     const g  = parseFloat(gmp);
+    const sub = parseFloat(subTimes) || 0;
     if (!p || !ls) return null;
 
-    const investment = p * ls * n;
-    const hasGmp     = !isNaN(g) && gmp !== '';
+    const capital     = p * ls * n;
+    const hasGmp      = !isNaN(g) && gmp !== '';
+    const listingPx   = hasGmp ? p + g : null;
+    const listingGain = hasGmp ? g * ls * n : null;
+    const returnPct   = hasGmp ? (g / p) * 100 : null;
+    const capEff      = hasGmp && listingGain !== null ? (listingGain / capital) * 100 : null;
+    const breakEven   = Math.max(1, Math.round(p * 0.01)); // 1% of issue price as min GMP needed to cover brokerage/charges
+    const flatCase    = 0;
+    const worstCase   = hasGmp ? Math.min(0, listingGain) : null;
 
-    // Max retail lots
-    const maxLots = p && ls ? Math.floor(200000 / (p * ls)) || 1 : 1;
+    return { p, ls, n, capital, listingPx, listingGain, returnPct, capEff, hasGmp, g, sub, breakEven, flatCase, worstCase };
+  }, [price, lotSize, lots, gmp, subTimes]);
 
-    if (!hasGmp) return { investment, hasGmp: false, maxLots };
+  const sub   = parseFloat(subTimes) || 0;
+  const dec   = decide(calc?.returnPct ?? 0, gmpTrend, sub, gmp !== '' ? parseFloat(gmp) : undefined);
+  const sigs  = calc ? getSignals(calc.returnPct ?? 0, gmpTrend, sub, gmp !== '' ? parseFloat(gmp) : undefined, parseInt(lots)||1) : [];
+  const allot = sub > 0 ? getAllotmentLabel(sub, parseInt(lots)||1) : null;
+  const hasCalc = calc !== null;
 
-    const adjGmp = gmpMode === 'conservative' ? g * 0.6
-                 : gmpMode === 'aggressive'   ? g * 1.4
-                 : g;
-
-    const listingPrice  = p + adjGmp;
-    const profitPerLot  = adjGmp * ls;
-    const totalProfit   = profitPerLot * n;
-    const returnPct     = (totalProfit / investment) * 100;
-    const breakEvenGmp  = 0; // issue price is floor for ASBA; no charges on non-allotment
-    const daysBlocked   = 6;
-    const annualReturn  = (returnPct / daysBlocked) * 365;
-    const decision      = decide(returnPct, gmpTrend);
-    const context       = contextLine(returnPct, gmpTrend);
-
-    return {
-      investment, hasGmp: true, maxLots,
-      listingPrice, profitPerLot, totalProfit,
-      returnPct, breakEvenGmp, daysBlocked, annualReturn,
-      decision, context, adjGmp, n,
-    };
-  }, [price, lotSize, lots, gmp, gmpMode, gmpTrend]);
-
-  // Scenario table
-  const scenarios = useMemo(() => {
-    const p  = parseFloat(price);
-    const ls = parseInt(lotSize);
-    const n  = parseInt(lots) || 1;
-    const g  = parseFloat(gmp);
-    if (!p || !ls || !g || isNaN(g)) return null;
-    return [
-      { label: 'Conservative', mult: 0.6 },
-      { label: 'Base',         mult: 1.0 },
-      { label: 'Aggressive',   mult: 1.4 },
-    ].map(s => {
-      const ag      = g * s.mult;
-      const profit  = ag * ls * n;
-      const retPct  = (profit / (p * ls * n)) * 100;
-      return { ...s, adjGmp: Math.round(ag), profit: Math.round(profit), retPct };
-    });
-  }, [price, lotSize, lots, gmp]);
-
-  function setMaxRetail() {
-    const p  = parseFloat(price);
-    const ls = parseInt(lotSize);
-    if (!p || !ls) return;
-    setLots(String(Math.max(1, Math.floor(200000 / (p * ls)))));
-  }
-
-  function handleSave() {
-    if (!calc?.hasGmp) return;
-    const entry = {
-      date:    new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
-      price, lotSize, lots, gmp: gmp + (gmpMode !== 'base' ? ` (${gmpMode})` : ''),
-      returnPct: calc.returnPct.toFixed(1),
-      tag: calc.decision.tag,
-    };
-    saveHistory(entry);
-    setHistory(loadHistory());
-  }
-
-  function handleCopy() {
-    if (!calc?.hasGmp) return;
-    const text = [
-      `IPO Calculation`,
-      `Issue Price: ₹${price} | Lot: ${lotSize} shares | Lots: ${lots}`,
-      `GMP: ₹${gmp} (${gmpMode})`,
-      `Investment: ₹${fmt(calc.investment)}`,
-      `Expected Listing: ₹${fmt(calc.listingPrice)}`,
-      `Expected Profit: ₹${fmt(calc.totalProfit)} (${fmtPct(calc.returnPct)})`,
-      `Decision: ${calc.decision.icon} ${calc.decision.tag}`,
-    ].join('\n');
-    navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
-  }
-
-  const pos = !calc?.hasGmp || calc?.returnPct >= 0;
+  const pColor = v => v == null ? '' : v >= 0 ? '#00C896' : '#FF4455';
 
   return (
     <div className="ipo-wrap">
+
+      {/* HEADER */}
       <div className="ipo-header">
-        <div>
-          <div className="ipo-title">IPO Decision Calculator</div>
-          <div className="ipo-subtitle">Estimate returns, risk, and capital efficiency before applying</div>
+        <div className="ipo-header-left">
+          <div className="ipo-page-title">IPO Decision Tool</div>
+          <div className="ipo-page-sub">Enter IPO details. Get instant decision, expected listing, and risk analysis.</div>
+        </div>
+        <div className="ipo-quick-links">
+          {QUICK_LINKS.map((l,i) => (
+            <a key={i} href={l.href} target="_blank" rel="noopener noreferrer" className="ipo-qlink">
+              <span className="ipo-qlink-label">{l.label}</span>
+              <span className="ipo-qlink-hint">{l.hint} ↗</span>
+            </a>
+          ))}
         </div>
       </div>
 
-      <div className="ipo-tabs">
-        {TABS.map(t => (
-          <button key={t} className={`ipo-tab ${tab === t ? 'ipo-tab-active' : ''}`} onClick={() => setTab(t)}>{t}</button>
-        ))}
-      </div>
+      {/* MAIN: INPUT + OUTPUT */}
+      <div className="ipo-main">
 
-      {/* ── CALCULATOR ── */}
-      {tab === 'Calculator' && (
-        <div className="idc-layout">
+        {/* LEFT: INPUT PANEL */}
+        <div className="ipo-input-panel">
+          <div className="ipo-panel-title">IPO DETAILS</div>
 
-          {/* LEFT: Inputs */}
-          <div className="idc-inputs">
-            <div className="idc-section-title">INPUTS</div>
-
-            <div className="idc-field">
-              <label>Issue Price (₹)</label>
-              <input type="number" placeholder="e.g. 480" value={price}
-                onChange={e => setPrice(e.target.value)} className="idc-input" />
-            </div>
-
-            <div className="idc-field">
-              <label>Lot Size (shares per lot)</label>
-              <input type="number" placeholder="e.g. 31" value={lotSize}
-                onChange={e => setLotSize(e.target.value)} className="idc-input" />
-            </div>
-
-            <div className="idc-field">
-              <label>Lots Applying</label>
-              <input type="number" placeholder="1" min="1" value={lots}
-                onChange={e => setLots(e.target.value)} className="idc-input" />
-              <div className="idc-lot-presets">
-                <button onClick={() => setLots('1')} className={`idc-preset ${lots==='1'?'active':''}`}>1 lot</button>
-                <button onClick={() => setLots('2')} className={`idc-preset ${lots==='2'?'active':''}`}>2 lots</button>
-                <button onClick={setMaxRetail} className="idc-preset">Max retail (₹2L)</button>
-              </div>
-            </div>
-
-            <div className="idc-field">
-              <label>GMP ₹ <span className="idc-optional">get from investorgain.com</span></label>
-              <input type="number" placeholder="e.g. 90" value={gmp}
-                onChange={e => setGmp(e.target.value)} className="idc-input idc-input-gmp" />
-            </div>
-
-            {gmp && (
-              <>
-                <div className="idc-field">
-                  <label>GMP Scenario</label>
-                  <div className="idc-toggle-group">
-                    {['conservative','base','aggressive'].map(m => (
-                      <button key={m} onClick={() => setGmpMode(m)}
-                        className={`idc-toggle ${gmpMode===m?'active':''}`}>
-                        {m === 'conservative' ? '60% GMP' : m === 'base' ? 'Current GMP' : '140% GMP'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="idc-field">
-                  <label>GMP Trend</label>
-                  <div className="idc-toggle-group">
-                    {['rising','flat','falling'].map(t => (
-                      <button key={t} onClick={() => setGmpTrend(t)}
-                        className={`idc-toggle ${gmpTrend===t?'active':''} ${t==='rising'?'trend-up':t==='falling'?'trend-dn':''}`}>
-                        {t === 'rising' ? '↑ Rising' : t === 'flat' ? '→ Flat' : '↓ Falling'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
+          <div className="ipo-field">
+            <label className="ipo-label">IPO Name <span className="ipo-label-opt">optional</span></label>
+            <input className="ipo-input" placeholder="e.g. Ola Electric, HDB Financial..." value={name} onChange={e=>setName(e.target.value)} />
           </div>
 
-          {/* RIGHT: Output */}
-          <div className="idc-output">
-            {!calc ? (
-              <div className="idc-empty">Enter issue price and lot size to evaluate opportunity</div>
-            ) : (
-              <>
-                {/* Investment */}
-                <div className="idc-inv-row">
-                  <span className="idc-inv-label">CAPITAL REQUIRED</span>
-                  <span className="idc-inv-val">₹{fmt(calc.investment)}</span>
+          <div className="ipo-field-row">
+            <div className="ipo-field">
+              <label className="ipo-label">Issue Price (Rs.)</label>
+              <input className="ipo-input" type="number" placeholder="e.g. 72" value={price} onChange={e=>setPrice(e.target.value)} />
+            </div>
+            <div className="ipo-field">
+              <label className="ipo-label">Lot Size (shares)</label>
+              <input className="ipo-input" type="number" placeholder="e.g. 200" value={lotSize} onChange={e=>setLotSize(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Lot strategy */}
+          <div className="ipo-field">
+            <label className="ipo-label">Number of Lots</label>
+            <div className="ipo-lot-btns">
+              {['1','2','3','5'].map(v => (
+                <button key={v} className={`ipo-lot-btn ${lots===v?'ipo-lot-btn-active':''}`} onClick={()=>setLots(v)}>{v} Lot{v!=='1'?'s':''}</button>
+              ))}
+              <input className="ipo-input ipo-lot-custom" type="number" min="1" placeholder="custom" value={!['1','2','3','5'].includes(lots)?lots:''} onChange={e=>{if(e.target.value)setLots(e.target.value);}} />
+            </div>
+            {parseInt(lots)>1 && sub>50 && <div className="ipo-field-hint ipo-hint-warn">High subscription — 1 lot gives better allotment odds</div>}
+          </div>
+
+          {/* GMP */}
+          <div className="ipo-field">
+            <label className="ipo-label">GMP — Grey Market Premium (Rs.) <span className="ipo-label-opt">optional</span></label>
+            <input className="ipo-input" type="number" placeholder="e.g. 40 (enter 0 if no GMP)" value={gmp} onChange={e=>setGmp(e.target.value)} />
+            <div className="ipo-field-hint">
+              Get GMP from <a href="https://www.investorgain.com/report/live-ipo-gmp/331/" target="_blank" rel="noopener noreferrer" className="ipo-link">InvestorGain ↗</a> or <a href="https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/" target="_blank" rel="noopener noreferrer" className="ipo-link">IPOWatch ↗</a>
+            </div>
+          </div>
+
+          {/* GMP Trend */}
+          {gmp !== '' && (
+            <div className="ipo-field">
+              <label className="ipo-label">GMP Trend</label>
+              <div className="ipo-seg">
+                {[['rising','Rising ↑'],['flat','Flat →'],['falling','Falling ↓']].map(([v,l])=>(
+                  <button key={v} className={`ipo-seg-btn ${gmpTrend===v?'ipo-seg-active':''}`} onClick={()=>setGmpTrend(v)}>{l}</button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Subscription */}
+          <div className="ipo-field">
+            <label className="ipo-label">Subscription <span className="ipo-label-opt">times oversubscribed — optional</span></label>
+            <input className="ipo-input" type="number" placeholder="e.g. 45 (times)" value={subTimes} onChange={e=>setSubTimes(e.target.value)} />
+            <div className="ipo-field-hint">
+              Check live subscription at <a href="https://www.nseindia.com/market-data/all-upcoming-issues-ipo" target="_blank" rel="noopener noreferrer" className="ipo-link">NSE live ↗</a>
+            </div>
+          </div>
+
+          {/* Capital at stake */}
+          {hasCalc && (
+            <div className="ipo-capital-bar">
+              <div className="ipo-capital-item">
+                <span className="ipo-cap-label">Capital Blocked</span>
+                <span className="ipo-cap-val">Rs.{fmt(calc.capital)}</span>
+              </div>
+              <div className="ipo-capital-item">
+                <span className="ipo-cap-label">Lock Duration</span>
+                <span className="ipo-cap-val">~5–7 days</span>
+              </div>
+              <div className="ipo-capital-item">
+                <span className="ipo-cap-label">Break-even GMP</span>
+                <span className="ipo-cap-val">Rs.{calc.breakEven}+</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT: OUTPUT PANEL */}
+        <div className="ipo-output-panel">
+
+          {!hasCalc ? (
+            <div className="ipo-empty">
+              <div className="ipo-empty-icon">⟶</div>
+              <div className="ipo-empty-title">Enter issue price and lot size to get started</div>
+              <div className="ipo-empty-sub">Listing price, profit, allotment chance, and decision will appear here instantly.</div>
+            </div>
+          ) : (
+            <>
+              {/* IPO name if given */}
+              {name && <div className="ipo-out-name">{name}</div>}
+
+              {/* Decision verdict */}
+              {dec && (
+                <div className="ipo-verdict" style={{background:dec.bg,borderColor:dec.border}}>
+                  <div className="ipo-verdict-tag" style={{color:dec.color}}>{dec.icon} {dec.tag}</div>
+                  <div className="ipo-verdict-text">{dec.verdict}</div>
                 </div>
+              )}
 
-                {!calc.hasGmp ? (
-                  <div className="idc-no-gmp">
-                    Add GMP to see decision and return analysis.
-                    <a href="https://www.investorgain.com/report/live-ipo-gmp/331/" target="_blank" rel="noopener" className="idc-gmp-link">Get GMP ↗</a>
-                  </div>
-                ) : (
+              {/* Key numbers */}
+              <div className="ipo-out-grid">
+                {calc.hasGmp && (
                   <>
-                    {/* Decision badge */}
-                    <div className="idc-decision" style={{background: calc.decision.bg, borderColor: calc.decision.color}}>
-                      <div className="idc-decision-top">
-                        <span className="idc-decision-icon">{calc.decision.icon}</span>
-                        <span className="idc-decision-tag" style={{color: calc.decision.color}}>{calc.decision.tag}</span>
-                      </div>
-                      <div className="idc-decision-line">{calc.decision.line}</div>
+                    <div className="ipo-out-card">
+                      <div className="ipo-out-label">Expected Listing</div>
+                      <div className="ipo-out-val" style={{color:pColor(calc.g)}}>Rs.{fmt(calc.listingPx)}</div>
+                      <div className="ipo-out-sub">at current GMP</div>
                     </div>
-
-                    {/* Core numbers */}
-                    <div className="idc-metrics">
-                      <div className="idc-metric-big">
-                        <div className="idc-metric-label">EXPECTED PROFIT</div>
-                        <div className="idc-metric-val" style={{color: pos?'var(--gain)':'var(--loss)'}}>
-                          {pos?'+':''}₹{fmt(calc.totalProfit)}
-                        </div>
-                      </div>
-                      <div className="idc-metric-big">
-                        <div className="idc-metric-label">RETURN</div>
-                        <div className="idc-metric-val" style={{color: pos?'var(--gain)':'var(--loss)'}}>
-                          {fmtPct(calc.returnPct)}
-                        </div>
-                      </div>
+                    <div className="ipo-out-card">
+                      <div className="ipo-out-label">Expected Profit</div>
+                      <div className="ipo-out-val" style={{color:pColor(calc.listingGain)}}>Rs.{fmt(Math.abs(calc.listingGain))}</div>
+                      <div className="ipo-out-sub">{calc.listingGain >= 0 ? 'gain' : 'loss'} · {calc.n} lot{calc.n>1?'s':''}</div>
                     </div>
-
-                    <div className="idc-submetrics">
-                      <div className="idc-submetric">
-                        <span>Expected listing</span>
-                        <strong style={{color: pos?'var(--gain)':'var(--loss)'}}>₹{fmt(calc.listingPrice)}</strong>
-                      </div>
-                      <div className="idc-submetric">
-                        <span>Profit per lot</span>
-                        <strong>₹{fmt(calc.profitPerLot)}</strong>
-                      </div>
-                      <div className="idc-submetric">
-                        <span>Days blocked</span>
-                        <strong>{calc.daysBlocked} days</strong>
-                      </div>
-                      <div className="idc-submetric">
-                        <span>Annualised return</span>
-                        <strong style={{color:'var(--accent)'}}>~{calc.annualReturn.toFixed(0)}%</strong>
-                      </div>
+                    <div className="ipo-out-card">
+                      <div className="ipo-out-label">Return on Capital</div>
+                      <div className="ipo-out-val" style={{color:pColor(calc.returnPct)}}>{calc.returnPct !== null ? `${calc.returnPct.toFixed(1)}%` : '--'}</div>
+                      <div className="ipo-out-sub">on issue price</div>
                     </div>
-
-                    <div className="idc-context">{calc.context}</div>
-
-                    {/* Scenario table */}
-                    {scenarios && (
-                      <div className="idc-scenarios">
-                        <div className="idc-scenarios-title">GMP SCENARIOS</div>
-                        <table className="idc-sc-table">
-                          <thead><tr><th>Scenario</th><th>Adj. GMP</th><th>Profit</th><th>Return</th></tr></thead>
-                          <tbody>
-                            {scenarios.map(s => (
-                              <tr key={s.label} className={gmpMode===s.label.toLowerCase()?'idc-sc-active':''}>
-                                <td>{s.label}</td>
-                                <td>₹{s.adjGmp}</td>
-                                <td style={{color: s.profit>=0?'var(--gain)':'var(--loss)'}}>₹{fmt(s.profit)}</td>
-                                <td style={{color: s.retPct>=0?'var(--gain)':'var(--loss)'}}>{fmtPct(s.retPct)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="idc-actions">
-                      <button onClick={handleCopy} className="idc-act-btn">
-                        {copied ? '✓ Copied' : '📋 Copy result'}
-                      </button>
-                      <button onClick={handleSave} className="idc-act-btn">💾 Save</button>
-                      <a href="https://zerodha.com/ipo/" target="_blank" rel="noopener" className="idc-act-btn idc-act-primary">Apply via Kite ↗</a>
+                    <div className="ipo-out-card">
+                      <div className="ipo-out-label">Capital Efficiency</div>
+                      <div className="ipo-out-val" style={{color:pColor(calc.capEff)}}>{calc.capEff !== null ? `${calc.capEff.toFixed(2)}%` : '--'}</div>
+                      <div className="ipo-out-sub">return on Rs.{fmt(calc.capital)} blocked</div>
                     </div>
                   </>
                 )}
-              </>
-            )}
-
-            {/* Recent history */}
-            {history.length > 0 && (
-              <div className="idc-history">
-                <div className="idc-history-title">RECENT CALCULATIONS</div>
-                {history.map((h, i) => (
-                  <div key={i} className="idc-history-row">
-                    <span className="idc-history-date">{h.date}</span>
-                    <span className="idc-history-detail">₹{h.price} · {h.lotSize}sh · GMP {h.gmp}</span>
-                    <span className="idc-history-ret" style={{color: parseFloat(h.returnPct)>=0?'var(--gain)':'var(--loss)'}}>
-                      {h.returnPct}%
-                    </span>
-                    <span className="idc-history-tag">{h.tag}</span>
+                <div className="ipo-out-card">
+                  <div className="ipo-out-label">Issue Price</div>
+                  <div className="ipo-out-val">Rs.{fmt(calc.p)}</div>
+                  <div className="ipo-out-sub">{calc.ls} shares per lot</div>
+                </div>
+                <div className="ipo-out-card">
+                  <div className="ipo-out-label">Capital Blocked</div>
+                  <div className="ipo-out-val">Rs.{fmt(calc.capital)}</div>
+                  <div className="ipo-out-sub">{calc.n} lot{calc.n>1?'s':''} · ~5-7 days</div>
+                </div>
+                {allot && (
+                  <div className="ipo-out-card">
+                    <div className="ipo-out-label">Allotment Chance</div>
+                    <div className="ipo-out-val" style={{color:allot.color}}>{allot.label}</div>
+                    <div className="ipo-out-sub">{sub}x subscribed</div>
                   </div>
-                ))}
-                <button className="idc-history-clear" onClick={() => { localStorage.removeItem('ipo_calc_history'); setHistory([]); }}>
-                  Clear history
-                </button>
+                )}
+                <div className="ipo-out-card">
+                  <div className="ipo-out-label">Break-even GMP</div>
+                  <div className="ipo-out-val">Rs.{calc.breakEven}+</div>
+                  <div className="ipo-out-sub">to cover charges</div>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* ── HOW TO APPLY ── */}
-      {tab === 'How to Apply' && (
-        <div className="idc-steps">
-          <div className="idc-steps-header">Follow these steps every IPO</div>
-          {STEPS.map((s, i) => (
-            <div key={i} className="idc-step-row">
-              <div className="idc-step-num">{s.step}</div>
-              <div className="idc-step-body">
-                <div className="idc-step-action">{s.action}</div>
-                <div className="idc-step-desc">{s.desc}</div>
-              </div>
-              {s.url ? (
-                <a href={s.url} target="_blank" rel="noopener" className="idc-step-cta">{s.cta}</a>
-              ) : (
-                <span className="idc-step-cta idc-step-cta-inert">{s.cta}</span>
+              {/* Scenarios */}
+              {calc.hasGmp && (
+                <div className="ipo-scenarios">
+                  <div className="ipo-scen-title">LISTING SCENARIOS</div>
+                  <div className="ipo-scen-grid">
+                    <div className="ipo-scen ipo-scen-bull">
+                      <div className="ipo-scen-label">Bull Case</div>
+                      <div className="ipo-scen-sub">GMP holds or rises</div>
+                      <div className="ipo-scen-val" style={{color:'#00C896'}}>+Rs.{fmt(Math.abs(calc.listingGain ?? 0))}</div>
+                    </div>
+                    <div className="ipo-scen ipo-scen-neutral">
+                      <div className="ipo-scen-label">Flat Listing</div>
+                      <div className="ipo-scen-sub">Lists at issue price</div>
+                      <div className="ipo-scen-val" style={{color:'var(--text3)'}}>Rs.0</div>
+                    </div>
+                    <div className="ipo-scen ipo-scen-bear">
+                      <div className="ipo-scen-label">Bear Case</div>
+                      <div className="ipo-scen-sub">Lists below issue price (5%)</div>
+                      <div className="ipo-scen-val" style={{color:'#FF4455'}}>-Rs.{fmt(Math.round(calc.p * 0.05 * calc.ls * calc.n))}</div>
+                    </div>
+                  </div>
+                </div>
               )}
-            </div>
-          ))}
-          <div className="idc-allotment-note">
-            💡 Heavily oversubscribed IPOs have low allotment probability for retail. Applying for 1 lot maximises your chances relative to capital blocked.
-          </div>
-        </div>
-      )}
 
-      {/* ── PLAYBOOK ── */}
-      {tab === 'IPO Playbook' && (
-        <div className="idc-playbook">
-          <div className="idc-playbook-header">How to think about IPOs</div>
-          {PLAYBOOK.map((p, i) => (
-            <div key={i} className="idc-play-row">
-              <span className="idc-play-icon">{p.icon}</span>
-              <span className="idc-play-text">{p.text}</span>
+              {/* Signals */}
+              {sigs.length > 0 && (
+                <div className="ipo-signals">
+                  <div className="ipo-scen-title">SIGNAL ANALYSIS</div>
+                  {sigs.map((s,i) => (
+                    <div key={i} className="ipo-sig-row">
+                      <span className="ipo-sig-icon" style={{color:s.type==='bull'?'#00C896':s.type==='bear'?'#FF4455':'#F59E0B'}}>{s.type==='bull'?'✔':s.type==='bear'?'✖':'⚠'}</span>
+                      <span className="ipo-sig-text">{s.text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Lot strategy note */}
+              {calc.n > 1 && (
+                <div className="ipo-lot-note">
+                  <div className="ipo-scen-title">LOT STRATEGY</div>
+                  <div className="ipo-lot-compare">
+                    <div className="ipo-lot-compare-item">
+                      <div className="ipo-lot-compare-label">1 lot strategy</div>
+                      <div className="ipo-lot-compare-val">Better allotment probability in oversubscribed IPOs</div>
+                    </div>
+                    <div className="ipo-lot-compare-item">
+                      <div className="ipo-lot-compare-label">{calc.n} lots strategy</div>
+                      <div className="ipo-lot-compare-val">{calc.hasGmp ? `Rs.${fmt(Math.abs(calc.listingGain ?? 0))} if allotted — but lower allotment odds` : 'Higher profit if allotted — but lower allotment odds'}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* HOW TO APPLY — collapsible */}
+      <div className="ipo-collapse-section">
+        <button className="ipo-collapse-toggle" onClick={()=>setStepsOpen(v=>!v)}>
+          <span>HOW TO APPLY</span>
+          <span className="ipo-collapse-chevron">{stepsOpen?'▲ Collapse':'▼ Expand'}</span>
+        </button>
+        {stepsOpen && (
+          <div className="ipo-steps-grid">
+            {STEPS.map((s,i) => (
+              <div key={i} className="ipo-step">
+                <div className="ipo-step-n">{s.n}</div>
+                <div className="ipo-step-body">
+                  <div className="ipo-step-title">{s.title}</div>
+                  <div className="ipo-step-desc">{s.desc}</div>
+                </div>
+              </div>
+            ))}
+            <div className="ipo-allot-links">
+              <div className="ipo-allot-title">CHECK ALLOTMENT STATUS</div>
+              <a href="https://kosipo.kfintech.com/" target="_blank" rel="noopener noreferrer" className="ipo-allot-btn">KFintech ↗</a>
+              <a href="https://linkintime.co.in/MIPO/Ipoallotment.html" target="_blank" rel="noopener noreferrer" className="ipo-allot-btn">Link Intime ↗</a>
+              <a href="https://ris.kfintech.com/ipostatus" target="_blank" rel="noopener noreferrer" className="ipo-allot-btn">SEBI Registrar ↗</a>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* IPO PLAYBOOK — always visible */}
+      <div className="ipo-playbook">
+        <div className="ipo-playbook-title">IPO PLAYBOOK</div>
+        <div className="ipo-playbook-grid">
+          {PLAYBOOK.map((p,i) => (
+            <div key={i} className="ipo-playbook-item">
+              <span className="ipo-playbook-icon">{p.icon}</span>
+              <span className="ipo-playbook-text">{p.text}</span>
             </div>
           ))}
-          <div className="idc-play-disclaimer">
-            GMP is unofficial and unregulated. This calculator is for estimation only. Not investment advice.
-          </div>
         </div>
-      )}
+      </div>
+
+      <div className="ipo-footer">
+        This tool is for educational use only. GMP is an unofficial, unregulated market. Listing price is not guaranteed. Not investment advice.
+      </div>
     </div>
   );
 }
