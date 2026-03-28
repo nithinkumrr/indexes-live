@@ -71,7 +71,7 @@ const PLAYBOOK = [
   { icon:'💧', text:'Capital is blocked 5–7 days via UPI. Factor in opportunity cost, especially during volatile market conditions.' },
   { icon:'🏦', text:'QIB subscription (10x+) is the most reliable positive signal. Institutional demand is a better indicator than retail GMP.' },
   { icon:'🔢', text:'Actual return = gain on capital blocked, not issue price. Rs.500 profit on Rs.1.5L blocked = only 0.33% in a week.' },
-  { icon:'🔒', text:'Track lock-in expiry (promoters / early investors / ESOP) on Kite under Fundamentals → Events. Powered by Tijori Finance.' },
+  { icon:'🔒', text:'Beware of lock-in expiries, as they may lead to increased selling activity. Currently, one can check these under Fundamentals → Events on Zerodha Kite. Powered by Tijori Finance.' },
   { icon:'📊', text:'Listing day performance and 6-month post-listing performance are often uncorrelated. Both timeframes need separate evaluation.' },
   { icon:'🔁', text:'Some IPOs underperform on day 1 but re-rate meaningfully 3–6 months post-listing as quarterly results come in.' },
 ];
