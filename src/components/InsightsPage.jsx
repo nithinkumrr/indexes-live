@@ -1,13 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
 
-// ─── Static economic calendar (update weekly) ────────────────────────────────
+// ─── Economic calendar — sourced from Zerodha Markets (update periodically) ──
+// Dates: YYYY-MM-DD. High impact only shown prominently. Medium shown if near.
 const ECON_EVENTS = [
-  { day: 1, time: '06:00 PM', event: 'US ISM Manufacturing PMI',    impact: 'high',   note: 'Factory activity indicator. Below 50 signals contraction.' },
-  { day: 2, time: '06:00 PM', event: 'US JOLTS Job Openings',        impact: 'medium', note: 'Labour market health. High openings = strong economy.' },
-  { day: 3, time: '06:00 PM', event: 'US ADP Employment',           impact: 'medium', note: 'Private payrolls preview ahead of NFP Friday.' },
-  { day: 4, time: '08:30 PM', event: 'US Initial Jobless Claims',    impact: 'medium', note: 'Weekly unemployment claims. Rising trend = caution.' },
-  { day: 5, time: '06:00 PM', event: 'US Non-Farm Payrolls (NFP)',   impact: 'high',   note: 'Biggest weekly market mover. Strong NFP = rate hike fears.' },
-  { day: 5, time: '07:30 PM', event: 'US Unemployment Rate',        impact: 'high',   note: 'Headline unemployment figure released with NFP.' },
+  // Week of Mar 30
+  { date: '2026-03-29', time: 'All day', event: 'BOJ Policy Rate (Japan)',            impact: 'high',   country: 'Global', note: 'Bank of Japan rate decision. Yen volatility can spill into Asian markets including India.' },
+  { date: '2026-03-30', time: 'All day', event: 'Germany Inflation (Preliminary)',    impact: 'high',   country: 'Global', note: 'Early read on Eurozone inflation. Affects ECB rate expectations and global bond markets.' },
+  { date: '2026-03-31', time: 'All day', event: 'France & Italy Inflation',           impact: 'high',   country: 'Global', note: 'Eurozone inflation data. Combined with Germany read, shapes ECB policy direction.' },
+  { date: '2026-03-31', time: 'All day', event: 'China Manufacturing PMI',            impact: 'medium', country: 'Global', note: 'Below 50 signals contraction in Chinese factory activity. Affects metals and commodity prices.' },
+  { date: '2026-03-31', time: 'All day', event: 'Japan Unemployment Rate',            impact: 'medium', country: 'Global', note: 'Labour market health in Japan. Context for BOJ policy trajectory.' },
+  { date: '2026-04-01', time: 'All day', event: 'India GST Collections',              impact: 'medium', country: 'India',  note: 'Monthly GST data reflects consumption and economic activity. Strong collections = positive for India growth narrative.' },
+  // Week of Apr 3
+  { date: '2026-04-03', time: '06:00 PM', event: 'US Non-Farm Payrolls (NFP)',        impact: 'high',   country: 'Global', note: 'Biggest monthly market mover globally. Strong NFP delays Fed rate cuts, weak NFP accelerates them. Direct impact on FII flows into India.' },
+  { date: '2026-04-03', time: '06:00 PM', event: 'US Unemployment Rate',              impact: 'high',   country: 'Global', note: 'Released alongside NFP. Headline unemployment level watched by the Fed.' },
+  // Week of Apr 7
+  { date: '2026-04-08', time: 'All day', event: 'RBI Monetary Policy Rate Decision',  impact: 'high',   country: 'India',  note: 'Most important domestic event. Rate cut, hold, or hike directly impacts equities, bonds, and banking stocks. Previous: 5.25%.' },
+  { date: '2026-04-08', time: 'All day', event: 'India Cash Reserve Ratio (CRR)',     impact: 'medium', country: 'India',  note: 'RBI liquidity tool. CRR cut injects liquidity into the banking system, bullish for banks and NBFCs.' },
+  // Week of Apr 10
+  { date: '2026-04-09', time: 'All day', event: 'US PCE Price Index',                 impact: 'medium', country: 'Global', note: "Fed's preferred inflation gauge. Higher than expected PCE pushes rate cut expectations further out." },
+  { date: '2026-04-10', time: 'All day', event: 'US CPI Inflation',                   impact: 'high',   country: 'Global', note: 'Key US inflation reading. Above forecast = dollar strengthens, FIIs reduce EM exposure including India.' },
+  { date: '2026-04-10', time: 'All day', event: 'China CPI Inflation',                impact: 'high',   country: 'Global', note: 'Deflation risk in China affects commodity demand. Weak China CPI is bearish for metals.' },
+  { date: '2026-04-10', time: 'All day', event: 'Korea Central Bank Rate Decision',   impact: 'high',   country: 'Global', note: 'Regional central bank signal. Korea often leads Asian rate cycles.' },
+  // Week of Apr 14
+  { date: '2026-04-14', time: 'All day', event: 'China Trade Balance & Exports',      impact: 'medium', country: 'Global', note: 'Chinese export strength reflects global demand. Surplus data affects Yuan and commodity currencies.' },
+  { date: '2026-04-15', time: 'All day', event: 'India Merchandise Trade Balance',    impact: 'medium', country: 'India',  note: 'Monthly trade deficit data. Large deficit puts pressure on Rupee and current account.' },
+  // Week of Apr 17
+  { date: '2026-04-17', time: 'All day', event: 'China GDP (Q1 2026)',                impact: 'high',   country: 'Global', note: 'Quarterly Chinese GDP. Directly impacts commodity prices, global risk appetite and FII allocation to EMs including India.' },
+  // Week of Apr 20
+  { date: '2026-04-20', time: 'All day', event: 'China Central Bank Rate Decision',   impact: 'high',   country: 'Global', note: 'PBOC rate. China easing is positive for risk assets and commodity-linked Indian stocks.' },
+  // Week of Apr 29
+  { date: '2026-04-29', time: 'All day', event: 'US Fed Rate Decision (FOMC)',        impact: 'high',   country: 'Global', note: 'Federal Reserve policy. Most impactful global event for FII flows. Rate cuts positive for Indian equities. Previous rate: 3.50-3.75%.' },
+  { date: '2026-04-30', time: 'All day', event: 'US GDP Advance Estimate (Q1 2026)', impact: 'high',   country: 'Global', note: 'First read on US Q1 growth. Weak GDP accelerates Fed cut expectations.' },
+  { date: '2026-04-30', time: 'All day', event: 'ECB Rate Decision (Euro area)',      impact: 'high',   country: 'Global', note: 'European Central Bank policy. ECB easing is generally positive for global risk appetite.' },
+  { date: '2026-04-30', time: 'All day', event: 'Bank of England Rate Decision',      impact: 'high',   country: 'Global', note: 'BOE policy rate. Affects GBP and UK-linked capital flows.' },
 ];
 
 // ─── Rule engine ─────────────────────────────────────────────────────────────
@@ -245,7 +270,16 @@ export default function InsightsPage({ data = {}, nseData = {} }) {
 
   const timeStr = clock.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
   const dateStr = clock.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
-  const todayEvents = ECON_EVENTS.filter(e => e.day === (clock.getDay() === 0 ? 7 : clock.getDay()));
+  // Show events for today + next 6 days (7-day window), high impact first
+  const now7 = new Date();
+  const in7  = new Date(); in7.setDate(in7.getDate() + 6);
+  const pad2 = n => String(n).padStart(2, '0');
+  const todayStr = `${now7.getFullYear()}-${pad2(now7.getMonth()+1)}-${pad2(now7.getDate())}`;
+  const in7Str   = `${in7.getFullYear()}-${pad2(in7.getMonth()+1)}-${pad2(in7.getDate())}`;
+  const todayEvents = ECON_EVENTS
+    .filter(e => e.date >= todayStr && e.date <= in7Str)
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.impact === 'high' ? -1 : 1));
+  const fmtEvtDate = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
   // Nearest zone
   const nearestZone = zones ? zones.reduce((a, b) => Math.abs(a.level - (nifty?.price||0)) < Math.abs(b.level - (nifty?.price||0)) ? a : b) : null;
@@ -464,12 +498,15 @@ export default function InsightsPage({ data = {}, nseData = {} }) {
 
         {/* Economic calendar */}
         <div className="ins3-card">
-          <div className="ins3-card-title">ECONOMIC CALENDAR</div>
+          <div className="ins3-card-title">ECONOMIC CALENDAR <span style={{fontWeight:400,opacity:.6,letterSpacing:0}}>— Next 7 days</span></div>
           {todayEvents.length > 0 ? (
             <div className="ins3-econ-list">
               {todayEvents.map((e, i) => (
                 <div key={i} className={`ins3-econ-row ins3-econ-${e.impact}`}>
-                  <div className="ins3-econ-time">{e.time}</div>
+                  <div className="ins3-econ-meta">
+                    <div className="ins3-econ-date">{fmtEvtDate(e.date)}</div>
+                    <div className={`ins3-econ-country ins3-econ-country-${e.country === 'India' ? 'india' : 'global'}`}>{e.country}</div>
+                  </div>
                   <div className="ins3-econ-body">
                     <div className="ins3-econ-event">{e.event}</div>
                     <div className="ins3-econ-note">{e.note}</div>
@@ -479,12 +516,41 @@ export default function InsightsPage({ data = {}, nseData = {} }) {
               ))}
             </div>
           ) : (
-            <p className="ins3-loading">No major scheduled events today.</p>
+            <p className="ins3-loading">No major events in the next 7 days.</p>
           )}
-          <p className="ins3-zones-note">All times IST. High-impact events can cause volatility spikes.</p>
+          <p className="ins3-zones-note">Source: Zerodha Markets economic calendar. All times approximate IST.</p>
         </div>
 
       </div>
+
+      {/* ── Market Write-up ── */}
+      {(brief?.writeup || briefLoading) && (
+        <div className="ins3-writeup-wrap">
+          <div className="ins3-card ins3-writeup-card">
+            <div className="ins3-card-hdr-row">
+              <span className="ins3-card-title">{slot.toUpperCase()} WRITE-UP</span>
+              <span className="ins3-writeup-read">2 min read</span>
+              {briefLoading
+                ? <span className="ins3-badge ins3-badge-loading">GENERATING</span>
+                : brief?.cached
+                  ? <span className="ins3-badge ins3-badge-cached">CACHED</span>
+                  : <span className="ins3-badge ins3-badge-live">LIVE</span>}
+            </div>
+            {briefLoading ? (
+              <div className="ins3-brief-loading"><div className="ins3-spinner" /><span>Generating session writeup...</span></div>
+            ) : brief?.writeup ? (
+              <div className="ins3-writeup-body">
+                {brief.writeup.split('\n').filter(p => p.trim()).map((para, i) => (
+                  <p key={i} className="ins3-writeup-para">{para.trim()}</p>
+                ))}
+              </div>
+            ) : null}
+            {brief?.fallback && !briefLoading && (
+              <div className="ins3-writeup-fallback">Rule-based writeup. Set GEMINI_API_KEY in Vercel for AI-generated writeups with live news.</div>
+            )}
+          </div>
+        </div>
+      )}
 
       <HowToRead />
 

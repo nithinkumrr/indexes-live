@@ -5233,8 +5233,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* Economic calendar */
 .ins3-econ-list   { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
-.ins3-econ-row    { display: grid; grid-template-columns: 70px 1fr 50px; gap: 10px; align-items: start; padding: 10px 12px; border-radius: var(--r); background: var(--bg3); }
-.ins3-econ-time   { font-family: var(--mono); font-size: 10px; color: var(--text3); padding-top: 2px; }
+.ins3-econ-row    { display: grid; grid-template-columns: 80px 1fr 52px; gap: 10px; align-items: start; padding: 10px 12px; border-radius: var(--r); background: var(--bg3); }
+.ins3-econ-meta   { display: flex; flex-direction: column; gap: 4px; }
+.ins3-econ-date   { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text2); }
+.ins3-econ-country { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; padding: 2px 6px; border-radius: 8px; display: inline-block; }
+.ins3-econ-country-india  { background: rgba(0,200,150,.15); color: var(--gain); }
+.ins3-econ-country-global { background: rgba(74,158,255,.12); color: var(--accent); }
 .ins3-econ-event  { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
 .ins3-econ-note   { font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.5; }
 .ins3-econ-impact { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; padding: 3px 7px; border-radius: 8px; text-transform: uppercase; text-align: center; align-self: start; }
@@ -5254,6 +5258,15 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .ins3-how-body ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .ins3-how-body li { font-family: var(--mono); font-size: 12px; color: var(--text2); padding-left: 14px; position: relative; line-height: 1.5; }
 .ins3-how-body li::before { content: '•'; position: absolute; left: 0; color: var(--text3); }
+
+/* Write-up section */
+.ins3-writeup-wrap  { padding: 0 16px; margin-top: 12px; }
+.ins3-writeup-card  { border-left-color: var(--accent) !important; }
+.ins3-writeup-read  { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-left: 4px; }
+.ins3-writeup-body  { display: flex; flex-direction: column; gap: 14px; }
+.ins3-writeup-para  { font-family: var(--mono); font-size: 14px; color: var(--text2); line-height: 1.85; margin: 0; }
+.ins3-writeup-para:first-child { color: var(--text); font-size: 15px; }
+.ins3-writeup-fallback { font-family: var(--mono); font-size: 10px; color: var(--text3); opacity: .6; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
 
 .ins3-footer      { font-family: var(--mono); font-size: 10px; color: var(--text3); line-height: 1.8; padding: 20px 20px 0; margin-top: 12px; border-top: 1px solid var(--border); opacity: .7; }
 
