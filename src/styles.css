@@ -5203,6 +5203,21 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .ins2-loading       { font-family: var(--mono); font-size: 13px; color: var(--text3); margin: 0; }
 
 /* Footer */
+/* AI Brief card */
+.ins2-brief-card    { border-left-color: var(--accent) !important; }
+.ins2-brief-badge   { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; padding: 2px 8px; border-radius: 10px; background: rgba(74,158,255,.12); color: var(--accent); border: 1px solid rgba(74,158,255,.3); }
+.ins2-brief-time    { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-left: auto; }
+.ins2-brief-loading { display: flex; align-items: center; gap: 10px; padding: 24px 0; font-family: var(--mono); font-size: 12px; color: var(--text3); }
+.ins2-brief-spinner { width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: ins2-spin .7s linear infinite; flex-shrink: 0; }
+@keyframes ins2-spin { to { transform: rotate(360deg); } }
+.ins2-brief-error   { font-family: var(--mono); font-size: 12px; color: var(--loss); padding: 16px 0; display: flex; gap: 12px; align-items: center; }
+.ins2-retry-btn     { font-family: var(--mono); font-size: 11px; padding: 4px 12px; border-radius: var(--r); border: 1px solid var(--loss); background: none; color: var(--loss); cursor: pointer; }
+.ins2-brief-body    { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.ins2-brief-heading { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text3); margin-top: 6px; }
+.ins2-brief-heading-inline { font-weight: 700; color: var(--text); }
+.ins2-brief-para    { font-family: var(--mono); font-size: 14px; color: var(--text2); line-height: 1.8; margin: 0; }
+.ins2-brief-source  { font-family: var(--mono); font-size: 10px; color: var(--text3); opacity: .6; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
+
 .ins2-footer        { font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.8; padding-top: 24px; margin-top: 8px; border-top: 1px solid var(--border); opacity: .8; }
 
 @media (max-width: 600px) {
