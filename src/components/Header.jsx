@@ -22,6 +22,7 @@ export default function Header({ lastUpdate, view, setView }) {
     { id: 'ipo',       label: 'IPO',        icon: '🚀', cls: 'tab-teal' },
     { id: 'insights',   label: 'Insights',   icon: '📝', cls: 'tab-purple' },
     { id: 'calc',      label: 'Risk',       icon: '🎯', cls: '' },
+  { id: 'brokers',   label: 'Brokers',    icon: '🏦', cls: '' },
   ];
 
   return (

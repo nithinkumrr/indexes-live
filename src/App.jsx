@@ -21,6 +21,7 @@ const SentimentTop = lazy(() => import('./components/SentimentTop'));
 const IndiaHeatmap = lazy(() => import('./components/IndiaHeatmap'));
 const FiiDii       = lazy(() => import('./components/FiiDii'));
 const InsightsPage = lazy(() => import('./components/InsightsPage'));
+const BrokersPage  = lazy(() => import('./components/BrokersPage'));
 
 const HASH_MAP = {
   '':           'grid',
@@ -31,6 +32,7 @@ const HASH_MAP = {
   'ipo':        'ipo',
   'calc':       'calc',
   'insights':   'insights',
+  'brokers':    'brokers',
   'blog':       'insights',
 };
 
@@ -42,9 +44,10 @@ const VIEW_HASH = {
   'ipo':       'ipo',
   'calc':      'calc',
   'insights':  'insights',
+  'brokers':   'brokers',
 };
 
-const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc', 'insights']);
+const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc', 'insights', 'brokers']);
 
 function getViewFromHash() {
   const hash = window.location.hash.replace('#/', '').replace('#', '').toLowerCase();
@@ -96,6 +99,7 @@ export default function App() {
           view === 'ipo'       ? <IpoPage /> :
           view === 'calc'      ? <RiskCalcPage /> :
           view === 'insights'  ? <InsightsPage data={data} nseData={nseData} /> :
+          view === 'brokers'   ? <BrokersPage /> :
           null
         ) : (
           <>
