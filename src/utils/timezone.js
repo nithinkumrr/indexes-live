@@ -168,13 +168,32 @@ export function getNiftyExpiries(holidays = [], holidayNames = {}) {
     return d;
   }
 
-  function lastThursdayOfMonth(year, month) {
-    const d = new Date(year, month + 1, 0);
-    while (d.getDay() !== 4) d.setDate(d.getDate() - 1);
+  function lastWeekdayOfMonth(year, month, weekday) {
+    // weekday: 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
+    const d = new Date(year, month + 1, 0); // last day of month
+    while (d.getDay() !== weekday) d.setDate(d.getDate() - 1);
     d.setHours(15, 30, 0, 0);
     return d;
   }
 
+  function lastThursdayOfMonth(year, month) {
+    return lastWeekdayOfMonth(year, month, 4);
+  }
+
+  // Nifty monthly expiry = last Tuesday of the month
+  function getNiftyMonthly() {
+    let raw = lastWeekdayOfMonth(ist.getFullYear(), ist.getMonth(), 2); // 2 = Tuesday
+    let info = adjustExpiryWithInfo(raw, holidaySet, holidayNames);
+    if (info.date <= now) {
+      const nm = ist.getMonth() === 11 ? 0 : ist.getMonth() + 1;
+      const ny = ist.getMonth() === 11 ? ist.getFullYear() + 1 : ist.getFullYear();
+      raw = lastWeekdayOfMonth(ny, nm, 2);
+      info = adjustExpiryWithInfo(raw, holidaySet, holidayNames);
+    }
+    return info;
+  }
+
+  // Sensex monthly expiry = last Thursday of the month
   function getMonthly() {
     let raw = lastThursdayOfMonth(ist.getFullYear(), ist.getMonth());
     let info = adjustExpiryWithInfo(raw, holidaySet, holidayNames);
@@ -204,7 +223,7 @@ export function getNiftyExpiries(holidays = [], holidayNames = {}) {
   }
 
   const niftyWeeklyInfo   = getWeeklyWithRollover(2, holidaySet, holidayNames);
-  const niftyMonthlyInfo  = getMonthly();
+  const niftyMonthlyInfo  = getNiftyMonthly();
   const sensexWeeklyInfo  = getWeeklyWithRollover(4, holidaySet, holidayNames);
   const sensexMonthlyInfo = getMonthly();
 

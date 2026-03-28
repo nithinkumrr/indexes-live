@@ -1024,14 +1024,22 @@ function ExpiryCalendar({ holidays = [], holidayNames = {} }) {
       if (sw > now) events.push({ date: new Date(sw), label: 'Sensex Weekly', color: '#F59E0B', type: 'weekly' });
     }
 
-    // Monthly last Thursday for next 4 months
+    // Nifty Monthly = last Tuesday of month; Sensex Monthly = last Thursday
     for (let m = 0; m < 4; m++) {
-      const yr  = ist.getMonth() + m > 11 ? ist.getFullYear() + 1 : ist.getFullYear();
-      const mo  = (ist.getMonth() + m) % 12;
-      const d   = new Date(yr, mo + 1, 0);
-      while (d.getDay() !== 4) d.setDate(d.getDate() - 1);
-      d.setHours(15, 30, 0, 0);
-      if (d > now) events.push({ date: new Date(d), label: 'Nifty Monthly', color: '#A78BFA', type: 'monthly' });
+      const yr = ist.getMonth() + m > 11 ? ist.getFullYear() + 1 : ist.getFullYear();
+      const mo = (ist.getMonth() + m) % 12;
+      // Nifty: last Tuesday (day 2)
+      const dn = new Date(yr, mo + 1, 0);
+      while (dn.getDay() !== 2) dn.setDate(dn.getDate() - 1);
+      dn.setHours(15, 30, 0, 0);
+      if (holidaySet.has(toKey(dn))) dn.setDate(dn.getDate() - 1);
+      if (dn > now) events.push({ date: new Date(dn), label: 'Nifty Monthly', color: '#A78BFA', type: 'monthly' });
+      // Sensex: last Thursday (day 4)
+      const ds = new Date(yr, mo + 1, 0);
+      while (ds.getDay() !== 4) ds.setDate(ds.getDate() - 1);
+      ds.setHours(15, 30, 0, 0);
+      if (holidaySet.has(toKey(ds))) ds.setDate(ds.getDate() - 1);
+      if (ds > now) events.push({ date: new Date(ds), label: 'Sensex Monthly', color: '#F59E0B', type: 'monthly' });
     }
 
     // Holiday markers
@@ -1957,7 +1965,7 @@ function IndiaTickerFno() {
 function ExpiryStrip({ expiries, holidayLive, holidayNames = {} }) {
   const CONTRACTS = [
     { key: 'niftyWeekly',   label: 'Nifty Weekly',   rule: 'Tue',  color: '#4A9EFF', exp: expiries.niftyWeekly  },
-    { key: 'niftyMonthly',  label: 'Nifty Monthly',  rule: 'Thu',  color: '#4A9EFF', exp: expiries.niftyMonthly },
+    { key: 'niftyMonthly',  label: 'Nifty Monthly',  rule: 'Tue',  color: '#4A9EFF', exp: expiries.niftyMonthly },
     { key: 'sensexWeekly',  label: 'Sensex Weekly',  rule: 'Thu',  color: '#F59E0B', exp: expiries.sensexWeekly  },
     { key: 'sensexMonthly', label: 'Sensex Monthly', rule: 'Thu',  color: '#F59E0B', exp: expiries.sensexMonthly },
   ];
