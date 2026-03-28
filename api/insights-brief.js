@@ -63,9 +63,7 @@ function buildFallback(d, slot) {
 
 Price structure shows ${structWord}. ${sessionChar ? sessionChar + ', reflecting the character of participation during this session.' : 'The session has not yet produced a clear close relative to its range.'} ${np < 0 && vix > 16 ? 'Elevated VIX at ' + vix.toFixed(1) + ' indicates market uncertainty is elevated.' : vix ? 'India VIX at ' + vix.toFixed(1) + ' reflects ' + (vix < 14 ? 'calm conditions.' : 'normal market activity.') : ''}
 
-${presWord.charAt(0).toUpperCase() + presWord.slice(1)} is the dominant theme. Participants are watching whether key levels hold or give way as the session progresses. Global markets are providing the broader backdrop, and any sharp moves in US futures or Asian indices could amplify domestic moves.
-
-This summary is generated from live price data using rule-based logic. For news-driven context with OI data and quarterly results, configure the AI API key in your environment settings.`;
+${presWord.charAt(0).toUpperCase() + presWord.slice(1)} is the dominant theme. Participants are watching whether key levels hold or give way as the session progresses. Global markets are providing the broader backdrop, and any sharp moves in US futures or Asian indices could amplify domestic moves.`;
 
   return { trader: { tone, control: ctrl, behavior: beh, risk }, investor: { context: ctx, structure: struc, watch, risk: prisk }, writeup, fallback: true };
 }

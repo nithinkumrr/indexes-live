@@ -326,7 +326,7 @@ function getTomorrow(np, vix, fiiNet, diiNet, posInRange, dayType, events) {
 
   // Pad to 8 if needed with general structure observation
   if (items.length < 8)
-    items.push('Gift Nifty levels at 7–8 PM IST will give the first read on next session direction based on global futures at that time.');
+    items.push('Nifty F&O open interest data released after market close today will show whether positions are being built or unwound for the next session.');
   if (items.length < 8)
     items.push('Global cues: check S&P 500 futures, crude oil, and USD/INR after 6 PM IST for the overnight setup before the next session opens.');
 
@@ -595,34 +595,44 @@ export default function InsightsPage({data={}, nseData={}}) {
   return (
     <div className="ip-wrap">
 
-      {/* ROW 1: TICKER + COMMODITIES STRIP */}
-      <div className="ip-ticker-block">
-        <div className="ip-ticker-meta">
-          <div className="ip-ticker-slot">{slot.toUpperCase()}</div>
-          <div className="ip-ticker-date">{dateStr} · {timeStr}</div>
-        </div>
-        <div className="ip-ticker-indices">
-          <TickerItem label="NIFTY 50"   d={nifty} />
-          <TickerItem label="BANK NIFTY" d={banknifty} />
-          <TickerItem label="GIFT NIFTY" d={giftnifty} />
-          <TickerItem label="S&P 500"    d={data.sp500}  borderColor="#4A9EFF" />
-          <TickerItem label="NASDAQ"     d={data.nasdaq} borderColor="#A78BFA" />
-        </div>
-        {/* Commodity sub-section in same strip */}
-        <div className="ip-commstrip-divider">COMMODITIES</div>
-        <div className="ip-commstrip">
-          <CommStrip label="GOLD"    d={data.gold}   dec={1} />
-          <CommStrip label="SILVER"  d={data.silver} dec={2} />
-          <CommStrip label="CRUDE"   d={data.crude}  dec={1} />
-          <CommStrip label="BRENT"   d={data.brent}  dec={1} />
-          <CommStrip label="NAT GAS" d={data.natgas} dec={3} />
-        </div>
-        {nseData.vix&&(
-          <div className="ip-ticker-vix">
-            <div className="ip-ticker-vix-label">INDIA VIX</div>
-            <div className="ip-ticker-vix-val" style={{color:nseData.vix>18?'var(--loss)':nseData.vix<13?'var(--gain)':'var(--text)'}}>{nseData.vix.toFixed(1)}</div>
+      {/* SENTIMENT-STYLE TICKER (Global + India rows) */}
+      <Ticker data={data} nseData={nseData} />
+
+      {/* ROW 1: COMMODITIES (50% left) + INDICES/TIME (50% right) */}
+      <div className="ip-toprow">
+        {/* LEFT 50%: Commodities — no scroll, grid */}
+        <div className="ip-toprow-left">
+          <div className="ip-toprow-label">COMMODITIES</div>
+          <div className="ip-commstrip-v">
+            <CommStrip label="GOLD"      d={data.gold}      dec={1} />
+            <CommStrip label="SILVER"    d={data.silver}    dec={2} />
+            <CommStrip label="CRUDE WTI" d={data.crude}     dec={1} />
+            <CommStrip label="BRENT"     d={data.brent}     dec={1} />
+            <CommStrip label="NAT GAS"   d={data.natgas}    dec={3} />
+            <CommStrip label="COPPER"    d={data.copper}    dec={3} />
+            <CommStrip label="ALUMINIUM" d={data.aluminium} dec={0} />
           </div>
-        )}
+        </div>
+        {/* RIGHT 50%: time + indices strip */}
+        <div className="ip-toprow-right">
+          <div className="ip-ticker-meta">
+            <div className="ip-ticker-slot">{slot.toUpperCase()}</div>
+            <div className="ip-ticker-date">{dateStr} · {timeStr}</div>
+          </div>
+          <div className="ip-ticker-indices">
+            <TickerItem label="NIFTY 50"   d={nifty} />
+            <TickerItem label="BANK NIFTY" d={banknifty} />
+            <TickerItem label="GIFT NIFTY" d={giftnifty} />
+            <TickerItem label="S&P 500"    d={data.sp500}  borderColor="#4A9EFF" />
+            <TickerItem label="NASDAQ"     d={data.nasdaq} borderColor="#A78BFA" />
+          </div>
+          {nseData.vix&&(
+            <div className="ip-ticker-vix">
+              <div className="ip-ticker-vix-label">INDIA VIX</div>
+              <div className="ip-ticker-vix-val" style={{color:nseData.vix>18?'var(--loss)':nseData.vix<13?'var(--gain)':'var(--text)'}}>{nseData.vix.toFixed(1)}</div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ROW 2: SIGNALS (50%) + RIGHT PANEL (50%) */}
@@ -863,29 +873,31 @@ export default function InsightsPage({data={}, nseData={}}) {
           ):<div className="ip-note">Loading FII/DII data...</div>}
         </div>
 
-        {/* ECONOMIC CALENDAR full width below */}
+        {/* ECONOMIC CALENDAR — 2-column list */}
         <div className="ip-fiifull-cal">
           <div className="ip-block-label">ECONOMIC CALENDAR <span style={{opacity:.5,fontSize:9,fontWeight:400,letterSpacing:0}}>NEXT 7 DAYS</span></div>
-          <div className="ip-econ-list">
-          {events.length>0?events.map((e,i)=>(
-            <div key={i} className="ip-econ-row">
-              <div className="ip-econ-meta">
-                <span className="ip-econ-date">{fmtEvtDate(e.date)}</span>
-                <span className={`ip-econ-ctry ip-ctry-${e.country==='India'?'india':'global'}`}>{e.country}</span>
-              </div>
-              <div className="ip-econ-body">
-                <div className="ip-econ-event">{e.event}</div>
-                <div className="ip-econ-note">{e.note}</div>
-              </div>
-              <div className={`ip-econ-imp ip-imp-${e.impact}`}>{e.impact}</div>
+          {events.length>0?(
+            <div className="ip-econ-2col">
+              {events.map((e,i)=>(
+                <div key={i} className="ip-econ-row">
+                  <div className="ip-econ-meta">
+                    <span className="ip-econ-date">{fmtEvtDate(e.date)}</span>
+                    <span className={`ip-econ-ctry ip-ctry-${e.country==='India'?'india':'global'}`}>{e.country}</span>
+                  </div>
+                  <div className="ip-econ-body">
+                    <div className="ip-econ-event">{e.event}</div>
+                    <div className="ip-econ-note">{e.note}</div>
+                  </div>
+                  <div className={`ip-econ-imp ip-imp-${e.impact}`}>{e.impact}</div>
+                </div>
+              ))}
             </div>
-          )):<div className="ip-note">No major events in next 7 days.</div>}
-          </div>
+          ):<div className="ip-note">No major events in next 7 days.</div>}
         </div>
       </div>
 
-      <div className="ip-footer">
-        Data-driven signals from live market data. Not investment advice. Data via Kite Connect and NSE. AI write-up uses Gemini with live search grounding.
+      <div className="ip-footer-bold">
+        Data-driven signals from live market data. Not investment advice.
       </div>
     </div>
   );
