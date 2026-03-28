@@ -74,17 +74,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .app { width: 100%; min-height: 100vh; }
 
 /* HEADER */
-.header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; z-index: 100; gap: 10px; flex-wrap: nowrap; }
-.header-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.header { display: flex; align-items: stretch; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; z-index: 100; gap: 10px; flex-wrap: nowrap; min-height: 46px; }
+.header-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; padding: 10px 0; }
 .header-controls { display: flex; align-items: center; gap: 8px; }
 .logo { display: flex; align-items: baseline; }
 .logo-text { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; }
 .logo-dot  { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text3); }
 .logo-live { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--live); letter-spacing: -0.5px; }
-.desktop-nav { display: flex; background: var(--bg3); border: 1px solid var(--border2); border-radius: 14px; padding: 2px; gap: 2px; flex-shrink: 0; }
-.view-btn    { font-family: var(--mono); font-size: 11px; padding: 4px 12px; border-radius: 12px; border: none; background: transparent; color: var(--text2); cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
-.view-btn:hover { color: var(--text); }
-.view-active { background: var(--bg4); color: var(--text); }
+.desktop-nav { display: flex; background: transparent; border: none; border-radius: 0; padding: 0; gap: 0; flex-shrink: 0; align-items: stretch; }
+.view-btn    { font-family: var(--mono); font-size: 13px; font-weight: 700; padding: 6px 16px; border-radius: 0; border: none; border-bottom: 2px solid transparent; background: transparent; color: var(--text3); cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; letter-spacing: 0.2px; }
+.view-btn:hover { color: var(--text); background: rgba(255,255,255,.03); }
+.view-active { color: #fff !important; border-bottom-color: var(--accent) !important; background: rgba(74,158,255,.05) !important; }
 
 /* Mobile bottom nav — hidden on desktop */
 .mobile-nav { display: none; }
@@ -5480,10 +5480,18 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-featured-vs { font-family: var(--mono); font-size: 10px; color: var(--text3); padding-top: 6px; border-top: 1px solid var(--border); }
 
 /* Tabs */
-.brk-tabs        { display: flex; border-bottom: 1px solid var(--border); background: var(--bg0); overflow-x: auto; }
-.brk-tab         { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 12px 22px; border: none; border-bottom: 2px solid transparent; background: none; color: var(--text3); cursor: pointer; white-space: nowrap; transition: all .15s; }
-.brk-tab:hover   { color: var(--text); }
-.brk-tab-active  { color: var(--text) !important; border-bottom-color: var(--accent) !important; }
+/* Brokers sidebar layout */
+.brk-layout      { display: grid; grid-template-columns: 280px 1fr; align-items: start; min-height: 600px; border-top: 1px solid var(--border); }
+.brk-sidenav     { border-right: 1px solid var(--border); background: var(--bg0); position: sticky; top: 45px; display: flex; flex-direction: column; padding: 8px 0; }
+.brk-nav-btn     { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border: none; background: none; cursor: pointer; text-align: left; width: 100%; border-left: 3px solid transparent; transition: all .15s; }
+.brk-nav-btn:hover { background: rgba(255,255,255,.03); }
+.brk-nav-btn:hover .brk-nav-label { color: var(--text); }
+.brk-nav-icon    { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; color: var(--text3); font-family: var(--mono); font-weight: 700; transition: color .15s; }
+.brk-nav-label   { font-family: var(--mono); font-size: 15px; font-weight: 800; color: var(--text2); letter-spacing: 0.2px; transition: color .15s; }
+.brk-nav-active  { border-left-color: var(--accent) !important; background: rgba(74,158,255,.06) !important; }
+.brk-nav-active .brk-nav-icon  { color: var(--accent) !important; }
+.brk-nav-active .brk-nav-label { color: #fff !important; }
+.brk-main-content { padding: 20px 24px; min-width: 0; }
 
 /* Content */
 .brk-content     { padding: 16px 20px; }

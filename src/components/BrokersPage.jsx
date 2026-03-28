@@ -564,12 +564,23 @@ export default function BrokersPage() {
         </div>
       </div>
 
-      {/* TABS */}
-      <div className="brk-tabs">
-        {TABS.map(t=>(
-          <button key={t} className={`brk-tab${tab===t?' brk-tab-active':''}`} onClick={()=>setTab(t)}>{t}</button>
-        ))}
-      </div>
+      {/* MAIN: left nav 40% + content 60% */}
+      <div className="brk-layout">
+
+        {/* LEFT NAV */}
+        <div className="brk-sidenav">
+          {TABS.map(t=>(
+            <button key={t} className={`brk-nav-btn${tab===t?' brk-nav-active':''}`} onClick={()=>setTab(t)}>
+              <span className="brk-nav-icon">{
+                t==='Overview'?'◎':t==='Rankings'?'↓':t==='Calculator'?'₹':t==='Annual Cost'?'📅':t==='All Charges'?'≡':'📊'
+              }</span>
+              <span className="brk-nav-label">{t}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* RIGHT CONTENT */}
+        <div className="brk-main-content">
 
       {/* ── OVERVIEW ── */}
       {tab==='Overview' && (
@@ -1015,6 +1026,9 @@ export default function BrokersPage() {
           </div>
         </div>
       )}
+
+        </div>{/* end brk-main-content */}
+      </div>{/* end brk-layout */}
 
       <div className="brk-footer">
         Data sourced from official broker websites, fee documents, and NSE filings. Regulatory charges (STT, exchange fee, SEBI fee, stamp duty) are fixed by government and exchanges — identical at every broker. Always verify current charges before trading. No affiliates. No paid placements. No sponsored rankings. ★ Editor's Pick = editorial judgment based on platform quality, financial strength, and track record — not cost alone. Not sponsored.
