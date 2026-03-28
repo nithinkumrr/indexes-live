@@ -127,14 +127,21 @@ WRITEUP_END`;
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         tools: [{ google_search: {} }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 700 },
+        generationConfig: { temperature: 0.3, maxOutputTokens: 1500 },
       }),
     }
   );
 
-  if (!res.ok) throw new Error(`AI API ${res.status}`);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`AI API ${res.status}: ${errText.slice(0, 200)}`);
+  }
   const json = await res.json();
-  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  // Gemini with search grounding can return multiple parts — concatenate all text parts
+  const parts = json?.candidates?.[0]?.content?.parts || [];
+  const text = parts.map(p => p.text || '').join('');
+
+  if (!text) throw new Error('empty_response');
 
   const get = key => {
     const match = text.match(new RegExp(`${key}:\\s*(.+)`));
@@ -157,7 +164,7 @@ export default async function handler(req, res) {
   const slot = getSlotInfo();
 
   try {
-    const cached = await kv.get(`insights_v4_${slot.key}`);
+    const cached = await kv.get(`insights_v5_${slot.key}`);
     if (cached) return res.json({ ...cached, cached: true, slot });
   } catch (_) {}
 
@@ -169,12 +176,16 @@ export default async function handler(req, res) {
 
   if (apiKey) {
     try { result = await callGemini(apiKey, slot, body); }
-    catch (err) { console.error('AI brief failed:', err.message); result = buildFallback(body, slot); }
+    catch (err) {
+      console.error('AI brief failed:', err.message);
+      result = buildFallback(body, slot);
+      result._error = err.message; // surfaced in response for debugging
+    }
   } else {
     result = buildFallback(body, slot);
   }
 
   result.generatedAt = new Date().toISOString();
-  try { await kv.set(`insights_v4_${slot.key}`, result, { ex: slot.ttl }); } catch (_) {}
+  try { await kv.set(`insights_v5_${slot.key}`, result, { ex: slot.ttl }); } catch (_) {}
   return res.json({ ...result, cached: false, slot });
 }

@@ -435,7 +435,7 @@ export default function InsightsPage({ data = {}, nseData = {} }) {
           ) : (
             <div className="ins4-weekend-note">Brief unavailable. Try refreshing the page.</div>
           )}
-          <div className="ins4-brief-src">{brief?.fallback ? 'Generated from live market data using rule-based logic. Set up AI key for news-grounded briefs.' : 'AI-generated with live news and search. Refreshed each session window.'}</div>
+          <div className="ins4-brief-src">{brief?.fallback ? `Rule-based fallback.${brief?._error ? ' Error: ' + brief._error : ' AI key set but call failed — check Vercel logs.'}` : 'AI-generated with live news and search. Refreshed each session window.'}</div>
         </div>
 
         {/* MARKET STANCE (1 col) */}
