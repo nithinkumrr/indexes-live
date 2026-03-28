@@ -111,7 +111,7 @@ WRITEUP_END`;
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         tools: [{ google_search: {} }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: 700 },
+        generationConfig: { temperature: 0.3, maxOutputTokens: 600 },
       }),
     }
   );
