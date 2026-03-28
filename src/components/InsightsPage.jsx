@@ -671,6 +671,25 @@ export default function InsightsPage({data={}, nseData={}}) {
             </div>
           )}
 
+          {/* AI WRITE-UP lives here, directly below warnings, fills the left column */}
+          <div className="ip-ana-block ip-writeup-block">
+            <div className="ip-ana-title" style={{display:'flex',alignItems:'center',gap:8}}>
+              AI WRITE-UP
+              <span className="ip-writeup-badge">{briefLoading?'GENERATING':brief?.cached?'CACHED':'LIVE'}</span>
+            </div>
+            <div className="ip-writeup-content">
+              {briefLoading?(
+                <div className="ip-loading"><div className="ip-spinner"/><span>Generating write-up with live news and market data...</span></div>
+              ):brief?.writeup?(
+                brief.writeup.split('\n').filter(p=>p.trim()).map((para,i)=>(
+                  <p key={i} className="ip-writeup-para">{para.trim()}</p>
+                ))
+              ):(
+                <p className="ip-writeup-para" style={{color:'var(--text3)'}}>{brief?._error?`AI error: ${brief._error}`:'Write-up not available. Refresh to try again.'}</p>
+              )}
+            </div>
+          </div>
+
         </div>
 
         {/* RIGHT: Risk Meter + Stance + Key Levels + Trap Zones + Scenarios + Tomorrow */}
@@ -764,26 +783,27 @@ export default function InsightsPage({data={}, nseData={}}) {
         </div>
       </div>
 
-      {/* ROW 3: AI WRITE-UP (50%) + FII/DII (50%) */}
-      <div className="ip-row-half ip-section">
-        <div className="ip-half-left">
-          <div className="ip-block-label">
-            AI WRITE-UP
-            <span className="ip-writeup-badge">{briefLoading?'GENERATING':brief?.cached?'CACHED':'LIVE'}</span>
-          </div>
-          <div className="ip-writeup-content">
-            {briefLoading?(
-              <div className="ip-loading"><div className="ip-spinner"/><span>Generating write-up with live news...</span></div>
-            ):brief?.writeup?(
-              brief.writeup.split('\n').filter(p=>p.trim()).map((para,i)=>(
-                <p key={i} className="ip-writeup-para">{para.trim()}</p>
-              ))
-            ):(
-              <p className="ip-writeup-para" style={{color:'var(--text3)'}}>{brief?._error?`Error: ${brief._error}`:'Write-up not available. Refresh to try again.'}</p>
-            )}
-          </div>
+      {/* ROW 3: ECONOMIC CALENDAR (30%) + FII/DII FLOWS (70%) */}
+      <div className="ip-row-calendar ip-section">
+        <div className="ip-cal-col">
+          <div className="ip-block-label">ECONOMIC CALENDAR <span style={{opacity:.5,fontSize:9,fontWeight:400,letterSpacing:0}}>NEXT 7 DAYS</span></div>
+          {events.length>0?events.map((e,i)=>(
+            <div key={i} className="ip-econ-row">
+              <div className="ip-econ-meta">
+                <span className="ip-econ-date">{fmtEvtDate(e.date)}</span>
+                <span className={`ip-econ-ctry ip-ctry-${e.country==='India'?'india':'global'}`}>{e.country}</span>
+              </div>
+              <div className="ip-econ-body">
+                <div className="ip-econ-event">{e.event}</div>
+                <div className="ip-econ-note">{e.note}</div>
+              </div>
+              <div className={`ip-econ-imp ip-imp-${e.impact}`}>{e.impact}</div>
+            </div>
+          )):<div className="ip-note">No major events in next 7 days.</div>}
         </div>
-        <div className="ip-half-right">
+
+        {/* FII/DII — right side of calendar row */}
+        <div className="ip-cal-right">
           <div className="ip-block-label">FII / DII FLOWS</div>
           {fiiNet!==null?(
             <div className="ip-fii-content">
@@ -825,27 +845,7 @@ export default function InsightsPage({data={}, nseData={}}) {
         </div>
       </div>
 
-      {/* ROW 4: ECONOMIC CALENDAR (30%) */}
-      <div className="ip-row-calendar ip-section">
-        <div className="ip-cal-col">
-          <div className="ip-block-label">ECONOMIC CALENDAR <span style={{opacity:.5,fontSize:9,fontWeight:400,letterSpacing:0}}>NEXT 7 DAYS</span></div>
-          {events.length>0?events.map((e,i)=>(
-            <div key={i} className="ip-econ-row">
-              <div className="ip-econ-meta">
-                <span className="ip-econ-date">{fmtEvtDate(e.date)}</span>
-                <span className={`ip-econ-ctry ip-ctry-${e.country==='India'?'india':'global'}`}>{e.country}</span>
-              </div>
-              <div className="ip-econ-body">
-                <div className="ip-econ-event">{e.event}</div>
-                <div className="ip-econ-note">{e.note}</div>
-              </div>
-              <div className={`ip-econ-imp ip-imp-${e.impact}`}>{e.impact}</div>
-            </div>
-          )):<div className="ip-note">No major events in next 7 days.</div>}
-        </div>
-      </div>
-
-      <div className="ip-footer">
+            <div className="ip-footer">
         Data-driven signals from live market data. Not investment advice. Data via Kite Connect and NSE. AI write-up uses Gemini with live search grounding.
       </div>
     </div>
