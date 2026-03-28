@@ -29,54 +29,42 @@
 
 /* ── LIGHT THEME ──────────────────────────────────────────────────── */
 [data-theme="light"] {
-  /* Navy nav + elegant light content */
-  --bg:       #F0F4F8;
-  --bg0:      #1B2D45;
-  --bg2:      #FFFFFF;
-  --bg3:      #E4EAF2;
-  --bg4:      #D4DCE8;
-  --border:   rgba(27,45,69,0.10);
-  --border2:  rgba(27,45,69,0.18);
-  --text:     #0D1B2A;
-  --text2:    #2A4060;
-  --text3:    #6B85A0;
-  --gain:     #0A7C4E;
-  --gain-bg:  rgba(10,124,78,0.10);
-  --loss:     #C0392B;
-  --loss-bg:  rgba(192,57,43,0.10);
-  --live:     #0A7C4E;
-  --live-bg:  rgba(10,124,78,0.08);
-  --pre:      #9A5800;
-  --pre-bg:   rgba(154,88,0,0.10);
-  --india:    #9A5800;
-  --accent:   #1B2D45;
-  --nav-bg:   #1B2D45;
+  /* Warm Paper — high retention, easy on eyes, data pops */
+  --bg:       #FAFAF8;
+  --bg0:      #F3F3F0;
+  --bg2:      #FFFDF9;
+  --bg3:      #EDECE8;
+  --bg4:      #E2E0DB;
+  --border:   rgba(17,17,17,0.09);
+  --border2:  rgba(17,17,17,0.16);
+  --text:     #111111;
+  --text2:    #3A3A3A;
+  --text3:    #888880;
+  --gain:     #00875A;
+  --gain-bg:  rgba(0,135,90,0.09);
+  --loss:     #D5152B;
+  --loss-bg:  rgba(213,21,43,0.09);
+  --live:     #00875A;
+  --live-bg:  rgba(0,135,90,0.08);
+  --pre:      #9A5100;
+  --pre-bg:   rgba(154,81,0,0.09);
+  --india:    #A84A00;
+  --accent:   #1847B1;
 }
 
 [data-theme="light"] body { background: var(--bg); }
 [data-theme="light"] .live-pulse { background: var(--live); }
 [data-theme="light"] .ticker-wrap { background: var(--bg2); }
-[data-theme="light"] .chip-live { background: rgba(10,124,78,0.10); color: var(--live); border-color: rgba(10,124,78,0.28); }
+[data-theme="light"] .chip-live { background: rgba(0,135,90,0.10); color: var(--live); border-color: rgba(0,135,90,0.28); }
 [data-theme="light"] .chip-closed { background: var(--bg3); color: var(--text3); }
-[data-theme="light"] .logo-live { color: #4DA6FF; }
-[data-theme="light"] .header { background: #1B2D45 !important; border-bottom-color: rgba(255,255,255,0.08) !important; }
-[data-theme="light"] .logo-text { color: #E2EAF4 !important; }
-[data-theme="light"] .logo-live { color: #4DA6FF !important; }
-[data-theme="light"] .logo-dot { color: #4DA6FF !important; }
-[data-theme="light"] .update-time { color: #A8BDD4 !important; }
-[data-theme="light"] .live-badge { background: rgba(0,200,150,0.15) !important; border-color: rgba(0,200,150,0.3) !important; color: #00C896 !important; }
-[data-theme="light"] .view-btn { color: #A8BDD4 !important; }
-[data-theme="light"] .view-btn:hover { color: #E2EAF4 !important; background: rgba(255,255,255,0.06) !important; }
-[data-theme="light"] .view-active { color: #FFFFFF !important; border-bottom-color: #4DA6FF !important; background: rgba(77,166,255,0.10) !important; }
-[data-theme="light"] .theme-toggle { color: #A8BDD4 !important; background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.12) !important; }
-
-[data-theme="light"] .fno-vix-bar-track { background: #D4DCE8; }
-[data-theme="light"] .fiidii-bar-track { background: #D4DCE8; }
+[data-theme="light"] .logo-live { color: #1847B1; }
+[data-theme="light"] .fno-vix-bar-track { background: #DDDDE0; }
+[data-theme="light"] .fiidii-bar-track { background: #DDDDE0; }
 [data-theme="light"] .hours-tooltip { box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
 [data-theme="light"] .wb-home { border-style: dashed; }
 [data-theme="light"] .wb-vix { border-color: rgba(217,48,37,0.4) !important; background: linear-gradient(135deg, rgba(217,48,37,0.06), rgba(217,48,37,0.02)) !important; box-shadow: 0 0 14px rgba(217,48,37,0.08); }
-[data-theme="light"] .hero-card-gift { border: 1px solid rgba(27,45,69,0.35) !important; border-top: 3px solid #1B2D45 !important; background: linear-gradient(180deg, rgba(77,166,255,0.08) 0%, transparent 55%) !important; box-shadow: 0 0 16px rgba(77,166,255,0.10); }
-[data-theme="light"] .hero-note-tag { color: #4DA6FF; }
+[data-theme="light"] .hero-card-gift { border: 1px solid rgba(29,111,216,0.35) !important; border-top: 3px solid #1D6FD8 !important; background: linear-gradient(180deg, rgba(29,111,216,0.06) 0%, transparent 55%) !important; box-shadow: 0 0 16px rgba(29,111,216,0.08); }
+[data-theme="light"] .hero-note-tag { color: #1D6FD8; }
 
 /* Theme toggle button */
 .theme-toggle { font-size: 14px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.2s; line-height: 1; }
@@ -145,7 +133,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .update-time { display: none; }
 }
 
-[data-theme="light"] .mobile-nav { background: rgba(240,244,248,0.97); }
+[data-theme="light"] .mobile-nav { background: rgba(255,255,255,0.92); }
 .sim-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 3px 8px; border-radius: var(--r); background: rgba(245,158,11,0.12); color: var(--pre); border: 1px solid rgba(245,158,11,0.25); }
 .update-time { display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; color: var(--text3); }
 .update-dot  { width: 4px; height: 4px; border-radius: 50%; background: var(--text3); }
@@ -732,11 +720,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .kite-dot         { width: 8px; height: 8px; border-radius: 50%; background: var(--live); animation: pulse 1.4s ease-in-out infinite; flex-shrink: 0; }
 .kite-note        { font-size: 10px; color: var(--text3); margin-left: 4px; }
 
-[data-theme="light"] .bubble-name { color: #0A1628 !important; }
+[data-theme="light"] .bubble-name { color: #1A1A1C !important; }
 [data-theme="light"] .bubble-circle { border-width: 2px !important; }
-[data-theme="light"] .bubble-pct { font-weight: 800 !important; color: #0D1B2A !important; }
-[data-theme="light"] .bubble-title { color: #2A4060; }
-[data-theme="light"] .bubble-avg { color: #0D1B2A; }
+[data-theme="light"] .bubble-pct { font-weight: 800 !important; }
+[data-theme="light"] .bubble-title { color: #4A4A50; }
+[data-theme="light"] .bubble-avg { color: #1A1A1C; }
 [data-theme="light"] .bubble-region-btn { border-color: rgba(0,0,0,0.15); color: #4A4A50; }
 [data-theme="light"] .bubble-region-active { background: #E0E0E3; color: #1A1A1C; border-color: #1D6FD8; }
 [data-theme="light"] .bubble-sort-btn { color: #4A4A50; }
