@@ -532,8 +532,8 @@ export default function BrokersPage() {
       {/* HEADER */}
       <div className="brk-hero">
         <div className="brk-hero-left">
-          <div className="brk-hero-headline">They said zero brokerage.<br/>Nobody said zero cost.</div>
-          <div className="brk-hero-sub">16 brokers · every charge · factual data</div>
+          <div className="brk-hero-headline">What your broker<br/>actually charges you.</div>
+          <div className="brk-hero-sub">16 brokers · 8 charge categories · no affiliates</div>
           <div className="brk-hero-stats">
             <div className="brk-hstat">
               <div className="brk-hstat-n">₹126.26</div>
@@ -546,20 +546,20 @@ export default function BrokersPage() {
             </div>
             <div className="brk-hstat-badge">5.7× difference<br/><span>same ₹50K trade</span></div>
           </div>
-          <div className="brk-hero-note">₹111.51 in govt + exchange charges is unavoidable at every broker. Only brokerage, DP and AMC differ.</div>
+          <div className="brk-hero-note">On every ₹50K delivery trade, ₹111.51 goes to the government and exchanges — fixed at every broker. The gap between brokers is entirely in brokerage, DP charge, and AMC.</div>
         </div>
         <div className="brk-hero-right">
           <div className="brk-featured-card">
-            <div className="brk-featured-badge">PLATFORM PICK</div>
+            <div className="brk-featured-badge">EDITOR'S PICK</div>
             <div className="brk-featured-name">Zerodha</div>
-            <div className="brk-featured-tag">Highest networth · Best platform · Transparent pricing</div>
+            <div className="brk-featured-tag">15 years · ₹13,500 Cr networth · Kite platform · Varsity education</div>
             <div className="brk-featured-facts">
               <div className="brk-ffact"><span className="brk-ffact-v">₹13,500 Cr</span><span className="brk-ffact-l">Networth — #1 in India</span></div>
               <div className="brk-ffact"><span className="brk-ffact-v">6.9M</span><span className="brk-ffact-l">Active clients</span></div>
               <div className="brk-ffact"><span className="brk-ffact-v">15+ yrs</span><span className="brk-ffact-l">Track record</span></div>
               <div className="brk-ffact"><span className="brk-ffact-v">₹126.85</span><span className="brk-ffact-l">Total cost ₹50K trade</span></div>
             </div>
-            <div className="brk-featured-vs">₹0.59 more than cheapest broker · on ₹50,000</div>
+            <div className="brk-featured-vs">59 paise more than Dhan on a ₹50,000 trade.</div>
           </div>
         </div>
       </div>
@@ -577,10 +577,10 @@ export default function BrokersPage() {
           <div className="brk-overview-grid">
             {/* Top brokers for each type */}
             <div className="brk-ov-section">
-              <div className="brk-ov-title">For most traders — clear winners</div>
+              <div className="brk-ov-title">Two brokers stand out on cost</div>
               <div className="brk-ov-cards">
                 <div className="brk-ov-card brk-ov-primary">
-                  <div className="brk-ov-rank">#2 by cost · #1 by platform</div>
+                  <div className="brk-ov-rank">#2 by total cost · highest networth in India</div>
                   <div className="brk-ov-broker">Zerodha</div>
                   <div className="brk-ov-cost">₹126.85 / ₹50K trade</div>
                   <div className="brk-ov-list">
@@ -590,10 +590,10 @@ export default function BrokersPage() {
                     <div>✔ Zero delivery brokerage</div>
                     <div>✔ 15+ year track record</div>
                   </div>
-                  <div className="brk-ov-note">₹88.50 AMC/yr · ₹0.59 more than Dhan on same trade</div>
+                  <div className="brk-ov-note">₹88.50/yr AMC · 59 paise more than Dhan on a ₹50K trade</div>
                 </div>
                 <div className="brk-ov-card">
-                  <div className="brk-ov-rank">#1 by cost</div>
+                  <div className="brk-ov-rank">#1 by total cost</div>
                   <div className="brk-ov-broker">Dhan</div>
                   <div className="brk-ov-cost">₹126.26 / ₹50K trade</div>
                   <div className="brk-ov-list">
@@ -602,25 +602,25 @@ export default function BrokersPage() {
                     <div>✔ Lowest MTF rate (12.49% up to ₹5L)</div>
                     <div>✔ Free API</div>
                   </div>
-                  <div className="brk-ov-note">Newer platform · less institutional history</div>
+                  <div className="brk-ov-note">Newer platform · networth not publicly filed vs Zerodha</div>
                 </div>
               </div>
             </div>
 
             {/* What makes Zerodha different */}
             <div className="brk-ov-section">
-              <div className="brk-ov-title">Why the ₹0.59 difference matters less than it seems</div>
+              <div className="brk-ov-title">Cost is one number. Platform is another.</div>
               <div className="brk-ov-explainer">
-                <p>On a ₹50,000 delivery trade, Zerodha costs ₹126.85 and Dhan costs ₹126.26. That ₹0.59 gap is real — but the decision shouldn't rest on 59 paise.</p>
-                <p>Zerodha's networth is ₹13,500 Cr — 1.7× the next largest broker. It has processed ₹18 lakh crore in trades. Kite has the deepest feature set of any Indian trading platform. Varsity has taught millions of Indians about markets, for free. These aren't marketing claims — they're verifiable facts from NSE filings and public disclosures.</p>
-                <p>Dhan is a strong second. Zero AMC saves ₹88.50/year if you barely trade. For frequent traders, the difference in annual cost is under ₹200.</p>
-                <p>For most people: pick Zerodha if you value platform, stability, and ecosystem. Pick Dhan if you value zero AMC and the lowest possible per-transaction cost.</p>
+                <p>Dhan comes in 59 paise cheaper than Zerodha on a single ₹50K trade. Both charge zero delivery brokerage. The difference is DP charge — ₹14.75 at Dhan vs ₹15.34 at Zerodha — and Zerodha's annual ₹88.50 AMC.</p>
+                <p>Over a year with 5 delivery sells per month, Dhan costs ₹7,222 and Zerodha costs ₹7,332 — a ₹110 annual gap. Neither number is surprising. What is surprising: HDFC Securities costs ₹43,696 on the same activity.</p>
+                <p>Zerodha's financials from NSE filings: networth ₹13,500 Cr, the highest of any broker in India. Dhan doesn't publish a comparable figure. For traders who care about counterparty safety, this is a meaningful data point.</p>
+                <p>The practical split: Zerodha for platform depth, Kite's feature set, Varsity, and the API ecosystem. Dhan for zero AMC and the lowest per-transaction cost available today.</p>
               </div>
             </div>
 
             {/* Quick compare table */}
             <div className="brk-ov-section">
-              <div className="brk-ov-title">Cost on ₹50,000 delivery trade (all-in)</div>
+              <div className="brk-ov-title">All-in cost on a ₹50,000 delivery trade</div>
               <div className="brk-mini-table">
                 <div className="brk-mini-head"><span>Broker</span><span>Broker charges</span><span>Govt charges</span><span>Total</span></div>
                 {BROKERS.slice(0,8).sort((a,b)=>a.total50k-b.total50k).map((b,i)=>(
@@ -646,36 +646,36 @@ export default function BrokersPage() {
 
             {/* Charge breakdown explainer */}
             <div className="brk-ov-section">
-              <div className="brk-ov-title">Six layers of charges — three vary, three don't</div>
+              <div className="brk-ov-title">Every trade has six charge layers</div>
               <div className="brk-charges-split">
                 <div>
                   <div className="brk-charges-col-title brk-col-broker">Varies by broker</div>
                   <div className="brk-charge-card brk-charge-variable">
                     <div className="brk-charge-name">Brokerage</div>
-                    <div className="brk-charge-note">₹0 at Zerodha/Dhan on delivery. Up to 0.5% at HDFC/Axis. Per order.</div>
+                    <div className="brk-charge-note">Ranges from zero (Zerodha, Dhan on delivery) to 0.5% per order at full-service brokers like HDFC and Axis. This is the most visible variable.</div>
                   </div>
                   <div className="brk-charge-card brk-charge-variable">
                     <div className="brk-charge-name">DP Charge</div>
-                    <div className="brk-charge-note">Charged per scrip per sell day. Ranges ₹13.50 (Sahi) to ₹30 (HDFC). Unavoidable on every sell.</div>
+                    <div className="brk-charge-note">Debited from your account each time you sell shares — once per scrip per trading day. Ranges from ₹13.50 at Sahi to ₹30 at HDFC Securities. You pay this even if brokerage is zero.</div>
                   </div>
                   <div className="brk-charge-card brk-charge-variable">
                     <div className="brk-charge-name">AMC</div>
-                    <div className="brk-charge-note">Annual Maintenance Charge. ₹0 at 7 brokers. Up to ₹885/yr at full-service.</div>
+                    <div className="brk-charge-note">Flat yearly fee to keep your demat account open. Seven discount brokers charge nothing. Full-service brokers charge ₹600–₹885 per year regardless of how much you trade.</div>
                   </div>
                 </div>
                 <div>
                   <div className="brk-charges-col-title brk-col-govt">Fixed everywhere</div>
                   <div className="brk-charge-card brk-charge-fixed">
                     <div className="brk-charge-name">STT</div>
-                    <div className="brk-charge-note">Securities Transaction Tax. 0.1% on delivery sell side. ₹100 on ₹50K trade. Non-negotiable.</div>
+                    <div className="brk-charge-note">Government tax on every stock transaction. On delivery equity, 0.1% is charged on the sell side — that's ₹100 on a ₹50K trade. Cannot be reduced or waived by any broker.</div>
                   </div>
                   <div className="brk-charge-card brk-charge-fixed">
                     <div className="brk-charge-name">Exchange Fee + SEBI</div>
-                    <div className="brk-charge-note">~₹3.50 per ₹50K trade. Goes to NSE/BSE and SEBI. Identical everywhere.</div>
+                    <div className="brk-charge-note">NSE/BSE levy for executing your order, plus SEBI's regulatory fee. Together about ₹3.50 on a ₹50K delivery trade. The same amount at every broker — it goes to the exchange, not the broker.</div>
                   </div>
                   <div className="brk-charge-card brk-charge-fixed">
                     <div className="brk-charge-name">Stamp Duty + GST</div>
-                    <div className="brk-charge-note">State stamp duty + 18% GST on brokerage. If brokerage is zero, GST on brokerage is also zero.</div>
+                    <div className="brk-charge-note">Stamp duty is a state government levy on share purchases (0.015% of buy value). GST of 18% applies to brokerage and exchange fees — not on STT. If your broker charges zero brokerage, the GST on brokerage is also zero.</div>
                   </div>
                 </div>
               </div>
@@ -765,7 +765,7 @@ export default function BrokersPage() {
             ))}
           </div>
           <div className="brk-table-note">
-            Total includes brokerage, GST, DP charge, STT, exchange charges, SEBI fee, stamp duty. Regulatory = ₹111.51 on ₹50K delivery — identical at all brokers. ★ = Platform Pick. Click row for full breakdown.
+            Total cost includes brokerage, GST, DP charge, STT, exchange fee, SEBI charge, and stamp duty. Regulatory charges (₹111.51 on ₹50K delivery) are set by law — the same at every broker. ★ = Editor's Pick. Click any row to expand.
           </div>
         </div>
       )}
@@ -1017,7 +1017,7 @@ export default function BrokersPage() {
       )}
 
       <div className="brk-footer">
-        Data sourced from official broker websites, fee documents, and NSE filings. Regulatory charges (STT, exchange fee, SEBI fee, stamp duty) are fixed by government and exchanges — identical at every broker. Always verify current charges before trading. No affiliates. No paid placements. No sponsored rankings. ★ Platform Pick = editorial judgment based on platform quality, track record, and financial strength — not cost alone.
+        Data sourced from official broker websites, fee documents, and NSE filings. Regulatory charges (STT, exchange fee, SEBI fee, stamp duty) are fixed by government and exchanges — identical at every broker. Always verify current charges before trading. No affiliates. No paid placements. No sponsored rankings. ★ Editor's Pick = editorial judgment based on platform quality, financial strength, and track record — not cost alone. Not sponsored.
       </div>
     </div>
   );
