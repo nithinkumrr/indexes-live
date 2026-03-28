@@ -567,18 +567,13 @@ export default function Backtest() {
       <div className="edu-content">
         {strategy && <StrategyCard strategy={strategy} groupColor={group?.color || '#4A9EFF'} />}
 
-        {/* Sensibull promo */}
+        {/* Sensibull mention */}
         <div className="edu-sensibull">
-          <div>
-            <div className="edu-sensibull-logo">sensibull</div>
-            <div className="edu-sensibull-tag">India's #1 Options Trading Platform</div>
-            <div className="edu-sensibull-desc">
-              Ready to trade this strategy live? Sensibull lets you build, visualise and execute any options strategy directly from your Zerodha account, with live payoff charts, Greeks, and one-click order placement.
-            </div>
-            <a href="https://sensibull.com" target="_blank" rel="noopener noreferrer" className="edu-sensibull-link">
-              Try Sensibull Free →
-            </a>
+          <div className="edu-sensibull-desc">
+            Sensibull is worth a look for exploring and trading options strategies.{' '}
+            <a href="https://sensibull.com" target="_blank" rel="noopener noreferrer" className="edu-sensibull-link">sensibull.com →</a>
           </div>
+          <div className="edu-sensibull-disclaimer">No affiliation or promotion. Found it useful.</div>
         </div>
       </div>
 
