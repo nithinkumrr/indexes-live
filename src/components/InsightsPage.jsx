@@ -18,94 +18,10 @@ const ECON_EVENTS = [
   { date: '2026-04-30', event: 'ECB Rate Decision',          impact: 'high',   country: 'Global', note: 'ECB easing supports global risk appetite and EM inflows.' },
 ];
 
-// ── Stance ────────────────────────────────────────────────────────────────────
-function getStance(np, bp) {
-  if (np === null) return null;
-  if (np < -1.5 && bp !== null && bp < -1.5) return { label: 'Strong Bear', color: '#FF4455', bg: 'rgba(255,68,85,.07)', border: 'rgba(255,68,85,.3)', icon: '↓↓', confidence: 'High',   bias: 'Selling on rallies',      reasons: ['Broad decline across Nifty and Bank Nifty', 'Sustained selling pressure in large caps'] };
-  if (np < -0.7)  return { label: 'Bearish',     color: '#F59E0B', bg: 'rgba(245,158,11,.06)', border: 'rgba(245,158,11,.3)', icon: '↓',  confidence: 'Medium', bias: 'Cautious, negative bias',  reasons: ['Nifty declining more than 0.7%', 'Price momentum is negative'] };
-  if (np > 1.5 && bp !== null && bp > 1.5) return { label: 'Strong Bull', color: '#00C896', bg: 'rgba(0,200,150,.07)',  border: 'rgba(0,200,150,.3)',  icon: '↑↑', confidence: 'High',   bias: 'Dips being bought',       reasons: ['Broad advance across Nifty and Bank Nifty', 'Sustained buying across large caps'] };
-  if (np > 0.7)   return { label: 'Bullish',     color: '#00C896', bg: 'rgba(0,200,150,.06)',  border: 'rgba(0,200,150,.25)', icon: '↑',  confidence: 'Medium', bias: 'Positive bias',           reasons: ['Nifty advancing more than 0.7%', 'Price momentum is positive'] };
-  return { label: 'Neutral', color: 'var(--text2)', bg: 'var(--bg3)', border: 'var(--border2)', icon: '→', confidence: 'Low', bias: 'Neither side in control', reasons: ['Nifty within 0.7% of previous close', 'No dominant directional bias'] };
-}
+// Avg daily ranges (hardcoded from historical norms)
+const AVG_RANGES = { nifty: 155, banknifty: 450 };
 
-// ── Signals engine ────────────────────────────────────────────────────────────
-function buildSignals({ np, bp, vix, niftyPrice, fiiNet, diiNet, fii7d, data, history, allEvents }) {
-  const signals = [];
-  const cr = v => `Rs.${Math.abs(v).toLocaleString('en-IN')} Cr`;
-
-  if (fiiNet !== null && diiNet !== null) {
-    if      (fiiNet < 0 && diiNet > 0) signals.push({ tag: 'FLOWS', text: `FIIs net sold ${cr(fiiNet)} today. DIIs absorbed ${cr(diiNet)}. Domestic institutions cushioning the fall, limiting downside depth.`, type: 'warn' });
-    else if (fiiNet > 0 && diiNet > 0) signals.push({ tag: 'FLOWS', text: `Both FIIs (${cr(fiiNet)}) and DIIs (${cr(diiNet)}) buying today. Broad institutional conviction visible on both sides.`, type: 'bull' });
-    else if (fiiNet < 0 && diiNet < 0) signals.push({ tag: 'FLOWS', text: `Both FIIs (${cr(fiiNet)}) and DIIs (${cr(diiNet)}) are net sellers. No institutional support layer under this market right now.`, type: 'bear' });
-    else                                signals.push({ tag: 'FLOWS', text: `FIIs buying ${cr(fiiNet)}, DIIs trimming ${cr(Math.abs(diiNet))}. Foreign flows are the dominant support today.`, type: 'bull' });
-  }
-
-  if (fii7d !== null && history?.length >= 3) {
-    const sellDays = history.slice(-7).filter(d => (d.fiiNet ?? 0) < 0).length;
-    if      (fii7d < -8000) signals.push({ tag: 'FLOWS', text: `FIIs net sold Rs.${Math.abs(fii7d).toLocaleString('en-IN')} Cr over 7 sessions. Structural outflow pressure, not a single-day event.`, type: 'bear' });
-    else if (fii7d > 8000)  signals.push({ tag: 'FLOWS', text: `FIIs net bought Rs.${fii7d.toLocaleString('en-IN')} Cr over 7 sessions. Consistent foreign inflow supportive for large-cap index levels.`, type: 'bull' });
-    else if (sellDays >= 5) signals.push({ tag: 'FLOWS', text: `FIIs sold on ${sellDays} of the last 7 sessions. The selling trend is persistent even if daily amounts are moderate.`, type: 'warn' });
-  }
-
-  if (vix != null) {
-    if      (vix > 20) signals.push({ tag: 'VOLATILITY', text: `India VIX at ${vix.toFixed(1)} is elevated. Intraday ranges will be wider than usual. Options premiums are inflated. Smaller position sizes are appropriate.`, type: 'bear' });
-    else if (vix > 16) signals.push({ tag: 'VOLATILITY', text: `India VIX at ${vix.toFixed(1)} is moderately high. Expect choppy intraday swings. Participants are pricing in near-term uncertainty.`, type: 'warn' });
-    else if (vix < 12) signals.push({ tag: 'VOLATILITY', text: `India VIX at ${vix.toFixed(1)} is low. Options premiums are compressed. Low VIX environments can precede sudden spikes triggered by global events.`, type: 'neutral' });
-    else               signals.push({ tag: 'VOLATILITY', text: `India VIX at ${vix.toFixed(1)} is in normal range. Volatility conditions are not a constraint on regular positioning today.`, type: 'neutral' });
-  }
-
-  const globIdxs = [{ id: 'sp500', label: 'S&P 500' }, { id: 'nasdaq', label: 'Nasdaq' }, { id: 'nikkei', label: 'Nikkei' }, { id: 'hangseng', label: 'Hang Seng' }, { id: 'dax', label: 'DAX' }];
-  const globMoves = globIdxs.map(i => ({ label: i.label, pct: data[i.id]?.changePct ?? null })).filter(i => i.pct !== null);
-  if (globMoves.length) {
-    const avg = globMoves.reduce((s, i) => s + i.pct, 0) / globMoves.length;
-    if      (avg < -0.8) signals.push({ tag: 'GLOBAL', text: `Global markets broadly weak. Average decline across tracked indices is ${avg.toFixed(1)}%. FII flows into India typically come under pressure when global risk-off is this broad.`, type: 'bear' });
-    else if (avg > 0.8)  signals.push({ tag: 'GLOBAL', text: `Global markets broadly positive. Average gain across tracked indices is +${avg.toFixed(1)}%. Supportive backdrop for risk assets including Indian equities.`, type: 'bull' });
-    else                 signals.push({ tag: 'GLOBAL', text: `Global markets mixed. No strong directional cue from overseas. Indian markets likely trading on domestic factors today.`, type: 'neutral' });
-    const sp = data.sp500?.changePct;
-    if (sp != null && Math.abs(sp) > 1.2) signals.push({ tag: 'GLOBAL', text: `S&P 500 moved ${sp > 0 ? 'up' : 'down'} ${Math.abs(sp).toFixed(1)}% in the last session. This has a direct read-across for Indian large-cap IT and financial stocks.`, type: sp > 0 ? 'bull' : 'bear' });
-  }
-
-  const crude = data.crude;
-  if (crude?.changePct != null) {
-    if      (crude.changePct < -1.5) signals.push({ tag: 'COMMODITY', text: `Crude WTI down ${Math.abs(crude.changePct).toFixed(1)}% at $${crude.price?.toFixed(1)}. Positive for aviation, paints, FMCG. Negative for ONGC, Oil India, energy sector.`, type: 'neutral' });
-    else if (crude.changePct > 1.5)  signals.push({ tag: 'COMMODITY', text: `Crude WTI up ${crude.changePct.toFixed(1)}% at $${crude.price?.toFixed(1)}. Energy sector may outperform. Inflationary pressure adds caution to RBI cut expectations.`, type: 'neutral' });
-    else                             signals.push({ tag: 'COMMODITY', text: `Crude WTI stable at $${crude.price?.toFixed(1)} (${crude.changePct >= 0 ? '+' : ''}${crude.changePct.toFixed(1)}%). No significant energy sector impact from crude today.`, type: 'neutral' });
-  }
-
-  const gold = data.gold;
-  if (gold?.changePct != null && Math.abs(gold.changePct) > 0.7) {
-    if (gold.changePct > 0) signals.push({ tag: 'COMMODITY', text: `Gold up ${gold.changePct.toFixed(1)}% at $${gold.price?.toFixed(0)}. Rising gold signals risk-off globally. Defensive assets preferred over equities in global allocations.`, type: 'warn' });
-    else                    signals.push({ tag: 'COMMODITY', text: `Gold down ${Math.abs(gold.changePct).toFixed(1)}% at $${gold.price?.toFixed(0)}. Declining gold suggests improving global risk appetite. Positive read for equities.`, type: 'bull' });
-  }
-
-  const copper = data.copper;
-  if (copper?.changePct != null && Math.abs(copper.changePct) > 1) {
-    signals.push({ tag: 'COMMODITY', text: `Copper ${copper.changePct > 0 ? 'rising' : 'falling'} ${Math.abs(copper.changePct).toFixed(1)}%. ${copper.changePct > 0 ? 'Improving industrial demand signal. Positive for metals stocks.' : 'Weakening demand signal. Watch metals and mining stocks.'}`, type: copper.changePct > 0 ? 'bull' : 'bear' });
-  }
-
-  if (niftyPrice && np !== null) {
-    const s = niftyPrice < 10000 ? 100 : 50;
-    const r = v => Math.round(v / s) * s;
-    const sup1 = r(niftyPrice * 0.990), res1 = r(niftyPrice * 1.010);
-    if      (np < -0.5) signals.push({ tag: 'LEVELS', text: `Nifty down ${Math.abs(np).toFixed(1)}% today. Support at ${sup1.toLocaleString('en-IN')} is ${((niftyPrice - sup1)/niftyPrice*100).toFixed(1)}% away. A close below this shifts structure further negative.`, type: 'bear' });
-    else if (np > 0.5)  signals.push({ tag: 'LEVELS', text: `Nifty up ${np.toFixed(1)}% today. Resistance at ${res1.toLocaleString('en-IN')} is ${((res1 - niftyPrice)/niftyPrice*100).toFixed(1)}% away. Holding above this on close would be constructive.`, type: 'bull' });
-    else                signals.push({ tag: 'LEVELS', text: `Nifty flat, trading between support at ${sup1.toLocaleString('en-IN')} and resistance at ${res1.toLocaleString('en-IN')}. Breakout direction from this range sets the next trend.`, type: 'neutral' });
-    if (bp !== null && Math.abs(bp - np) > 0.7) {
-      if (bp < np) signals.push({ tag: 'LEVELS', text: `Bank Nifty underperforming Nifty by ${(np-bp).toFixed(1)}%. Banking sector weakness dragging on the broader market. Watch PSU banks and private bank names.`, type: 'warn' });
-      else         signals.push({ tag: 'LEVELS', text: `Bank Nifty outperforming Nifty by ${(bp-np).toFixed(1)}%. Banking strength leading the rally. Financials are the dominant driver today.`, type: 'bull' });
-    }
-  }
-
-  const today = new Date();
-  const rbi = allEvents.find(e => e.event.includes('RBI'));
-  if (rbi) { const d = Math.round((new Date(rbi.date) - today)/86400000); if (d >= 0 && d <= 5) signals.push({ tag: 'MACRO', text: `RBI policy decision in ${d} day${d!==1?'s':''}. Markets historically move cautious before RBI. Banking stocks and bonds most sensitive.`, type: 'warn' }); }
-  const fed = allEvents.find(e => e.event.includes('FOMC'));
-  if (fed) { const d = Math.round((new Date(fed.date) - today)/86400000); if (d >= 0 && d <= 7) signals.push({ tag: 'MACRO', text: `US Fed FOMC in ${d} day${d!==1?'s':''}. FII positioning in emerging markets including India typically turns cautious ahead of Fed decisions.`, type: 'warn' }); }
-
-  return signals;
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── IST helpers ───────────────────────────────────────────────────────────────
 function getIST() { return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })); }
 function getSlot() {
   const ist = getIST(); const d = ist.getDay(); const m = ist.getHours()*60 + ist.getMinutes();
@@ -115,74 +31,434 @@ function getSlot() {
   if (m<930) return 'Afternoon';  if (m<1020) return 'Market Close';
   return 'Post-Market';
 }
-const fmtP   = v => v ? v.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '--';
-const fmtF   = (v, d=2) => v != null ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: d }) : '--';
-const fmtPct = v => v != null ? `${v>=0?'+':''}${Number(v).toFixed(2)}%` : '--';
+function getMins() { const ist = getIST(); return ist.getHours()*60 + ist.getMinutes(); }
+
+// ── Stance ────────────────────────────────────────────────────────────────────
+function getStance(np, bp) {
+  if (np === null) return null;
+  if (np < -1.5 && bp !== null && bp < -1.5) return { label:'Strong Bear', color:'#FF4455', bg:'rgba(255,68,85,.07)', border:'rgba(255,68,85,.3)', icon:'↓↓', confidence:'High',   bias:'Selling on rallies',      reasons:['Broad decline across Nifty and Bank Nifty','Sustained selling pressure in large caps'] };
+  if (np < -0.7)  return { label:'Bearish',     color:'#F59E0B', bg:'rgba(245,158,11,.06)', border:'rgba(245,158,11,.3)', icon:'↓',  confidence:'Medium', bias:'Cautious, negative bias',  reasons:['Nifty declining more than 0.7%','Price momentum is negative'] };
+  if (np > 1.5 && bp !== null && bp > 1.5) return { label:'Strong Bull', color:'#00C896', bg:'rgba(0,200,150,.07)',  border:'rgba(0,200,150,.3)',  icon:'↑↑', confidence:'High',   bias:'Dips being bought',       reasons:['Broad advance across Nifty and Bank Nifty','Sustained buying across large caps'] };
+  if (np > 0.7)   return { label:'Bullish',     color:'#00C896', bg:'rgba(0,200,150,.06)',  border:'rgba(0,200,150,.25)', icon:'↑',  confidence:'Medium', bias:'Positive bias',            reasons:['Nifty advancing more than 0.7%','Price momentum is positive'] };
+  return { label:'Neutral', color:'var(--text2)', bg:'var(--bg3)', border:'var(--border2)', icon:'→', confidence:'Low', bias:'Neither side in control', reasons:['Nifty within 0.7% of previous close','No dominant directional bias'] };
+}
+
+// ── Day Type Detection ────────────────────────────────────────────────────────
+function getDayType(price, high, low, np) {
+  if (!price || !high || !low) return null;
+  const range = high - low;
+  const avg = AVG_RANGES.nifty;
+  const posInRange = (price - low) / (high - low); // 0=at low, 1=at high
+  const mins = getMins();
+  const isMktOpen = mins >= 555 && mins < 1020;
+
+  let type, label, detail, color;
+
+  // Reversal: opened strong direction but price ended up against it
+  const openedBullish = np !== null && np > 0;
+  const openedBearish = np !== null && np < 0;
+  const closingAtOpposite = (openedBullish && posInRange < 0.3) || (openedBearish && posInRange > 0.7);
+
+  if (closingAtOpposite && Math.abs(np) > 0.5) {
+    type = 'reversal'; color = '#A78BFA';
+    label = 'Reversal Day';
+    detail = openedBullish
+      ? 'Opened positive but selling into highs. Weak close suggests reversal attempt.'
+      : 'Opened negative but buying into lows. Potential reversal from key support.';
+  } else if (range > avg * 1.5 && posInRange > 0.7 && np > 0.8) {
+    type = 'trend-up'; color = '#00C896';
+    label = 'Trend Day (Up)';
+    detail = `Range ${Math.round(range)} points, ${Math.round(range/avg*100-100)}% above average. Price closing near high. Classic upside trend day.`;
+  } else if (range > avg * 1.5 && posInRange < 0.3 && np < -0.8) {
+    type = 'trend-down'; color = '#FF4455';
+    label = 'Trend Day (Down)';
+    detail = `Range ${Math.round(range)} points, ${Math.round(range/avg*100-100)}% above average. Price closing near low. Downside trend day with sustained selling.`;
+  } else if (range < avg * 0.75) {
+    type = 'range'; color = '#F59E0B';
+    label = 'Range Day';
+    detail = `Range ${Math.round(range)} points, below ${Math.round(avg)} point average. Market in compression. Breakout often follows tight range.`;
+  } else {
+    type = 'normal'; color = 'var(--text2)';
+    label = 'Normal Day';
+    detail = `Range ${Math.round(range)} points, near historical average. No strong directional structure established yet.`;
+  }
+
+  // Bias qualifier
+  const biasTag = np > 0.5 ? 'with upside bias' : np < -0.5 ? 'with downside bias' : 'neutral bias';
+  return { type, label: `${label}`, subLabel: biasTag, detail, color, range: Math.round(range), avg, posInRange };
+}
+
+// ── Intraday Bias Tracker ─────────────────────────────────────────────────────
+function getIntradayBias(price, high, low, np) {
+  if (!price || !high || !low) return null;
+  const mins = getMins();
+  const posInRange = (price - low) / (high - low);
+
+  // Simulate phase control from price position + changePct
+  // We don't have OHLC per phase, so we use heuristics from available data
+  const openingCtrl = np > 0.3 ? 'Buyers' : np < -0.3 ? 'Sellers' : 'Neutral';
+  const openingColor = np > 0.3 ? 'var(--gain)' : np < -0.3 ? 'var(--loss)' : 'var(--text3)';
+
+  // Mid session: infer from where price is vs where it opened
+  // If price is closing near high after falling → buyers came in mid session
+  const midCtrl = posInRange > 0.6 && np < 0 ? 'Buyers' : posInRange < 0.4 && np > 0 ? 'Sellers' : np > 0 ? 'Buyers' : np < 0 ? 'Sellers' : 'Neutral';
+  const midColor = midCtrl === 'Buyers' ? 'var(--gain)' : midCtrl === 'Sellers' ? 'var(--loss)' : 'var(--text3)';
+
+  // Closing expectation based on day structure
+  let closing, closingColor, closingNote;
+  if (posInRange > 0.75) {
+    closing = 'Strength into close'; closingColor = 'var(--gain)';
+    closingNote = 'Price holding near high. Buyers in control heading into close.';
+  } else if (posInRange < 0.25) {
+    closing = 'Weakness into close'; closingColor = 'var(--loss)';
+    closingNote = 'Price near session low. Sellers dominating the close.';
+  } else {
+    closing = 'Volatility expansion possible'; closingColor = '#F59E0B';
+    closingNote = 'Mid-range close. Directional move often comes in final 30 minutes.';
+  }
+
+  const isActive = mins >= 555 && mins < 930;
+  const phase = mins < 750 ? 'Opening' : mins < 870 ? 'Mid Session' : 'Closing Phase';
+
+  return {
+    opening:  { ctrl: openingCtrl, color: openingColor },
+    mid:      { ctrl: midCtrl,     color: midColor },
+    closing:  { ctrl: closing,     color: closingColor, note: closingNote },
+    phase, isActive,
+  };
+}
+
+// ── Volatility Context ────────────────────────────────────────────────────────
+function getVolContext(price, high, low, vix) {
+  if (!price || !high || !low) return null;
+  const range = high - low;
+  const avg = AVG_RANGES.nifty;
+  const pctOfAvg = (range / avg * 100).toFixed(0);
+
+  let rangeLabel, rangeColor, expectation;
+  if (range > avg * 2) {
+    rangeLabel = 'Extremely expanded'; rangeColor = '#FF4455';
+    expectation = 'Exhaustion likely. Extreme moves often see partial reversion before end of session.';
+  } else if (range > avg * 1.4) {
+    rangeLabel = 'Expanded'; rangeColor = '#F59E0B';
+    expectation = 'Follow-through is possible but be cautious of chasing. Pullbacks to VWAP are common.';
+  } else if (range < avg * 0.6) {
+    rangeLabel = 'Compressed'; rangeColor = '#A78BFA';
+    expectation = 'Compressed sessions often precede breakouts. Watch for volume spike on directional move.';
+  } else {
+    rangeLabel = 'Normal'; rangeColor = 'var(--gain)';
+    expectation = 'Normal volatility day. Standard position sizing applies.';
+  }
+
+  const vixContext = vix ? (vix > 18 ? 'Elevated VIX confirms high-vol environment.' : vix < 13 ? 'Low VIX confirms calm conditions.' : '') : '';
+
+  return { range: Math.round(range), avg, pctOfAvg, rangeLabel, rangeColor, expectation, vixContext };
+}
+
+// ── What Changed Today ────────────────────────────────────────────────────────
+function getChanges(nifty, banknifty, fiiNet, diiNet, fii7d, data) {
+  const items = [];
+  const np = nifty?.changePct ?? null;
+  const bp = banknifty?.changePct ?? null;
+
+  if (np !== null) {
+    const prevClose = nifty.price / (1 + np/100);
+    if (nifty.low < prevClose && np < 0)
+      items.push({ text: 'Nifty broke previous session close to the downside.', type: 'bear' });
+    if (nifty.high > prevClose && np > 0)
+      items.push({ text: 'Nifty extended above previous session close.', type: 'bull' });
+    if (Math.abs(np) < 0.2)
+      items.push({ text: 'Nifty effectively flat. Consolidation session with no new directional bias.', type: 'neutral' });
+  }
+
+  if (np !== null && bp !== null && Math.abs(bp - np) > 0.7) {
+    if (bp < np) items.push({ text: `Bank Nifty underperforming Nifty by ${(np-bp).toFixed(1)}%. Banking sector weakness visible.`, type: 'bear' });
+    else         items.push({ text: `Bank Nifty outperforming Nifty by ${(bp-np).toFixed(1)}%. Banking sector leading the move.`, type: 'bull' });
+  }
+
+  if (fiiNet !== null) {
+    if (fiiNet < -3000 && fii7d < -10000)
+      items.push({ text: `FII selling continues. Rs.${Math.abs(fiiNet).toLocaleString('en-IN')} Cr outflow today, part of sustained 7-session trend.`, type: 'bear' });
+    else if (fiiNet > 3000 && fii7d > 10000)
+      items.push({ text: `FII buying sustained. Rs.${fiiNet.toLocaleString('en-IN')} Cr inflow part of consistent 7-session buying.`, type: 'bull' });
+    else if (fiiNet < 0 && (diiNet ?? 0) > 0)
+      items.push({ text: `FII selling offset by DII buying. Market absorbed institutional selling today.`, type: 'neutral' });
+  }
+
+  const crude = data.crude;
+  if (crude?.changePct != null && Math.abs(crude.changePct) > 1.5)
+    items.push({ text: `Crude ${crude.changePct > 0 ? 'spiked up' : 'dropped sharply'} ${Math.abs(crude.changePct).toFixed(1)}% today. Energy sector impact visible.`, type: crude.changePct > 0 ? 'warn' : 'bull' });
+
+  const gold = data.gold;
+  if (gold?.changePct != null && gold.changePct > 0.8)
+    items.push({ text: `Gold rising ${gold.changePct.toFixed(1)}% today. Risk-off tone visible in global asset allocation.`, type: 'warn' });
+
+  if (items.length === 0)
+    items.push({ text: 'No significant structural changes detected today. Market continuing prior session character.', type: 'neutral' });
+
+  return items;
+}
+
+// ── Trader Warnings ───────────────────────────────────────────────────────────
+function getWarnings(np, vix, fiiNet, diiNet, posInRange, range) {
+  const warnings = [];
+  const avg = AVG_RANGES.nifty;
+
+  if (range > avg * 1.5 && np < -1)
+    warnings.push('Avoid chasing breakdowns after large red candles. Extended moves often see brief bounces before continuation.');
+  if (vix && vix > 18)
+    warnings.push(`VIX at ${vix.toFixed(1)} is elevated. High volatility means wider stop-losses needed. Reduce position size accordingly.`);
+  if (fiiNet !== null && fiiNet < 0 && diiNet !== null && diiNet > 0)
+    warnings.push('FIIs selling while DIIs absorb creates a choppy, two-sided market. Momentum trades can fail quickly in this setup.');
+  if (posInRange !== null && posInRange > 0.8 && np > 1.2)
+    warnings.push('Price near session high after a strong move. Buying near highs late in the session carries increased reversal risk.');
+  if (posInRange !== null && posInRange < 0.2 && np < -1.2)
+    warnings.push('Price near session low after a large decline. Shorting near lows late in session carries increased bounce risk.');
+  if (range < avg * 0.65)
+    warnings.push('Compressed range day. Avoid overtrading in low-volatility environments. Wait for a clear breakout with volume.');
+  if (vix && vix < 12 && Math.abs(np ?? 0) < 0.3)
+    warnings.push('Low VIX with flat market. Options sellers benefit but be aware sudden events can cause sharp VIX spikes.');
+
+  return warnings.slice(0, 3);
+}
+
+// ── Risk Meter ────────────────────────────────────────────────────────────────
+function getRiskMeter(np, vix, fiiNet, diiNet) {
+  let score = 0;
+  if (np !== null && np < -1)   score += 2;
+  else if (np !== null && np < 0) score += 1;
+  if (vix && vix > 18) score += 2;
+  else if (vix && vix > 14) score += 1;
+  if (fiiNet !== null && fiiNet < -2000) score += 2;
+  else if (fiiNet !== null && fiiNet < 0) score += 1;
+  if (fiiNet !== null && fiiNet < 0 && diiNet !== null && diiNet < 0) score += 1;
+
+  let level, color, bg, factors = [];
+  if (score >= 5) { level = 'High Risk'; color = '#FF4455'; bg = 'rgba(255,68,85,.08)'; }
+  else if (score >= 3) { level = 'Moderate Risk'; color = '#F59E0B'; bg = 'rgba(245,158,11,.07)'; }
+  else { level = 'Lower Risk'; color = '#00C896'; bg = 'rgba(0,200,150,.07)'; }
+
+  if (np !== null && np < -0.7) factors.push('Selling pressure');
+  if (vix && vix > 16) factors.push('Elevated volatility');
+  if (fiiNet !== null && fiiNet < 0) factors.push('FII outflow');
+  if (fiiNet !== null && fiiNet < 0 && diiNet !== null && diiNet < 0) factors.push('No institutional support');
+  if (factors.length === 0) factors.push('No elevated risk factors');
+
+  return { level, color, bg, factors, score, maxScore: 7 };
+}
+
+// ── Trap Zones ────────────────────────────────────────────────────────────────
+function getTrapZones(price, high, low) {
+  if (!price) return [];
+  const zones = [];
+  const round = (v, step) => Math.round(v / step) * step;
+  const step = price < 10000 ? 500 : 500;
+
+  // Previous day high/low (approximated from today's open move)
+  if (high) zones.push({ level: Math.round(high), label: "Today's High", note: 'Stop-loss cluster above this. Breakout here often traps longs.', type: 'resist' });
+  if (low)  zones.push({ level: Math.round(low),  label: "Today's Low",  note: 'Stop-loss cluster below this. Break here triggers cascade selling.', type: 'support' });
+
+  // Round number traps near price
+  const below = round(price, step);
+  const above = below + step;
+  if (Math.abs(below - price) / price < 0.025) zones.push({ level: below, label: `Round ${below.toLocaleString('en-IN')}`, note: 'Psychological level. Heavy options OI. Expect reaction here.', type: below < price ? 'support' : 'resist' });
+  if (Math.abs(above - price) / price < 0.025) zones.push({ level: above, label: `Round ${above.toLocaleString('en-IN')}`, note: 'Psychological level. Heavy options OI. Expect reaction here.', type: 'resist' });
+
+  return zones;
+}
+
+// ── What to Watch Tomorrow ────────────────────────────────────────────────────
+function getTomorrow(np, vix, fiiNet, posInRange, dayType, events) {
+  const items = [];
+  const slot = getSlot();
+  const showTomorrow = slot === 'Market Close' || slot === 'Post-Market' || slot === 'Weekend';
+
+  if (dayType?.type === 'trend-down' || (np !== null && np < -1)) {
+    items.push('Watch for continuation of today\'s breakdown. Gap down open followed by bounce attempt is common after strong down days.');
+    items.push(`Key level to watch: whether Nifty can reclaim ${np !== null && np < 0 ? 'today\'s close' : 'prior support'} in the first 30 minutes.`);
+  } else if (dayType?.type === 'trend-up' || (np !== null && np > 1)) {
+    items.push('Continuation or exhaustion after strong up day. Watch if gap-up open sustains or fades.');
+    items.push('If market opens flat after today\'s rally, it signals distribution. Watch volume on any early weakness.');
+  } else if (dayType?.type === 'range') {
+    items.push('Range compression today. Tomorrow watch for a breakout move. Direction of first 30 minutes often sets the tone.');
+    items.push('Low-volatility sessions often precede high-volatility breakouts. Be ready with levels in both directions.');
+  } else {
+    items.push('Neutral session today. Watch early direction tomorrow. Gap and hold above resistance = bullish. Gap and fade = distribution.');
+  }
+
+  if (fiiNet !== null && fiiNet < -3000)
+    items.push('FII outflow heavy today. Check if DIIs continue to absorb tomorrow morning. Sustained DII buying can stabilize the market.');
+
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const tStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
+  const tmEvent = events.find(e => e.date === tStr);
+  if (tmEvent) items.push(`Event tomorrow: ${tmEvent.event}. Markets often move cautiously ahead of high-impact data releases.`);
+
+  return { items, show: true };
+}
+
+// ── Signals engine ────────────────────────────────────────────────────────────
+function buildSignals({ np, bp, vix, niftyPrice, fiiNet, diiNet, fii7d, data, history, allEvents }) {
+  const signals = [];
+  const cr = v => `Rs.${Math.abs(v).toLocaleString('en-IN')} Cr`;
+
+  if (fiiNet !== null && diiNet !== null) {
+    if      (fiiNet < 0 && diiNet > 0) signals.push({ tag:'FLOWS', text:`FIIs net sold ${cr(fiiNet)} today. DIIs absorbed ${cr(diiNet)}. Domestic institutions cushioning the fall.`, type:'warn' });
+    else if (fiiNet > 0 && diiNet > 0) signals.push({ tag:'FLOWS', text:`Both FIIs (${cr(fiiNet)}) and DIIs (${cr(diiNet)}) buying today. Broad institutional conviction.`, type:'bull' });
+    else if (fiiNet < 0 && diiNet < 0) signals.push({ tag:'FLOWS', text:`Both FIIs and DIIs net sellers. No institutional support layer under this market.`, type:'bear' });
+    else                                signals.push({ tag:'FLOWS', text:`FIIs buying ${cr(fiiNet)}, DIIs trimming. Foreign flows are the dominant support today.`, type:'bull' });
+  }
+
+  if (fii7d !== null && history?.length >= 3) {
+    const sellDays = history.slice(-7).filter(d => (d.fiiNet ?? 0) < 0).length;
+    if      (fii7d < -8000) signals.push({ tag:'FLOWS', text:`FIIs net sold Rs.${Math.abs(fii7d).toLocaleString('en-IN')} Cr over 7 sessions. Structural outflow, not a single-day event.`, type:'bear' });
+    else if (fii7d > 8000)  signals.push({ tag:'FLOWS', text:`FIIs net bought Rs.${fii7d.toLocaleString('en-IN')} Cr over 7 sessions. Consistent inflow supports large-cap indices.`, type:'bull' });
+    else if (sellDays >= 5) signals.push({ tag:'FLOWS', text:`FIIs sold on ${sellDays} of last 7 sessions. Selling trend persistent even if daily amounts are moderate.`, type:'warn' });
+  }
+
+  if (vix != null) {
+    if      (vix > 20) signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)} — elevated. Intraday ranges wider than usual. Options premiums inflated. Reduce position size.`, type:'bear' });
+    else if (vix > 16) signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)} — moderately high. Expect choppy intraday swings. Participants pricing in near-term uncertainty.`, type:'warn' });
+    else if (vix < 12) signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)} — low. Options premiums compressed. Low VIX can precede sudden spikes from global events.`, type:'neutral' });
+    else               signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)} — normal range. Volatility not a constraint on regular positioning today.`, type:'neutral' });
+  }
+
+  const globIdxs = [{id:'sp500',label:'S&P 500'},{id:'nasdaq',label:'Nasdaq'},{id:'nikkei',label:'Nikkei'},{id:'hangseng',label:'Hang Seng'},{id:'dax',label:'DAX'}];
+  const globMoves = globIdxs.map(i=>({label:i.label,pct:data[i.id]?.changePct??null})).filter(i=>i.pct!==null);
+  if (globMoves.length) {
+    const avg = globMoves.reduce((s,i)=>s+i.pct,0)/globMoves.length;
+    if      (avg<-0.8) signals.push({ tag:'GLOBAL', text:`Global markets broadly weak. Average decline across tracked indices: ${avg.toFixed(1)}%. FII flows into India under pressure.`, type:'bear' });
+    else if (avg>0.8)  signals.push({ tag:'GLOBAL', text:`Global markets broadly positive. Average gain: +${avg.toFixed(1)}%. Supportive backdrop for Indian equities.`, type:'bull' });
+    else               signals.push({ tag:'GLOBAL', text:`Global markets mixed. No strong directional cue overseas. Indian markets trading on domestic factors.`, type:'neutral' });
+    const sp = data.sp500?.changePct;
+    if (sp!=null && Math.abs(sp)>1.2) signals.push({ tag:'GLOBAL', text:`S&P 500 moved ${sp>0?'up':'down'} ${Math.abs(sp).toFixed(1)}%. Direct read-across for Indian large-cap IT and financials.`, type:sp>0?'bull':'bear' });
+  }
+
+  const crude = data.crude;
+  if (crude?.changePct!=null) {
+    if      (crude.changePct<-1.5) signals.push({ tag:'COMMODITY', text:`Crude WTI down ${Math.abs(crude.changePct).toFixed(1)}% at $${crude.price?.toFixed(1)}. Positive for aviation, paints, FMCG. Negative for energy sector.`, type:'neutral' });
+    else if (crude.changePct>1.5)  signals.push({ tag:'COMMODITY', text:`Crude WTI up ${crude.changePct.toFixed(1)}% at $${crude.price?.toFixed(1)}. Energy sector may outperform. Inflation caution for RBI rate cut expectations.`, type:'neutral' });
+    else                           signals.push({ tag:'COMMODITY', text:`Crude stable at $${crude.price?.toFixed(1)} (${crude.changePct>=0?'+':''}${crude.changePct.toFixed(1)}%). No significant energy sector impact today.`, type:'neutral' });
+  }
+
+  const gold = data.gold;
+  if (gold?.changePct!=null && Math.abs(gold.changePct)>0.7) {
+    if (gold.changePct>0) signals.push({ tag:'COMMODITY', text:`Gold up ${gold.changePct.toFixed(1)}% at $${gold.price?.toFixed(0)}. Risk-off tone in global allocation. Defensive assets preferred.`, type:'warn' });
+    else                  signals.push({ tag:'COMMODITY', text:`Gold down ${Math.abs(gold.changePct).toFixed(1)}% at $${gold.price?.toFixed(0)}. Declining gold suggests improving global risk appetite.`, type:'bull' });
+  }
+
+  if (niftyPrice && np!==null) {
+    const s=niftyPrice<10000?100:50, r=v=>Math.round(v/s)*s;
+    const sup1=r(niftyPrice*0.990), res1=r(niftyPrice*1.010);
+    if      (np<-0.5) signals.push({ tag:'LEVELS', text:`Nifty down ${Math.abs(np).toFixed(1)}%. Support at ${sup1.toLocaleString('en-IN')} is ${((niftyPrice-sup1)/niftyPrice*100).toFixed(1)}% away. Close below shifts structure negative.`, type:'bear' });
+    else if (np>0.5)  signals.push({ tag:'LEVELS', text:`Nifty up ${np.toFixed(1)}%. Resistance at ${res1.toLocaleString('en-IN')} is ${((res1-niftyPrice)/niftyPrice*100).toFixed(1)}% away. Holding above on close is constructive.`, type:'bull' });
+    else              signals.push({ tag:'LEVELS', text:`Nifty flat between ${sup1.toLocaleString('en-IN')} support and ${res1.toLocaleString('en-IN')} resistance. Breakout direction sets the next trend.`, type:'neutral' });
+    if (bp!==null && Math.abs(bp-np)>0.7) {
+      if (bp<np) signals.push({ tag:'LEVELS', text:`Bank Nifty underperforming by ${(np-bp).toFixed(1)}%. Banking weakness dragging broader market. Watch PSU and private bank names.`, type:'warn' });
+      else       signals.push({ tag:'LEVELS', text:`Bank Nifty outperforming by ${(bp-np).toFixed(1)}%. Banking strength leading. Financials are today's dominant driver.`, type:'bull' });
+    }
+  }
+
+  const today = new Date();
+  const rbi = allEvents.find(e=>e.event.includes('RBI'));
+  if (rbi) { const d=Math.round((new Date(rbi.date)-today)/86400000); if(d>=0&&d<=5) signals.push({ tag:'MACRO', text:`RBI policy in ${d} day${d!==1?'s':''}. Markets historically turn cautious before RBI. Banking stocks and bonds most sensitive.`, type:'warn' }); }
+  const fed = allEvents.find(e=>e.event.includes('FOMC'));
+  if (fed) { const d=Math.round((new Date(fed.date)-today)/86400000); if(d>=0&&d<=7) signals.push({ tag:'MACRO', text:`US Fed FOMC in ${d} day${d!==1?'s':''}. FII positioning in EMs typically turns cautious ahead of Fed decisions.`, type:'warn' }); }
+
+  return signals;
+}
+
+// ── Zones ─────────────────────────────────────────────────────────────────────
+function getZones(price) {
+  if (!price) return null;
+  const s=price<10000?100:50, r=v=>Math.round(v/s)*s;
+  return [
+    {level:r(price*0.990),label:'Support 1',    type:'support'},
+    {level:r(price*0.976),label:'Support 2',    type:'support'},
+    {level:r(price*1.010),label:'Resistance 1', type:'resistance'},
+    {level:r(price*1.022),label:'Resistance 2', type:'resistance'},
+  ].map(z=>({...z,dist:((z.level-price)/price*100).toFixed(1)}));
+}
+
+// ── Enhanced Scenarios ────────────────────────────────────────────────────────
+function getScenarios(price, np, data) {
+  if (!price || np===null) return null;
+  const s=price<10000?100:50, r=v=>Math.round(v/s)*s;
+  const sup=r(price*0.990), sup2=r(price*0.976), res=r(price*1.010), res2=r(price*1.022);
+  return [
+    { if:`${sup.toLocaleString('en-IN')} breaks`, action:'Momentum continuation', next:`Next reaction zone: ${sup2.toLocaleString('en-IN')}`, watch:'Volume on break. False breaks retrace quickly.', type:'bear' },
+    { if:`${res.toLocaleString('en-IN')} reclaimed`, action:'Short covering zone', next:`Watch for follow-through to ${res2.toLocaleString('en-IN')}`, watch:'Volume on reclaim. Sustained above = continuation.', type:'bull' },
+    { if:`${sup.toLocaleString('en-IN')} to ${res.toLocaleString('en-IN')} holds`, action:'Range compression', next:'Breakout expected when range narrows further', watch:'Direction of first break with volume is the signal.', type:'neutral' },
+  ];
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const fmtP   = v => v ? v.toLocaleString('en-IN',{maximumFractionDigits:0}) : '--';
+const fmtF   = (v,d=2) => v!=null ? Number(v).toLocaleString('en-IN',{maximumFractionDigits:d}) : '--';
+const fmtPct = v => v!=null ? `${v>=0?'+':''}${Number(v).toFixed(2)}%` : '--';
 const pColor = v => v==null ? 'var(--text3)' : v>=0 ? 'var(--gain)' : 'var(--loss)';
 
 const TAG_COLORS = {
-  FLOWS:      { bg:'rgba(74,158,255,.12)',  color:'#4A9EFF' },
-  VOLATILITY: { bg:'rgba(245,158,11,.1)',   color:'#F59E0B' },
-  GLOBAL:     { bg:'rgba(167,139,250,.1)',  color:'#A78BFA' },
-  COMMODITY:  { bg:'rgba(251,191,36,.1)',   color:'#FBB724' },
-  LEVELS:     { bg:'rgba(0,200,150,.1)',    color:'#00C896' },
-  MACRO:      { bg:'rgba(255,68,85,.1)',    color:'#FF4455' },
+  FLOWS:      {bg:'rgba(74,158,255,.12)', color:'#4A9EFF'},
+  VOLATILITY: {bg:'rgba(245,158,11,.1)',  color:'#F59E0B'},
+  GLOBAL:     {bg:'rgba(167,139,250,.1)', color:'#A78BFA'},
+  COMMODITY:  {bg:'rgba(251,191,36,.1)',  color:'#FBB724'},
+  LEVELS:     {bg:'rgba(0,200,150,.1)',   color:'#00C896'},
+  MACRO:      {bg:'rgba(255,68,85,.1)',   color:'#FF4455'},
 };
-const SIG_ICON  = { bull:'▲', bear:'▼', warn:'!', neutral:'·' };
-const SIG_COLOR = { bull:'var(--gain)', bear:'var(--loss)', warn:'#F59E0B', neutral:'var(--text3)' };
+const SIG_ICON  = {bull:'▲',bear:'▼',warn:'!',neutral:'·'};
+const SIG_COLOR = {bull:'var(--gain)',bear:'var(--loss)',warn:'#F59E0B',neutral:'var(--text3)'};
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-function TickerIndex({ label, d, accent }) {
+function TickerItem({label, d, borderColor}) {
   if (!d?.price) return null;
-  const gain = (d.changePct ?? 0) >= 0;
+  const gain = (d.changePct??0)>=0;
+  const bc = borderColor || (gain ? 'rgba(0,200,150,.5)' : 'rgba(255,68,85,.5)');
   return (
-    <div className="ip-ticker-item" style={{ borderLeftColor: accent || (gain ? 'rgba(0,200,150,.5)' : 'rgba(255,68,85,.5)') }}>
+    <div className="ip-ticker-item" style={{borderLeftColor:bc}}>
       <div className="ip-ticker-name">{label}</div>
       <div className="ip-ticker-price">{fmtP(d.price)}</div>
-      <div className="ip-ticker-pct" style={{ color: pColor(d.changePct) }}>{gain ? '▲' : '▼'} {Math.abs(d.changePct ?? 0).toFixed(2)}%</div>
-      {d.high && d.low && <div className="ip-ticker-hl">H {fmtP(d.high)} · L {fmtP(d.low)}</div>}
+      <div className="ip-ticker-pct" style={{color:pColor(d.changePct)}}>{gain?'▲':'▼'} {Math.abs(d.changePct??0).toFixed(2)}%</div>
+      {d.high&&d.low&&<div className="ip-ticker-hl">H {fmtP(d.high)} · L {fmtP(d.low)}</div>}
     </div>
   );
 }
 
-function CommCard({ label, unit, d, dec }) {
+function CommStrip({label, d, dec=1}) {
   if (!d?.price) return null;
-  const gain = (d.changePct ?? 0) >= 0;
+  const gain=(d.changePct??0)>=0;
   return (
-    <div className="ip-comm-card" style={{ borderTopColor: gain ? 'rgba(0,200,150,.4)' : 'rgba(255,68,85,.4)' }}>
-      <div className="ip-comm-name">{label}</div>
-      <div className="ip-comm-price">{fmtF(d.price, dec)}</div>
-      <div className="ip-comm-row">
-        <span className="ip-comm-unit">{unit}</span>
-        <span style={{ color: pColor(d.changePct), fontFamily:'var(--mono)', fontSize:12, fontWeight:700 }}>{fmtPct(d.changePct)}</span>
-      </div>
+    <div className="ip-commstrip-item" style={{borderLeftColor:gain?'rgba(0,200,150,.4)':'rgba(255,68,85,.4)'}}>
+      <div className="ip-commstrip-name">{label}</div>
+      <div className="ip-commstrip-price">{fmtF(d.price,dec)}</div>
+      <div className="ip-commstrip-pct" style={{color:pColor(d.changePct)}}>{gain?'▲':'▼'} {fmtPct(d.changePct)}</div>
     </div>
   );
 }
 
-function SignalCard({ tag, text, type }) {
-  const tc = TAG_COLORS[tag] || { bg:'var(--bg3)', color:'var(--text3)' };
+function SignalCard({tag, text, type}) {
+  const tc=TAG_COLORS[tag]||{bg:'var(--bg3)',color:'var(--text3)'};
   return (
     <div className="ip-signal">
       <div className="ip-signal-left">
-        <span className="ip-signal-tag" style={{ background:tc.bg, color:tc.color }}>{tag}</span>
-        <span className="ip-signal-icon" style={{ color:SIG_COLOR[type] }}>{SIG_ICON[type]}</span>
+        <span className="ip-signal-tag" style={{background:tc.bg,color:tc.color}}>{tag}</span>
+        <span className="ip-signal-icon" style={{color:SIG_COLOR[type]}}>{SIG_ICON[type]}</span>
       </div>
       <div className="ip-signal-text">{text}</div>
     </div>
   );
 }
 
-function FiiBar({ history }) {
+function FiiBar({history}) {
   if (!history?.length) return null;
-  const last7 = history.slice(-7);
-  const maxAbs = Math.max(...last7.map(d => Math.max(Math.abs(d.fiiNet??0), Math.abs(d.diiNet??0))), 1);
+  const last7=history.slice(-7);
+  const maxAbs=Math.max(...last7.map(d=>Math.max(Math.abs(d.fiiNet??0),Math.abs(d.diiNet??0))),1);
   return (
     <div className="ip-fii-bars">
-      {last7.map((d,i) => {
-        const fii=d.fiiNet??0, dii=d.diiNet??0;
-        const dt = d.date ? new Date(d.date) : null;
-        const lbl = dt ? dt.toLocaleDateString('en-IN',{weekday:'short'}) : `D${i+1}`;
+      {last7.map((d,i)=>{
+        const fii=d.fiiNet??0,dii=d.diiNet??0;
+        const dt=d.date?new Date(d.date):null;
+        const lbl=dt?dt.toLocaleDateString('en-IN',{weekday:'short'}):`D${i+1}`;
         return (
           <div key={i} className="ip-fii-bar-col">
             <div className="ip-fii-bar-pair">
@@ -198,159 +474,225 @@ function FiiBar({ history }) {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function InsightsPage({ data = {}, nseData = {} }) {
-  const [fiidii,       setFiidii]       = useState(null);
-  const [brief,        setBrief]        = useState(null);
+export default function InsightsPage({data={}, nseData={}}) {
+  const [fiidii,       setFiidii]   = useState(null);
+  const [brief,        setBrief]    = useState(null);
   const [briefLoading, setBriefLoading] = useState(true);
-  const [clock,        setClock]        = useState(getIST());
-  const [slot,         setSlot]         = useState(getSlot());
+  const [clock,        setClock]    = useState(getIST());
+  const [slot,         setSlot]     = useState(getSlot());
 
-  useEffect(() => {
+  useEffect(()=>{
     fetch('/api/fiidii').then(r=>r.json()).then(setFiidii).catch(()=>{});
-    const id = setInterval(()=>{ setClock(getIST()); setSlot(getSlot()); }, 60000);
+    const id=setInterval(()=>{setClock(getIST());setSlot(getSlot());},60000);
     return ()=>clearInterval(id);
-  }, []);
+  },[]);
 
-  const fetchBrief = useCallback(() => {
+  const fetchBrief=useCallback(()=>{
     setBriefLoading(true);
-    const nifty = nseData.nifty50||data.nifty50||{};
-    const bn    = nseData.banknifty||data.banknifty||{};
-    const np=nifty.changePct??null, bp=bn.changePct??null;
-    fetch('/api/insights-brief', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        niftyPrice:nifty.price, bnPrice:bn.price, niftyPct:np, bnPct:bp,
+    const nifty=nseData.nifty50||data.nifty50||{};
+    const bn=nseData.banknifty||data.banknifty||{};
+    const np=nifty.changePct??null,bp=bn.changePct??null;
+    fetch('/api/insights-brief',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        niftyPrice:nifty.price,bnPrice:bn.price,niftyPct:np,bnPct:bp,
         vix:nseData.vix??null,
         stance:getStance(np,bp)?.label||'Neutral',
         structure:np<-0.5?'Downtrend':np>0.5?'Uptrend':'Range',
         volLabel:Math.abs(np??0)>1.5?'High':Math.abs(np??0)>0.7?'Moderate':'Low',
-        fiiNet:fiidii?.fiiNet??null, diiNet:fiidii?.diiNet??null,
-        sp500Pct:data.sp500?.changePct??null, nikkeiPct:data.nikkei?.changePct??null,
+        fiiNet:fiidii?.fiiNet??null,diiNet:fiidii?.diiNet??null,
+        sp500Pct:data.sp500?.changePct??null,nikkeiPct:data.nikkei?.changePct??null,
         hangsengPct:data.hangseng?.changePct??null,
-        crudePct:data.crude?.changePct??null, goldPct:data.gold?.changePct??null,
+        crudePct:data.crude?.changePct??null,goldPct:data.gold?.changePct??null,
       }),
     }).then(r=>r.json()).then(d=>{setBrief(d);setBriefLoading(false);}).catch(()=>setBriefLoading(false));
-  }, [data, nseData, fiidii]);
+  },[data,nseData,fiidii]);
 
-  useEffect(()=>{ fetchBrief(); }, [fiidii]);
+  useEffect(()=>{fetchBrief();},[fiidii]);
 
   // Data
   const nifty     = nseData.nifty50        || data.nifty50        || null;
   const banknifty = nseData.banknifty      || data.banknifty      || null;
-  const finnifty  = nseData.niftyfinservice || data.niftyfinservice || null;
-  const sensex    = nseData.sensex         || data.sensex         || null;
   const giftnifty = data.giftnifty         || null;
-  const np = nifty?.changePct ?? null;
-  const bp = banknifty?.changePct ?? null;
+  const np = nifty?.changePct??null;
+  const bp = banknifty?.changePct??null;
   const stance = getStance(np, bp);
 
   // FII/DII
-  const fiiNet  = fiidii?.fiiNet  ?? null;
-  const fiiBuy  = fiidii?.fiiBuy  ?? null;
-  const fiiSell = fiidii?.fiiSell ?? null;
-  const diiNet  = fiidii?.diiNet  ?? null;
-  const diiBuy  = fiidii?.diiBuy  ?? null;
-  const diiSell = fiidii?.diiSell ?? null;
-  const history = fiidii?.history || [];
+  const fiiNet  = fiidii?.fiiNet??null;
+  const fiiBuy  = fiidii?.fiiBuy??null;
+  const fiiSell = fiidii?.fiiSell??null;
+  const diiNet  = fiidii?.diiNet??null;
+  const diiBuy  = fiidii?.diiBuy??null;
+  const diiSell = fiidii?.diiSell??null;
+  const history = fiidii?.history||[];
   const fii7d   = history.slice(-7).reduce((s,d)=>s+(d.fiiNet??0),0);
   const dii7d   = history.slice(-7).reduce((s,d)=>s+(d.diiNet??0),0);
 
-  // Zones
-  const zones = (() => {
-    if (!nifty?.price) return null;
-    const p=nifty.price, s=p<10000?100:50, r=v=>Math.round(v/s)*s;
-    return [
-      { level:r(p*0.990), label:'Support 1',    type:'support'    },
-      { level:r(p*0.976), label:'Support 2',    type:'support'    },
-      { level:r(p*1.010), label:'Resistance 1', type:'resistance' },
-      { level:r(p*1.022), label:'Resistance 2', type:'resistance' },
-    ].map(z=>({...z, dist:((z.level-p)/p*100).toFixed(1)}));
-  })();
+  // Analytics
+  const posInRange = nifty?.price && nifty.high && nifty.low ? (nifty.price-nifty.low)/(nifty.high-nifty.low) : null;
+  const dayType   = getDayType(nifty?.price, nifty?.high, nifty?.low, np);
+  const intraday  = getIntradayBias(nifty?.price, nifty?.high, nifty?.low, np);
+  const volCtx    = getVolContext(nifty?.price, nifty?.high, nifty?.low, nseData.vix);
+  const changes   = getChanges(nifty, banknifty, fiiNet, diiNet, fii7d, data);
+  const warnings  = getWarnings(np, nseData.vix, fiiNet, diiNet, posInRange, nifty?.high&&nifty?.low?nifty.high-nifty.low:null);
+  const riskMeter = getRiskMeter(np, nseData.vix, fiiNet, diiNet);
+  const trapZones = getTrapZones(nifty?.price, nifty?.high, nifty?.low);
+  const zones     = getZones(nifty?.price);
+  const scenarios = getScenarios(nifty?.price, np, data);
 
-  const scenarios = (() => {
-    if (!nifty?.price || np===null) return null;
-    const p=nifty.price, s=p<10000?100:50, r=v=>Math.round(v/s)*s;
-    const sup=r(p*0.990), res=r(p*1.010);
-    return [
-      { if:`Nifty breaks ${sup.toLocaleString('en-IN')}`,       then:'Downside continuation toward next support zone likely.', type:'bear' },
-      { if:`Nifty reclaims ${res.toLocaleString('en-IN')}`,     then:'Short covering possible. Watch for volume confirmation on the break.', type:'bull' },
-      { if:`Range ${sup.toLocaleString('en-IN')} to ${res.toLocaleString('en-IN')} holds`, then:'Consolidation continues. Directional move expected on clean breakout.', type:'neutral' },
-    ];
-  })();
-
-  const pad2 = n=>String(n).padStart(2,'0');
-  const now  = new Date();
-  const todayStr = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
-  const in7  = new Date(now); in7.setDate(now.getDate()+6);
-  const in7Str   = `${in7.getFullYear()}-${pad2(in7.getMonth()+1)}-${pad2(in7.getDate())}`;
+  const pad2=n=>String(n).padStart(2,'0');
+  const now=new Date();
+  const todayStr=`${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+  const in7=new Date(now); in7.setDate(now.getDate()+6);
+  const in7Str=`${in7.getFullYear()}-${pad2(in7.getMonth()+1)}-${pad2(in7.getDate())}`;
   const events    = ECON_EVENTS.filter(e=>e.date>=todayStr&&e.date<=in7Str).sort((a,b)=>a.date.localeCompare(b.date));
   const allEvents = ECON_EVENTS.filter(e=>e.date>=todayStr).slice(0,8);
-  const fmtEvtDate = d => new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+  const fmtEvtDate= d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
 
-  const signals = buildSignals({ np, bp, vix:nseData.vix, niftyPrice:nifty?.price, fiiNet, diiNet, fii7d, data, history, allEvents });
+  const tmrw    = getTomorrow(np, nseData.vix, fiiNet, posInRange, dayType, ECON_EVENTS);
+  const signals = buildSignals({np,bp,vix:nseData.vix,niftyPrice:nifty?.price,fiiNet,diiNet,fii7d,data,history,allEvents});
 
-  const timeStr = clock.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
-  const dateStr = clock.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-
-  const COMMODITIES = [
-    { id:'gold',      label:'Gold',      unit:'USD/oz',    dec:1 },
-    { id:'silver',    label:'Silver',    unit:'USD/oz',    dec:2 },
-    { id:'crude',     label:'Crude WTI', unit:'USD/bbl',   dec:1 },
-    { id:'brent',     label:'Brent',     unit:'USD/bbl',   dec:1 },
-    { id:'natgas',    label:'Nat Gas',   unit:'USD/mmBtu', dec:3 },
-    { id:'copper',    label:'Copper',    unit:'USD/lb',    dec:3 },
-    { id:'aluminium', label:'Aluminium', unit:'USD/t',     dec:0 },
-    { id:'wheat',     label:'Wheat',     unit:'USD/bu',    dec:2 },
-  ];
+  const timeStr=clock.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+  const dateStr=clock.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
 
   return (
     <div className="ip-wrap">
 
-      {/* ── ROW 1: TICKER STRIP — 5 key indices in one full-width block ── */}
+      {/* ROW 1: TICKER + COMMODITIES STRIP */}
       <div className="ip-ticker-block">
         <div className="ip-ticker-meta">
           <div className="ip-ticker-slot">{slot.toUpperCase()}</div>
           <div className="ip-ticker-date">{dateStr} · {timeStr}</div>
         </div>
         <div className="ip-ticker-indices">
-          <TickerIndex label="NIFTY 50"   d={nifty}                        />
-          <TickerIndex label="BANK NIFTY" d={banknifty}                    />
-          <TickerIndex label="GIFT NIFTY" d={giftnifty}                    />
-          <TickerIndex label="S&P 500"    d={data.sp500}    accent="#4A9EFF" />
-          <TickerIndex label="NASDAQ"     d={data.nasdaq}   accent="#A78BFA" />
+          <TickerItem label="NIFTY 50"   d={nifty} />
+          <TickerItem label="BANK NIFTY" d={banknifty} />
+          <TickerItem label="GIFT NIFTY" d={giftnifty} />
+          <TickerItem label="S&P 500"    d={data.sp500}  borderColor="#4A9EFF" />
+          <TickerItem label="NASDAQ"     d={data.nasdaq} borderColor="#A78BFA" />
         </div>
-        {nseData.vix && (
+        {/* Commodity sub-section in same strip */}
+        <div className="ip-commstrip-divider">COMMODITIES</div>
+        <div className="ip-commstrip">
+          <CommStrip label="GOLD"    d={data.gold}   dec={1} />
+          <CommStrip label="SILVER"  d={data.silver} dec={2} />
+          <CommStrip label="CRUDE"   d={data.crude}  dec={1} />
+          <CommStrip label="BRENT"   d={data.brent}  dec={1} />
+          <CommStrip label="NAT GAS" d={data.natgas} dec={3} />
+        </div>
+        {nseData.vix&&(
           <div className="ip-ticker-vix">
-            <span className="ip-ticker-vix-label">INDIA VIX</span>
-            <span className="ip-ticker-vix-val" style={{color: nseData.vix>18?'var(--loss)':nseData.vix<13?'var(--gain)':'var(--text)'}}>{nseData.vix.toFixed(1)}</span>
+            <div className="ip-ticker-vix-label">INDIA VIX</div>
+            <div className="ip-ticker-vix-val" style={{color:nseData.vix>18?'var(--loss)':nseData.vix<13?'var(--gain)':'var(--text)'}}>{nseData.vix.toFixed(1)}</div>
           </div>
         )}
       </div>
 
-      {/* ── ROW 2: COMMODITIES ── */}
-      <div className="ip-section ip-section-tight">
-        <div className="ip-section-label">COMMODITIES</div>
-        <div className="ip-comm-grid">
-          {COMMODITIES.map((c,i) => <CommCard key={i} label={c.label} unit={c.unit} d={data[c.id]} dec={c.dec} />)}
-        </div>
-      </div>
-
-      {/* ── ROW 3: SIGNALS (50%) + STANCE+LEVELS (50%) ── */}
+      {/* ROW 2: SIGNALS (50%) + RIGHT PANEL (50%) */}
       <div className="ip-row-half ip-section">
-        {/* LEFT: Market Signals */}
+
+        {/* LEFT: all analytical blocks */}
         <div className="ip-half-left">
-          <div className="ip-section-label">MARKET SIGNALS</div>
+
+          {/* Market Signals */}
+          <div className="ip-block-label">MARKET SIGNALS</div>
           <div className="ip-signals-list">
-            {signals.map((s,i) => <SignalCard key={i} {...s} />)}
-            {signals.length === 0 && <div className="ip-note">Loading market data...</div>}
+            {signals.map((s,i)=><SignalCard key={i} {...s}/>)}
           </div>
+
+          {/* Day Profile */}
+          {dayType&&(
+            <div className="ip-ana-block">
+              <div className="ip-ana-title">DAY PROFILE</div>
+              <div className="ip-day-type-row">
+                <span className="ip-day-type-badge" style={{background:dayType.color+'18',color:dayType.color,border:`1px solid ${dayType.color}40`}}>{dayType.label}</span>
+                <span className="ip-day-type-sub">{dayType.subLabel}</span>
+              </div>
+              <div className="ip-day-type-detail">{dayType.detail}</div>
+              {volCtx&&(
+                <div className="ip-vol-row">
+                  <span className="ip-vol-badge" style={{color:volCtx.rangeColor}}>Range: {volCtx.range} pts</span>
+                  <span className="ip-vol-label" style={{color:volCtx.rangeColor}}>{volCtx.rangeLabel} ({volCtx.pctOfAvg}% of avg)</span>
+                </div>
+              )}
+              {volCtx&&<div className="ip-vol-expect">{volCtx.expectation}{volCtx.vixContext?' '+volCtx.vixContext:''}</div>}
+            </div>
+          )}
+
+          {/* Intraday Bias */}
+          {intraday&&(
+            <div className="ip-ana-block">
+              <div className="ip-ana-title">INTRADAY BIAS TRACKER</div>
+              <div className="ip-bias-grid">
+                {[
+                  {phase:'Opening',ctrl:intraday.opening.ctrl,color:intraday.opening.color,time:'9:15–10:30'},
+                  {phase:'Mid Session',ctrl:intraday.mid.ctrl,color:intraday.mid.color,time:'10:30–1:30'},
+                  {phase:'Closing Phase',ctrl:intraday.closing.ctrl,color:intraday.closing.color,time:'1:30–3:30'},
+                ].map((ph,i)=>(
+                  <div key={i} className="ip-bias-item" style={{borderLeftColor:ph.color}}>
+                    <div className="ip-bias-phase">{ph.phase}</div>
+                    <div className="ip-bias-time">{ph.time}</div>
+                    <div className="ip-bias-ctrl" style={{color:ph.color}}>{ph.ctrl}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="ip-bias-note">{intraday.closing.note}</div>
+            </div>
+          )}
+
+          {/* What Changed Today */}
+          {changes.length>0&&(
+            <div className="ip-ana-block">
+              <div className="ip-ana-title">WHAT CHANGED TODAY</div>
+              <div className="ip-changes-list">
+                {changes.map((c,i)=>(
+                  <div key={i} className="ip-change-row" style={{borderLeftColor:c.type==='bull'?'var(--gain)':c.type==='bear'?'var(--loss)':c.type==='warn'?'#F59E0B':'var(--border2)'}}>
+                    <span className="ip-change-icon" style={{color:c.type==='bull'?'var(--gain)':c.type==='bear'?'var(--loss)':c.type==='warn'?'#F59E0B':'var(--text3)'}}>{c.type==='bull'?'▲':c.type==='bear'?'▼':'→'}</span>
+                    <span className="ip-change-text">{c.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Trader Warnings */}
+          {warnings.length>0&&(
+            <div className="ip-ana-block ip-warnings-block">
+              <div className="ip-ana-title" style={{color:'#F59E0B'}}>TRADER WARNINGS</div>
+              <div className="ip-warnings-list">
+                {warnings.map((w,i)=>(
+                  <div key={i} className="ip-warning-row">
+                    <span className="ip-warning-icon">!</span>
+                    <span className="ip-warning-text">{w}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
 
-        {/* RIGHT: Stance + Key Levels + Scenarios — all stacked, no gap */}
+        {/* RIGHT: Risk Meter + Stance + Key Levels + Trap Zones + Scenarios + Tomorrow */}
         <div className="ip-half-right">
+
+          {/* Risk Meter */}
+          <div className="ip-risk-meter" style={{background:riskMeter.bg,border:`1px solid ${riskMeter.color}40`}}>
+            <div className="ip-risk-header">
+              <div className="ip-risk-label">RISK ENVIRONMENT</div>
+              <div className="ip-risk-level" style={{color:riskMeter.color}}>{riskMeter.level}</div>
+            </div>
+            <div className="ip-risk-bar-track">
+              <div className="ip-risk-bar-fill" style={{width:`${(riskMeter.score/riskMeter.maxScore)*100}%`,background:riskMeter.color}}/>
+            </div>
+            <div className="ip-risk-factors">
+              {riskMeter.factors.map((f,i)=><span key={i} className="ip-risk-factor" style={{color:riskMeter.color}}>{f}</span>)}
+            </div>
+          </div>
+
           {/* Stance */}
-          {stance && (
-            <div className="ip-stance-box" style={{background:stance.bg, borderColor:stance.border}}>
+          {stance&&(
+            <div className="ip-stance-box" style={{background:stance.bg,borderColor:stance.border}}>
               <div className="ip-stance-header">
                 <div>
                   <div className="ip-stance-icon" style={{color:stance.color}}>{stance.icon}</div>
@@ -363,117 +705,131 @@ export default function InsightsPage({ data = {}, nseData = {} }) {
                 </div>
               </div>
               <ul className="ip-stance-reasons">
-                {stance.reasons.map((r,i) => <li key={i}>{r}</li>)}
+                {stance.reasons.map((r,i)=><li key={i}>{r}</li>)}
               </ul>
             </div>
           )}
 
-          {/* Key Levels — directly below stance, same column */}
-          {zones && (
+          {/* Key Levels + Trap Zones */}
+          <div className="ip-levels-box">
+            <div className="ip-box-title">KEY LEVELS</div>
+            {zones?zones.map((z,i)=>(
+              <div key={i} className={`ip-zone ip-zone-${z.type}`}>
+                <span className="ip-zone-label">{z.label}</span>
+                <span className="ip-zone-level" style={{color:z.type==='support'?'var(--gain)':'var(--loss)'}}>{z.level.toLocaleString('en-IN')}</span>
+                <span className="ip-zone-dist">{z.dist>0?'+':''}{z.dist}%</span>
+              </div>
+            )):<div className="ip-note">No price data.</div>}
+            {trapZones.length>0&&(
+              <>
+                <div className="ip-box-title" style={{marginTop:12}}>TRAP ZONES</div>
+                {trapZones.map((z,i)=>(
+                  <div key={i} className="ip-trap-row" style={{borderLeftColor:z.type==='support'?'var(--gain)':'var(--loss)'}}>
+                    <div className="ip-trap-level">{z.level.toLocaleString('en-IN')} <span className="ip-trap-badge">{z.label}</span></div>
+                    <div className="ip-trap-note">{z.note}</div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+
+          {/* Enhanced Scenarios */}
+          {scenarios&&(
             <div className="ip-levels-box">
-              <div className="ip-box-title">KEY LEVELS</div>
-              {zones.map((z,i) => (
-                <div key={i} className={`ip-zone ip-zone-${z.type}`}>
-                  <span className="ip-zone-label">{z.label}</span>
-                  <span className="ip-zone-level" style={{color:z.type==='support'?'var(--gain)':'var(--loss)'}}>{z.level.toLocaleString('en-IN')}</span>
-                  <span className="ip-zone-dist">{z.dist>0?'+':''}{z.dist}%</span>
+              <div className="ip-box-title">SCENARIO FRAMEWORK</div>
+              {scenarios.map((s,i)=>(
+                <div key={i} className={`ip-scen ip-scen-${s.type}`}>
+                  <div className="ip-scen-if">IF {s.if}</div>
+                  <div className="ip-scen-action">{s.action}</div>
+                  <div className="ip-scen-next">{s.next}</div>
+                  <div className="ip-scen-watch">Watch: {s.watch}</div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Scenarios */}
-          {scenarios && (
-            <div className="ip-levels-box">
-              <div className="ip-box-title">SCENARIOS</div>
-              {scenarios.map((s,i) => (
-                <div key={i} className={`ip-scenario ip-sc-${s.type}`}>
-                  <div className="ip-sc-if">{s.if}</div>
-                  <div className="ip-sc-then">{s.then}</div>
+          {/* What to Watch Tomorrow */}
+          {tmrw.items.length>0&&(
+            <div className="ip-levels-box ip-tomorrow-box">
+              <div className="ip-box-title">WHAT TO WATCH TOMORROW</div>
+              {tmrw.items.map((item,i)=>(
+                <div key={i} className="ip-tomorrow-row">
+                  <span className="ip-tomorrow-dot"/>
+                  <span className="ip-tomorrow-text">{item}</span>
                 </div>
               ))}
-              <div className="ip-note">Rule-based from live price. Not predictions.</div>
             </div>
           )}
+
         </div>
       </div>
 
-      {/* ── ROW 4: AI WRITE-UP (50%) + FII/DII (50%) ── */}
+      {/* ROW 3: AI WRITE-UP (50%) + FII/DII (50%) */}
       <div className="ip-row-half ip-section">
-        {/* LEFT: AI Write-up */}
         <div className="ip-half-left">
-          <div className="ip-section-label">
+          <div className="ip-block-label">
             AI WRITE-UP
-            <span className="ip-writeup-badge">{briefLoading ? 'GENERATING' : brief?.cached ? 'CACHED' : 'LIVE'}</span>
+            <span className="ip-writeup-badge">{briefLoading?'GENERATING':brief?.cached?'CACHED':'LIVE'}</span>
           </div>
           <div className="ip-writeup-content">
-            {briefLoading ? (
-              <div className="ip-loading"><div className="ip-spinner" /><span>Generating write-up with live news and market data...</span></div>
-            ) : brief?.writeup ? (
-              brief.writeup.split('\n').filter(p=>p.trim()).map((para,i) => (
+            {briefLoading?(
+              <div className="ip-loading"><div className="ip-spinner"/><span>Generating write-up with live news...</span></div>
+            ):brief?.writeup?(
+              brief.writeup.split('\n').filter(p=>p.trim()).map((para,i)=>(
                 <p key={i} className="ip-writeup-para">{para.trim()}</p>
               ))
-            ) : (
-              <p className="ip-writeup-para" style={{color:'var(--text3)'}}>
-                {brief?._error ? `Error: ${brief._error}` : 'Write-up not available. Refresh to try again.'}
-              </p>
+            ):(
+              <p className="ip-writeup-para" style={{color:'var(--text3)'}}>{brief?._error?`Error: ${brief._error}`:'Write-up not available. Refresh to try again.'}</p>
             )}
           </div>
         </div>
-
-        {/* RIGHT: FII/DII */}
         <div className="ip-half-right">
-          <div className="ip-section-label">FII / DII FLOWS</div>
-          {fiiNet !== null ? (
+          <div className="ip-block-label">FII / DII FLOWS</div>
+          {fiiNet!==null?(
             <div className="ip-fii-content">
-              {/* 7D totals */}
               <div className="ip-flow-7d">
-                {[{ label:'FII 7D TOTAL', val:fii7d }, { label:'DII 7D TOTAL', val:dii7d }, { label:'COMBINED', sub:fii7d+dii7d>=0?'Net inflow':'Net outflow', val:fii7d+dii7d }].map((c,i) => (
+                {[{label:'FII 7D',val:fii7d},{label:'DII 7D',val:dii7d},{label:'COMBINED',val:fii7d+dii7d,sub:(fii7d+dii7d)>=0?'Net inflow':'Net outflow'}].map((c,i)=>(
                   <div key={i} className="ip-flow-7d-item">
                     <div className="ip-flow-7d-label">{c.label}</div>
                     <div className="ip-flow-7d-val" style={{color:pColor(c.val)}}>{c.val>=0?'+':''}Rs.{Math.abs(c.val).toLocaleString('en-IN')} Cr</div>
-                    {c.sub && <div className="ip-flow-7d-sub">{c.sub}</div>}
+                    {c.sub&&<div className="ip-flow-7d-sub">{c.sub}</div>}
                   </div>
                 ))}
               </div>
-
-              {/* Today's big numbers */}
               <div className="ip-flow-today">
                 <div className="ip-flow-side">
                   <div className="ip-flow-who">FII / FPI</div>
                   <div className="ip-flow-net" style={{color:pColor(fiiNet)}}>{fiiNet>=0?'+':''}Rs.{Math.abs(fiiNet).toLocaleString('en-IN')} Cr</div>
                   <div className="ip-flow-dir" style={{color:pColor(fiiNet)}}>{fiiNet>=0?'↑ Net Buyers':'↓ Net Sellers'}</div>
-                  {fiiBuy!=null && fiiSell!=null && <div className="ip-flow-buysell"><span>Buy Rs.{Math.round(fiiBuy).toLocaleString('en-IN')} Cr</span><span>Sell Rs.{Math.round(fiiSell).toLocaleString('en-IN')} Cr</span></div>}
+                  {fiiBuy!=null&&fiiSell!=null&&<div className="ip-flow-buysell"><span>Buy Rs.{Math.round(fiiBuy).toLocaleString('en-IN')} Cr</span><span>Sell Rs.{Math.round(fiiSell).toLocaleString('en-IN')} Cr</span></div>}
                   <div className="ip-flow-type">Foreign Institutional</div>
                 </div>
                 <div className="ip-flow-side">
                   <div className="ip-flow-who">DII</div>
                   <div className="ip-flow-net" style={{color:pColor(diiNet)}}>{(diiNet??0)>=0?'+':''}Rs.{Math.abs(diiNet??0).toLocaleString('en-IN')} Cr</div>
                   <div className="ip-flow-dir" style={{color:pColor(diiNet)}}>{(diiNet??0)>=0?'↑ Net Buyers':'↓ Net Sellers'}</div>
-                  {diiBuy!=null && diiSell!=null && <div className="ip-flow-buysell"><span>Buy Rs.{Math.round(diiBuy).toLocaleString('en-IN')} Cr</span><span>Sell Rs.{Math.round(diiSell).toLocaleString('en-IN')} Cr</span></div>}
+                  {diiBuy!=null&&diiSell!=null&&<div className="ip-flow-buysell"><span>Buy Rs.{Math.round(diiBuy).toLocaleString('en-IN')} Cr</span><span>Sell Rs.{Math.round(diiSell).toLocaleString('en-IN')} Cr</span></div>}
                   <div className="ip-flow-type">Domestic Institutional</div>
                 </div>
               </div>
-
-              {/* Bar chart */}
               <div className="ip-fii-legend">
                 <span><span style={{display:'inline-block',width:9,height:9,background:'var(--gain)',borderRadius:2,marginRight:4}}/>FII</span>
                 <span><span style={{display:'inline-block',width:9,height:9,background:'#4A9EFF',borderRadius:2,marginRight:4}}/>DII</span>
               </div>
-              <FiiBar history={history} />
-              {fiiNet<0&&(diiNet??0)>0 && <div className="ip-note" style={{marginTop:8}}>FIIs selling, DIIs absorbing. Domestic support visible.</div>}
-              {fiiNet>0&&(diiNet??0)>0 && <div className="ip-note" style={{marginTop:8}}>Both sides buying. Broad institutional conviction.</div>}
-              {fiiNet<0&&(diiNet??0)<0 && <div className="ip-note" style={{marginTop:8}}>Both selling. No institutional support layer.</div>}
+              <FiiBar history={history}/>
+              {fiiNet<0&&(diiNet??0)>0&&<div className="ip-note" style={{marginTop:8}}>FIIs selling, DIIs absorbing. Domestic support visible.</div>}
+              {fiiNet>0&&(diiNet??0)>0&&<div className="ip-note" style={{marginTop:8}}>Both sides buying. Broad institutional conviction.</div>}
+              {fiiNet<0&&(diiNet??0)<0&&<div className="ip-note" style={{marginTop:8}}>Both selling. No institutional support layer.</div>}
             </div>
-          ) : <div className="ip-note">Loading FII/DII data...</div>}
+          ):<div className="ip-note">Loading FII/DII data...</div>}
         </div>
       </div>
 
-      {/* ── ROW 5: ECONOMIC CALENDAR (30%) + rest ── */}
+      {/* ROW 4: ECONOMIC CALENDAR (30%) */}
       <div className="ip-row-calendar ip-section">
         <div className="ip-cal-col">
-          <div className="ip-section-label">ECONOMIC CALENDAR <span style={{opacity:.5,fontSize:9,fontWeight:400,letterSpacing:0}}>NEXT 7 DAYS</span></div>
-          {events.length > 0 ? events.map((e,i) => (
+          <div className="ip-block-label">ECONOMIC CALENDAR <span style={{opacity:.5,fontSize:9,fontWeight:400,letterSpacing:0}}>NEXT 7 DAYS</span></div>
+          {events.length>0?events.map((e,i)=>(
             <div key={i} className="ip-econ-row">
               <div className="ip-econ-meta">
                 <span className="ip-econ-date">{fmtEvtDate(e.date)}</span>
@@ -485,7 +841,7 @@ export default function InsightsPage({ data = {}, nseData = {} }) {
               </div>
               <div className={`ip-econ-imp ip-imp-${e.impact}`}>{e.impact}</div>
             </div>
-          )) : <div className="ip-note">No major events in next 7 days.</div>}
+          )):<div className="ip-note">No major events in next 7 days.</div>}
         </div>
       </div>
 
