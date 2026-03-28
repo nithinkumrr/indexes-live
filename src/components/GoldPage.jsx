@@ -61,8 +61,9 @@ function McxFutures({ ibjaGold24, ibjaSilver }) {
     const mon = MONTHS[useMo];
     const yr2 = String(useYr).slice(-2);
     return {
-      gold:   `MCX:GOLD${mon}${yr2}FUT`,
-      silver: `MCX:SILVER${mon}${yr2}FUT`,
+      // Kite format: GOLD26APRFUT, SILVERM26APRFUT (year before month)
+      gold:   `MCX:GOLD${yr2}${mon}FUT`,
+      silver: `MCX:SILVERM${yr2}${mon}FUT`,
       label:  `${mon}${yr2}`,
     };
   };
@@ -115,7 +116,7 @@ function McxFutures({ ibjaGold24, ibjaSilver }) {
     <>
       <div className="gold-mcx-item gold-mcx-live">
         <span className="gold-mcx-name">
-          MCX Gold (GOLDM) · {gold?.contract || contractLabel}
+          MCX Gold · {gold?.contract || contractLabel}
           {isLive && gold?.source === 'MCX live' && <span className="gold-live-dot"/>}
         </span>
         {gold?.price ? (
@@ -138,7 +139,7 @@ function McxFutures({ ibjaGold24, ibjaSilver }) {
 
       <div className="gold-mcx-item gold-mcx-live">
         <span className="gold-mcx-name" style={{color:'#A8B8CC'}}>
-          MCX Silver (SILVERM) · {silver?.contract || contractLabel}
+          MCX Silver M · {silver?.contract || contractLabel}
           {isLive && silver?.source === 'MCX live' && <span className="gold-live-dot" style={{background:'#8899cc'}}/>}
         </span>
         {silver?.price ? (
