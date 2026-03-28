@@ -598,22 +598,9 @@ export default function InsightsPage({data={}, nseData={}}) {
       {/* SENTIMENT-STYLE TICKER (Global + India rows) */}
       <Ticker data={data} nseData={nseData} />
 
-      {/* ROW 1: COMMODITIES (50% left) + INDICES/TIME (50% right) */}
+      {/* ROW 1: TIME/INDICES (50% left) + COMMODITIES (50% right) */}
       <div className="ip-toprow">
-        {/* LEFT 50%: Commodities — no scroll, grid */}
-        <div className="ip-toprow-left">
-          <div className="ip-toprow-label">COMMODITIES</div>
-          <div className="ip-commstrip-v">
-            <CommStrip label="GOLD"      d={data.gold}      dec={1} />
-            <CommStrip label="SILVER"    d={data.silver}    dec={2} />
-            <CommStrip label="CRUDE WTI" d={data.crude}     dec={1} />
-            <CommStrip label="BRENT"     d={data.brent}     dec={1} />
-            <CommStrip label="NAT GAS"   d={data.natgas}    dec={3} />
-            <CommStrip label="COPPER"    d={data.copper}    dec={3} />
-            <CommStrip label="ALUMINIUM" d={data.aluminium} dec={0} />
-          </div>
-        </div>
-        {/* RIGHT 50%: time + indices strip */}
+        {/* LEFT 50%: time + indices */}
         <div className="ip-toprow-right">
           <div className="ip-ticker-meta">
             <div className="ip-ticker-slot">{slot.toUpperCase()}</div>
@@ -632,6 +619,19 @@ export default function InsightsPage({data={}, nseData={}}) {
               <div className="ip-ticker-vix-val" style={{color:nseData.vix>18?'var(--loss)':nseData.vix<13?'var(--gain)':'var(--text)'}}>{nseData.vix.toFixed(1)}</div>
             </div>
           )}
+        </div>
+        {/* RIGHT 50%: Commodities grid */}
+        <div className="ip-toprow-left">
+          <div className="ip-toprow-label">COMMODITIES</div>
+          <div className="ip-commstrip-v">
+            <CommStrip label="GOLD"      d={data.gold}      dec={1} />
+            <CommStrip label="SILVER"    d={data.silver}    dec={2} />
+            <CommStrip label="CRUDE WTI" d={data.crude}     dec={1} />
+            <CommStrip label="BRENT"     d={data.brent}     dec={1} />
+            <CommStrip label="NAT GAS"   d={data.natgas}    dec={3} />
+            <CommStrip label="COPPER"    d={data.copper}    dec={3} />
+            <CommStrip label="ALUMINIUM" d={data.aluminium} dec={0} />
+          </div>
         </div>
       </div>
 
