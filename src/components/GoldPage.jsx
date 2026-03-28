@@ -29,35 +29,71 @@ function McxFutures({ ibjaGold24, ibjaSilver }) {
   const [gold,   setGold]   = useState(null);
   const [silver, setSilver] = useState(null);
 
+  // Dynamically build current MCX contract symbol.
+  // MCX Gold & Silver expire on the last Thursday of each month.
+  // Within 7 days of expiry we roll to the next month contract.
+  const getMcxSymbols = () => {
+    const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const yr  = now.getFullYear();
+    const mo  = now.getMonth(); // 0-indexed
+
+    // Last Thursday of a given year/month (0-indexed month)
+    const lastThursday = (y, m) => {
+      const last = new Date(y, m + 1, 0); // last day of month
+      while (last.getDay() !== 4) last.setDate(last.getDate() - 1); // 4 = Thursday
+      return last;
+    };
+
+    const expiry = lastThursday(yr, mo);
+    const daysToExpiry = Math.round((expiry - now) / 86400000);
+
+    let useMo, useYr;
+    if (daysToExpiry <= 7) {
+      // Roll to next month
+      useMo = mo === 11 ? 0 : mo + 1;
+      useYr = mo === 11 ? yr + 1 : yr;
+    } else {
+      useMo = mo;
+      useYr = yr;
+    }
+
+    const mon = MONTHS[useMo];
+    const yr2 = String(useYr).slice(-2);
+    return {
+      gold:   `MCX:GOLD${mon}${yr2}FUT`,
+      silver: `MCX:SILVER${mon}${yr2}FUT`,
+      label:  `${mon}${yr2}`,
+    };
+  };
+
   const load = () => {
     const open = isMcxOpen();
+    const syms = getMcxSymbols();
 
-    // Try Kite quote for MCX current-month futures
+    // Fetch via dedicated MCX Kite endpoint
     Promise.all([
-      fetch('/api/quote?symbol=MCX%3AGOLD25MAYFUT').then(r=>r.json()).catch(()=>null),
-      fetch('/api/quote?symbol=MCX%3ASILVER25MAYFUT').then(r=>r.json()).catch(()=>null),
+      fetch(`/api/mcx-quote?symbol=${encodeURIComponent(syms.gold)}`).then(r=>r.json()).catch(()=>null),
+      fetch(`/api/mcx-quote?symbol=${encodeURIComponent(syms.silver)}`).then(r=>r.json()).catch(()=>null),
     ]).then(([gd, sd]) => {
-      const goldKite   = gd?.data?.['MCX:GOLD25MAYFUT']?.last_price;
-      const silverKite = sd?.data?.['MCX:SILVER25MAYFUT']?.last_price;
-
-      if (goldKite) {
-        // Kite MCX GOLD is per 10g — multiply x100 to get 1 kg
-        const goldKg = Math.round(goldKite * 100);
-        const prev = gd?.data?.['MCX:GOLD25MAYFUT']?.ohlc?.close;
-        const chgPct = prev ? ((goldKg - prev*100)/(prev*100)*100).toFixed(2) : null;
-        setGold({ price: goldKg, chgPct, isOpen: open, source: 'MCX live' });
+      if (gd?.price) {
+        // MCX Gold quote from Kite is per 10g — multiply x100 to get 1 kg
+        const goldKg = Math.round(gd.price * 100);
+        const prevKg = gd.prevClose ? Math.round(gd.prevClose * 100) : null;
+        const chgPct = prevKg ? ((goldKg - prevKg) / prevKg * 100).toFixed(2) : null;
+        setGold({ price: goldKg, chgPct, isOpen: open, source: 'MCX live', contract: syms.label });
       } else if (ibjaGold24) {
-        setGold({ price: Math.round(ibjaGold24 * 1000), chgPct: null, isOpen: open, source: 'IBJA est.' });
+        setGold({ price: Math.round(ibjaGold24 * 1000), chgPct: null, isOpen: open, source: 'IBJA est.', contract: null });
       }
 
-      if (silverKite) {
-        // Kite MCX SILVER is per kg
-        const silverKg = Math.round(silverKite);
-        const prev = sd?.data?.['MCX:SILVER25MAYFUT']?.ohlc?.close;
-        const chgPct = prev ? ((silverKg - prev)/prev*100).toFixed(2) : null;
-        setSilver({ price: silverKg, chgPct, isOpen: open, source: 'MCX live' });
+      if (sd?.price) {
+        // MCX Silver Mini 1kg — Kite quotes per kg, no conversion needed
+        const silverKg = Math.round(sd.price);
+        const prevKg   = sd.prevClose ? Math.round(sd.prevClose) : null;
+        const chgPct   = prevKg ? ((silverKg - prevKg) / prevKg * 100).toFixed(2) : null;
+        setSilver({ price: silverKg, chgPct, isOpen: open, source: 'MCX live', contract: syms.label });
       } else if (ibjaSilver) {
-        setSilver({ price: ibjaSilver, chgPct: null, isOpen: open, source: 'IBJA est.' });
+        setSilver({ price: ibjaSilver, chgPct: null, isOpen: open, source: 'IBJA est.', contract: null });
       }
     });
   };
@@ -74,7 +110,7 @@ function McxFutures({ ibjaGold24, ibjaSilver }) {
       {gold?.source === 'MCX live' && (
         <div className="gold-mcx-item gold-mcx-live">
           <span className="gold-mcx-name">
-            ⚡ MCX Gold (1 kg)
+            ⚡ MCX Gold 1kg{gold.contract ? ' · ' + gold.contract : ''}
             {gold.isOpen && <span className="gold-live-dot"/>}
           </span>
           <span className="gold-mcx-price">&#x20B9;{gold.price?.toLocaleString('en-IN')}</span>
@@ -86,7 +122,7 @@ function McxFutures({ ibjaGold24, ibjaSilver }) {
       {silver?.source === 'MCX live' && (
         <div className="gold-mcx-item gold-mcx-live">
           <span className="gold-mcx-name" style={{color:'#A8B8CC'}}>
-            ⚡ MCX Silver (1 kg)
+            ⚡ MCX Silver 1kg{silver.contract ? ' · ' + silver.contract : ''}
             {silver.isOpen && <span className="gold-live-dot" style={{background:'#8899cc'}}/>}
           </span>
           <span className="gold-mcx-price" style={{color:'#A8B8CC'}}>&#x20B9;{silver.price?.toLocaleString('en-IN')}</span>
