@@ -237,7 +237,6 @@ export default function InsightsPage({ data = {}, nseData = {} }) {
   }, []);
 
   const fetchBrief = useCallback(() => {
-    if (isWeekend()) { setBriefLoading(false); return; }
     setBriefLoading(true);
     const nifty = nseData.nifty50 || data.nifty50 || {};
     const bn    = nseData.banknifty || data.banknifty || {};
@@ -423,9 +422,10 @@ export default function InsightsPage({ data = {}, nseData = {} }) {
             </div>
           )}
 
-          {weekend ? (
-            <div className="ins4-weekend-note">Indian markets are closed on weekends. The brief generates during market hours Monday to Friday.</div>
-          ) : briefLoading ? (
+          {weekend && (
+            <div className="ins4-weekend-note ins4-weekend-banner">Markets closed. Showing Friday post-market summary.</div>
+          )}
+          {briefLoading ? (
             <div className="ins4-loading-row"><div className="ins4-spinner" /><span>Reading live market data and current news...</span></div>
           ) : brief?.trader ? (
             <div className="ins4-bp-grid">
@@ -571,7 +571,7 @@ export default function InsightsPage({ data = {}, nseData = {} }) {
       </div>
 
       {/* WRITE-UP */}
-      {(brief?.writeup || (briefLoading && !weekend)) && (
+      {(brief?.writeup || briefLoading) && (
         <div className="ins4-writeup-wrap">
           <button className="ins4-writeup-toggle" onClick={() => setWriteupOpen(v => !v)}>
             <span>{slot.toUpperCase()} WRITE-UP <span className="ins4-writeup-tag">2 min read</span></span>

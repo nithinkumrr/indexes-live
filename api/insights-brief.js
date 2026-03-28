@@ -21,7 +21,11 @@ function getSlotInfo() {
   ];
 
   if (day === 0 || day === 6) {
-    return { name: 'weekend', label: 'Weekend', window: 'Market closed', context: 'Markets are closed. Cover the week that was, key developments, and what to watch in the coming week.', key: `${dateStr}-weekend`, ttl: 86400 };
+    // On weekends, try to serve Friday's post-market brief
+    const friday = new Date(ist);
+    friday.setDate(ist.getDate() - (day === 0 ? 2 : 1)); // Sunday back 2, Saturday back 1
+    const fridayStr = `${friday.getFullYear()}-${pad(friday.getMonth()+1)}-${pad(friday.getDate())}`;
+    return { name: 'eod', label: 'Friday Post-Market', window: 'Week wrap', context: 'Markets are closed for the weekend. Cover the full week that was: key drivers, sector performance, FII/DII trend, commodity moves, and the global and domestic setup for the coming week. This should read as a proper end-of-week debrief that a trader or investor can act on when markets reopen.', key: `${fridayStr}-eod`, ttl: 172800, isWeekend: true };
   }
   const slot = slots.find(s => mins >= s.minStart && mins <= s.minEnd) || slots[5];
   return { ...slot, key: `${dateStr}-${slot.name}` };
