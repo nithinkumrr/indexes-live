@@ -122,7 +122,7 @@ function FearGreedMeter() {
   };
 
   const comps = [
-    { label: 'India VIX',    val: mmi.scores.vixScore, detail: mmi.vix ? 'VIX ' + mmi.vix.toFixed(2) : '' },
+    { label: 'India VIX',    val: mmi.scores.vixScore, display: mmi.vix ? mmi.vix.toFixed(1) : null, detail: mmi.vix ? 'VIX ' + mmi.vix.toFixed(2) + ' → sentiment score ' + mmi.scores.vixScore : '' },
     { label: 'FII Activity', val: mmi.scores.fiiScore, detail: mmi.fiiNet ? ('Net ' + (mmi.fiiNet > 0 ? '+' : '') + Math.round(mmi.fiiNet) + 'Cr') : '' },
     { label: 'Momentum',     val: mmi.scores.momScore, detail: 'EMA30 vs EMA90' },
     { label: 'Breadth',      val: mmi.scores.adScore,  detail: (mmi.advancers && mmi.decliners) ? (mmi.advancers + 'A / ' + mmi.decliners + 'D') : '' },
@@ -176,7 +176,7 @@ function FearGreedMeter() {
               <div className="fg-comp-bar-wrap">
                 <div className="fg-comp-bar" style={{ width: c.val + '%', background: barColor }}/>
               </div>
-              <span className="fg-comp-val">{c.val}</span>
+              <span className="fg-comp-val">{c.display != null ? c.display : c.val}</span>
             </div>
           );
         })}

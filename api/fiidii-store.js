@@ -83,6 +83,18 @@ export default async function handler(req, res) {
     return res.status(200).json({ stored: Object.keys(results).length, data: results });
   }
 
+  // Guard: don't run the store on weekends or holidays — the cron runs Mon-Fri
+  // but some holidays fall on weekdays. Exit cleanly without fetching.
+  const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const todayISO = nowIST.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const todayDOW = nowIST.getDay();
+  if (todayDOW === 0 || todayDOW === 6 || HOLIDAYS.has(todayISO)) {
+    return res.status(200).json({
+      success: true, stored: [], failed: [], skipped: [],
+      message: `Market closed today (${todayISO}). No data stored.`
+    });
+  }
+
   const days = parseInt(req.query?.days || '1');
   const tradingDays = getTradingDays(Math.min(days, 10));
 

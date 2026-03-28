@@ -78,24 +78,40 @@ export default async function handler(req, res) {
     }
   } // end !todayIsHoliday
 
-  // Step 3: Merge today's live data
-  if (liveToday) {
+  // Step 3: Merge today's live data — ONLY if today is a confirmed trading day
+  // Even though we check todayIsHoliday above, NSE sometimes returns data on weekends.
+  // Double-check: verify today is in our trading days list before storing or showing.
+  const todayIsTradingDay = tradingDays.includes(today);
+  if (liveToday && todayIsTradingDay) {
     const existing = history.findIndex(h => h.date === today);
     if (existing >= 0) history[existing] = liveToday;
     else history.push(liveToday);
-    // Also store in KV for future use
     try { await kv.set(`fiidii:${today}`, JSON.stringify(liveToday), { ex: 60 * 24 * 60 * 60 }); } catch (_) {}
   }
 
-  history.sort((a, b) => new Date(a.date) - new Date(b.date));
-  const latest = history[history.length - 1] || {};
+  // ── CRITICAL: Filter history to only confirmed trading days ──────────────────
+  // Remove any entries that accidentally got stored on weekends or holidays.
+  const allTradingDaySet = new Set(tradingDays);
+  const filteredHistory = history.filter(h => {
+    if (!h.date) return false;
+    const d = new Date(h.date + 'T00:00:00');
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6) return false; // reject weekends
+    if (HOLIDAYS.has(h.date)) return false;   // reject holidays
+    return true;
+  });
+
+  filteredHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Latest is the most recent trading day — could be yesterday if today is weekend/holiday
+  const latest = filteredHistory[filteredHistory.length - 1] || {};
 
   return res.status(200).json({
     fiiNet: latest.fiiNet || 0, fiiBuy: latest.fiiBuy || 0, fiiSell: latest.fiiSell || 0,
     diiNet: latest.diiNet || 0, diiBuy: latest.diiBuy || 0, diiSell: latest.diiSell || 0,
     date: latest.date || '',
-    history: history.slice(-7),
-    daysFound: history.length,
-    kvDays: history.filter(h => h.date !== today).length,
+    history: filteredHistory.slice(-7),
+    daysFound: filteredHistory.length,
+    kvDays: filteredHistory.filter(h => h.date !== today).length,
   });
 }

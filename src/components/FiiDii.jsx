@@ -16,9 +16,28 @@ function fmtCr(n) {
   if (abs >= 10000) return `${sign}₹${(abs / 100).toFixed(1)}K Cr`;
   return `${sign}₹${abs.toFixed(0)} Cr`;
 }
+const HOLIDAYS_FIIDII = new Set([
+  '2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31',
+  '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26',
+  '2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25',
+]);
+
+function isTradingDay() {
+  const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const dow = ist.getDay();
+  if (dow === 0 || dow === 6) return false; // weekend
+  const iso = ist.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  if (HOLIDAYS_FIIDII.has(iso)) return false; // market holiday
+  return true;
+}
+
+// Only re-fetch at 5:00 PM, 6:30 PM, or 7:00 PM IST on trading days.
+// NSE publishes provisional data at ~5 PM and final data around 6:30–7 PM.
 function shouldFetch() {
+  if (!isTradingDay()) return false;
   const ist  = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const mins = ist.getHours() * 60 + ist.getMinutes();
+  // 5:00–5:04 PM, 6:30–6:34 PM, 7:00–7:04 PM IST
   return (mins >= 1020 && mins < 1025) || (mins >= 1110 && mins < 1115) || (mins >= 1140 && mins < 1145);
 }
 
