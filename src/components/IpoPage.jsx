@@ -117,23 +117,25 @@ export default function IpoPage() {
 
       {/* HEADER */}
       <div className="ipo2-header">
-        <div>
+        {/* LEFT 50%: Title */}
+        <div className="ipo2-header-left">
           <div className="ipo2-title">IPO Decision Tool</div>
           <div className="ipo2-sub">Enter details. Get instant listing estimate, risk read, and decision signal.</div>
         </div>
-        <div className="ipo2-links">
-          <div className="ipo2-link-group">
-            <span className="ipo2-link-label">GMP</span>
-            <a href="https://www.investorgain.com/report/live-ipo-gmp/331/" target="_blank" rel="noopener noreferrer" className="ipo2-qlink">InvestorGain ↗</a>
-            <a href="https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/" target="_blank" rel="noopener noreferrer" className="ipo2-qlink">IPOWatch ↗</a>
+        {/* RIGHT 50%: Quick links — bigger, highlighted, grouped */}
+        <div className="ipo2-header-right">
+          <div className="ipo2-link-section">
+            <span className="ipo2-link-cat">GMP</span>
+            <a href="https://www.investorgain.com/report/live-ipo-gmp/331/" target="_blank" rel="noopener noreferrer" className="ipo2-qlink ipo2-qlink-gmp">InvestorGain ↗</a>
+            <a href="https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/" target="_blank" rel="noopener noreferrer" className="ipo2-qlink ipo2-qlink-gmp">IPOWatch ↗</a>
           </div>
-          <div className="ipo2-link-group">
-            <span className="ipo2-link-label">Subscription</span>
-            <a href="https://www.nseindia.com/market-data/all-upcoming-issues-ipo" target="_blank" rel="noopener noreferrer" className="ipo2-qlink">NSE Live ↗</a>
+          <div className="ipo2-link-section">
+            <span className="ipo2-link-cat">Subscription</span>
+            <a href="https://www.nseindia.com/market-data/all-upcoming-issues-ipo" target="_blank" rel="noopener noreferrer" className="ipo2-qlink ipo2-qlink-sub">NSE Live ↗</a>
           </div>
-          <div className="ipo2-link-group">
-            <span className="ipo2-link-label">Allotment</span>
-            {ALLOTMENT_LINKS.map((l,i)=><a key={i} href={l.href} target="_blank" rel="noopener noreferrer" className="ipo2-qlink">{l.label} ↗</a>)}
+          <div className="ipo2-link-section">
+            <span className="ipo2-link-cat">Allotment</span>
+            {ALLOTMENT_LINKS.map((l,i)=><a key={i} href={l.href} target="_blank" rel="noopener noreferrer" className="ipo2-qlink ipo2-qlink-allot">{l.label} ↗</a>)}
           </div>
         </div>
       </div>
