@@ -100,37 +100,63 @@ function McxFutures({ ibjaGold24, ibjaSilver }) {
 
   useEffect(() => {
     load();
-    // Every 2 hours — MCX prices don't need frequent updates
-    const id = setInterval(load, 2 * 60 * 60 * 1000);
+    // During MCX hours refresh every 5 minutes, otherwise every 30 minutes
+    const interval = isMcxOpen() ? 5 * 60 * 1000 : 30 * 60 * 1000;
+    const id = setInterval(load, interval);
     return () => clearInterval(id);
   }, [ibjaGold24, ibjaSilver]);
 
+  // Always show MCX section — show live price if available, else show contract label with fallback note
+  const { gold: goldSym, silver: silverSym, label: contractLabel } = getMcxSymbols();
+  const isLive = isMcxOpen();
+
   return (
     <>
-      {gold?.source === 'MCX live' && (
-        <div className="gold-mcx-item gold-mcx-live">
-          <span className="gold-mcx-name">
-            ⚡ MCX Gold 1kg{gold.contract ? ' · ' + gold.contract : ''}
-            {gold.isOpen && <span className="gold-live-dot"/>}
+      <div className="gold-mcx-item gold-mcx-live">
+        <span className="gold-mcx-name">
+          MCX Gold 1kg · {gold?.contract || contractLabel}
+          {isLive && gold?.source === 'MCX live' && <span className="gold-live-dot"/>}
+        </span>
+        {gold?.price ? (
+          <>
+            <span className="gold-mcx-price">&#x20B9;{gold.price.toLocaleString('en-IN')}</span>
+            {gold.chgPct != null ? (
+              <span className={`gold-mcx-sub ${parseFloat(gold.chgPct)>=0?'gain':'loss'}`}>
+                {parseFloat(gold.chgPct)>=0?'▲':'▼'} {Math.abs(gold.chgPct)}% · {gold.source}
+              </span>
+            ) : (
+              <span className="gold-mcx-sub">{gold.source}</span>
+            )}
+          </>
+        ) : (
+          <span className="gold-mcx-sub" style={{color:'var(--text3)'}}>
+            {isLive ? 'Fetching from Kite...' : 'Market closed'}
           </span>
-          <span className="gold-mcx-price">&#x20B9;{gold.price?.toLocaleString('en-IN')}</span>
-          <span className={`gold-mcx-sub ${parseFloat(gold.chgPct)>=0?'gain':'loss'}`}>
-            {parseFloat(gold.chgPct)>=0?'▲':'▼'} {Math.abs(gold.chgPct)}% · MCX live
+        )}
+      </div>
+
+      <div className="gold-mcx-item gold-mcx-live">
+        <span className="gold-mcx-name" style={{color:'#A8B8CC'}}>
+          MCX Silver 1kg · {silver?.contract || contractLabel}
+          {isLive && silver?.source === 'MCX live' && <span className="gold-live-dot" style={{background:'#8899cc'}}/>}
+        </span>
+        {silver?.price ? (
+          <>
+            <span className="gold-mcx-price" style={{color:'#A8B8CC'}}>&#x20B9;{silver.price.toLocaleString('en-IN')}</span>
+            {silver.chgPct != null ? (
+              <span className={`gold-mcx-sub ${parseFloat(silver.chgPct)>=0?'gain':'loss'}`}>
+                {parseFloat(silver.chgPct)>=0?'▲':'▼'} {Math.abs(silver.chgPct)}% · {silver.source}
+              </span>
+            ) : (
+              <span className="gold-mcx-sub">{silver.source}</span>
+            )}
+          </>
+        ) : (
+          <span className="gold-mcx-sub" style={{color:'var(--text3)'}}>
+            {isLive ? 'Fetching from Kite...' : 'Market closed'}
           </span>
-        </div>
-      )}
-      {silver?.source === 'MCX live' && (
-        <div className="gold-mcx-item gold-mcx-live">
-          <span className="gold-mcx-name" style={{color:'#A8B8CC'}}>
-            ⚡ MCX Silver 1kg{silver.contract ? ' · ' + silver.contract : ''}
-            {silver.isOpen && <span className="gold-live-dot" style={{background:'#8899cc'}}/>}
-          </span>
-          <span className="gold-mcx-price" style={{color:'#A8B8CC'}}>&#x20B9;{silver.price?.toLocaleString('en-IN')}</span>
-          <span className={`gold-mcx-sub ${parseFloat(silver.chgPct)>=0?'gain':'loss'}`}>
-            {parseFloat(silver.chgPct)>=0?'▲':'▼'} {Math.abs(silver.chgPct)}% · MCX live
-          </span>
-        </div>
-      )}
+        )}
+      </div>
     </>
   );
 }
