@@ -77,23 +77,24 @@ function McxFutures({ ibjaGold24, ibjaSilver }) {
       fetch(`/api/mcx-quote?symbol=${encodeURIComponent(syms.silver)}`).then(r=>r.json()).catch(()=>null),
     ]).then(([gd, sd]) => {
       if (gd?.price) {
-        // MCX Gold quote from Kite is per 10g — multiply x100 to get 1 kg
-        const goldKg = Math.round(gd.price * 100);
-        const prevKg = gd.prevClose ? Math.round(gd.prevClose * 100) : null;
-        const chgPct = prevKg ? ((goldKg - prevKg) / prevKg * 100).toFixed(2) : null;
-        setGold({ price: goldKg, chgPct, isOpen: open, source: 'MCX live', contract: syms.label });
+        // GOLDM is quoted per 10g on Kite — show directly, label as /10g
+        const price = Math.round(gd.price);
+        const prev  = gd.prevClose ? Math.round(gd.prevClose) : null;
+        const chgPct = prev ? ((price - prev) / prev * 100).toFixed(2) : null;
+        setGold({ price, chgPct, isOpen: open, source: 'MCX live', contract: syms.label, unit: '10g' });
       } else if (ibjaGold24) {
-        setGold({ price: Math.round(ibjaGold24 * 1000), chgPct: null, isOpen: open, source: 'IBJA est.', contract: null });
+        // IBJA ibjaGold24 is per gram, show per 10g for comparison
+        setGold({ price: Math.round(ibjaGold24 * 10), chgPct: null, isOpen: open, source: 'IBJA est.', contract: null, unit: '10g' });
       }
 
       if (sd?.price) {
-        // MCX Silver Mini 1kg — Kite quotes per kg, no conversion needed
-        const silverKg = Math.round(sd.price);
-        const prevKg   = sd.prevClose ? Math.round(sd.prevClose) : null;
-        const chgPct   = prevKg ? ((silverKg - prevKg) / prevKg * 100).toFixed(2) : null;
-        setSilver({ price: silverKg, chgPct, isOpen: open, source: 'MCX live', contract: syms.label });
+        // SILVERM is quoted per kg on Kite
+        const price  = Math.round(sd.price);
+        const prev   = sd.prevClose ? Math.round(sd.prevClose) : null;
+        const chgPct = prev ? ((price - prev) / prev * 100).toFixed(2) : null;
+        setSilver({ price, chgPct, isOpen: open, source: 'MCX live', contract: syms.label, unit: 'kg' });
       } else if (ibjaSilver) {
-        setSilver({ price: ibjaSilver, chgPct: null, isOpen: open, source: 'IBJA est.', contract: null });
+        setSilver({ price: Math.round(ibjaSilver), chgPct: null, isOpen: open, source: 'IBJA est.', contract: null, unit: 'kg' });
       }
     });
   };
@@ -114,12 +115,12 @@ function McxFutures({ ibjaGold24, ibjaSilver }) {
     <>
       <div className="gold-mcx-item gold-mcx-live">
         <span className="gold-mcx-name">
-          MCX Gold 1kg · {gold?.contract || contractLabel}
+          MCX Gold (GOLDM) · {gold?.contract || contractLabel}
           {isLive && gold?.source === 'MCX live' && <span className="gold-live-dot"/>}
         </span>
         {gold?.price ? (
           <>
-            <span className="gold-mcx-price">&#x20B9;{gold.price.toLocaleString('en-IN')}</span>
+            <span className="gold-mcx-price">&#x20B9;{gold.price.toLocaleString('en-IN')}<span style={{fontSize:11,color:'var(--text3)',fontWeight:400,marginLeft:4}}>/{gold.unit||'10g'}</span></span>
             {gold.chgPct != null ? (
               <span className={`gold-mcx-sub ${parseFloat(gold.chgPct)>=0?'gain':'loss'}`}>
                 {parseFloat(gold.chgPct)>=0?'▲':'▼'} {Math.abs(gold.chgPct)}% · {gold.source}
@@ -137,12 +138,12 @@ function McxFutures({ ibjaGold24, ibjaSilver }) {
 
       <div className="gold-mcx-item gold-mcx-live">
         <span className="gold-mcx-name" style={{color:'#A8B8CC'}}>
-          MCX Silver 1kg · {silver?.contract || contractLabel}
+          MCX Silver (SILVERM) · {silver?.contract || contractLabel}
           {isLive && silver?.source === 'MCX live' && <span className="gold-live-dot" style={{background:'#8899cc'}}/>}
         </span>
         {silver?.price ? (
           <>
-            <span className="gold-mcx-price" style={{color:'#A8B8CC'}}>&#x20B9;{silver.price.toLocaleString('en-IN')}</span>
+            <span className="gold-mcx-price" style={{color:'#A8B8CC'}}>&#x20B9;{silver.price.toLocaleString('en-IN')}<span style={{fontSize:11,color:'var(--text3)',fontWeight:400,marginLeft:4}}>/{silver.unit||'kg'}</span></span>
             {silver.chgPct != null ? (
               <span className={`gold-mcx-sub ${parseFloat(silver.chgPct)>=0?'gain':'loss'}`}>
                 {parseFloat(silver.chgPct)>=0?'▲':'▼'} {Math.abs(silver.chgPct)}% · {silver.source}
