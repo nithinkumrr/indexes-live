@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import Ticker from './Ticker';
 
 // ── Economic calendar ─────────────────────────────────────────────────────────
 const ECON_EVENTS = [
@@ -268,33 +269,68 @@ function getTrapZones(price, high, low) {
 }
 
 // ── What to Watch Tomorrow ────────────────────────────────────────────────────
-function getTomorrow(np, vix, fiiNet, posInRange, dayType, events) {
+function getTomorrow(np, vix, fiiNet, diiNet, posInRange, dayType, events) {
   const items = [];
-  const slot = getSlot();
-  const showTomorrow = slot === 'Market Close' || slot === 'Post-Market' || slot === 'Weekend';
 
+  // 1 — Direction cue from today's session
   if (dayType?.type === 'trend-down' || (np !== null && np < -1)) {
-    items.push('Watch for continuation of today\'s breakdown. Gap down open followed by bounce attempt is common after strong down days.');
-    items.push(`Key level to watch: whether Nifty can reclaim ${np !== null && np < 0 ? 'today\'s close' : 'prior support'} in the first 30 minutes.`);
+    items.push('Gap down opens are common after strong down sessions. Watch whether the gap fills in the first 30 minutes or extends further.');
+    items.push(`The first 30 minutes tomorrow will show whether ${np !== null && np < 0 ? "today's closing level" : "prior support"} acts as resistance or gets reclaimed.`);
   } else if (dayType?.type === 'trend-up' || (np !== null && np > 1)) {
-    items.push('Continuation or exhaustion after strong up day. Watch if gap-up open sustains or fades.');
-    items.push('If market opens flat after today\'s rally, it signals distribution. Watch volume on any early weakness.');
+    items.push('Strong up sessions are followed by one of two patterns: gap-up continuation or a morning fade. Watch opening range in the first 15 minutes.');
+    items.push('Flat open after today\'s rally is often the sign of distribution. Volume on early weakness will be the tell.');
   } else if (dayType?.type === 'range') {
-    items.push('Range compression today. Tomorrow watch for a breakout move. Direction of first 30 minutes often sets the tone.');
-    items.push('Low-volatility sessions often precede high-volatility breakouts. Be ready with levels in both directions.');
+    items.push('Today\'s compressed range sets up a potential breakout session tomorrow. The direction of the first clean move with volume is often the day\'s bias.');
+    items.push('Low-range sessions often see a high-range follow-through. Wide stop levels on both sides are appropriate when going into this kind of setup.');
   } else {
-    items.push('Neutral session today. Watch early direction tomorrow. Gap and hold above resistance = bullish. Gap and fade = distribution.');
+    items.push('A neutral session like today\'s often resolves with a directional move the next day. The opening gap direction and first 30 minutes are the key reads.');
+    items.push('Gap and hold above prior resistance = sustained buying interest. Gap and fade = likely another rotation or range day.');
   }
 
-  if (fiiNet !== null && fiiNet < -3000)
-    items.push('FII outflow heavy today. Check if DIIs continue to absorb tomorrow morning. Sustained DII buying can stabilize the market.');
+  // 2 — Volatility context
+  if (vix !== null && vix !== undefined) {
+    if (vix > 18)
+      items.push(`VIX closed at ${vix.toFixed(1)} — elevated. Wider intraday ranges and faster moves are likely tomorrow. Positions sized for normal days will feel oversized.`);
+    else if (vix < 13)
+      items.push(`VIX at ${vix.toFixed(1)} — subdued. Low volatility often keeps intraday ranges tight. A breakout of note will stand out clearly.`);
+  }
 
+  // 3 — FII/DII
+  if (fiiNet !== null && fiiNet < -3000)
+    items.push(`FII outflow was Rs.${Math.abs(fiiNet).toLocaleString('en-IN')} Cr today. Tomorrow morning\'s DII data will show whether domestic institutions step up absorption again.`);
+  else if (fiiNet !== null && fiiNet > 3000)
+    items.push(`FII inflow of Rs.${fiiNet.toLocaleString('en-IN')} Cr today. Sustained foreign buying over multiple sessions is typically supportive for index levels.`);
+  else if (fiiNet !== null && fiiNet < 0 && diiNet !== null && diiNet > 0)
+    items.push('FIIs selling, DIIs absorbing — this two-sided flow pattern often creates choppy intraday conditions. Range-bound behaviour is common in such setups.');
+
+  // 4 — Position in range
+  if (posInRange !== null) {
+    if (posInRange < 0.25)
+      items.push('Today\'s close near session low suggests sellers were in control into the close. A bounce attempt tomorrow is possible but needs volume confirmation.');
+    else if (posInRange > 0.75)
+      items.push('Closing near session high shows buyers held momentum into the close. This is generally constructive for the next session open.');
+  }
+
+  // 5 — Tomorrow's event
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   const tStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
   const tmEvent = events.find(e => e.date === tStr);
-  if (tmEvent) items.push(`Event tomorrow: ${tmEvent.event}. Markets often move cautiously ahead of high-impact data releases.`);
+  if (tmEvent) items.push(`${tmEvent.event} is scheduled tomorrow. High-impact events typically increase pre-event caution and post-event volatility.`);
 
-  return { items, show: true };
+  // 6 — Upcoming events in next 3 days
+  const in3 = new Date(); in3.setDate(in3.getDate() + 3);
+  const in3Str = `${in3.getFullYear()}-${String(in3.getMonth()+1).padStart(2,'0')}-${String(in3.getDate()).padStart(2,'0')}`;
+  const soon = events.filter(e => e.date > tStr && e.date <= in3Str && e.impact === 'high');
+  if (soon.length > 0)
+    items.push(`High-impact events within 3 days: ${soon.map(e => e.event).join(', ')}. Pre-event positioning effects can show up a session or two before the actual date.`);
+
+  // Pad to 8 if needed with general structure observation
+  if (items.length < 8)
+    items.push('Gift Nifty levels at 7–8 PM IST will give the first read on next session direction based on global futures at that time.');
+  if (items.length < 8)
+    items.push('Global cues: check S&P 500 futures, crude oil, and USD/INR after 6 PM IST for the overnight setup before the next session opens.');
+
+  return { items: items.slice(0, 8), show: true };
 }
 
 // ── Signals engine ────────────────────────────────────────────────────────────
@@ -550,7 +586,7 @@ export default function InsightsPage({data={}, nseData={}}) {
   const allEvents = ECON_EVENTS.filter(e=>e.date>=todayStr).slice(0,8);
   const fmtEvtDate= d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
 
-  const tmrw    = getTomorrow(np, nseData.vix, fiiNet, posInRange, dayType, ECON_EVENTS);
+  const tmrw    = getTomorrow(np, nseData.vix, fiiNet, diiNet, posInRange, dayType, ECON_EVENTS);
   const signals = buildSignals({np,bp,vix:nseData.vix,niftyPrice:nifty?.price,fiiNet,diiNet,fii7d,data,history,allEvents});
 
   const timeStr=clock.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
@@ -769,7 +805,7 @@ export default function InsightsPage({data={}, nseData={}}) {
 
           {/* What to Watch Tomorrow */}
           {tmrw.items.length>0&&(
-            <div className="ip-levels-box ip-tomorrow-box">
+            <div className="ip-levels-box ip-tomorrow-box ip-tomorrow-full">
               <div className="ip-box-title">WHAT TO WATCH TOMORROW</div>
               {tmrw.items.map((item,i)=>(
                 <div key={i} className="ip-tomorrow-row">
@@ -783,27 +819,10 @@ export default function InsightsPage({data={}, nseData={}}) {
         </div>
       </div>
 
-      {/* ROW 3: ECONOMIC CALENDAR (30%) + FII/DII FLOWS (70%) */}
-      <div className="ip-row-calendar ip-section">
-        <div className="ip-cal-col">
-          <div className="ip-block-label">ECONOMIC CALENDAR <span style={{opacity:.5,fontSize:9,fontWeight:400,letterSpacing:0}}>NEXT 7 DAYS</span></div>
-          {events.length>0?events.map((e,i)=>(
-            <div key={i} className="ip-econ-row">
-              <div className="ip-econ-meta">
-                <span className="ip-econ-date">{fmtEvtDate(e.date)}</span>
-                <span className={`ip-econ-ctry ip-ctry-${e.country==='India'?'india':'global'}`}>{e.country}</span>
-              </div>
-              <div className="ip-econ-body">
-                <div className="ip-econ-event">{e.event}</div>
-                <div className="ip-econ-note">{e.note}</div>
-              </div>
-              <div className={`ip-econ-imp ip-imp-${e.impact}`}>{e.impact}</div>
-            </div>
-          )):<div className="ip-note">No major events in next 7 days.</div>}
-        </div>
-
-        {/* FII/DII — right side of calendar row */}
-        <div className="ip-cal-right">
+      {/* ROW 3: FII/DII FLOWS (full width) + ECONOMIC CALENDAR below */}
+      <div className="ip-row-fiifull ip-section">
+        {/* FII/DII FULL WIDTH */}
+        <div className="ip-fiifull-top">
           <div className="ip-block-label">FII / DII FLOWS</div>
           {fiiNet!==null?(
             <div className="ip-fii-content">
@@ -843,9 +862,29 @@ export default function InsightsPage({data={}, nseData={}}) {
             </div>
           ):<div className="ip-note">Loading FII/DII data...</div>}
         </div>
+
+        {/* ECONOMIC CALENDAR full width below */}
+        <div className="ip-fiifull-cal">
+          <div className="ip-block-label">ECONOMIC CALENDAR <span style={{opacity:.5,fontSize:9,fontWeight:400,letterSpacing:0}}>NEXT 7 DAYS</span></div>
+          <div className="ip-econ-list">
+          {events.length>0?events.map((e,i)=>(
+            <div key={i} className="ip-econ-row">
+              <div className="ip-econ-meta">
+                <span className="ip-econ-date">{fmtEvtDate(e.date)}</span>
+                <span className={`ip-econ-ctry ip-ctry-${e.country==='India'?'india':'global'}`}>{e.country}</span>
+              </div>
+              <div className="ip-econ-body">
+                <div className="ip-econ-event">{e.event}</div>
+                <div className="ip-econ-note">{e.note}</div>
+              </div>
+              <div className={`ip-econ-imp ip-imp-${e.impact}`}>{e.impact}</div>
+            </div>
+          )):<div className="ip-note">No major events in next 7 days.</div>}
+          </div>
+        </div>
       </div>
 
-            <div className="ip-footer">
+      <div className="ip-footer">
         Data-driven signals from live market data. Not investment advice. Data via Kite Connect and NSE. AI write-up uses Gemini with live search grounding.
       </div>
     </div>
