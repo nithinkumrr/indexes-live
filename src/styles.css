@@ -29,35 +29,35 @@
 
 /* ── LIGHT THEME ──────────────────────────────────────────────────── */
 [data-theme="light"] {
-  /* Cool Slate day theme */
-  --bg:       #EEF2F7;
-  --bg0:      #E6ECF4;
-  --bg2:      #FFFFFF;
-  --bg3:      #DAE2ED;
-  --bg4:      #C8D4E3;
-  --border:   rgba(15,23,42,0.10);
-  --border2:  rgba(15,23,42,0.18);
-  --text:     #0F172A;
-  --text2:    #1E3A5F;
-  --text3:    #5A7595;
+  /* Warm Paper — high retention, easy on eyes, data pops */
+  --bg:       #FAFAF8;
+  --bg0:      #F3F3F0;
+  --bg2:      #FFFDF9;
+  --bg3:      #EDECE8;
+  --bg4:      #E2E0DB;
+  --border:   rgba(17,17,17,0.09);
+  --border2:  rgba(17,17,17,0.16);
+  --text:     #111111;
+  --text2:    #3A3A3A;
+  --text3:    #888880;
   --gain:     #00875A;
-  --gain-bg:  rgba(0,135,90,0.10);
-  --loss:     #C1121F;
-  --loss-bg:  rgba(193,18,31,0.10);
+  --gain-bg:  rgba(0,135,90,0.09);
+  --loss:     #D5152B;
+  --loss-bg:  rgba(213,21,43,0.09);
   --live:     #00875A;
   --live-bg:  rgba(0,135,90,0.08);
-  --pre:      #A05A00;
-  --pre-bg:   rgba(160,90,0,0.10);
-  --india:    #B04A00;
-  --accent:   #1A56DB;
+  --pre:      #9A5100;
+  --pre-bg:   rgba(154,81,0,0.09);
+  --india:    #A84A00;
+  --accent:   #1847B1;
 }
 
 [data-theme="light"] body { background: var(--bg); }
 [data-theme="light"] .live-pulse { background: var(--live); }
 [data-theme="light"] .ticker-wrap { background: var(--bg2); }
-[data-theme="light"] .chip-live { background: rgba(0,147,110,0.12); color: var(--live); border-color: rgba(0,147,110,0.3); }
+[data-theme="light"] .chip-live { background: rgba(0,135,90,0.10); color: var(--live); border-color: rgba(0,135,90,0.28); }
 [data-theme="light"] .chip-closed { background: var(--bg3); color: var(--text3); }
-[data-theme="light"] .logo-live { color: #1A56DB; }
+[data-theme="light"] .logo-live { color: #1847B1; }
 [data-theme="light"] .fno-vix-bar-track { background: #DDDDE0; }
 [data-theme="light"] .fiidii-bar-track { background: #DDDDE0; }
 [data-theme="light"] .hours-tooltip { box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
