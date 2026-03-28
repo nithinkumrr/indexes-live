@@ -15,14 +15,14 @@ export default function Header({ lastUpdate, view, setView }) {
     : null;
 
   const tabs = [
-    { id: 'grid',      label: 'Markets',    icon: '📊', cls: '' },
-    { id: 'bubble',    label: 'Sentiment',  icon: '💭', cls: '' },
-    { id: 'fno',       label: 'F&O',        icon: '📈', cls: '' },
-    { id: 'gold',      label: 'Gold',       icon: '🥇', cls: 'tab-gold' },
-    { id: 'ipo',       label: 'IPO',        icon: '🚀', cls: 'tab-teal' },
-    { id: 'insights',   label: 'Insights',   icon: '📝', cls: 'tab-purple' },
-    { id: 'calc',      label: 'Risk',       icon: '🎯', cls: '' },
-  { id: 'brokers',   label: 'Brokers',    icon: '🏦', cls: '' },
+    { id: 'grid',     label: 'Markets',         icon: '📊', cls: '' },
+    { id: 'bubble',   label: 'Sentiment',       icon: '💭', cls: '' },
+    { id: 'fno',      label: 'F&O',             icon: '📈', cls: '' },
+    { id: 'calc',     label: 'Risk Calculator', icon: '🎯', cls: '' },
+    { id: 'ipo',      label: 'IPO',             icon: '🚀', cls: 'tab-teal' },
+    { id: 'gold',     label: 'Gold',            icon: '🥇', cls: 'tab-gold' },
+    { id: 'brokers',  label: 'Brokers',         icon: '🏦', cls: '' },
+    { id: 'insights', label: 'Daily Insights',  icon: '📝', cls: 'tab-purple' },
   ];
 
   return (
