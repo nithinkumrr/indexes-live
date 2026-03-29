@@ -655,7 +655,7 @@ export default function BrokersPage() {
                     <div className="brk-col">
                       <div className="brk-col-label">DP CHARGE</div>
                       <div className={`brk-col-val ${b.dp<=14.75?'brk-col-green':''}`}>₹{fmt(b.dp,2)}</div>
-                      <div className="brk-col-sub">{b.dpLabel} · per scrip per sell</div>
+                      <div className="brk-col-sub">{b.dpLabel} · {['upstox','groww','angelone','mstock','sharemarket'].includes(b.id) ? 'per sell transaction' : 'per stock'}</div>
                     </div>
 
                     {/* Col: AMC */}
@@ -717,7 +717,10 @@ export default function BrokersPage() {
                             </div>
                             <div className="brk-t3-row brk-t3-row-mtf">
                               <span className="brk-t3-seg">MTF</span>
-                              <span className="brk-t3-num">₹{fmt(totMTF,2)} <span className="brk-t3-brk">(Brokerage: ₹{fmt(mtfBrkAmt,2)})</span></span>
+                              <div className="brk-t3-mtf-stack">
+                                <span className="brk-t3-num">₹{fmt(totMTF,2)}</span>
+                                <span className={`brk-t3-brk ${mtfBrkAmt<=40?'brk-col-green':'brk-col-red'}`}>(Brokerage: ₹{fmt(mtfBrkAmt,2)})</span>
+                              </div>
                             </div>
                           </div>
                           <div className="brk-col-sub" style={{marginTop:4}}>
