@@ -666,38 +666,67 @@ export default function BrokersPage() {
 
                     <div className="brk-col-divider"/>
 
-                    {/* Col: Totals — Delivery + Intraday + MTF brokerage */}
+                    {/* Col: Totals — Delivery + Intraday + MTF (all-in) */}
                     {(()=>{
-                      const tv=parseFloat(tradeVal)||50000;
-                      const scale=tv/50000;
-                      const govtD=111.24*scale;
-                      const govtI=17.74;
-                      const totD=(b.delivery===0?0:b.brokerCharges50k*scale*1.18)+b.dp+govtD;
-                      const totI=(b.intradayB||20)*1.18+govtI;
-                      const totMTF=(b.intradayB||20)*1.18; // MTF brokerage only (not interest)
-                      const cheapTot=(sorted[0].delivery===0?0:sorted[0].brokerCharges50k*scale*1.18)+sorted[0].dp+111.24*scale;
-                      const isBest=totD<=cheapTot+0.01;
+                      const tv = parseFloat(tradeVal)||50000;
+                      const scale = tv/50000;
+
+                      // Govt charges scale with trade size (from Zerodha calculator verified)
+                      const sttD   = tv * 0.002;          // 0.1% buy + 0.1% sell
+                      const txn    = tv * 2 * 0.0000307;  // NSE 0.00307% on turnover
+                      const sebi   = tv * 2 / 10000000 * 10;
+                      const stampD = tv * 0.00015;         // 0.015% buy only
+                      const sttI   = tv * 0.00025;         // 0.025% sell only
+                      const stampI = tv * 0.00003;         // 0.003% buy only
+
+                      // GST = 18% on (brokerage + txn + SEBI)
+                      // Per-side brokerage, then × 2 for round trip
+                      // Delivery: brokerCharges50k is already per-trade (buy+sell at ₹50K), scale linearly
+                      const brkD   = b.delivery===0 ? 0 : Math.min(b.brokerCharges50k/50000*tv, tv*0.005*2);
+                      // Intraday: min(rate%, flat cap) per side × 2
+                      const intRate = b.intradayB||20;
+                      const brkI   = Math.min(intRate, tv*0.0003) * 2; // 0.03% or cap, both sides
+                      // MTF: same delivery rate structure
+                      const mtfBrkAmt = b.delivery===0
+                        ? Math.min(20, tv*0.003) * 2  // use delivery rate for MTF (e.g. Zerodha 0.3% or ₹20)
+                        : Math.min(b.brokerCharges50k/50000*tv, tv*0.005*2);
+
+                      const gstD   = (brkD + txn + sebi) * 0.18;
+                      const gstI   = (brkI*2 + txn + sebi) * 0.18;
+                      const gstMTF = (mtfBrkAmt + txn + sebi) * 0.18;
+
+                      const totD   = brkD + gstD + b.dp + sttD + txn + sebi + stampD;
+                      const totI   = brkI*2 + gstI + sttI + txn + sebi + stampI;
+                      const totMTF = mtfBrkAmt + gstMTF + b.dp + sttD + txn + sebi + stampD;
+
+                      const cheapTot = (sorted[0].delivery===0?0:Math.min(sorted[0].brokerCharges50k/50000*tv,tv*0.005)) + sorted[0].dp + (tv*0.002+tv*2*0.0000307+tv*2/10000000*10+tv*0.00015+(tv*2*0.0000307+tv*2/10000000*10)*0.18);
+                      const isBest = totD <= cheapTot + 0.1;
+
+                      const lbl = {'50000':'₹50K','100000':'₹1L','1000000':'₹10L'}[tradeVal]||'custom';
                       return (
                         <div className="brk-col brk-col-total">
-                          <div className="brk-col-label">TOTAL — {['50000','100000','1000000'].includes(tradeVal)?{'50000':'₹50K','100000':'₹1L','1000000':'₹10L'}[tradeVal]:'custom'}</div>
+                          <div className="brk-col-label">ALL-IN — {lbl}</div>
                           <div className="brk-total-3">
                             <div className="brk-t3-row">
                               <span className="brk-t3-seg">Delivery</span>
-                              <span className={`brk-t3-num ${isBest?'brk-col-green':b.total50k>400?'brk-col-red':''}`}>₹{fmt(totD,0)}</span>
+                              <span className={`brk-t3-num ${isBest?'brk-col-green':b.total50k>400?'brk-col-red':''}`}>₹{fmt(totD,2)}</span>
                             </div>
                             <div className="brk-t3-row">
                               <span className="brk-t3-seg">Intraday</span>
-                              <span className={`brk-t3-num ${b.intradayB===5?'brk-col-green':''}`}>₹{fmt(totI,0)}</span>
+                              <span className={`brk-t3-num ${b.intradayB===5?'brk-col-green':''}`}>₹{fmt(totI,2)}</span>
                             </div>
                             <div className="brk-t3-row">
-                              <span className="brk-t3-seg">MTF brk</span>
-                              <span className={`brk-t3-num ${b.intradayB===5?'brk-col-green':''}`}>₹{fmt(totMTF,0)}</span>
+                              <span className="brk-t3-seg">MTF</span>
+                              <span className="brk-t3-num">₹{fmt(totMTF,2)}</span>
                             </div>
                           </div>
-                          {isBest
-                            ? <div className="brk-col-sub brk-col-green" style={{marginTop:4}}>↓ cheapest delivery</div>
-                            : <div className="brk-col-sub" style={{marginTop:4}}>+₹{fmt(totD-cheapTot,0)} vs cheapest</div>
-                          }
+                          <div className="brk-col-sub" style={{marginTop:4}}>
+                            {isBest
+                              ? <span className="brk-col-green">↓ cheapest</span>
+                              : <span>+₹{fmt(totD-cheapTot,0)} vs cheapest</span>
+                            }
+                          </div>
+                          <div className="brk-col-sub">brk+GST+DP+govt</div>
                         </div>
                       );
                     })()}
