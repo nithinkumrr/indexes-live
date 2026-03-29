@@ -13,6 +13,7 @@ const BROKERS = [
     amc: 88.50, amcLabel: '₹75 + GST/yr',
     mtfRate: 14.6, mtfLabel: '14.6% p.a.',
     mtfBrokerage: '0.3% or ₹20',
+    mtfSlabs: [['All amounts','14.6% p.a.']],
     callTrade: 59, squareOff: 59,
     paymentGw: 10.62,
     instantWithdrawal: 'Free',
@@ -40,28 +41,29 @@ const BROKERS = [
   },
   {
     id: 'dhan', name: 'Dhan', type: 'discount', rank: 1, featured: false,
-    tagline: 'Zero delivery brokerage, zero AMC. Lowest per-trade cost in India by ₹0.59.',
+    tagline: 'Zero delivery brokerage, zero AMC. Lower by ₹0.59 compared to Zerodha.',
     delivery: 0, deliveryLabel: 'Zero',
     intraday: '0.03% or ₹20', intradayB: 20,
     futures: '0.03% or ₹20', futuresB: 20,
     options: '₹20/order', optionsB: 20,
     dp: 14.75, dpLabel: '₹12.5 + 18% GST',
     amc: 0, amcLabel: 'Free',
-    mtfRate: 12.49, mtfLabel: '12.49% (up to ₹5L)',
+    mtfRate: 12.49, mtfLabel: '12.49% (≤₹5L)',
     mtfBrokerage: '0.03% or ₹20',
+    mtfSlabs: [['≤ ₹5L','12.49%'],['₹5L–₹10L','13.49%'],['₹10L–₹25L','14.49%'],['₹25L–₹50L','15.49%'],['> ₹50L','16.49%']],
     callTrade: 59, squareOff: 23.60,
     paymentGw: 0,
     instantWithdrawal: 'Free',
-    api: 'Free', apiNote: 'Dhan HQ API — free access',
+    api: 'Free', apiNote: 'Trading API free · Data API ₹499+GST (real-time feed + historical data)',
     ddpi: 118, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 1.0, activeClientsLabel: '1.0M',
     total50k: 125.99, brokerCharges50k: 14.75,
     pledgeUnpledge: '₹17.70/ISIN each',
     dematerialisation: '₹177/cert',
-    marginShortfall: '0.05%/day',
-    strengths: ['Zero AMC', 'Lowest DP charge (₹14.75)', 'Free API (Dhan HQ)', 'Lowest MTF rate in class (12.49%)', 'Clean mobile-first app'],
-    watch: ['Newer platform vs Zerodha', 'MTF rate rises with amount (up to 16.49%)', 'Less institutional track record'],
+    marginShortfall: '0.0438%/day (15.99% p.a.)',
+    strengths: ['Zero AMC', 'Lowest DP charge (₹14.75 = ₹12.50 + 18% GST)'],
+    watch: ['UI design not as refined compared to top brokers', 'MTF rates vary by slab — not the same for everyone', 'MTF interest charged on both days for BTST trades', 'Intraday cash margin shortfall: 0.0438%/day (15.99% p.a.)', 'Newer broker — less institutional track record vs Zerodha'],
     best: ['equity', 'longterm', 'beginner'],
     url: 'https://dhan.co',
   },
@@ -558,9 +560,8 @@ export default function BrokersPage() {
           </div>
         </div>
         <div className="brk-hero2-note">
-          <span style={{color:'var(--accent)',fontWeight:900,fontSize:15}}>★ Zerodha</span> — Widely considered the best combination of low cost, trading experience, reliability and trust in India. ₹13,500 Cr networth (highest of any broker in India), 15+ year track record, Kite platform, <a href="https://zerodha.com/varsity/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)',textDecoration:'underline'}}>Varsity</a> education. Costs just ₹0.59 more than Dhan on a ₹50,000 delivery trade.
-          <br/><br/>
-          <span style={{color:'var(--text3)',fontSize:11}}>The ₹111.24 on every ₹50K delivery trade: STT ₹100 + exchange ₹3.07 + SEBI ₹0.10 + stamp ₹7.50 + GST ₹0.57. Fixed by law, same at every broker. Futures charged on ₹1.5L contract value (no futures contract exists at ₹50K). Budget 2026: futures STT raised to 0.05%, options to 0.15%, effective April 1 2026.</span>
+          <span style={{color:'var(--accent)',fontWeight:900,fontSize:15}}>★ Zerodha</span> — Widely considered the best combination of low cost, trading experience, reliability and trust in India. ₹13,500 Cr networth (highest of any broker in India), 15+ year track record, Kite platform, <a href="https://zerodha.com/varsity/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)',textDecoration:'underline'}}>Varsity</a> education.<br/>Costs ₹0.59 more than Dhan for a ₹50,000 delivery trade.
+
         </div>
       </div>
 
@@ -604,7 +605,7 @@ export default function BrokersPage() {
 
           {/* Regulatory note */}
           <div className="brk-reg-note">
-            <span className="brk-reg-num">₹111.24</span> govt charges on ₹50K delivery — STT ₹100 + exchange ₹3.07 + SEBI ₹0.10 + stamp ₹7.50 + GST ₹0.57. Fixed by law, same at every broker. Futures calculated on ₹1.5L contract (realistic minimum). Budget 2026: futures STT 0.05%, options STT 0.15%, effective April 1 2026.
+            <span className="brk-reg-num">₹111.24</span> govt charges on ₹50K delivery — STT ₹100 + exchange ₹3.07 + SEBI ₹0.10 + stamp ₹7.50 + GST ₹0.57. Fixed by law, same at every broker.<br/>Futures calculated on ₹1.5L contract (realistic minimum). Budget 2026: futures STT 0.05%, options STT 0.15%, effective April 1 2026.
           </div>
 
           {/* Broker cards */}
@@ -667,7 +668,7 @@ export default function BrokersPage() {
                   </div>
 
                   <div className="brk-card-total-col">
-                    <div className="brk-card-total-label">TOTAL COST — ₹50K TRADE</div>
+                    <div className="brk-card-total-label">TOTAL — ₹50K TRADE</div>
                     <div className="brk-card-total-rows">
                       <div className="brk-card-total-row">
                         <span className="brk-card-total-seg">Delivery</span>
@@ -675,15 +676,15 @@ export default function BrokersPage() {
                       </div>
                       <div className="brk-card-total-row">
                         <span className="brk-card-total-seg">Intraday</span>
-                        <span className="brk-card-total-sm">₹{fmt(Math.round((b.intradayB||20)*1.18 + 9.01),0)}</span>
+                        <span className="brk-card-total-sm">₹{fmt(((b.intradayB||20)*1.18 + 17.74).toFixed(2))}</span>
                       </div>
                       <div className="brk-card-total-row">
-                        <span className="brk-card-total-seg">Options</span>
-                        <span className="brk-card-total-sm">₹{fmt(Math.round((b.optionsB||20)*1.18 + 114.55),0)}</span>
+                        <span className="brk-card-total-seg">MTF (30d)</span>
+                        <span className="brk-card-total-sm">{b.mtfRate ? '₹'+fmt(((b.delivery===0?0:(b.intradayB||20))*1.18 + b.dp + (50000*b.mtfRate/100/365*30)).toFixed(0)) : '—'}</span>
                       </div>
                     </div>
                     {i>0&&<div className="brk-card-vs">+₹{fmt(b.total50k-sorted[0].total50k,2)} vs cheapest</div>}
-                    <div className="brk-card-expand-hint">{expanded===b.id?'▲ less':'▼ full details'}</div>
+                    <div className="brk-card-expand-hint">{expanded===b.id?'▲ less':'▼ details'}</div>
                   </div>
                 </div>
 
@@ -703,7 +704,7 @@ export default function BrokersPage() {
                       </div>
                       <div className="brk-card-charge-section">
                         <div className="brk-ccs-title">DEMAT CHARGES</div>
-                        <div className="brk-ccs-row"><span>DP charge (per sell)</span><span>{b.dpLabel}</span></div>
+                        <div className="brk-ccs-row"><span>DP charge (per scrip sell)</span><span>{b.dpLabel}</span></div>
                         <div className="brk-ccs-row"><span>AMC</span><span className={b.amc===0?'brk-green':''}>{b.amcLabel}</span></div>
                         <div className="brk-ccs-row"><span>Pledge / Unpledge</span><span>{b.pledgeUnpledge}</span></div>
                         <div className="brk-ccs-row"><span>Dematerialisation</span><span>{b.dematerialisation}</span></div>
@@ -717,9 +718,14 @@ export default function BrokersPage() {
                       </div>
                       <div className="brk-card-charge-section">
                         <div className="brk-ccs-title">MTF & API</div>
-                        <div className="brk-ccs-row"><span>MTF interest</span><span>{b.mtfLabel}</span></div>
-                        <div className="brk-ccs-row"><span>MTF brokerage</span><span>{b.mtfBrokerage}</span></div>
-                        <div className="brk-ccs-row"><span>API access</span><span>{b.api}</span></div>
+                        {b.mtfSlabs ? b.mtfSlabs.map((s,si)=>(
+                          <div key={si} className="brk-ccs-row">
+                            <span>{s[0]}</span>
+                            <span className={parseFloat(s[1])>=15?'brk-card-red':parseFloat(s[1])<=13?'brk-green':''}>{s[1]}</span>
+                          </div>
+                        )) : <div className="brk-ccs-row"><span>MTF interest</span><span>{b.mtfLabel||'—'}</span></div>}
+                        <div className="brk-ccs-row" style={{marginTop:4,borderTop:'1px solid var(--border)',paddingTop:4}}><span>MTF brokerage</span><span>{b.mtfBrokerage}</span></div>
+                        <div className="brk-ccs-row"><span>API access</span><span>{b.apiNote||b.api}</span></div>
                         <div className="brk-ccs-row"><span>Margin shortfall</span><span className={b.marginShortfall==='0.035%/day'?'brk-green':''}>{b.marginShortfall}</span></div>
                       </div>
                       <div className="brk-card-charge-section">

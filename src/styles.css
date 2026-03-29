@@ -5551,8 +5551,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 /* Filters */
 .brk-filters     { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 14px; }
 .brk-filter-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.brk-filter-label { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--text3); }
-.brk-filter-btn  { font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--r); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all .15s; }
+.brk-filter-label { font-family: var(--mono); font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--text3); }
+.brk-filter-btn  { font-family: var(--mono); font-size: 13px; font-weight: 700; padding: 7px 16px; border: 1px solid var(--border); border-radius: var(--r); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all .15s; }
 .brk-filter-btn:hover { border-color: var(--accent); }
 .brk-filter-btn.active { border-color: var(--accent); background: rgba(74,158,255,.1); color: var(--accent); }
 
@@ -5761,7 +5761,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-card-total-rows  { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
 .brk-card-total-row   { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .brk-card-total-seg   { font-family: var(--mono); font-size: 10px; color: var(--text3); font-weight: 600; }
-.brk-card-total-sm    { font-family: var(--mono); font-size: 15px; font-weight: 800; color: var(--text2); }
+.brk-card-total-sm    { font-family: var(--mono); font-size: 17px; font-weight: 800; color: var(--text2); }
 
 /* ── Broker card v2 — grouped, no Excel feeling ───────────────────── */
 
@@ -5770,7 +5770,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 .brk-num-group     { display: flex; flex-direction: column; gap: 6px; padding: 0 16px; flex: 1; }
 .brk-num-group:first-child { padding-left: 0; }
-.brk-num-group-label { font-family: var(--mono); font-size: 8px; font-weight: 800; letter-spacing: 1.8px; color: var(--text3); opacity: .6; margin-bottom: 4px; text-transform: uppercase; }
+.brk-num-group-label { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: var(--text3); opacity: .7; margin-bottom: 6px; text-transform: uppercase; }
 .brk-num-group-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
 /* Faint vertical divider between groups */
@@ -5791,20 +5791,20 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-card-rank     { font-family: var(--mono); font-size: 13px; font-weight: 900; color: var(--text3); background: var(--bg3); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
 /* Name — bigger */
-.brk-card-name     { font-family: var(--mono); font-size: 17px; font-weight: 900; color: var(--text); display: flex; align-items: center; gap: 7px; }
+.brk-card-name     { font-family: var(--mono); font-size: 20px; font-weight: 900; color: var(--text); display: flex; align-items: center; gap: 7px; }
 
 /* Num label — softer */
-.brk-card-num-label { font-family: var(--mono); font-size: 9px; font-weight: 600; color: var(--text3); letter-spacing: .5px; margin-bottom: 3px; }
+.brk-card-num-label { font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: .5px; margin-bottom: 4px; }
 
 /* Num val — bigger, bolder */
-.brk-card-num-val  { font-family: var(--mono); font-size: 14px; font-weight: 800; color: var(--text); }
+.brk-card-num-val  { font-family: var(--mono); font-size: 15px; font-weight: 900; color: var(--text); letter-spacing: -0.3px; }
 
 /* Header hover feedback */
 .brk-card-header:hover { background: rgba(255,255,255,.015); }
 .brk-card-header   { padding: 16px 20px; gap: 12px; }
 
 /* Total col — cleaner */
-.brk-card-total    { font-family: var(--mono); font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; }
+.brk-card-total    { font-family: var(--mono); font-size: 26px; font-weight: 900; color: var(--text); letter-spacing: -1px; }
 .brk-card-total-row { gap: 6px; }
 .brk-card-total-seg { font-size: 9px; color: var(--text3); font-weight: 700; letter-spacing: .5px; min-width: 46px; }
 .brk-card-vs       { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 2px; }
