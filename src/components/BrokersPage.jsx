@@ -666,15 +666,15 @@ export default function BrokersPage() {
                       <div className="brk-col-val">{b.mtfBrokerage||'—'}</div>
                     </div>
 
-                    {/* Col: MTF Interest — show slabs if available */}
+                    {/* Col: MTF Interest — compact slabs */}
                     <div className="brk-col brk-col-wide">
                       <div className="brk-col-label">MTF INTEREST</div>
                       {b.mtfSlabs ? (
-                        <div className="brk-col-slabs">
+                        <div className="brk-col-slabs-compact">
                           {b.mtfSlabs.map((s,si)=>(
-                            <div key={si} className="brk-col-slab">
-                              <span className="brk-slab-range">{s[0]}</span>
-                              <span className={`brk-slab-rate ${parseFloat(s[1])>=15?'brk-col-red':parseFloat(s[1])<=13?'brk-col-green':'brk-col-amber'}`}>{s[1]}</span>
+                            <div key={si} className="brk-slab-compact">
+                              <span className="brk-slab-r">{s[0]}</span>
+                              <span className={`brk-slab-v ${parseFloat(s[1])>=15?'brk-col-red':parseFloat(s[1])<=13?'brk-col-green':'brk-col-amber'}`}>{s[1]}</span>
                             </div>
                           ))}
                         </div>
@@ -700,23 +700,38 @@ export default function BrokersPage() {
 
                     <div className="brk-col-divider"/>
 
-                    {/* Col: Total cost for selected trade size */}
+                    {/* Col: Totals — Delivery + Intraday + MTF brokerage */}
                     {(()=>{
                       const tv=parseFloat(tradeVal)||50000;
                       const scale=tv/50000;
                       const govtD=111.24*scale;
+                      const govtI=17.74;
                       const totD=(b.delivery===0?0:b.brokerCharges50k*scale*1.18)+b.dp+govtD;
+                      const totI=(b.intradayB||20)*1.18+govtI;
+                      const totMTF=(b.intradayB||20)*1.18; // MTF brokerage only (not interest)
                       const cheapTot=(sorted[0].delivery===0?0:sorted[0].brokerCharges50k*scale*1.18)+sorted[0].dp+111.24*scale;
                       const isBest=totD<=cheapTot+0.01;
                       return (
                         <div className="brk-col brk-col-total">
-                          <div className="brk-col-label">TOTAL — DELIVERY</div>
-                          <div className={`brk-col-val brk-col-total-num ${isBest?'brk-col-green':b.total50k>400?'brk-col-red':''}`}>₹{fmt(totD,0)}</div>
+                          <div className="brk-col-label">TOTAL — {['50000','100000','1000000'].includes(tradeVal)?{'50000':'₹50K','100000':'₹1L','1000000':'₹10L'}[tradeVal]:'custom'}</div>
+                          <div className="brk-total-3">
+                            <div className="brk-t3-row">
+                              <span className="brk-t3-seg">Delivery</span>
+                              <span className={`brk-t3-num ${isBest?'brk-col-green':b.total50k>400?'brk-col-red':''}`}>₹{fmt(totD,0)}</span>
+                            </div>
+                            <div className="brk-t3-row">
+                              <span className="brk-t3-seg">Intraday</span>
+                              <span className={`brk-t3-num ${b.intradayB===5?'brk-col-green':''}`}>₹{fmt(totI,0)}</span>
+                            </div>
+                            <div className="brk-t3-row">
+                              <span className="brk-t3-seg">MTF brk</span>
+                              <span className={`brk-t3-num ${b.intradayB===5?'brk-col-green':''}`}>₹{fmt(totMTF,0)}</span>
+                            </div>
+                          </div>
                           {isBest
-                            ? <div className="brk-col-sub brk-col-green">↓ cheapest</div>
-                            : <div className="brk-col-sub">+₹{fmt(totD-cheapTot,0)} vs cheapest</div>
+                            ? <div className="brk-col-sub brk-col-green" style={{marginTop:4}}>↓ cheapest delivery</div>
+                            : <div className="brk-col-sub" style={{marginTop:4}}>+₹{fmt(totD-cheapTot,0)} vs cheapest</div>
                           }
-                          <div className="brk-col-sub" style={{marginTop:2}}>{b.delivery===0?'Zero brk':'₹'+fmt(b.brokerCharges50k*scale*1.18,0)+' brk'} · ₹{fmt(b.dp,2)} DP</div>
                         </div>
                       );
                     })()}
