@@ -5762,3 +5762,50 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-card-total-row   { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .brk-card-total-seg   { font-family: var(--mono); font-size: 10px; color: var(--text3); font-weight: 600; }
 .brk-card-total-sm    { font-family: var(--mono); font-size: 15px; font-weight: 800; color: var(--text2); }
+
+/* ── Broker card v2 — grouped, no Excel feeling ───────────────────── */
+
+/* Remove old grid, replace with flex groups */
+.brk-card-nums     { display: flex; align-items: stretch; gap: 0; flex: 1; }
+
+.brk-num-group     { display: flex; flex-direction: column; gap: 6px; padding: 0 16px; flex: 1; }
+.brk-num-group:first-child { padding-left: 0; }
+.brk-num-group-label { font-family: var(--mono); font-size: 8px; font-weight: 800; letter-spacing: 1.8px; color: var(--text3); opacity: .6; margin-bottom: 4px; text-transform: uppercase; }
+.brk-num-group-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+/* Faint vertical divider between groups */
+.brk-num-divider   { width: 1px; background: var(--border); margin: 0 4px; flex-shrink: 0; align-self: stretch; }
+
+/* Smart value highlighting */
+.brk-dim-zero      { color: var(--text3) !important; font-weight: 600 !important; }  /* delivery=0 everywhere — dim it */
+.brk-card-red      { color: var(--loss) !important; }
+.brk-card-dim      { color: var(--text3) !important; }
+
+/* Card row — remove Excel feel */
+.brk-card          { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: box-shadow .2s, border-color .2s; margin-bottom: 2px; }
+.brk-card:hover    { border-color: var(--border2); box-shadow: 0 2px 12px rgba(0,0,0,.15); }
+.brk-card-featured { border-color: rgba(74,158,255,.25) !important; }
+.brk-card-open     { border-color: var(--accent) !important; box-shadow: 0 0 0 1px var(--accent) !important; }
+
+/* Rank badge — more visual weight */
+.brk-card-rank     { font-family: var(--mono); font-size: 13px; font-weight: 900; color: var(--text3); background: var(--bg3); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* Name — bigger */
+.brk-card-name     { font-family: var(--mono); font-size: 17px; font-weight: 900; color: var(--text); display: flex; align-items: center; gap: 7px; }
+
+/* Num label — softer */
+.brk-card-num-label { font-family: var(--mono); font-size: 9px; font-weight: 600; color: var(--text3); letter-spacing: .5px; margin-bottom: 3px; }
+
+/* Num val — bigger, bolder */
+.brk-card-num-val  { font-family: var(--mono); font-size: 14px; font-weight: 800; color: var(--text); }
+
+/* Header hover feedback */
+.brk-card-header:hover { background: rgba(255,255,255,.015); }
+.brk-card-header   { padding: 16px 20px; gap: 12px; }
+
+/* Total col — cleaner */
+.brk-card-total    { font-family: var(--mono); font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; }
+.brk-card-total-row { gap: 6px; }
+.brk-card-total-seg { font-size: 9px; color: var(--text3); font-weight: 700; letter-spacing: .5px; min-width: 46px; }
+.brk-card-vs       { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 2px; }
+.brk-card-expand-hint { font-family: var(--mono); font-size: 10px; color: var(--accent); opacity: .7; margin-top: 6px; }

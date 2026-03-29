@@ -624,31 +624,45 @@ export default function BrokersPage() {
                     <div className="brk-card-type-tag">{b.type==='discount'?'Discount':'Full-Service'}</div>
                   </div>
 
-                  {/* Key numbers — big and clear */}
+                  {/* Grouped charge columns */}
                   <div className="brk-card-nums">
-                    <div className="brk-card-num">
-                      <div className="brk-card-num-label">DELIVERY</div>
-                      <div className={`brk-card-num-val${b.delivery===0?' brk-card-green':''}`}>{b.deliveryLabel}</div>
+                    {/* Group 1: Trading Costs */}
+                    <div className="brk-num-group">
+                      <div className="brk-num-group-label">TRADING COSTS</div>
+                      <div className="brk-num-group-cols">
+                        <div className="brk-card-num">
+                          <div className="brk-card-num-label">Delivery</div>
+                          <div className={`brk-card-num-val${b.delivery===0?' brk-dim-zero':''}`}>{b.deliveryLabel}</div>
+                        </div>
+                        <div className="brk-card-num">
+                          <div className="brk-card-num-label">Intraday</div>
+                          <div className="brk-card-num-val">{b.intraday}</div>
+                        </div>
+                        <div className="brk-card-num">
+                          <div className="brk-card-num-label">Options</div>
+                          <div className="brk-card-num-val">{b.options}</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="brk-card-num">
-                      <div className="brk-card-num-label">INTRADAY</div>
-                      <div className="brk-card-num-val">{b.intraday}</div>
-                    </div>
-                    <div className="brk-card-num">
-                      <div className="brk-card-num-label">OPTIONS</div>
-                      <div className="brk-card-num-val">{b.options}</div>
-                    </div>
-                    <div className="brk-card-num">
-                      <div className="brk-card-num-label">MTF INTEREST</div>
-                      <div className="brk-card-num-val">{b.mtfLabel||'—'}</div>
-                    </div>
-                    <div className="brk-card-num">
-                      <div className="brk-card-num-label">DP PER SCRIP SELL</div>
-                      <div className="brk-card-num-val">₹{fmt(b.dp,2)}</div>
-                    </div>
-                    <div className="brk-card-num">
-                      <div className="brk-card-num-label">AMC / YR</div>
-                      <div className={`brk-card-num-val${b.amc===0?' brk-card-green':''}`}>{b.amcLabel}</div>
+                    {/* Divider */}
+                    <div className="brk-num-divider"/>
+                    {/* Group 2: Other Costs */}
+                    <div className="brk-num-group">
+                      <div className="brk-num-group-label">OTHER COSTS</div>
+                      <div className="brk-num-group-cols">
+                        <div className="brk-card-num">
+                          <div className="brk-card-num-label">MTF Interest</div>
+                          <div className={`brk-card-num-val${b.mtfRate&&b.mtfRate<=13?' brk-card-green':b.mtfRate&&b.mtfRate>=17?' brk-card-red':''}`}>{b.mtfLabel||'—'}</div>
+                        </div>
+                        <div className="brk-card-num">
+                          <div className="brk-card-num-label">DP / Scrip Sell</div>
+                          <div className={`brk-card-num-val${b.dp<=14.75?' brk-card-green':b.dp>=22?' brk-card-dim':''}`}>₹{fmt(b.dp,2)}</div>
+                        </div>
+                        <div className="brk-card-num">
+                          <div className="brk-card-num-label">AMC / Year</div>
+                          <div className={`brk-card-num-val${b.amc===0?' brk-card-green':b.amc>=600?' brk-card-red':''}`}>{b.amcLabel}</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
