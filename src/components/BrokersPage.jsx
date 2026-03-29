@@ -698,85 +698,147 @@ export default function BrokersPage() {
       {/* ── RANKINGS ── */}
       {tab==='Rankings' && (
         <div className="brk-content">
+
+          {/* Filters */}
           <div className="brk-filters">
             <div className="brk-filter-group">
-              <span className="brk-filter-label">TYPE</span>
-              {[['all','All'],['discount','Discount'],['full','Full-Service']].map(([v,l])=>(
+              <span className="brk-filter-label">BROKER TYPE</span>
+              {[['all','All Brokers'],['discount','Discount Only'],['full','Full-Service Only']].map(([v,l])=>(
                 <button key={v} className={`brk-filter-btn${filter===v?' active':''}`} onClick={()=>setFilter(v)}>{l}</button>
               ))}
             </div>
             <div className="brk-filter-group">
-              <span className="brk-filter-label">SORT</span>
+              <span className="brk-filter-label">SORT BY</span>
               {[['total50k','Total Cost'],['dp','DP Charge'],['amc','AMC'],['mtfRate','MTF Rate']].map(([v,l])=>(
                 <button key={v} className={`brk-filter-btn${sort===v?' active':''}`} onClick={()=>setSort(v)}>{l}</button>
               ))}
             </div>
           </div>
 
-          <div className="brk-table">
-            <div className="brk-table-head">
-              <span>#</span><span>Broker</span><span>Delivery</span><span>Intraday</span><span>F&O Options</span><span>DP/scrip</span><span>AMC/yr</span><span>Total (₹50K)</span>
-            </div>
+          {/* Regulatory note */}
+          <div className="brk-reg-note">
+            <span className="brk-reg-num">₹111.51</span> in STT + exchange fee + SEBI fee + stamp duty on every ₹50K delivery trade — fixed by law, identical at every broker. Only brokerage, DP charge and AMC differ.
+          </div>
+
+          {/* Broker cards */}
+          <div className="brk-cards-list">
             {sorted.map((b,i)=>(
-              <div key={b.id}>
-                <div className={`brk-table-row${b.featured?' brk-row-featured':''}${b.type==='full'?' brk-row-full':''}${expanded===b.id?' brk-row-expanded':''}`}
-                  onClick={()=>setExpanded(expanded===b.id?null:b.id)}>
-                  <span className="brk-rank">{i+1}</span>
-                  <span className="brk-broker-cell">
-                    <span className="brk-broker-name">{b.featured&&<span className="brk-star">★ </span>}{b.name}</span>
-                    <span className={`brk-broker-type ${b.type==='discount'?'brk-type-discount':'brk-type-full'}`}>{b.type==='discount'?'Discount':'Full service'}</span>
-                  </span>
-                  <span className={`brk-charge${b.delivery===0?' brk-zero':''}`}>{b.deliveryLabel}</span>
-                  <span className="brk-charge">{b.intraday}</span>
-                  <span className="brk-charge">{b.options}</span>
-                  <span className="brk-charge">₹{fmt(b.dp,2)}</span>
-                  <span className={`brk-charge${b.amc===0?' brk-zero':''}`}>{b.amcLabel}</span>
-                  <span className={`brk-total${i===0?' brk-total-best':''}`}>₹{fmt(b.total50k,2)}</span>
+              <div key={b.id} className={`brk-card${b.featured?' brk-card-featured':''}${expanded===b.id?' brk-card-open':''}`}>
+
+                {/* Card header — always visible */}
+                <div className="brk-card-header" onClick={()=>setExpanded(expanded===b.id?null:b.id)}>
+                  <div className="brk-card-rank">#{i+1}</div>
+
+                  <div className="brk-card-identity">
+                    <div className="brk-card-name">
+                      {b.featured&&<span className="brk-card-star">★</span>}
+                      {b.name}
+                    </div>
+                    <div className="brk-card-type-tag">{b.type==='discount'?'Discount':'Full-Service'}</div>
+                  </div>
+
+                  {/* Key numbers — big and clear */}
+                  <div className="brk-card-nums">
+                    <div className="brk-card-num">
+                      <div className="brk-card-num-label">DELIVERY</div>
+                      <div className={`brk-card-num-val${b.delivery===0?' brk-card-green':''}`}>{b.deliveryLabel}</div>
+                    </div>
+                    <div className="brk-card-num">
+                      <div className="brk-card-num-label">INTRADAY</div>
+                      <div className="brk-card-num-val">{b.intraday}</div>
+                    </div>
+                    <div className="brk-card-num">
+                      <div className="brk-card-num-label">OPTIONS</div>
+                      <div className="brk-card-num-val">{b.options}</div>
+                    </div>
+                    <div className="brk-card-num">
+                      <div className="brk-card-num-label">DP / SELL</div>
+                      <div className="brk-card-num-val">₹{fmt(b.dp,2)}</div>
+                    </div>
+                    <div className="brk-card-num">
+                      <div className="brk-card-num-label">AMC / YR</div>
+                      <div className={`brk-card-num-val${b.amc===0?' brk-card-green':''}`}>{b.amcLabel}</div>
+                    </div>
+                  </div>
+
+                  <div className="brk-card-total-col">
+                    <div className="brk-card-total-label">TOTAL · ₹50K TRADE</div>
+                    <div className={`brk-card-total${i===0?' brk-card-total-best':b.featured?' brk-card-total-featured':''}`}>
+                      ₹{fmt(b.total50k,2)}
+                    </div>
+                    {i>0&&<div className="brk-card-vs">+₹{fmt(b.total50k-sorted[0].total50k,2)} vs cheapest</div>}
+                    <div className="brk-card-expand-hint">{expanded===b.id?'▲ less':'▼ full details'}</div>
+                  </div>
                 </div>
+
+                {/* Expanded detail */}
                 {expanded===b.id&&(
-                  <div className="brk-expand">
-                    <div className="brk-expand-tagline">{b.tagline}</div>
-                    <div className="brk-expand-grid">
-                      <div>
-                        <div className="brk-expand-label">KEY CHARGES</div>
-                        <div className="brk-expand-item">Delivery: {b.deliveryLabel}</div>
-                        <div className="brk-expand-item">Intraday: {b.intraday}</div>
-                        <div className="brk-expand-item">Options: {b.options}</div>
-                        <div className="brk-expand-item">DP charge: {b.dpLabel}</div>
-                        <div className="brk-expand-item">AMC: {b.amcLabel}</div>
-                        <div className="brk-expand-item">MTF: {b.mtfLabel}</div>
-                        <div className="brk-expand-item">Pledge: {b.pledgeUnpledge}</div>
-                        <div className="brk-expand-item">Call & trade: ₹{b.callTrade}</div>
-                        <div className="brk-expand-item">Auto sq-off: ₹{b.squareOff}</div>
-                        <div className="brk-expand-item">API: {b.api}</div>
+                  <div className="brk-card-detail">
+                    <div className="brk-card-tagline">{b.tagline}</div>
+
+                    {/* Full charge breakdown */}
+                    <div className="brk-card-charge-grid">
+                      <div className="brk-card-charge-section">
+                        <div className="brk-ccs-title">BROKERAGE</div>
+                        <div className="brk-ccs-row"><span>Delivery equity</span><span className={b.delivery===0?'brk-green':''}>{b.deliveryLabel}</span></div>
+                        <div className="brk-ccs-row"><span>Intraday equity</span><span>{b.intraday}</span></div>
+                        <div className="brk-ccs-row"><span>F&O Futures</span><span>{b.futures}</span></div>
+                        <div className="brk-ccs-row"><span>F&O Options</span><span>{b.options}</span></div>
                       </div>
-                      <div>
-                        <div className="brk-expand-label">STRENGTHS</div>
-                        {b.strengths.map((s,i)=><div key={i} className="brk-expand-item brk-item-good">✔ {s}</div>)}
+                      <div className="brk-card-charge-section">
+                        <div className="brk-ccs-title">DEMAT CHARGES</div>
+                        <div className="brk-ccs-row"><span>DP charge (per sell)</span><span>{b.dpLabel}</span></div>
+                        <div className="brk-ccs-row"><span>AMC</span><span className={b.amc===0?'brk-green':''}>{b.amcLabel}</span></div>
+                        <div className="brk-ccs-row"><span>Pledge / Unpledge</span><span>{b.pledgeUnpledge}</span></div>
+                        <div className="brk-ccs-row"><span>Dematerialisation</span><span>{b.dematerialisation}</span></div>
                       </div>
-                      <div>
-                        <div className="brk-expand-label">WATCH OUT FOR</div>
-                        {b.watch.map((s,i)=><div key={i} className="brk-expand-item brk-item-warn">⚠ {s}</div>)}
-                        {b.networth&&(
-                          <>
-                            <div className="brk-expand-label" style={{marginTop:12}}>FINANCIAL STRENGTH</div>
-                            <div className="brk-expand-item">Networth: {b.networthLabel}</div>
-                            <div className="brk-expand-item">Active clients: {b.activeClientsLabel}</div>
-                          </>
-                        )}
+                      <div className="brk-card-charge-section">
+                        <div className="brk-ccs-title">SERVICES</div>
+                        <div className="brk-ccs-row"><span>Call & trade</span><span>₹{b.callTrade}</span></div>
+                        <div className="brk-ccs-row"><span>Auto square-off</span><span>₹{b.squareOff}</span></div>
+                        <div className="brk-ccs-row"><span>Instant withdrawal</span><span className={b.instantWithdrawal==='Free'?'brk-green':''}>{b.instantWithdrawal}</span></div>
+                        <div className="brk-ccs-row"><span>Payment gateway</span><span>{b.paymentGw===0?'Free':'₹'+fmt(b.paymentGw,2)}</span></div>
+                      </div>
+                      <div className="brk-card-charge-section">
+                        <div className="brk-ccs-title">MTF & API</div>
+                        <div className="brk-ccs-row"><span>MTF interest</span><span>{b.mtfLabel}</span></div>
+                        <div className="brk-ccs-row"><span>MTF brokerage</span><span>{b.mtfBrokerage}</span></div>
+                        <div className="brk-ccs-row"><span>API access</span><span>{b.api}</span></div>
+                        <div className="brk-ccs-row"><span>Margin shortfall</span><span className={b.marginShortfall==='0.035%/day'?'brk-green':''}>{b.marginShortfall}</span></div>
+                      </div>
+                      <div className="brk-card-charge-section">
+                        <div className="brk-ccs-title">ACCOUNT</div>
+                        <div className="brk-ccs-row"><span>Account opening</span><span className="brk-green">Free</span></div>
+                        <div className="brk-ccs-row"><span>DDPI</span><span>₹{b.ddpi}</span></div>
+                        <div className="brk-ccs-row"><span>Reactivation</span><span>₹{b.reactivation}</span></div>
+                        {b.networth&&<div className="brk-ccs-row"><span>Networth (NSE)</span><span>{b.networthLabel}</span></div>}
+                        {b.activeClients&&<div className="brk-ccs-row"><span>Active clients</span><span>{b.activeClientsLabel}</span></div>}
                       </div>
                     </div>
+
+                    <div className="brk-card-sw">
+                      <div className="brk-card-sw-col">
+                        <div className="brk-ccs-title">STRENGTHS</div>
+                        {b.strengths.map((s,i)=><div key={i} className="brk-sw-item brk-sw-good">✔ {s}</div>)}
+                      </div>
+                      <div className="brk-card-sw-col">
+                        <div className="brk-ccs-title">WATCH OUT FOR</div>
+                        {b.watch.map((s,i)=><div key={i} className="brk-sw-item brk-sw-warn">⚠ {s}</div>)}
+                      </div>
+                    </div>
+
                     <div className="brk-expand-footer">
                       <a href={b.url} target="_blank" rel="noopener noreferrer" className="brk-ext-link">Visit {b.name} ↗</a>
-                      <span className="brk-disclaimer">Verify current charges on official website.</span>
+                      <span className="brk-disclaimer">Verify all charges on the broker's official website before trading.</span>
                     </div>
                   </div>
                 )}
               </div>
             ))}
           </div>
+
           <div className="brk-table-note">
-            Total cost includes brokerage, GST, DP charge, STT, exchange fee, SEBI charge, and stamp duty. Regulatory charges (₹111.51 on ₹50K delivery) are set by law — the same at every broker. ★ = Editor's Pick. Click any row to expand.
+            Total cost on ₹50,000 delivery trade (buy + sell) includes all charges. ★ = Editor's Pick (platform quality, track record, financial strength). Click any broker to expand full charge breakdown.
           </div>
         </div>
       )}
