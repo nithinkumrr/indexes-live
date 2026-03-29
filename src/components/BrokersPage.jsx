@@ -587,224 +587,182 @@ export default function BrokersPage() {
       {tab==='Rankings' && (
         <div className="brk-content">
 
-          {/* Filters */}
-          <div className="brk-filters">
+          {/* TRADE SIZE TOGGLE — sticky */}
+          <div className="brk-size-bar">
+            <span className="brk-size-label">TRADE SIZE</span>
+            {[['₹50K',50000],['₹1L',100000],['₹10L',1000000]].map(([label,val])=>(
+              <button key={val} className={`brk-size-btn${tradeVal==val?' brk-size-active':''}`} onClick={()=>setTradeVal(String(val))}>
+                {label}
+              </button>
+            ))}
+            <span className="brk-size-context">All costs calculated on {['50000','100000','1000000'].includes(tradeVal)?{'50000':'₹50,000','100000':'₹1,00,000','1000000':'₹10,00,000'}[tradeVal]:'custom'} delivery trade</span>
+          </div>
+
+          {/* FILTERS */}
+          <div className="brk-filters" style={{marginBottom:12}}>
             <div className="brk-filter-group">
-              <span className="brk-filter-label">BROKER TYPE</span>
-              {[['all','All Brokers'],['discount','Discount Only'],['full','Full-Service Only']].map(([v,l])=>(
+              <span className="brk-filter-label">TYPE</span>
+              {[['all','All'],['discount','Discount'],['full','Full-Service']].map(([v,l])=>(
                 <button key={v} className={`brk-filter-btn${filter===v?' active':''}`} onClick={()=>setFilter(v)}>{l}</button>
               ))}
             </div>
             <div className="brk-filter-group">
-              <span className="brk-filter-label">SORT BY</span>
+              <span className="brk-filter-label">SORT</span>
               {[['total50k','Total Cost'],['dp','DP Charge'],['amc','AMC'],['mtfRate','MTF Rate']].map(([v,l])=>(
                 <button key={v} className={`brk-filter-btn${sort===v?' active':''}`} onClick={()=>setSort(v)}>{l}</button>
               ))}
             </div>
           </div>
 
-          {/* Regulatory note */}
-          <div className="brk-reg-note">
-            <span className="brk-reg-num">₹111.24</span> govt charges on ₹50K delivery — STT ₹100 + exchange ₹3.07 + SEBI ₹0.10 + stamp ₹7.50 + GST ₹0.57. Fixed by law, same at every broker.<br/>Futures calculated on ₹1.5L contract (realistic minimum). Budget 2026: futures STT 0.05%, options STT 0.15%, effective April 1 2026.
-          </div>
-
-          {/* Broker cards */}
+          {/* BROKER CARDS */}
           <div className="brk-cards-list">
-            {sorted.map((b,i)=>(
-              <div key={b.id} className={`brk-card${b.featured?' brk-card-featured':''}${expanded===b.id?' brk-card-open':''}`}>
+            {sorted.map((b,i)=>{
+              const tv = parseFloat(tradeVal)||50000;
+              const scale = tv/50000;
+              // Govt charges scale with trade size
+              const govtD = 111.24 * scale;
+              const govtI = 17.74; // intraday brokerage is flat ₹20 cap — govt scales but brokerage doesn't
+              // Delivery total
+              const brkD18 = b.delivery===0 ? 0 : b.brokerCharges50k * scale * 1.18;
+              const totD = (b.delivery===0?0:brkD18) + b.dp + govtD;
+              const cheapestD = sorted[0];
+              const cheapestTotD = (cheapestD.delivery===0?0:cheapestD.brokerCharges50k*scale*1.18) + cheapestD.dp + 111.24*scale;
+              const isCheapest = totD <= cheapestTotD + 0.01;
+              // Intraday total
+              const brkI18 = (b.intradayB||20)*1.18;
+              const totI = brkI18 + govtI*scale;
+              // MTF 30d interest on trade value
+              const mtf30 = b.mtfRate ? Math.round(tv*b.mtfRate/100/365*30) : null;
 
-                {/* Card — full redesign: name top, all columns, totals bottom */}
-                <div className="brk-card-header" onClick={()=>setExpanded(expanded===b.id?null:b.id)}>
+              return (
+                <div key={b.id} className={`brk2-card${b.featured?' brk2-featured':''}${isCheapest?' brk2-cheapest':''}${expanded===b.id?' brk2-open':''}`}>
 
-                  {/* TOP ROW: rank + name + type + expand hint */}
-                  <div className="brk-card-top">
-                    <div className="brk-card-rank-badge">#{i+1}</div>
-                    <div className="brk-card-name">
-                      {b.featured&&<span className="brk-card-star">★ </span>}
-                      {b.name}
+                  {/* MAIN CLICKABLE AREA */}
+                  <div className="brk2-main" onClick={()=>setExpanded(expanded===b.id?null:b.id)}>
+
+                    {/* LEFT: rank + name + badge */}
+                    <div className="brk2-left">
+                      <div className="brk2-rank">#{i+1}</div>
+                      <div className="brk2-name">
+                        {b.featured&&<span className="brk2-star">★ </span>}{b.name}
+                      </div>
+                      <div className="brk2-tags">
+                        <span className={`brk2-type ${b.type==='discount'?'brk2-type-d':'brk2-type-f'}`}>{b.type==='discount'?'Discount':'Full-Service'}</span>
+                        {isCheapest&&<span className="brk2-best">LOWEST COST</span>}
+                      </div>
                     </div>
-                    <span className={`brk-card-typetag ${b.type==='discount'?'brk-tag-d':'brk-tag-f'}`}>{b.type==='discount'?'Discount':'Full-Service'}</span>
-                    <div className="brk-card-expand-hint">{expanded===b.id?'▲ collapse':'▼ full details'}</div>
+
+                    {/* CENTER: BIG COST NUMBER */}
+                    <div className="brk2-center">
+                      <div className="brk2-cost-label">DELIVERY · {['50000','100000','1000000'].includes(tradeVal)?{'50000':'₹50K','100000':'₹1L','1000000':'₹10L'}[tradeVal]:'custom'} TRADE</div>
+                      <div className={`brk2-cost ${isCheapest?'brk2-cost-best':b.total50k>400?'brk2-cost-exp':''}`}>
+                        ₹{fmt(totD,0)}
+                      </div>
+                      {!isCheapest&&<div className="brk2-vs">+₹{fmt(totD-cheapestTotD,0)} vs cheapest</div>}
+                      {isCheapest&&<div className="brk2-vs brk2-vs-best">↓ cheapest for this trade size</div>}
+                    </div>
+
+                    {/* RIGHT: quick stats + multi-size */}
+                    <div className="brk2-right">
+                      <div className="brk2-quick">
+                        <div className="brk2-q"><span className="brk2-ql">Delivery</span><span className={`brk2-qv ${b.delivery===0?'brk2-green':''}`}>{b.deliveryLabel}</span></div>
+                        <div className="brk2-q"><span className="brk2-ql">Intraday</span><span className={`brk2-qv ${b.intradayB===5?'brk2-green':''}`}>{b.intraday}</span></div>
+                        <div className="brk2-q"><span className="brk2-ql">DP/scrip</span><span className={`brk2-qv ${b.dp<=14.75?'brk2-green':''}`}>₹{fmt(b.dp,2)}</span></div>
+                        <div className="brk2-q"><span className="brk2-ql">AMC</span><span className={`brk2-qv ${b.amc===0?'brk2-green':b.amc>=600?'brk2-red':''}`}>{b.amcLabel}</span></div>
+                        <div className="brk2-q"><span className="brk2-ql">MTF</span><span className={`brk2-qv ${b.mtfRate&&b.mtfRate<=13?'brk2-green':b.mtfRate&&b.mtfRate>=17?'brk2-red':''}`}>{b.mtfLabel||'N/A'}</span></div>
+                      </div>
+                      <div className="brk2-sizes">
+                        <span className="brk2-size-item">₹50K → ₹{fmt((b.delivery===0?0:b.brokerCharges50k*1.18)+b.dp+111.24,0)}</span>
+                        <span className="brk2-size-item">₹1L → ₹{fmt((b.delivery===0?0:b.brokerCharges50k*2*1.18)+b.dp+222.48,0)}</span>
+                        <span className="brk2-size-item">₹10L → ₹{fmt((b.delivery===0?0:b.brokerCharges50k*20*1.18)+b.dp+2224.8,0)}</span>
+                      </div>
+                      <div className="brk2-expand-hint">{expanded===b.id?'▲ collapse':'▼ full breakdown'}</div>
+                    </div>
+
                   </div>
 
-                  {/* CHARGE COLUMNS */}
-                  <div className="brk-card-cols">
+                  {/* EXPANDED BREAKDOWN */}
+                  {expanded===b.id&&(
+                    <div className="brk2-detail">
+                      <div className="brk2-detail-tagline">{b.tagline}</div>
 
-                    {/* Col: Delivery */}
-                    <div className="brk-col">
-                      <div className="brk-col-label">DELIVERY</div>
-                      <div className={`brk-col-val ${b.delivery===0?'brk-col-zero':''}`}>{b.deliveryLabel}</div>
-                    </div>
+                      {/* COST BREAKDOWN TABLE */}
+                      <div className="brk2-breakdown">
+                        <div className="brk2-bd-title">DELIVERY — ₹{fmt(tv,0)} TRADE</div>
+                        <div className="brk2-bd-row"><span>Brokerage</span><span className={b.delivery===0?'brk2-green':''}>{b.delivery===0?'Zero':'₹'+fmt(brkD18,2)+' incl. GST'}</span></div>
+                        <div className="brk2-bd-row"><span>DP charge (per scrip sell)</span><span>{b.dpLabel}</span></div>
+                        <div className="brk2-bd-row brk2-bd-govt"><span>STT (0.1% sell)</span><span>₹{fmt(tv*0.001,2)}</span></div>
+                        <div className="brk2-bd-row brk2-bd-govt"><span>Exchange fee + GST</span><span>₹{fmt(tv*2*0.0000307*1.18,2)}</span></div>
+                        <div className="brk2-bd-row brk2-bd-govt"><span>SEBI fee</span><span>₹{fmt(tv*2/10000000*10,2)}</span></div>
+                        <div className="brk2-bd-row brk2-bd-govt"><span>Stamp duty (buy side)</span><span>₹{fmt(tv*0.00015,2)}</span></div>
+                        <div className="brk2-bd-total"><span>TOTAL</span><span>₹{fmt(totD,2)}</span></div>
+                      </div>
 
-                    {/* Col: Intraday */}
-                    <div className="brk-col">
-                      <div className="brk-col-label">INTRADAY</div>
-                      <div className="brk-col-val">{b.intraday}</div>
-                    </div>
+                      <div className="brk2-breakdown">
+                        <div className="brk2-bd-title">INTRADAY — ₹{fmt(tv,0)} TRADE</div>
+                        <div className="brk2-bd-row"><span>Brokerage ({b.intraday})</span><span>₹{fmt(brkI18,2)} incl. GST</span></div>
+                        <div className="brk2-bd-row brk2-bd-govt"><span>STT (0.025% sell)</span><span>₹{fmt(tv*0.00025,2)}</span></div>
+                        <div className="brk2-bd-row brk2-bd-govt"><span>Exchange fee + GST</span><span>₹{fmt(tv*2*0.0000307*1.18,2)}</span></div>
+                        <div className="brk2-bd-row brk2-bd-govt"><span>Stamp duty</span><span>₹{fmt(tv*0.00003,2)}</span></div>
+                        <div className="brk2-bd-total"><span>TOTAL</span><span>₹{fmt(totI,2)}</span></div>
+                      </div>
 
-                    {/* Col: Options */}
-                    <div className="brk-col">
-                      <div className="brk-col-label">OPTIONS</div>
-                      <div className="brk-col-val">{b.options}</div>
-                    </div>
-
-                    <div className="brk-col-divider"/>
-
-                    {/* Col: MTF Brokerage */}
-                    <div className="brk-col">
-                      <div className="brk-col-label">MTF BROKERAGE</div>
-                      <div className="brk-col-val">{b.mtfBrokerage||'—'}</div>
-                    </div>
-
-                    {/* Col: MTF Interest — show slabs if available */}
-                    <div className="brk-col brk-col-wide">
-                      <div className="brk-col-label">MTF INTEREST</div>
-                      {b.mtfSlabs ? (
-                        <div className="brk-col-slabs">
-                          {b.mtfSlabs.map((s,si)=>(
-                            <div key={si} className="brk-col-slab">
-                              <span className="brk-slab-range">{s[0]}</span>
-                              <span className={`brk-slab-rate ${parseFloat(s[1])>=15?'brk-col-red':parseFloat(s[1])<=13?'brk-col-green':'brk-col-amber'}`}>{s[1]}</span>
+                      {b.mtfRate&&(
+                        <div className="brk2-breakdown">
+                          <div className="brk2-bd-title">MTF — ₹{fmt(tv,0)} FOR 30 DAYS</div>
+                          {b.mtfSlabs?b.mtfSlabs.map((s,si)=>(
+                            <div key={si} className="brk2-bd-row">
+                              <span>{s[0]}</span>
+                              <span className={parseFloat(s[1])>=15?'brk2-red':parseFloat(s[1])<=13?'brk2-green':''}>{s[1]}</span>
                             </div>
-                          ))}
+                          )):<div className="brk2-bd-row"><span>Interest rate</span><span>{b.mtfLabel}</span></div>}
+                          <div className="brk2-bd-row"><span>MTF brokerage</span><span>{b.mtfBrokerage}</span></div>
+                          <div className="brk2-bd-total"><span>30-day interest on ₹{fmt(tv,0)}</span><span className={mtf30&&mtf30>5000?'brk2-red':''}>₹{fmt(mtf30,0)}</span></div>
                         </div>
-                      ) : (
-                        <div className={`brk-col-val ${b.mtfRate&&b.mtfRate<=13?'brk-col-green':b.mtfRate&&b.mtfRate>=17?'brk-col-red':''}`}>{b.mtfLabel||'N/A'}</div>
                       )}
+
+                      {/* OTHER CHARGES */}
+                      <div className="brk2-other">
+                        <div className="brk2-bd-title">OTHER CHARGES</div>
+                        <div className="brk2-other-grid">
+                          <div className="brk2-bd-row"><span>F&O Futures</span><span>{b.futures}</span></div>
+                          <div className="brk2-bd-row"><span>F&O Options</span><span>{b.options}</span></div>
+                          <div className="brk2-bd-row"><span>Call & trade</span><span>₹{b.callTrade}</span></div>
+                          <div className="brk2-bd-row"><span>Auto square-off</span><span>₹{b.squareOff}</span></div>
+                          <div className="brk2-bd-row"><span>Pledge/Unpledge</span><span>{b.pledgeUnpledge}</span></div>
+                          <div className="brk2-bd-row"><span>Margin shortfall</span><span>{b.marginShortfall}</span></div>
+                          <div className="brk2-bd-row"><span>API</span><span>{b.apiNote||b.api}</span></div>
+                          <div className="brk2-bd-row"><span>DDPI</span><span>₹{b.ddpi}</span></div>
+                        </div>
+                      </div>
+
+                      <div className="brk2-sw">
+                        <div className="brk2-sw-col">
+                          {b.strengths.map((s,si)=><div key={si} className="brk2-strength">✔ {s}</div>)}
+                        </div>
+                        <div className="brk2-sw-col">
+                          {b.watch.map((s,si)=><div key={si} className="brk2-watch">⚠ {s}</div>)}
+                        </div>
+                      </div>
+
+                      <div className="brk2-footer">
+                        <a href={b.url} target="_blank" rel="noopener noreferrer" className="brk2-link">Visit {b.name} ↗</a>
+                        <span className="brk2-disclaimer">Verify all charges on the broker's official website before trading.</span>
+                      </div>
                     </div>
-
-                    <div className="brk-col-divider"/>
-
-                    {/* Col: DP Charge */}
-                    <div className="brk-col">
-                      <div className="brk-col-label">DP CHARGE</div>
-                      <div className={`brk-col-val ${b.dp<=14.75?'brk-col-green':''}`}>₹{fmt(b.dp,2)}</div>
-                      <div className="brk-col-sub">{b.dpLabel} · per scrip per sell</div>
-                    </div>
-
-                    {/* Col: AMC */}
-                    <div className="brk-col">
-                      <div className="brk-col-label">AMC / YEAR</div>
-                      <div className={`brk-col-val ${b.amc===0?'brk-col-green':b.amc>=600?'brk-col-red':''}`}>{b.amcLabel}</div>
-                    </div>
-
-                  </div>
-
-                  {/* BOTTOM ROW: total costs — 3 trade sizes */}
-                  <div className="brk-card-totals">
-                    <div className="brk-card-totals-label">TOTAL ALL-IN COST — brokerage + GST + regulatory charges</div>
-                    <div className="brk-card-totals-groups">
-                      {[['₹50K',50000,111.24,17.74],['₹1L',100000,222.48,35.48],['₹10L',1000000,2224.8,354.8]].map(([label,v,gD,gI])=>{
-                        const brkD = b.delivery===0 ? 0 : Math.min(b.brokerCharges50k/50000*v, v*0.005+25);
-                        const brkI = (b.intradayB||20)*1.18;
-                        const totD = (b.delivery===0?0:brkD*1.18) + b.dp + gD;
-                        const totI = brkI + gI;
-                        const mtf30 = b.mtfRate ? Math.round(v*b.mtfRate/100/365*30) : null;
-                        return (
-                          <div key={label} className="brk-totals-group">
-                            <div className="brk-totals-group-title">{label} TRADE</div>
-                            <div className="brk-total-item">
-                              <span className="brk-total-seg">DELIVERY</span>
-                              <span className={`brk-total-num ${i===0?'brk-col-green':b.featured?'brk-col-accent':''}`}>₹{fmt(totD,0)}</span>
-                              <span className="brk-total-sub">{b.delivery===0?'Zero brk':'₹'+fmt(brkD*1.18,0)+' brk'} · ₹{fmt(b.dp,2)} DP · ₹{fmt(gD,2)} govt</span>
-                            </div>
-                            <div className="brk-total-item">
-                              <span className="brk-total-seg">INTRADAY</span>
-                              <span className={`brk-total-num ${b.intradayB===5?'brk-col-green':''}`}>₹{fmt(totI,0)}</span>
-                              <span className="brk-total-sub">₹{fmt(brkI,2)} brk · ₹{fmt(gI,2)} govt</span>
-                            </div>
-                            <div className="brk-total-item">
-                              <span className="brk-total-seg">MTF 30 DAYS</span>
-                              <span className={`brk-total-num ${mtf30&&mtf30<1500?'brk-col-green':mtf30&&mtf30>5000?'brk-col-red':''}`}>{mtf30?'₹'+fmt(mtf30,0):'—'}</span>
-                              <span className="brk-total-sub">{b.mtfRate?`${b.mtfRate}% p.a. on ₹${fmt(v/100000,1)}L`:'Not offered'}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {i>0&&<div className="brk-total-vs">+₹{fmt(b.total50k-sorted[0].total50k,2)} vs cheapest on ₹50K delivery</div>}
-                  </div>
-
+                  )}
                 </div>
-
-                {/* Expanded detail */}
-                {expanded===b.id&&(
-                  <div className="brk-card-detail">
-                    <div className="brk-card-tagline">{b.tagline}</div>
-
-                    {/* Full charge breakdown */}
-                    <div className="brk-card-charge-grid">
-                      <div className="brk-card-charge-section">
-                        <div className="brk-ccs-title">BROKERAGE</div>
-                        <div className="brk-ccs-row"><span>Delivery equity</span><span className={b.delivery===0?'brk-green':''}>{b.deliveryLabel}</span></div>
-                        <div className="brk-ccs-row"><span>Intraday equity</span><span>{b.intraday}</span></div>
-                        <div className="brk-ccs-row"><span>F&O Futures</span><span>{b.futures}</span></div>
-                        <div className="brk-ccs-row"><span>F&O Options</span><span>{b.options}</span></div>
-                      </div>
-                      <div className="brk-card-charge-section">
-                        <div className="brk-ccs-title">DEMAT CHARGES</div>
-                        <div className="brk-ccs-row"><span>DP charge (per scrip sell)</span><span>{b.dpLabel}</span></div>
-                        <div className="brk-ccs-row"><span>AMC</span><span className={b.amc===0?'brk-green':''}>{b.amcLabel}</span></div>
-                        <div className="brk-ccs-row"><span>Pledge / Unpledge</span><span>{b.pledgeUnpledge}</span></div>
-                        <div className="brk-ccs-row"><span>Dematerialisation</span><span>{b.dematerialisation}</span></div>
-                      </div>
-                      <div className="brk-card-charge-section">
-                        <div className="brk-ccs-title">SERVICES</div>
-                        <div className="brk-ccs-row"><span>Call & trade</span><span>₹{b.callTrade}</span></div>
-                        <div className="brk-ccs-row"><span>Auto square-off</span><span>₹{b.squareOff}</span></div>
-                        <div className="brk-ccs-row"><span>Instant withdrawal</span><span className={b.instantWithdrawal==='Free'?'brk-green':''}>{b.instantWithdrawal}</span></div>
-                        <div className="brk-ccs-row"><span>Payment gateway</span><span>{b.paymentGw===0?'Free':'₹'+fmt(b.paymentGw,2)}</span></div>
-                      </div>
-                      <div className="brk-card-charge-section">
-                        <div className="brk-ccs-title">MTF & API</div>
-                        {b.mtfSlabs ? b.mtfSlabs.map((s,si)=>(
-                          <div key={si} className="brk-ccs-row">
-                            <span>{s[0]}</span>
-                            <span className={parseFloat(s[1])>=15?'brk-card-red':parseFloat(s[1])<=13?'brk-green':''}>{s[1]}</span>
-                          </div>
-                        )) : <div className="brk-ccs-row"><span>MTF interest</span><span>{b.mtfLabel||'—'}</span></div>}
-                        <div className="brk-ccs-row" style={{marginTop:4,borderTop:'1px solid var(--border)',paddingTop:4}}><span>MTF brokerage</span><span>{b.mtfBrokerage}</span></div>
-                        <div className="brk-ccs-row"><span>API access</span><span>{b.apiNote||b.api}</span></div>
-                        <div className="brk-ccs-row"><span>Margin shortfall</span><span className={b.marginShortfall==='0.035%/day'?'brk-green':''}>{b.marginShortfall}</span></div>
-                      </div>
-                      <div className="brk-card-charge-section">
-                        <div className="brk-ccs-title">ACCOUNT</div>
-                        <div className="brk-ccs-row"><span>Account opening</span><span className="brk-green">Free</span></div>
-                        <div className="brk-ccs-row"><span>DDPI</span><span>₹{b.ddpi}</span></div>
-                        <div className="brk-ccs-row"><span>Reactivation</span><span>₹{b.reactivation}</span></div>
-                        {b.networth&&<div className="brk-ccs-row"><span>Networth (NSE)</span><span>{b.networthLabel}</span></div>}
-                        {b.activeClients&&<div className="brk-ccs-row"><span>Active clients</span><span>{b.activeClientsLabel}</span></div>}
-                      </div>
-                    </div>
-
-                    <div className="brk-card-sw">
-                      <div className="brk-card-sw-col">
-                        <div className="brk-ccs-title">STRENGTHS</div>
-                        {b.strengths.map((s,i)=><div key={i} className="brk-sw-item brk-sw-good">✔ {s}</div>)}
-                      </div>
-                      <div className="brk-card-sw-col">
-                        <div className="brk-ccs-title">WATCH OUT FOR</div>
-                        {b.watch.map((s,i)=><div key={i} className="brk-sw-item brk-sw-warn">⚠ {s}</div>)}
-                      </div>
-                    </div>
-
-                    <div className="brk-expand-footer">
-                      <a href={b.url} target="_blank" rel="noopener noreferrer" className="brk-ext-link">Visit {b.name} ↗</a>
-                      <span className="brk-disclaimer">Verify all charges on the broker's official website before trading.</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="brk-table-note">
-            Total cost on ₹50,000 delivery trade (buy + sell) includes all charges. ★ = Editor's Pick (platform quality, track record, financial strength). Click any broker to expand full charge breakdown.
+            Delivery total = brokerage + GST + DP charge + STT + exchange fee + SEBI fee + stamp duty. Govt charges scale with trade size; flat brokerage caps do not. ★ = Editor's Pick.
           </div>
         </div>
       )}
 
-      {/* ── CALCULATOR ── */}
+
       {tab==='Calculator' && (
         <div className="brk-content">
           <div className="brk-calc-inputs">
