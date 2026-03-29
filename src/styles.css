@@ -5729,3 +5729,31 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .brk-card-charge-grid { grid-template-columns: 1fr 1fr; }
   .brk-card-sw     { grid-template-columns: 1fr; }
 }
+
+/* ── Broker Hero v2 ───────────────────────────────────────────────── */
+.brk-hero2       { padding: 18px 20px; border-bottom: 1px solid var(--border); background: var(--bg0); }
+.brk-hero2-title { font-family: var(--mono); font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px; }
+.brk-hero2-sub   { font-family: var(--mono); font-size: 11px; color: var(--text3); letter-spacing: 0.5px; margin-bottom: 14px; }
+.brk-hero2-stats { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.brk-hs2         { display: flex; flex-direction: column; gap: 3px; }
+.brk-hs2-n       { font-family: var(--mono); font-size: 26px; font-weight: 900; letter-spacing: -1px; }
+.brk-hs2-l       { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.brk-hs2-sep     { font-family: var(--mono); font-size: 18px; color: var(--border2); }
+.brk-hero2-note  { font-family: var(--mono); font-size: 12px; color: var(--text2); line-height: 1.6; padding: 10px 14px; background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r); }
+
+/* ── MTF Comparison ───────────────────────────────────────────────── */
+.brk-mtf-grid    { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 20px; }
+.brk-mtf-row     { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-family: var(--mono); }
+.brk-mtf-rank    { font-size: 12px; font-weight: 700; color: var(--text3); width: 28px; flex-shrink: 0; }
+.brk-mtf-name    { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+.brk-mtf-rate    { font-size: 16px; font-weight: 900; letter-spacing: -0.5px; min-width: 70px; text-align: right; }
+.brk-mtf-note    { font-size: 11px; color: var(--text3); min-width: 180px; text-align: right; }
+.brk-mtf-cost-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; }
+.brk-mtf-int     { color: var(--text3); min-width: 90px; }
+.brk-mtf-brk     { color: var(--text3); min-width: 90px; }
+.brk-mtf-total-val { font-size: 15px; font-weight: 900; min-width: 70px; text-align: right; }
+
+@media (max-width: 900px) {
+  .brk-mtf-grid  { grid-template-columns: 1fr; }
+  .brk-mtf-note  { display: none; }
+}

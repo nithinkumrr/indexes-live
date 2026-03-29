@@ -16,8 +16,8 @@ const BROKERS = [
     callTrade: 59, squareOff: 59,
     paymentGw: 10.62,
     instantWithdrawal: 'Free',
-    api: '₹2,000/mo', apiNote: 'Kite Connect — most mature API in India',
-    ddpi: 118, reactivation: 59,
+    api: '₹500/mo', apiNote: 'Kite Connect — ₹500/mo base plan',
+    ddpi: 118, reactivation: 0,
     networth: 13500, networthLabel: '₹13,500 Cr',
     activeClients: 6.9, activeClientsLabel: '6.9M',
     total50k: 126.85, brokerCharges50k: 15.34,
@@ -34,7 +34,7 @@ const BROKERS = [
       'Coin for direct mutual funds',
       'Low margin shortfall interest (0.035%/day vs 0.05% at most)',
     ],
-    watch: ['AMC ₹88.50/yr (₹7.38/mo)', 'API costs ₹2,000/mo', 'No SLB or LAS'],
+    watch: ['AMC ₹88.50/yr (₹7.38/mo)', 'API ₹500/mo (Kite Connect)', 'No SLB or LAS'],
     best: ['equity', 'options', 'algo', 'longterm'],
     url: 'https://zerodha.com',
   },
@@ -53,7 +53,7 @@ const BROKERS = [
     paymentGw: 0,
     instantWithdrawal: 'Free',
     api: 'Free', apiNote: 'Dhan HQ API — free access',
-    ddpi: 118, reactivation: 59,
+    ddpi: 118, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 1.0, activeClientsLabel: '1.0M',
     total50k: 126.26, brokerCharges50k: 14.75,
@@ -80,7 +80,7 @@ const BROKERS = [
     paymentGw: 10,
     instantWithdrawal: 'Free',
     api: 'N/A', apiNote: 'Not offered',
-    ddpi: 99, reactivation: 118,
+    ddpi: 99, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 0.27, activeClientsLabel: '0.27M',
     total50k: 132.75, brokerCharges50k: 21.24,
@@ -128,13 +128,13 @@ const BROKERS = [
     options: '₹20/order', optionsB: 20,
     dp: 14.75, dpLabel: '₹12.5 + 18% GST',
     amc: 0, amcLabel: 'Free',
-    mtfRate: 16.49, mtfLabel: '16.49% p.a.',
+    mtfRate: 16.49, mtfLabel: '16.49% (up to ₹1L)',
     mtfBrokerage: '₹20 or 0.3%',
     callTrade: 59, squareOff: 59,
     paymentGw: 0,
     instantWithdrawal: 'Free',
     api: 'Free', apiNote: 'Fyers API — free, well documented',
-    ddpi: 0, reactivation: 59,
+    ddpi: 0, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: null, activeClientsLabel: '—',
     total50k: 173.46, brokerCharges50k: 61.95,
@@ -160,8 +160,8 @@ const BROKERS = [
     callTrade: 0, squareOff: 50,
     paymentGw: 0,
     instantWithdrawal: 'Free',
-    api: 'N/A', apiNote: 'Not offered',
-    ddpi: 118, reactivation: 118,
+    api: '₹499+GST/mo', apiNote: 'Data API',
+    ddpi: 118, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 12.5, activeClientsLabel: '12.5M',
     total50k: 178.71, brokerCharges50k: 67.20,
@@ -188,7 +188,7 @@ const BROKERS = [
     paymentGw: 8.26,
     instantWithdrawal: 'Free',
     api: 'Free', apiNote: 'Upstox API — free',
-    ddpi: 150, reactivation: 118,
+    ddpi: 150, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 2.0, activeClientsLabel: '2.0M',
     total50k: 178.71, brokerCharges50k: 67.20,
@@ -215,7 +215,7 @@ const BROKERS = [
     paymentGw: 0,
     instantWithdrawal: 'Free',
     api: 'Free', apiNote: 'SmartAPI — free',
-    ddpi: 118, reactivation: 118,
+    ddpi: 118, reactivation: 0,
     networth: 4400, networthLabel: '₹4,400 Cr',
     activeClients: 6.7, activeClientsLabel: '6.7M',
     total50k: 178.71, brokerCharges50k: 67.20,
@@ -236,7 +236,7 @@ const BROKERS = [
     options: '₹20/order', optionsB: 20,
     dp: 20, dpLabel: '₹20/scrip',
     amc: 0, amcLabel: 'Free',
-    mtfRate: 9.99, mtfLabel: '9.99% p.a.',
+    mtfRate: 7.99, mtfLabel: '7.99% (up to ₹1L)',
     mtfBrokerage: '0.1%',
     callTrade: 100, squareOff: 59,
     paymentGw: 0,
@@ -296,7 +296,7 @@ const BROKERS = [
     paymentGw: 11.80,
     instantWithdrawal: 'Free',
     api: '₹500/mo', apiNote: '₹500/month',
-    ddpi: 118, reactivation: 118,
+    ddpi: 118, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 0.34, activeClientsLabel: '0.34M',
     total50k: 182.31, brokerCharges50k: 70.80,
@@ -469,10 +469,10 @@ const SCENARIOS = {
 const fmt  = (v, d=0) => v != null ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: d }) : '—';
 const fmtR = (v) => v != null ? `₹${fmt(v)}` : '—';
 
-const TABS = ['Overview', 'Rankings', 'Calculator', 'Annual Cost', 'All Charges', 'Market Data'];
+const TABS = ['Rankings', 'Calculator', 'MTF Comparison', 'All Charges', 'Market Data'];
 
 export default function BrokersPage() {
-  const [tab,      setTab]     = useState('Overview');
+  const [tab,      setTab]     = useState('Rankings');
   const [sort,     setSort]    = useState('total50k');
   const [filter,   setFilter]  = useState('all');
   const [expanded, setExpanded]= useState(null);
@@ -530,37 +530,20 @@ export default function BrokersPage() {
     <div className="brk-wrap">
 
       {/* HEADER */}
-      <div className="brk-hero">
-        <div className="brk-hero-left">
-          <div className="brk-hero-headline">What your broker<br/>actually charges you.</div>
-          <div className="brk-hero-sub">16 brokers · 8 charge categories · no affiliates</div>
-          <div className="brk-hero-stats">
-            <div className="brk-hstat">
-              <div className="brk-hstat-n">₹126.26</div>
-              <div className="brk-hstat-l">cheapest broker</div>
-            </div>
-            <div className="brk-hstat-vs">vs</div>
-            <div className="brk-hstat">
-              <div className="brk-hstat-n brk-hstat-red">₹721.51</div>
-              <div className="brk-hstat-l">most expensive</div>
-            </div>
-            <div className="brk-hstat-badge">5.7× difference<br/><span>same ₹50K trade</span></div>
-          </div>
-          <div className="brk-hero-note">On every ₹50K delivery trade, ₹111.51 goes to the government and exchanges — fixed at every broker. The gap between brokers is entirely in brokerage, DP charge, and AMC.</div>
+      <div className="brk-hero2">
+        <div className="brk-hero2-title">Indian Broker Charges — Every Fee, Calculated</div>
+        <div className="brk-hero2-sub">16 brokers · factual data · no affiliates · no sponsored rankings</div>
+        <div className="brk-hero2-stats">
+          <div className="brk-hs2"><div className="brk-hs2-n" style={{color:'var(--gain)'}}>₹126.26</div><div className="brk-hs2-l">Cheapest (Dhan)</div></div>
+          <div className="brk-hs2-sep">vs</div>
+          <div className="brk-hs2"><div className="brk-hs2-n" style={{color:'var(--loss)'}}>₹721.51</div><div className="brk-hs2-l">Most expensive (HDFC)</div></div>
+          <div className="brk-hs2-sep">·</div>
+          <div className="brk-hs2"><div className="brk-hs2-n">₹111.51</div><div className="brk-hs2-l">Fixed govt charges (same everywhere)</div></div>
+          <div className="brk-hs2-sep">·</div>
+          <div className="brk-hs2"><div className="brk-hs2-n">5.7×</div><div className="brk-hs2-l">Gap cheapest vs costliest</div></div>
         </div>
-        <div className="brk-hero-right">
-          <div className="brk-featured-card">
-            <div className="brk-featured-badge">EDITOR'S PICK</div>
-            <div className="brk-featured-name">Zerodha</div>
-            <div className="brk-featured-tag">15 years · ₹13,500 Cr networth · Kite platform · Varsity education</div>
-            <div className="brk-featured-facts">
-              <div className="brk-ffact"><span className="brk-ffact-v">₹13,500 Cr</span><span className="brk-ffact-l">Networth — #1 in India</span></div>
-              <div className="brk-ffact"><span className="brk-ffact-v">6.9M</span><span className="brk-ffact-l">Active clients</span></div>
-              <div className="brk-ffact"><span className="brk-ffact-v">15+ yrs</span><span className="brk-ffact-l">Track record</span></div>
-              <div className="brk-ffact"><span className="brk-ffact-v">₹126.85</span><span className="brk-ffact-l">Total cost ₹50K trade</span></div>
-            </div>
-            <div className="brk-featured-vs">59 paise more than Dhan on a ₹50,000 trade.</div>
-          </div>
+        <div className="brk-hero2-note">
+          <span style={{color:'var(--accent)',fontWeight:700}}>★ Zerodha</span> — Editor's Pick. ₹13,500 Cr networth (highest in India), 15+ year track record, Kite platform, Varsity education. Costs ₹0.59 more than Dhan on a ₹50K trade.
         </div>
       </div>
 
@@ -572,7 +555,7 @@ export default function BrokersPage() {
           {TABS.map(t=>(
             <button key={t} className={`brk-nav-btn${tab===t?' brk-nav-active':''}`} onClick={()=>setTab(t)}>
               <span className="brk-nav-icon">{
-                t==='Overview'?'◎':t==='Rankings'?'↓':t==='Calculator'?'₹':t==='Annual Cost'?'📅':t==='All Charges'?'≡':'📊'
+                t==='Rankings'?'↓':t==='Calculator'?'₹':t==='MTF Comparison'?'%':t==='All Charges'?'≡':'📊'
               }</span>
               <span className="brk-nav-label">{t}</span>
             </button>
@@ -581,119 +564,6 @@ export default function BrokersPage() {
 
         {/* RIGHT CONTENT */}
         <div className="brk-main-content">
-
-      {/* ── OVERVIEW ── */}
-      {tab==='Overview' && (
-        <div className="brk-content">
-          <div className="brk-overview-grid">
-            {/* Top brokers for each type */}
-            <div className="brk-ov-section">
-              <div className="brk-ov-title">Two brokers stand out on cost</div>
-              <div className="brk-ov-cards">
-                <div className="brk-ov-card brk-ov-primary">
-                  <div className="brk-ov-rank">#2 by total cost · highest networth in India</div>
-                  <div className="brk-ov-broker">Zerodha</div>
-                  <div className="brk-ov-cost">₹126.85 / ₹50K trade</div>
-                  <div className="brk-ov-list">
-                    <div>✔ Kite — best trading UI in India</div>
-                    <div>✔ Varsity — free education platform</div>
-                    <div>✔ ₹13,500 Cr networth (highest in India)</div>
-                    <div>✔ Zero delivery brokerage</div>
-                    <div>✔ 15+ year track record</div>
-                  </div>
-                  <div className="brk-ov-note">₹88.50/yr AMC · 59 paise more than Dhan on a ₹50K trade</div>
-                </div>
-                <div className="brk-ov-card">
-                  <div className="brk-ov-rank">#1 by total cost</div>
-                  <div className="brk-ov-broker">Dhan</div>
-                  <div className="brk-ov-cost">₹126.26 / ₹50K trade</div>
-                  <div className="brk-ov-list">
-                    <div>✔ Zero AMC (saves ₹88.50/yr vs Zerodha)</div>
-                    <div>✔ Lowest DP charge (₹14.75)</div>
-                    <div>✔ Lowest MTF rate (12.49% up to ₹5L)</div>
-                    <div>✔ Free API</div>
-                  </div>
-                  <div className="brk-ov-note">Newer platform · networth not publicly filed vs Zerodha</div>
-                </div>
-              </div>
-            </div>
-
-            {/* What makes Zerodha different */}
-            <div className="brk-ov-section">
-              <div className="brk-ov-title">Cost is one number. Platform is another.</div>
-              <div className="brk-ov-explainer">
-                <p>Dhan comes in 59 paise cheaper than Zerodha on a single ₹50K trade. Both charge zero delivery brokerage. The difference is DP charge — ₹14.75 at Dhan vs ₹15.34 at Zerodha — and Zerodha's annual ₹88.50 AMC.</p>
-                <p>Over a year with 5 delivery sells per month, Dhan costs ₹7,222 and Zerodha costs ₹7,332 — a ₹110 annual gap. Neither number is surprising. What is surprising: HDFC Securities costs ₹43,696 on the same activity.</p>
-                <p>Zerodha's financials from NSE filings: networth ₹13,500 Cr, the highest of any broker in India. Dhan doesn't publish a comparable figure. For traders who care about counterparty safety, this is a meaningful data point.</p>
-                <p>The practical split: Zerodha for platform depth, Kite's feature set, Varsity, and the API ecosystem. Dhan for zero AMC and the lowest per-transaction cost available today.</p>
-              </div>
-            </div>
-
-            {/* Quick compare table */}
-            <div className="brk-ov-section">
-              <div className="brk-ov-title">All-in cost on a ₹50,000 delivery trade</div>
-              <div className="brk-mini-table">
-                <div className="brk-mini-head"><span>Broker</span><span>Broker charges</span><span>Govt charges</span><span>Total</span></div>
-                {BROKERS.slice(0,8).sort((a,b)=>a.total50k-b.total50k).map((b,i)=>(
-                  <div key={b.id} className={`brk-mini-row${b.id==='zerodha'?' brk-mini-highlight':''}`}>
-                    <span>{b.id==='zerodha'&&<span className="brk-mini-star">★</span>}{b.name}</span>
-                    <span className={b.brokerCharges50k<=15.34?'brk-green':''}>₹{fmt(b.brokerCharges50k,2)}</span>
-                    <span className="brk-dim">₹111.51</span>
-                    <span className={i===0?'brk-green':''}><strong>₹{fmt(b.total50k,2)}</strong></span>
-                  </div>
-                ))}
-                <div className="brk-mini-row brk-mini-sep"><span>Full-service brokers</span><span/><span/><span/></div>
-                {BROKERS.filter(b=>b.type==='full').sort((a,b)=>a.total50k-b.total50k).map((b,i)=>(
-                  <div key={b.id} className="brk-mini-row brk-mini-full">
-                    <span>{b.name}</span>
-                    <span className="brk-red">₹{fmt(b.brokerCharges50k,2)}</span>
-                    <span className="brk-dim">₹111.51</span>
-                    <span><strong>₹{fmt(b.total50k,2)}</strong></span>
-                  </div>
-                ))}
-              </div>
-              <div className="brk-table-note">★ Platform Pick. Govt charges (STT + exchange + SEBI + stamp) are fixed by law and identical at every broker.</div>
-            </div>
-
-            {/* Charge breakdown explainer */}
-            <div className="brk-ov-section">
-              <div className="brk-ov-title">Every trade has six charge layers</div>
-              <div className="brk-charges-split">
-                <div>
-                  <div className="brk-charges-col-title brk-col-broker">Varies by broker</div>
-                  <div className="brk-charge-card brk-charge-variable">
-                    <div className="brk-charge-name">Brokerage</div>
-                    <div className="brk-charge-note">Ranges from zero (Zerodha, Dhan on delivery) to 0.5% per order at full-service brokers like HDFC and Axis. This is the most visible variable.</div>
-                  </div>
-                  <div className="brk-charge-card brk-charge-variable">
-                    <div className="brk-charge-name">DP Charge</div>
-                    <div className="brk-charge-note">Debited from your account each time you sell shares — once per scrip per trading day. Ranges from ₹13.50 at Sahi to ₹30 at HDFC Securities. You pay this even if brokerage is zero.</div>
-                  </div>
-                  <div className="brk-charge-card brk-charge-variable">
-                    <div className="brk-charge-name">AMC</div>
-                    <div className="brk-charge-note">Flat yearly fee to keep your demat account open. Seven discount brokers charge nothing. Full-service brokers charge ₹600–₹885 per year regardless of how much you trade.</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="brk-charges-col-title brk-col-govt">Fixed everywhere</div>
-                  <div className="brk-charge-card brk-charge-fixed">
-                    <div className="brk-charge-name">STT</div>
-                    <div className="brk-charge-note">Government tax on every stock transaction. On delivery equity, 0.1% is charged on the sell side — that's ₹100 on a ₹50K trade. Cannot be reduced or waived by any broker.</div>
-                  </div>
-                  <div className="brk-charge-card brk-charge-fixed">
-                    <div className="brk-charge-name">Exchange Fee + SEBI</div>
-                    <div className="brk-charge-note">NSE/BSE levy for executing your order, plus SEBI's regulatory fee. Together about ₹3.50 on a ₹50K delivery trade. The same amount at every broker — it goes to the exchange, not the broker.</div>
-                  </div>
-                  <div className="brk-charge-card brk-charge-fixed">
-                    <div className="brk-charge-name">Stamp Duty + GST</div>
-                    <div className="brk-charge-note">Stamp duty is a state government levy on share purchases (0.015% of buy value). GST of 18% applies to brokerage and exchange fees — not on STT. If your broker charges zero brokerage, the GST on brokerage is also zero.</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── RANKINGS ── */}
       {tab==='Rankings' && (
@@ -883,47 +753,102 @@ export default function BrokersPage() {
         </div>
       )}
 
-      {/* ── ANNUAL COST ── */}
-      {tab==='Annual Cost' && (
+      {/* ── MTF COMPARISON ── */}
+      {tab==='MTF Comparison' && (
         <div className="brk-content">
-          <div className="brk-scenario-tabs">
-            {Object.entries(SCENARIOS).map(([k,v])=>(
-              <button key={k} className={`brk-stab${scenario===k?' brk-stab-active':''}`} onClick={()=>setScenario(k)}>
-                <span>{v.icon}</span> {v.label}
-              </button>
-            ))}
+          <div className="brk-reg-note">
+            <span className="brk-reg-num">MTF = Margin Trading Facility</span> — buy stocks with borrowed money. Two costs hit you: interest on borrowed amount (daily, compounded) + brokerage per order. Rates below are indicative; verify with broker before using MTF.
           </div>
-          <div className="brk-scenario-desc">{SCENARIOS[scenario].desc}</div>
-          <div className="brk-calc-results">
-            <div className="brk-annual-head">
-              <span>#</span><span>Broker</span><span>Trading</span><span>DP charges</span><span>AMC</span><span>Regulatory</span><span>Total/year</span>
+
+          <div className="brk-mtf-grid">
+            {/* Interest rates ranked */}
+            <div>
+              <div className="brk-ccs-title" style={{fontSize:13,marginBottom:14}}>MTF INTEREST RATE — RANKED LOW TO HIGH</div>
+              <div className="brk-cards-list">
+                {[
+                  {name:'Paytm Money', rate:'7.99%', note:'Up to ₹1L · 9.99% above ₹1L', color:'var(--gain)'},
+                  {name:'HDFC Securities', rate:'12%', note:'~0.032%/day on funded amount', color:'var(--gain)'},
+                  {name:'Dhan', rate:'12.49%', note:'Up to ₹5L · rises to 16.49% above ₹50L', color:'var(--gain)'},
+                  {name:'Zerodha', rate:'14.6%', note:'0.04%/day · flat rate · unlimited holding', color:'var(--text)'},
+                  {name:'INDmoney', rate:'14.6%', note:'0.04%/day', color:'var(--text)'},
+                  {name:'Kotak Securities', rate:'14.97%', note:'0.041%/day (Trade Free plan)', color:'var(--text)'},
+                  {name:'Angel One', rate:'14.99%', note:'0.049%/day', color:'var(--text)'},
+                  {name:'mStock', rate:'15%', note:'0.0274%/day up to ₹25L', color:'var(--text)'},
+                  {name:'5paisa', rate:'15.5%', note:'0.042%/day (₹5L–₹1Cr slab)', color:'#F59E0B'},
+                  {name:'Groww', rate:'15.75%', note:'0.043%/day under ₹25L · 9.75% above', color:'#F59E0B'},
+                  {name:'Fyers', rate:'16.49%', note:'For ₹1K–₹1L · lower for larger amounts', color:'#F59E0B'},
+                  {name:'ICICI Direct', rate:'17.99%', note:'On base plan', color:'var(--loss)'},
+                  {name:'Axis Securities', rate:'17.99%', note:'0.05%/day', color:'var(--loss)'},
+                  {name:'Upstox', rate:'18.25%', note:'₹20/day per ₹40,000 slab', color:'var(--loss)'},
+                ].map((b,i)=>(
+                  <div key={i} className="brk-mtf-row">
+                    <span className="brk-mtf-rank">#{i+1}</span>
+                    <span className="brk-mtf-name">{b.name}</span>
+                    <span className="brk-mtf-rate" style={{color:b.color}}>{b.rate}</span>
+                    <span className="brk-mtf-note">{b.note}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            {SCENARIOS[scenario].data.sort((a,b)=>a.total-b.total).map((row,i)=>{
-              const b = BROKERS.find(x=>x.id===row.id);
-              const best = SCENARIOS[scenario].data[0].total;
-              return (
-                <div key={row.id} className={`brk-annual-row${i===0?' brk-calc-best':''}${row.id==='zerodha'?' brk-calc-featured':''}`}>
-                  <span className="brk-rank">{i+1}</span>
-                  <span className="brk-broker-name">{row.id==='zerodha'&&<span className="brk-star">★ </span>}{b?.name||row.id}</span>
-                  <span>₹{fmt(row.brokerage)}</span>
-                  <span>₹{fmt(row.dp)}</span>
-                  <span>₹{fmt(row.amc)}</span>
-                  <span className="brk-govt">₹{fmt(row.regulatory)}</span>
-                  <span className="brk-calc-total">
-                    ₹{fmt(row.total)}
-                    {i>0&&<span className="brk-annual-diff"> +₹{fmt(row.total-best)}</span>}
-                  </span>
-                </div>
-              );
-            })}
+
+            {/* MTF cost comparison for ₹1L borrowed 30 days */}
+            <div>
+              <div className="brk-ccs-title" style={{fontSize:13,marginBottom:14}}>COST OF ₹1,00,000 BORROWED FOR 30 DAYS</div>
+              <div className="brk-cards-list">
+                {[
+                  {name:'Paytm Money', interest:657, brokerage:47, total:704, note:'7.99% p.a.'},
+                  {name:'HDFC Securities', interest:986, brokerage:755, total:1741, note:'12% p.a. but high brokerage'},
+                  {name:'Dhan', interest:1027, brokerage:47, total:1074, note:'12.49% for ≤₹5L'},
+                  {name:'Zerodha', interest:1200, brokerage:47, total:1247, note:'14.6% p.a. flat'},
+                  {name:'Angel One', interest:1232, brokerage:47, total:1279, note:'14.99% p.a.'},
+                  {name:'Kotak Securities', interest:1230, brokerage:472, total:1702, note:'High brokerage on MTF'},
+                  {name:'Groww', interest:1295, brokerage:236, total:1531, note:'15.75% + higher brokerage'},
+                  {name:'Upstox', interest:1500, brokerage:47, total:1547, note:'₹20/day per ₹40K slab'},
+                  {name:'ICICI Direct', interest:2465, brokerage:2950, total:5415, note:'Very expensive on base plan'},
+                ].map((b,i)=>(
+                  <div key={i} className="brk-mtf-cost-row">
+                    <span className="brk-mtf-rank">#{i+1}</span>
+                    <span className="brk-mtf-name">{b.name}</span>
+                    <span className="brk-mtf-int">Int: ₹{b.interest.toLocaleString('en-IN')}</span>
+                    <span className="brk-mtf-brk">Brk: ₹{b.brokerage.toLocaleString('en-IN')}</span>
+                    <span className="brk-mtf-total-val" style={{color:i===0?'var(--gain)':i>=7?'var(--loss)':'var(--text)'}}>₹{b.total.toLocaleString('en-IN')}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="brk-reg-note" style={{marginTop:16}}>
+                <span style={{color:'var(--loss)',fontWeight:800}}>MTF is leverage.</span> Interest compounds daily. A ₹5L position at 14.6% for 30 days costs ₹6,000 in interest alone. Use MTF only with a clear short-term thesis and planned exit.
+              </div>
+
+              <div className="brk-ccs-title" style={{fontSize:12,marginTop:20,marginBottom:10}}>MTF BROKERAGE PER ORDER</div>
+              <div className="brk-cards-list">
+                {[
+                  {name:'mStock', brk:'₹5 flat'},
+                  {name:'Zerodha / Dhan', brk:'0.3% or ₹20'},
+                  {name:'Angel One', brk:'0.1% or ₹20'},
+                  {name:'Groww', brk:'0.1% of order'},
+                  {name:'Upstox / 5paisa', brk:'₹20 flat'},
+                  {name:'Kotak Securities', brk:'0–0.30% by plan'},
+                  {name:'HDFC Securities', brk:'0.32% min ₹25'},
+                  {name:'ICICI Direct', brk:'0.25% base plan'},
+                  {name:'Axis Securities', brk:'0.5% min ₹25'},
+                ].map((b,i)=>(
+                  <div key={i} className="brk-mtf-row">
+                    <span className="brk-mtf-name" style={{flex:'1'}}>{b.name}</span>
+                    <span className="brk-mtf-rate" style={{color:i<=1?'var(--gain)':'var(--text)'}}>{b.brk}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+
           <div className="brk-table-note">
-            Annual cost includes all charges. Regulatory = STT + exchange + SEBI + stamp duty. Fixed by law, identical everywhere. ★ = Platform Pick.
+            MTF interest rates change frequently. Always confirm with your broker before using MTF. Rates shown are for standard/base plans. ₹1L for 30 days calculation uses 1 buy + 1 sell brokerage including 18% GST on brokerage.
           </div>
         </div>
       )}
 
-      {/* ── ALL CHARGES ── */}
+            {/* ── ALL CHARGES ── */}
       {tab==='All Charges' && (
         <div className="brk-content">
           <div className="brk-charge-nav">
