@@ -532,18 +532,30 @@ export default function BrokersPage() {
       {/* HEADER */}
       <div className="brk-hero2">
         <div className="brk-hero2-title">Indian Broker Charges — Every Fee, Calculated</div>
-        <div className="brk-hero2-sub">16 brokers · factual data · no affiliates · no sponsored rankings</div>
+        <div className="brk-hero2-sub">16 brokers covered. No bias from affiliates or paid placements.</div>
         <div className="brk-hero2-stats">
-          <div className="brk-hs2"><div className="brk-hs2-n" style={{color:'var(--gain)'}}>₹126.26</div><div className="brk-hs2-l">Cheapest (Dhan)</div></div>
+          <div className="brk-hs2">
+            <div className="brk-hs2-n" style={{color:'var(--gain)'}}>₹126.26</div>
+            <div className="brk-hs2-l">Cheapest — <strong style={{color:'var(--text)'}}>Dhan</strong> &amp; <strong style={{color:'var(--accent)'}}>Zerodha ★</strong></div>
+          </div>
           <div className="brk-hs2-sep">vs</div>
-          <div className="brk-hs2"><div className="brk-hs2-n" style={{color:'var(--loss)'}}>₹721.51</div><div className="brk-hs2-l">Most expensive (HDFC)</div></div>
+          <div className="brk-hs2">
+            <div className="brk-hs2-n" style={{color:'var(--loss)'}}>₹721.51</div>
+            <div className="brk-hs2-l">Most expensive — <strong style={{color:'var(--text)'}}>HDFC Securities</strong></div>
+          </div>
           <div className="brk-hs2-sep">·</div>
-          <div className="brk-hs2"><div className="brk-hs2-n">₹111.51</div><div className="brk-hs2-l">Fixed govt charges (same everywhere)</div></div>
+          <div className="brk-hs2">
+            <div className="brk-hs2-n">₹111.51</div>
+            <div className="brk-hs2-l">Fixed govt charges — same at every broker</div>
+          </div>
           <div className="brk-hs2-sep">·</div>
-          <div className="brk-hs2"><div className="brk-hs2-n">5.7×</div><div className="brk-hs2-l">Gap cheapest vs costliest</div></div>
+          <div className="brk-hs2">
+            <div className="brk-hs2-n">5.7×</div>
+            <div className="brk-hs2-l">Difference between cheapest and costliest</div>
+          </div>
         </div>
         <div className="brk-hero2-note">
-          <span style={{color:'var(--accent)',fontWeight:700}}>★ Zerodha</span> — Editor's Pick. ₹13,500 Cr networth (highest in India), 15+ year track record, Kite platform, Varsity education. Costs ₹0.59 more than Dhan on a ₹50K trade.
+          <span style={{color:'var(--accent)',fontWeight:900,fontSize:15}}>★ Zerodha</span> — Widely considered the best combination of low cost, trading experience, reliability and trust in India. ₹13,500 Cr networth (highest of any broker in India), 15+ year track record, Kite platform, Varsity education. Costs just ₹0.59 more than Dhan on a ₹50,000 delivery trade.
         </div>
       </div>
 
