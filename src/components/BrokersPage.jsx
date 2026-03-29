@@ -587,6 +587,16 @@ export default function BrokersPage() {
       {tab==='Rankings' && (
         <div className="brk-content">
 
+          {/* TRADE SIZE TOGGLE */}
+          <div className="brk-size-bar">
+            <span className="brk-size-label">TRADE SIZE</span>
+            {[['₹50K','50000'],['₹1L','100000'],['₹10L','1000000']].map(([label,val])=>(
+              <button key={val} className={`brk-size-btn${tradeVal===val?' brk-size-active':''}`} onClick={()=>setTradeVal(val)}>
+                {label}
+              </button>
+            ))}
+          </div>
+
           {/* Filters */}
           <div className="brk-filters">
             <div className="brk-filter-group">
@@ -633,7 +643,7 @@ export default function BrokersPage() {
                     {/* Col: Delivery */}
                     <div className="brk-col">
                       <div className="brk-col-label">DELIVERY</div>
-                      <div className={`brk-col-val ${b.delivery===0?'brk-col-zero':''}`}>{b.deliveryLabel}</div>
+                      <div className={`brk-col-val ${b.delivery===0?'brk-col-green':''}`}>{b.deliveryLabel}</div>
                     </div>
 
                     {/* Col: Intraday */}
@@ -688,41 +698,29 @@ export default function BrokersPage() {
                       <div className={`brk-col-val ${b.amc===0?'brk-col-green':b.amc>=600?'brk-col-red':''}`}>{b.amcLabel}</div>
                     </div>
 
-                  </div>
+                    <div className="brk-col-divider"/>
 
-                  {/* BOTTOM ROW: total costs — 3 trade sizes */}
-                  <div className="brk-card-totals">
-                    <div className="brk-card-totals-label">TOTAL ALL-IN COST — brokerage + GST + regulatory charges</div>
-                    <div className="brk-card-totals-groups">
-                      {[['₹50K',50000,111.24,17.74],['₹1L',100000,222.48,35.48],['₹10L',1000000,2224.8,354.8]].map(([label,v,gD,gI])=>{
-                        const brkD = b.delivery===0 ? 0 : Math.min(b.brokerCharges50k/50000*v, v*0.005+25);
-                        const brkI = (b.intradayB||20)*1.18;
-                        const totD = (b.delivery===0?0:brkD*1.18) + b.dp + gD;
-                        const totI = brkI + gI;
-                        const mtf30 = b.mtfRate ? Math.round(v*b.mtfRate/100/365*30) : null;
-                        return (
-                          <div key={label} className="brk-totals-group">
-                            <div className="brk-totals-group-title">{label} TRADE</div>
-                            <div className="brk-total-item">
-                              <span className="brk-total-seg">DELIVERY</span>
-                              <span className={`brk-total-num ${i===0?'brk-col-green':b.featured?'brk-col-accent':''}`}>₹{fmt(totD,0)}</span>
-                              <span className="brk-total-sub">{b.delivery===0?'Zero brk':'₹'+fmt(brkD*1.18,0)+' brk'} · ₹{fmt(b.dp,2)} DP · ₹{fmt(gD,2)} govt</span>
-                            </div>
-                            <div className="brk-total-item">
-                              <span className="brk-total-seg">INTRADAY</span>
-                              <span className={`brk-total-num ${b.intradayB===5?'brk-col-green':''}`}>₹{fmt(totI,0)}</span>
-                              <span className="brk-total-sub">₹{fmt(brkI,2)} brk · ₹{fmt(gI,2)} govt</span>
-                            </div>
-                            <div className="brk-total-item">
-                              <span className="brk-total-seg">MTF 30 DAYS</span>
-                              <span className={`brk-total-num ${mtf30&&mtf30<1500?'brk-col-green':mtf30&&mtf30>5000?'brk-col-red':''}`}>{mtf30?'₹'+fmt(mtf30,0):'—'}</span>
-                              <span className="brk-total-sub">{b.mtfRate?`${b.mtfRate}% p.a. on ₹${fmt(v/100000,1)}L`:'Not offered'}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {i>0&&<div className="brk-total-vs">+₹{fmt(b.total50k-sorted[0].total50k,2)} vs cheapest on ₹50K delivery</div>}
+                    {/* Col: Total cost for selected trade size */}
+                    {(()=>{
+                      const tv=parseFloat(tradeVal)||50000;
+                      const scale=tv/50000;
+                      const govtD=111.24*scale;
+                      const totD=(b.delivery===0?0:b.brokerCharges50k*scale*1.18)+b.dp+govtD;
+                      const cheapTot=(sorted[0].delivery===0?0:sorted[0].brokerCharges50k*scale*1.18)+sorted[0].dp+111.24*scale;
+                      const isBest=totD<=cheapTot+0.01;
+                      return (
+                        <div className="brk-col brk-col-total">
+                          <div className="brk-col-label">TOTAL — DELIVERY</div>
+                          <div className={`brk-col-val brk-col-total-num ${isBest?'brk-col-green':b.total50k>400?'brk-col-red':''}`}>₹{fmt(totD,0)}</div>
+                          {isBest
+                            ? <div className="brk-col-sub brk-col-green">↓ cheapest</div>
+                            : <div className="brk-col-sub">+₹{fmt(totD-cheapTot,0)} vs cheapest</div>
+                          }
+                          <div className="brk-col-sub" style={{marginTop:2}}>{b.delivery===0?'Zero brk':'₹'+fmt(b.brokerCharges50k*scale*1.18,0)+' brk'} · ₹{fmt(b.dp,2)} DP</div>
+                        </div>
+                      );
+                    })()}
+
                   </div>
 
                 </div>

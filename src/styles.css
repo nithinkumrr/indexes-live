@@ -5771,3 +5771,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-hs2-sep      { font-family: var(--mono); font-size: 20px; color: var(--border2); line-height: 1; }
 .brk-hero2-note   { font-family: var(--mono); font-size: 12px; color: var(--text2); line-height: 1.7; padding: 10px 14px; background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r); }
 .brk-hero2-note a { color: var(--accent); }
+
+/* ── Trade size toggle ────────────────────────────────────────────── */
+.brk-size-bar    { display: flex; align-items: center; gap: 8px; padding: 10px 0 12px; flex-wrap: wrap; }
+.brk-size-label  { font-family: var(--mono); font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: var(--text3); margin-right: 4px; }
+.brk-size-btn    { font-family: var(--mono); font-size: 13px; font-weight: 800; padding: 7px 20px; border-radius: 40px; border: 2px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; transition: all .15s; }
+.brk-size-btn:hover { border-color: var(--accent); color: var(--accent); }
+.brk-size-active { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
+
+/* Total column in card */
+.brk-col-total      { min-width: 120px; }
+.brk-col-total-num  { font-size: 22px !important; letter-spacing: -0.5px; }
+
+/* Fix Zero to be green + same size */
+.brk-col-zero { color: var(--gain) !important; font-size: 16px !important; font-weight: 900 !important; }
