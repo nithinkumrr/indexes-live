@@ -560,7 +560,7 @@ export default function BrokersPage() {
           </div>
         </div>
         <div className="brk-hero2-note">
-          <span style={{color:'var(--accent)',fontWeight:900,fontSize:15}}>★ Zerodha</span> — Widely considered the best combination of low cost, trading experience, reliability and trust in India. ₹13,500 Cr networth (highest of any broker in India), 15+ year track record, Kite platform, <a href="https://zerodha.com/varsity/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)',textDecoration:'underline'}}>Varsity</a> education.<br/>Costs ₹0.59 more than Dhan for a ₹50,000 delivery trade.
+          <span style={{color:'var(--accent)',fontWeight:900,fontSize:15}}>★ Zerodha</span> — Widely considered for combination of low cost, robust trading experience, reliability and trust. ₹13,500 Cr networth (highest of any broker in India), 15+ year track record, Kite platform, <a href="https://zerodha.com/varsity/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)',textDecoration:'underline'}}>Varsity</a> education.<br/>Costs just ₹0.59 more than Dhan on a ₹50,000 delivery trade.
 
         </div>
       </div>
