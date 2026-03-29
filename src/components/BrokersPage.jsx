@@ -715,9 +715,9 @@ export default function BrokersPage() {
                               <span className="brk-t3-seg">Intraday</span>
                               <span className={`brk-t3-num ${b.intradayB===5?'brk-col-green':''}`}>₹{fmt(totI,2)}</span>
                             </div>
-                            <div className="brk-t3-row">
-                              <span className="brk-t3-seg">MTF <span className="brk-t3-brk">({b.mtfBrokerage||'—'})</span></span>
-                              <span className="brk-t3-num">₹{fmt(totMTF,2)}</span>
+                            <div className="brk-t3-row brk-t3-row-mtf">
+                              <span className="brk-t3-seg">MTF</span>
+                              <span className="brk-t3-num">₹{fmt(totMTF,2)} <span className="brk-t3-brk">(Brokerage: ₹{fmt(mtfBrkAmt,2)})</span></span>
                             </div>
                           </div>
                           <div className="brk-col-sub" style={{marginTop:4}}>
