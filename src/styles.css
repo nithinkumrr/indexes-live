@@ -5672,7 +5672,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-card-open     { border-color: var(--accent) !important; }
 
 /* Card header row */
-.brk-card-header   { display: grid; grid-template-columns: 44px 160px 1fr 180px; align-items: center; padding: 16px 20px; cursor: pointer; gap: 16px; }
+.brk-card-header   { display: grid; grid-template-columns: 44px 140px 1fr 210px; align-items: center; padding: 14px 20px; cursor: pointer; gap: 14px; }
 .brk-card-header:hover { background: rgba(255,255,255,.02); }
 
 .brk-card-rank     { font-family: var(--mono); font-size: 22px; font-weight: 900; color: var(--text3); text-align: center; }
@@ -5683,7 +5683,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-card-featured .brk-card-type-tag { color: var(--accent); }
 
 /* Charge numbers in the row */
-.brk-card-nums     { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.brk-card-nums     { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
 .brk-card-num      { display: flex; flex-direction: column; gap: 4px; }
 .brk-card-num-label { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 1.2px; color: var(--text3); }
 .brk-card-num-val  { font-family: var(--mono); font-size: 15px; font-weight: 800; color: var(--text); }
@@ -5757,3 +5757,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .brk-mtf-grid  { grid-template-columns: 1fr; }
   .brk-mtf-note  { display: none; }
 }
+
+.brk-card-total-rows  { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
+.brk-card-total-row   { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.brk-card-total-seg   { font-family: var(--mono); font-size: 10px; color: var(--text3); font-weight: 600; }
+.brk-card-total-sm    { font-family: var(--mono); font-size: 15px; font-weight: 800; color: var(--text2); }

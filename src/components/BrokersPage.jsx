@@ -20,7 +20,7 @@ const BROKERS = [
     ddpi: 118, reactivation: 0,
     networth: 13500, networthLabel: '₹13,500 Cr',
     activeClients: 6.9, activeClientsLabel: '6.9M',
-    total50k: 126.85, brokerCharges50k: 15.34,
+    total50k: 126.58, brokerCharges50k: 15.34,
     pledgeUnpledge: '₹35.40 pledge / Free unpledge',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.035%/day',
@@ -56,7 +56,7 @@ const BROKERS = [
     ddpi: 118, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 1.0, activeClientsLabel: '1.0M',
-    total50k: 126.26, brokerCharges50k: 14.75,
+    total50k: 125.99, brokerCharges50k: 14.75,
     pledgeUnpledge: '₹17.70/ISIN each',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.05%/day',
@@ -83,7 +83,7 @@ const BROKERS = [
     ddpi: 99, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 0.27, activeClientsLabel: '0.27M',
-    total50k: 132.75, brokerCharges50k: 21.24,
+    total50k: 132.48, brokerCharges50k: 21.24,
     pledgeUnpledge: '₹32/unpledge only',
     dematerialisation: '₹236/cert',
     marginShortfall: '0.049%/day',
@@ -110,7 +110,7 @@ const BROKERS = [
     ddpi: 0, reactivation: 118,
     networth: null, networthLabel: '—',
     activeClients: null, activeClientsLabel: '—',
-    total50k: 148.61, brokerCharges50k: 37.10,
+    total50k: 148.34, brokerCharges50k: 37.10,
     pledgeUnpledge: '₹23.60 pledge / ₹5.90 repledge',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.05%/day',
@@ -137,7 +137,7 @@ const BROKERS = [
     ddpi: 0, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: null, activeClientsLabel: '—',
-    total50k: 173.46, brokerCharges50k: 61.95,
+    total50k: 173.19, brokerCharges50k: 61.95,
     pledgeUnpledge: '₹5/ISIN',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.041%/day',
@@ -164,7 +164,7 @@ const BROKERS = [
     ddpi: 118, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 12.5, activeClientsLabel: '12.5M',
-    total50k: 178.71, brokerCharges50k: 67.20,
+    total50k: 178.44, brokerCharges50k: 67.20,
     pledgeUnpledge: '₹23.60 each',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.05%/day',
@@ -191,7 +191,7 @@ const BROKERS = [
     ddpi: 150, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 2.0, activeClientsLabel: '2.0M',
-    total50k: 178.71, brokerCharges50k: 67.20,
+    total50k: 178.44, brokerCharges50k: 67.20,
     pledgeUnpledge: '₹23.60 each',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.05%/day',
@@ -218,7 +218,7 @@ const BROKERS = [
     ddpi: 118, reactivation: 0,
     networth: 4400, networthLabel: '₹4,400 Cr',
     activeClients: 6.7, activeClientsLabel: '6.7M',
-    total50k: 178.71, brokerCharges50k: 67.20,
+    total50k: 178.44, brokerCharges50k: 67.20,
     pledgeUnpledge: '₹23.60 each',
     dematerialisation: '₹236/cert',
     marginShortfall: '0.05%/day',
@@ -245,7 +245,7 @@ const BROKERS = [
     ddpi: 0, reactivation: 118,
     networth: null, networthLabel: '—',
     activeClients: 0.86, activeClientsLabel: '0.86M',
-    total50k: 178.71, brokerCharges50k: 67.20,
+    total50k: 178.44, brokerCharges50k: 67.20,
     pledgeUnpledge: '₹20/transaction',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.05%/day',
@@ -272,7 +272,7 @@ const BROKERS = [
     ddpi: 118, reactivation: 118,
     networth: null, networthLabel: '—',
     activeClients: 0.68, activeClientsLabel: '0.68M',
-    total50k: 180.54, brokerCharges50k: 69.03,
+    total50k: 180.27, brokerCharges50k: 69.03,
     pledgeUnpledge: 'Free',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.049%/day',
@@ -299,7 +299,7 @@ const BROKERS = [
     ddpi: 118, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 0.34, activeClientsLabel: '0.34M',
-    total50k: 182.31, brokerCharges50k: 70.80,
+    total50k: 182.04, brokerCharges50k: 70.80,
     pledgeUnpledge: '₹23.60 each',
     dematerialisation: '₹236/cert',
     marginShortfall: '0.05%/day',
@@ -326,7 +326,7 @@ const BROKERS = [
     ddpi: 118, reactivation: 236,
     networth: 7900, networthLabel: '₹7,900 Cr',
     activeClients: 1.4, activeClientsLabel: '1.4M',
-    total50k: 367.51, brokerCharges50k: 256,
+    total50k: 367.24, brokerCharges50k: 256,
     pledgeUnpledge: '₹20 each',
     dematerialisation: '₹295/cert',
     marginShortfall: '0.049%/day',
@@ -353,7 +353,7 @@ const BROKERS = [
     ddpi: 0, reactivation: 354,
     networth: 4500, networthLabel: '₹4,500 Cr',
     activeClients: 2.0, activeClientsLabel: '2.0M',
-    total50k: 430.11, brokerCharges50k: 318.60,
+    total50k: 429.84, brokerCharges50k: 318.60,
     pledgeUnpledge: '₹29.50 each',
     dematerialisation: '₹295/cert',
     marginShortfall: '0.05%/day',
@@ -380,7 +380,7 @@ const BROKERS = [
     ddpi: 0, reactivation: 236,
     networth: 1700, networthLabel: '₹1,700 Cr',
     activeClients: 0.41, activeClientsLabel: '0.41M',
-    total50k: 701.51, brokerCharges50k: 590,
+    total50k: 701.24, brokerCharges50k: 590,
     pledgeUnpledge: '0.5%+GST min ₹29.50',
     dematerialisation: '₹295/cert',
     marginShortfall: '0.05%/day',
@@ -407,7 +407,7 @@ const BROKERS = [
     ddpi: 500, reactivation: 354,
     networth: 2700, networthLabel: '₹2,700 Cr',
     activeClients: 1.4, activeClientsLabel: '1.4M',
-    total50k: 721.51, brokerCharges50k: 610,
+    total50k: 721.24, brokerCharges50k: 610,
     pledgeUnpledge: '0.04% min ₹20',
     dematerialisation: '₹354/cert',
     marginShortfall: '0.05%/day',
@@ -419,11 +419,14 @@ const BROKERS = [
 ];
 
 // ── REGULATORY CHARGES (fixed everywhere) ────────────────────────────────────
+// STT updated per Union Budget 2026, effective April 1 2026:
+// Futures sell: 0.05% (was 0.02%) · Options premium sell: 0.15% (was 0.10%)
+// Delivery/Intraday base: ₹50K · Futures base: ₹1.5L (realistic min contract) · Options base: ₹50K premium
 const REGULATORY = {
-  delivery: { stt: 100, exchange: 2.97, sebi: 0.51, stamp: 7.50, gstExch: 0.53, total: 111.51 },
-  intraday: { stt: 6.25, exchange: 1.49, sebi: 0.26, stamp: 0.75, gstExch: 0.27, total: 9.01 },
-  futures:  { stt: 100, exchange: 2.0,  sebi: 5.10, stamp: 10.0, gstExch: 0.36, total: 117.46 },
-  options:  { stt: 50,  exchange: 53.0, sebi: 0.51, stamp: 1.50, gstExch: 9.54, total: 114.55 },
+  delivery: { stt: 100.00, txn: 3.07,  sebi: 0.10, stamp: 7.50,  gst: 0.57, total: 111.24, base: '₹50K' },
+  intraday: { stt: 12.50,  txn: 3.07,  sebi: 0.10, stamp: 1.50,  gst: 0.57, total: 17.74,  base: '₹50K' },
+  futures:  { stt: 75.00,  txn: 5.49,  sebi: 0.30, stamp: 3.00,  gst: 1.04, total: 84.83,  base: '₹1.5L' },
+  options:  { stt: 75.00,  txn: 17.77, sebi: 0.05, stamp: 1.50,  gst: 3.21, total: 97.52,  base: '₹50K premium' },
 };
 
 // ── ANNUAL SCENARIO DATA ──────────────────────────────────────────────────────
@@ -535,12 +538,12 @@ export default function BrokersPage() {
         <div className="brk-hero2-sub">16 brokers covered. No bias from affiliates or paid placements.</div>
         <div className="brk-hero2-stats">
           <div className="brk-hs2">
-            <div className="brk-hs2-n" style={{color:'var(--gain)'}}>₹126.26</div>
+            <div className="brk-hs2-n" style={{color:'var(--gain)'}}>₹125.99</div>
             <div className="brk-hs2-l">Cheapest — <strong style={{color:'var(--text)'}}>Dhan</strong> &amp; <strong style={{color:'var(--accent)'}}>Zerodha ★</strong></div>
           </div>
           <div className="brk-hs2-sep">vs</div>
           <div className="brk-hs2">
-            <div className="brk-hs2-n" style={{color:'var(--loss)'}}>₹721.51</div>
+            <div className="brk-hs2-n" style={{color:'var(--loss)'}}>₹721.24</div>
             <div className="brk-hs2-l">Most expensive — <strong style={{color:'var(--text)'}}>HDFC Securities</strong></div>
           </div>
           <div className="brk-hs2-sep">·</div>
@@ -555,7 +558,9 @@ export default function BrokersPage() {
           </div>
         </div>
         <div className="brk-hero2-note">
-          <span style={{color:'var(--accent)',fontWeight:900,fontSize:15}}>★ Zerodha</span> — Widely considered the best combination of low cost, trading experience, reliability and trust in India. ₹13,500 Cr networth (highest of any broker in India), 15+ year track record, Kite platform, Varsity education. Costs just ₹0.59 more than Dhan on a ₹50,000 delivery trade.
+          <span style={{color:'var(--accent)',fontWeight:900,fontSize:15}}>★ Zerodha</span> — Widely considered the best combination of low cost, trading experience, reliability and trust in India. ₹13,500 Cr networth (highest of any broker in India), 15+ year track record, Kite platform, <a href="https://zerodha.com/varsity/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)',textDecoration:'underline'}}>Varsity</a> education. Costs just ₹0.59 more than Dhan on a ₹50,000 delivery trade.
+          <br/><br/>
+          <span style={{color:'var(--text3)',fontSize:11}}>The ₹111.24 on every ₹50K delivery trade: STT ₹100 + exchange ₹3.07 + SEBI ₹0.10 + stamp ₹7.50 + GST ₹0.57. Fixed by law, same at every broker. Futures charged on ₹1.5L contract value (no futures contract exists at ₹50K). Budget 2026: futures STT raised to 0.05%, options to 0.15%, effective April 1 2026.</span>
         </div>
       </div>
 
@@ -599,7 +604,7 @@ export default function BrokersPage() {
 
           {/* Regulatory note */}
           <div className="brk-reg-note">
-            <span className="brk-reg-num">₹111.51</span> in STT + exchange fee + SEBI fee + stamp duty on every ₹50K delivery trade — fixed by law, identical at every broker. Only brokerage, DP charge and AMC differ.
+            <span className="brk-reg-num">₹111.24</span> govt charges on ₹50K delivery — STT ₹100 + exchange ₹3.07 + SEBI ₹0.10 + stamp ₹7.50 + GST ₹0.57. Fixed by law, same at every broker. Futures calculated on ₹1.5L contract (realistic minimum). Budget 2026: futures STT 0.05%, options STT 0.15%, effective April 1 2026.
           </div>
 
           {/* Broker cards */}
@@ -634,7 +639,11 @@ export default function BrokersPage() {
                       <div className="brk-card-num-val">{b.options}</div>
                     </div>
                     <div className="brk-card-num">
-                      <div className="brk-card-num-label">DP / SELL</div>
+                      <div className="brk-card-num-label">MTF INTEREST</div>
+                      <div className="brk-card-num-val">{b.mtfLabel||'—'}</div>
+                    </div>
+                    <div className="brk-card-num">
+                      <div className="brk-card-num-label">DP PER SCRIP SELL</div>
                       <div className="brk-card-num-val">₹{fmt(b.dp,2)}</div>
                     </div>
                     <div className="brk-card-num">
@@ -644,9 +653,20 @@ export default function BrokersPage() {
                   </div>
 
                   <div className="brk-card-total-col">
-                    <div className="brk-card-total-label">TOTAL · ₹50K TRADE</div>
-                    <div className={`brk-card-total${i===0?' brk-card-total-best':b.featured?' brk-card-total-featured':''}`}>
-                      ₹{fmt(b.total50k,2)}
+                    <div className="brk-card-total-label">TOTAL COST — ₹50K TRADE</div>
+                    <div className="brk-card-total-rows">
+                      <div className="brk-card-total-row">
+                        <span className="brk-card-total-seg">Delivery</span>
+                        <span className={`brk-card-total${i===0?' brk-card-total-best':b.featured?' brk-card-total-featured':''}`}>₹{fmt(b.total50k,2)}</span>
+                      </div>
+                      <div className="brk-card-total-row">
+                        <span className="brk-card-total-seg">Intraday</span>
+                        <span className="brk-card-total-sm">₹{fmt(Math.round((b.intradayB||20)*1.18 + 9.01),0)}</span>
+                      </div>
+                      <div className="brk-card-total-row">
+                        <span className="brk-card-total-seg">Options</span>
+                        <span className="brk-card-total-sm">₹{fmt(Math.round((b.optionsB||20)*1.18 + 114.55),0)}</span>
+                      </div>
                     </div>
                     {i>0&&<div className="brk-card-vs">+₹{fmt(b.total50k-sorted[0].total50k,2)} vs cheapest</div>}
                     <div className="brk-card-expand-hint">{expanded===b.id?'▲ less':'▼ full details'}</div>
@@ -758,7 +778,7 @@ export default function BrokersPage() {
                 </div>
               ))}
               <div className="brk-calc-note">
-                Govt + Exchange charges (STT, exchange fee, SEBI fee, stamp duty) are fixed by law and identical at every broker. They add up to ₹{fmt(REGULATORY[segment]?.total,2)} on this {segment} trade.
+                Regulatory charges (STT, exchange fee, SEBI fee, stamp duty + GST) are fixed by law — identical at every broker. Total: ₹{fmt(REGULATORY[segment]?.total,2)} on this trade. Futures base = ₹1.5L contract (realistic minimum). Budget 2026: futures STT 0.05%, options STT 0.15%.
               </div>
             </div>
           )}
