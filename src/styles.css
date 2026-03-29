@@ -5809,3 +5809,61 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-card-total-seg { font-size: 9px; color: var(--text3); font-weight: 700; letter-spacing: .5px; min-width: 46px; }
 .brk-card-vs       { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 2px; }
 .brk-card-expand-hint { font-family: var(--mono); font-size: 10px; color: var(--accent); opacity: .7; margin-top: 6px; }
+
+/* ── Broker Card v3 — complete redesign ───────────────────────────── */
+.brk-card-header   { padding: 0; cursor: pointer; }
+.brk-card-header:hover { background: rgba(255,255,255,.015); }
+
+/* TOP ROW */
+.brk-card-top      { display: flex; align-items: center; gap: 12px; padding: 14px 20px 10px; border-bottom: 1px solid var(--border); }
+.brk-card-rank-badge { font-family: var(--mono); font-size: 13px; font-weight: 900; color: var(--text3); background: var(--bg3); border-radius: 6px; padding: 4px 9px; flex-shrink: 0; }
+.brk-card-name     { font-family: var(--mono); font-size: 22px; font-weight: 900; color: var(--text); flex: 1; letter-spacing: -0.5px; }
+.brk-card-star     { color: var(--accent); }
+.brk-card-typetag  { font-family: var(--mono); font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 3px 10px; border-radius: 4px; flex-shrink: 0; }
+.brk-tag-d         { background: rgba(0,200,150,.1); color: var(--gain); border: 1px solid rgba(0,200,150,.2); }
+.brk-tag-f         { background: rgba(100,116,139,.1); color: var(--text3); border: 1px solid var(--border); }
+
+/* CHARGE COLUMNS */
+.brk-card-cols     { display: flex; align-items: flex-start; gap: 0; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+.brk-col           { display: flex; flex-direction: column; gap: 5px; flex: 1; padding: 0 14px 0 0; }
+.brk-col-wide      { flex: 1.5; }
+.brk-col-divider   { width: 1px; background: var(--border); margin: 0 16px; align-self: stretch; flex-shrink: 0; }
+
+.brk-col-label     { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: var(--text3); text-transform: uppercase; margin-bottom: 2px; }
+.brk-col-val       { font-family: var(--mono); font-size: 16px; font-weight: 900; color: var(--text); letter-spacing: -0.3px; }
+.brk-col-sub       { font-family: var(--mono); font-size: 10px; color: var(--text3); line-height: 1.4; margin-top: 2px; }
+
+/* Colour states */
+.brk-col-zero      { color: var(--text3) !important; font-weight: 600 !important; font-size: 14px !important; }
+.brk-col-green     { color: var(--gain) !important; }
+.brk-col-red       { color: var(--loss) !important; }
+.brk-col-amber     { color: #F59E0B !important; }
+.brk-col-accent    { color: var(--accent) !important; }
+
+/* MTF Slabs */
+.brk-col-slabs     { display: flex; flex-direction: column; gap: 3px; }
+.brk-col-slab      { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); }
+.brk-slab-range    { font-size: 10px; color: var(--text3); }
+.brk-slab-rate     { font-size: 13px; font-weight: 800; }
+
+/* TOTALS ROW */
+.brk-card-totals   { padding: 12px 20px; background: var(--bg0); }
+.brk-card-totals-label { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 8px; }
+.brk-card-totals-row { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.brk-total-item    { display: flex; align-items: baseline; gap: 8px; }
+.brk-total-seg     { font-family: var(--mono); font-size: 11px; color: var(--text3); font-weight: 700; }
+.brk-total-num     { font-family: var(--mono); font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; }
+.brk-total-vs      { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-left: auto; }
+
+/* Card shell */
+.brk-card          { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: box-shadow .2s, border-color .15s; margin-bottom: 6px; }
+.brk-card:hover    { border-color: var(--border2); box-shadow: 0 2px 16px rgba(0,0,0,.15); }
+.brk-card-featured { border-color: rgba(74,158,255,.3) !important; }
+.brk-card-open     { border-color: var(--accent) !important; box-shadow: 0 0 0 1px var(--accent) !important; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .brk-card-cols { flex-wrap: wrap; gap: 12px; }
+  .brk-col-divider { display: none; }
+  .brk-col { min-width: 100px; }
+}

@@ -613,79 +613,103 @@ export default function BrokersPage() {
             {sorted.map((b,i)=>(
               <div key={b.id} className={`brk-card${b.featured?' brk-card-featured':''}${expanded===b.id?' brk-card-open':''}`}>
 
-                {/* Card header — always visible */}
+                {/* Card — full redesign: name top, all columns, totals bottom */}
                 <div className="brk-card-header" onClick={()=>setExpanded(expanded===b.id?null:b.id)}>
-                  <div className="brk-card-rank">#{i+1}</div>
 
-                  <div className="brk-card-identity">
+                  {/* TOP ROW: rank + name + type + expand hint */}
+                  <div className="brk-card-top">
+                    <div className="brk-card-rank-badge">#{i+1}</div>
                     <div className="brk-card-name">
-                      {b.featured&&<span className="brk-card-star">★</span>}
+                      {b.featured&&<span className="brk-card-star">★ </span>}
                       {b.name}
                     </div>
-                    <div className="brk-card-type-tag">{b.type==='discount'?'Discount':'Full-Service'}</div>
+                    <span className={`brk-card-typetag ${b.type==='discount'?'brk-tag-d':'brk-tag-f'}`}>{b.type==='discount'?'Discount':'Full-Service'}</span>
+                    <div className="brk-card-expand-hint">{expanded===b.id?'▲ collapse':'▼ full details'}</div>
                   </div>
 
-                  {/* Grouped charge columns */}
-                  <div className="brk-card-nums">
-                    {/* Group 1: Trading Costs */}
-                    <div className="brk-num-group">
-                      <div className="brk-num-group-label">TRADING COSTS</div>
-                      <div className="brk-num-group-cols">
-                        <div className="brk-card-num">
-                          <div className="brk-card-num-label">Delivery</div>
-                          <div className={`brk-card-num-val${b.delivery===0?' brk-dim-zero':''}`}>{b.deliveryLabel}</div>
-                        </div>
-                        <div className="brk-card-num">
-                          <div className="brk-card-num-label">Intraday</div>
-                          <div className="brk-card-num-val">{b.intraday}</div>
-                        </div>
-                        <div className="brk-card-num">
-                          <div className="brk-card-num-label">Options</div>
-                          <div className="brk-card-num-val">{b.options}</div>
-                        </div>
-                      </div>
+                  {/* CHARGE COLUMNS */}
+                  <div className="brk-card-cols">
+
+                    {/* Col: Delivery */}
+                    <div className="brk-col">
+                      <div className="brk-col-label">DELIVERY</div>
+                      <div className={`brk-col-val ${b.delivery===0?'brk-col-zero':''}`}>{b.deliveryLabel}</div>
                     </div>
-                    {/* Divider */}
-                    <div className="brk-num-divider"/>
-                    {/* Group 2: Other Costs */}
-                    <div className="brk-num-group">
-                      <div className="brk-num-group-label">OTHER COSTS</div>
-                      <div className="brk-num-group-cols">
-                        <div className="brk-card-num">
-                          <div className="brk-card-num-label">MTF Interest</div>
-                          <div className={`brk-card-num-val${b.mtfRate&&b.mtfRate<=13?' brk-card-green':b.mtfRate&&b.mtfRate>=17?' brk-card-red':''}`}>{b.mtfLabel||'—'}</div>
+
+                    {/* Col: Intraday */}
+                    <div className="brk-col">
+                      <div className="brk-col-label">INTRADAY</div>
+                      <div className="brk-col-val">{b.intraday}</div>
+                    </div>
+
+                    {/* Col: Options */}
+                    <div className="brk-col">
+                      <div className="brk-col-label">OPTIONS</div>
+                      <div className="brk-col-val">{b.options}</div>
+                    </div>
+
+                    <div className="brk-col-divider"/>
+
+                    {/* Col: MTF Brokerage */}
+                    <div className="brk-col">
+                      <div className="brk-col-label">MTF BROKERAGE</div>
+                      <div className="brk-col-val">{b.mtfBrokerage||'—'}</div>
+                    </div>
+
+                    {/* Col: MTF Interest — show slabs if available */}
+                    <div className="brk-col brk-col-wide">
+                      <div className="brk-col-label">MTF INTEREST</div>
+                      {b.mtfSlabs ? (
+                        <div className="brk-col-slabs">
+                          {b.mtfSlabs.map((s,si)=>(
+                            <div key={si} className="brk-col-slab">
+                              <span className="brk-slab-range">{s[0]}</span>
+                              <span className={`brk-slab-rate ${parseFloat(s[1])>=15?'brk-col-red':parseFloat(s[1])<=13?'brk-col-green':'brk-col-amber'}`}>{s[1]}</span>
+                            </div>
+                          ))}
                         </div>
-                        <div className="brk-card-num">
-                          <div className="brk-card-num-label">DP / Scrip Sell</div>
-                          <div className={`brk-card-num-val${b.dp<=14.75?' brk-card-green':b.dp>=22?' brk-card-dim':''}`}>₹{fmt(b.dp,2)}</div>
-                        </div>
-                        <div className="brk-card-num">
-                          <div className="brk-card-num-label">AMC / Year</div>
-                          <div className={`brk-card-num-val${b.amc===0?' brk-card-green':b.amc>=600?' brk-card-red':''}`}>{b.amcLabel}</div>
-                        </div>
+                      ) : (
+                        <div className={`brk-col-val ${b.mtfRate&&b.mtfRate<=13?'brk-col-green':b.mtfRate&&b.mtfRate>=17?'brk-col-red':''}`}>{b.mtfLabel||'N/A'}</div>
+                      )}
+                    </div>
+
+                    <div className="brk-col-divider"/>
+
+                    {/* Col: DP Charge */}
+                    <div className="brk-col">
+                      <div className="brk-col-label">DP CHARGE</div>
+                      <div className={`brk-col-val ${b.dp<=14.75?'brk-col-green':''}`}>₹{fmt(b.dp,2)}</div>
+                      <div className="brk-col-sub">{b.dpLabel} · per scrip per sell</div>
+                    </div>
+
+                    {/* Col: AMC */}
+                    <div className="brk-col">
+                      <div className="brk-col-label">AMC / YEAR</div>
+                      <div className={`brk-col-val ${b.amc===0?'brk-col-green':b.amc>=600?'brk-col-red':''}`}>{b.amcLabel}</div>
+                    </div>
+
+                  </div>
+
+                  {/* BOTTOM ROW: total costs */}
+                  <div className="brk-card-totals">
+                    <div className="brk-card-totals-label">TOTAL ALL-IN COST — ₹50,000 TRADE</div>
+                    <div className="brk-card-totals-row">
+                      <div className="brk-total-item">
+                        <span className="brk-total-seg">Delivery</span>
+                        <span className={`brk-total-num ${i===0?'brk-col-green':b.featured?'brk-col-accent':''}`}>₹{fmt(b.total50k,2)}</span>
                       </div>
+                      <div className="brk-total-item">
+                        <span className="brk-total-seg">Intraday</span>
+                        <span className="brk-total-num">₹{fmt(((b.intradayB||20)*1.18 + 17.74).toFixed(2))}</span>
+                      </div>
+                      <div className="brk-total-item">
+                        <span className="brk-total-seg">Options</span>
+                        <span className="brk-total-num">₹{fmt(((b.optionsB||20)*1.18 + 97.52).toFixed(2))}</span>
+                      </div>
+                      {i>0&&<div className="brk-total-vs">+₹{fmt(b.total50k-sorted[0].total50k,2)} vs cheapest on delivery</div>}
                     </div>
                   </div>
 
-                  <div className="brk-card-total-col">
-                    <div className="brk-card-total-label">TOTAL — ₹50K TRADE</div>
-                    <div className="brk-card-total-rows">
-                      <div className="brk-card-total-row">
-                        <span className="brk-card-total-seg">Delivery</span>
-                        <span className={`brk-card-total${i===0?' brk-card-total-best':b.featured?' brk-card-total-featured':''}`}>₹{fmt(b.total50k,2)}</span>
-                      </div>
-                      <div className="brk-card-total-row">
-                        <span className="brk-card-total-seg">Intraday</span>
-                        <span className="brk-card-total-sm">₹{fmt(((b.intradayB||20)*1.18 + 17.74).toFixed(2))}</span>
-                      </div>
-                      <div className="brk-card-total-row">
-                        <span className="brk-card-total-seg">MTF (30d)</span>
-                        <span className="brk-card-total-sm">{b.mtfRate ? '₹'+fmt(((b.delivery===0?0:(b.intradayB||20))*1.18 + b.dp + (50000*b.mtfRate/100/365*30)).toFixed(0)) : '—'}</span>
-                      </div>
-                    </div>
-                    {i>0&&<div className="brk-card-vs">+₹{fmt(b.total50k-sorted[0].total50k,2)} vs cheapest</div>}
-                    <div className="brk-card-expand-hint">{expanded===b.id?'▲ less':'▼ details'}</div>
-                  </div>
                 </div>
 
                 {/* Expanded detail */}
