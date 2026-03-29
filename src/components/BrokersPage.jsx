@@ -690,23 +690,26 @@ export default function BrokersPage() {
 
                   </div>
 
-                  {/* BOTTOM ROW: total costs */}
+                  {/* BOTTOM ROW: total all-in costs */}
                   <div className="brk-card-totals">
-                    <div className="brk-card-totals-label">TOTAL ALL-IN COST — ₹50,000 TRADE</div>
+                    <div className="brk-card-totals-label">TOTAL ALL-IN COST — ₹50,000 TRADE (brokerage + GST + regulatory charges)</div>
                     <div className="brk-card-totals-row">
                       <div className="brk-total-item">
-                        <span className="brk-total-seg">Delivery</span>
+                        <span className="brk-total-seg">DELIVERY</span>
                         <span className={`brk-total-num ${i===0?'brk-col-green':b.featured?'brk-col-accent':''}`}>₹{fmt(b.total50k,2)}</span>
+                        <span className="brk-total-sub">{b.delivery===0?'Zero brokerage':'₹'+fmt(b.brokerCharges50k,2)+' brokerage'} · ₹{fmt(b.dp,2)} DP + ₹111.24 govt</span>
                       </div>
                       <div className="brk-total-item">
-                        <span className="brk-total-seg">Intraday</span>
-                        <span className="brk-total-num">₹{fmt(((b.intradayB||20)*1.18 + 17.74).toFixed(2))}</span>
+                        <span className="brk-total-seg">INTRADAY</span>
+                        <span className={`brk-total-num ${b.intradayB===5?'brk-col-green':''}`}>₹{fmt(((b.intradayB||20)*1.18 + 17.74).toFixed(2))}</span>
+                        <span className="brk-total-sub">₹{fmt(((b.intradayB||20)*1.18).toFixed(2))} broker + ₹17.74 govt</span>
                       </div>
                       <div className="brk-total-item">
-                        <span className="brk-total-seg">Options</span>
+                        <span className="brk-total-seg">OPTIONS</span>
                         <span className="brk-total-num">₹{fmt(((b.optionsB||20)*1.18 + 97.52).toFixed(2))}</span>
+                        <span className="brk-total-sub">₹{fmt(((b.optionsB||20)*1.18).toFixed(2))} broker + ₹97.52 govt</span>
                       </div>
-                      {i>0&&<div className="brk-total-vs">+₹{fmt(b.total50k-sorted[0].total50k,2)} vs cheapest on delivery</div>}
+                      {i>0&&<div className="brk-total-vs">+₹{fmt(b.total50k-sorted[0].total50k,2)} vs cheapest</div>}
                     </div>
                   </div>
 
