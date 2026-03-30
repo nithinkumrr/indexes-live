@@ -466,127 +466,742 @@ const TABS = ['Rankings', 'Head to Head', 'Calculator', 'MTF Comparison', 'All C
 
 // ── HEAD TO HEAD COMPONENT ────────────────────────────────────────────────────
 
-// Verified data from comparebroker.info — ₹50K delivery trade baseline
-const H2H_PAIRS = [
-  {
-    a: { id:'zerodha', name:'Zerodha', total:126.58, delivery:0, intraday:'0.03% or ₹20', options:'₹20/order', dp:15.34, amc:88.50, mtf:'14.6% p.a.' },
-    b: { id:'dhan',    name:'Dhan',    total:125.99, delivery:0, intraday:'0.03% or ₹20', options:'₹20/order', dp:14.75, amc:0,     mtf:'12.49%–16.49%' },
+const H2H_DATA = {
+  'zerodha-dhan': {
+    a:'Zerodha', b:'Dhan',
+    perTrade:[
+      {type:'Delivery',sub:'₹50K round-trip',av:126.85,bv:126.26},
+      {type:'Intraday',sub:'₹1L round-trip',av:83.23,bv:83.23},
+      {type:'Futures',sub:'₹1L round-trip',av:70.69,bv:70.69},
+      {type:'Options',sub:'₹1L round-trip',av:276.30,bv:276.30},
+    ],
+    annual:[
+      {profile:'Passive Investor',sub:'2 delivery/mo, 1 sell day',av:2948.93,al:'Trading ₹2,860.43 · AMC ₹88.50',bv:2853.35,bl:'Trading ₹2,853.35 · AMC ₹0'},
+      {profile:'Swing Trader',sub:'8 delivery/mo, 4 sell days',av:13671.30,al:'Trading ₹13,582.80 · AMC ₹88.50',bv:13554.48,bl:'Trading ₹13,554.48 · AMC ₹0'},
+      {profile:'F&O Active',sub:'30 futures + 60 options/mo',av:224473.62,al:'Trading ₹224,385.12 · AMC ₹88.50',bv:224385.12,bl:'Trading ₹224,385.12 · AMC ₹0'},
+    ],
+    trading:[
+      ['Delivery Brokerage','₹0','₹0',true,true],
+      ['Intraday Brokerage','0.03% or ₹20, lower','0.03% or ₹20, lower'],
+      ['F&O Futures Brokerage','0.03% or ₹20, lower','0.03% or ₹20, lower'],
+      ['F&O Options Brokerage','Flat ₹20/order','Flat ₹20/order'],
+      ['CDS Futures','0.03% or ₹20, lower','0.03% or ₹20, lower'],
+      ['CDS Options','Flat ₹20/order','Flat ₹20/order'],
+      ['Commodity Futures','0.03% or ₹20, lower','0.03% or ₹20, lower'],
+      ['Commodity Options','Flat ₹20/order','Flat ₹20/order'],
+    ],
+    demat:[
+      ['DP Charge','₹13 + 18% GST = ₹15.34','₹12.50 + 18% GST = ₹14.75'],
+      ['AMC','₹75 + 18% GST = ₹88.50/year','Free',false,true],
+      ['MF DP Charges','Free for MF redemptions','₹12.50 + 18% GST = ₹14.75/ISIN',true],
+      ['Dematerialisation','₹150 + GST/certificate + CDSL charges','₹150 + GST/certificate'],
+      ['Rematerialisation','₹150 + GST/certificate + CDSL charges','₹150 + GST/certificate'],
+      ['Failed Demat Transaction','₹50 + GST per failed instruction','₹50 + GST per failed instruction'],
+    ],
+    mtf:[
+      ['MTF Interest Rate','14.60% p.a. (~0.040%/day)','12.49% p.a. (~0.034%/day, tiered)'],
+      ['MTF Brokerage','0.3% or ₹20, lower','0.03% or ₹20, lower'],
+      ['MTF Conversion','Free (auto-conversion at 3:20 PM)','Free',true,true],
+      ['MTF Pledging','Pledge ₹15+GST/ISIN per request; Unpledge ₹15+GST','₹15 + GST = ₹17.70/ISIN'],
+    ],
+    settlement:[
+      ['Physical Settlement','0.25% on physical delivery value','0.1% on contract value'],
+      ['Physical Settlement (Netted)','0.25% on netted settlement value','0.1% on netted settlement value'],
+      ['Clearing Charges','NSE: ₹0/trade (included)','Included in brokerage',true],
+      ['Interest on Margin Shortfall','0.035%/day (12.775%/yr) on shortfall','0.05%/day on margin shortfall'],
+      ['Pledge / Unpledge','Pledge ₹30+GST/ISIN (₹35.40); Unpledge free','Pledge ₹15+GST/ISIN (₹17.70); Unpledge ₹15+GST/ISIN (₹17.70)'],
+      ['Delayed Payment Interest','0.05%/day on negative balance; 0.035%/day on non-cash overuse','0.0438%/day or 16.99% p.a.'],
+      ['Off-Market Transfer','₹25 + 18% GST = ₹29.50/security/transaction','₹12.50 + 18% GST = ₹14.75/scrip'],
+    ],
+    services:[
+      ['Call & Trade','₹50 + 18% GST = ₹59/order','₹50 + GST/order'],
+      ['Auto Square-off','₹50 + 18% GST = ₹59/order','₹20 + GST/order'],
+      ['Payment Gateway','₹9 + 18% GST = ₹10.62','Free',false,true],
+      ['Instant Withdrawal','Free via UPI','Free via UPI',true,true],
+      ['Corporate Action','Free','Free',true,true],
+      ['API Access','Kite Connect: ₹2,000/month','Free (Dhan HQ API)',false,true],
+      ['API Brokerage','Same as manual trades','Same as regular trades'],
+    ],
+    account:[
+      ['Account Opening','Free','Free',true,true],
+      ['DDPI','₹100 + 18% GST = ₹118','₹100 + 18% GST = ₹118'],
+      ['Account Reactivation','₹50 + GST = ₹59','₹50 + GST = ₹59'],
+      ['NPS','Not offered','Not offered'],
+    ],
+    documents:[
+      ['DIS Slip','₹100 + GST/booklet (not needed with DDPI)','₹100 + GST/booklet'],
+      ['Physical CMR','₹50 + GST','₹50 + GST'],
+      ['P&L / Ledger (Digital)','Free (downloadable from Console)','Free (downloadable)',true,true],
+      ['P&L / Ledger (Physical)','Not available','Not available'],
+      ['Contract Note (Physical)','₹20 + GST per contract note','Not available'],
+    ],
+    instruments:[
+      ['G-Sec / T-Bills','Available on Coin — no additional charge','Not offered',true],
+      ['SLB','Not offered directly','Not offered'],
+      ['LAS','Not offered','Not offered'],
+    ],
+    modifications:[
+      ['Name Change','₹25 + GST (₹29.50) · Up to 72 hrs','Free · 5–7 working days',false,true],
+      ['Mobile & Email','Free · Up to 24 hrs','Free · Up to 48 hrs',true,true],
+      ['Address Change','₹25 + GST (₹29.50) · Up to 72 hrs','Free',false,true],
+      ['Nominee Change','Adding: Free; Modification ₹25+GST (₹29.50)','Adding: Free; Modification ₹25+GST (₹29.50)'],
+      ['DOB Change','₹25 + GST (₹29.50) · Up to 72 hrs','Free',false,true],
+      ['Bank Account Change','₹25 + GST (₹29.50) · Up to 72 hrs','₹25 + GST (₹29.50) · Up to 48 hrs'],
+      ['KYC Modification','Re-KYC: Free; Modification ₹25+GST (₹29.50)','Re-KYC: Free',false,true],
+      ['Cheque Bounce','₹350 + 18% GST = ₹413','₹500 + 18% GST = ₹590'],
+    ],
   },
-  {
-    a: { id:'zerodha', name:'Zerodha', total:126.58, delivery:0,         intraday:'0.03% or ₹20',   options:'₹20/order',  dp:15.34, amc:88.50, mtf:'14.6% p.a.' },
-    b: { id:'groww',   name:'Groww',   total:178.44, delivery:'₹5–₹20',  intraday:'0.1% or ₹20',    options:'₹20/order',  dp:20,    amc:0,     mtf:'14.95% p.a.' },
+  'zerodha-groww':{
+    a:'Zerodha',b:'Groww',
+    perTrade:[
+      {type:'Delivery',sub:'₹50K round-trip',av:126.85,bv:178.71},
+      {type:'Intraday',sub:'₹1L round-trip',av:83.23,bv:83.23},
+      {type:'Futures',sub:'₹1L round-trip',av:70.69,bv:70.69},
+      {type:'Options',sub:'₹1L round-trip',av:276.30,bv:276.30},
+    ],
+    annual:[
+      {profile:'Passive Investor',sub:'2 delivery/mo, 1 sell day',av:2948.93,al:'Trading ₹2,860.43 · AMC ₹88.50',bv:4849.15,bl:'Trading ₹4,049.15 · AMC ₹0'},
+      {profile:'Swing Trader',sub:'8 delivery/mo, 4 sell days',av:13671.30,al:'Trading ₹13,582.80 · AMC ₹88.50',bv:18337.68,bl:'Trading ₹18,337.68 · AMC ₹0'},
+      {profile:'F&O Active',sub:'30 futures + 60 options/mo',av:224473.62,al:'Trading ₹224,385.12 · AMC ₹88.50',bv:224385.12,bl:'Trading ₹224,385.12 · AMC ₹0'},
+    ],
+    trading:[
+      ['Delivery Brokerage','₹0','0.1% or ₹20, lower (min ₹5)',true],
+      ['Intraday Brokerage','0.03% or ₹20, lower','0.1% or ₹20, lower (min ₹5)'],
+      ['F&O Futures Brokerage','0.03% or ₹20, lower','Flat ₹20/order'],
+      ['F&O Options Brokerage','Flat ₹20/order','Flat ₹20/order'],
+      ['CDS Futures','0.03% or ₹20, lower','Flat ₹20/order'],
+      ['CDS Options','Flat ₹20/order','Flat ₹20/order'],
+      ['Commodity Futures','0.03% or ₹20, lower','Not offered'],
+      ['Commodity Options','Flat ₹20/order','Not offered'],
+    ],
+    demat:[
+      ['DP Charge','₹13 + 18% GST = ₹15.34','₹20/scrip (free under ₹100)'],
+      ['AMC','₹75 + 18% GST = ₹88.50/year','Free',false,true],
+      ['MF DP Charges','Free for MF redemptions','Free',true,true],
+      ['Dematerialisation','₹150 + GST/certificate + CDSL charges','₹150 + GST/certificate'],
+      ['Rematerialisation','₹150 + GST/certificate + CDSL charges','₹200 + GST/certificate'],
+      ['Failed Demat Transaction','₹50 + GST per failed instruction','₹50 + GST per failed instruction'],
+    ],
+    mtf:[
+      ['MTF Interest Rate','14.60% p.a. (~0.040%/day)','14.95% p.a. (~0.043%/day for <₹25L)'],
+      ['MTF Brokerage','0.3% or ₹20, lower','0.1% of order value'],
+      ['MTF Conversion','Free (auto-conversion at 3:20 PM)','Free',true,true],
+      ['MTF Pledging','Pledge ₹15+GST/ISIN; Unpledge ₹15+GST','₹20 + GST = ₹23.60/ISIN'],
+    ],
+    settlement:[
+      ['Physical Settlement','0.25% on physical delivery value','₹20/order'],
+      ['Physical Settlement (Netted)','0.25% on netted settlement value','₹20/order'],
+      ['Clearing Charges','NSE: ₹0/trade (included)','Included in brokerage',true],
+      ['Interest on Margin Shortfall','0.035%/day (12.775%/yr)','0.05%/day on margin shortfall'],
+      ['Pledge / Unpledge','Pledge ₹30+GST/ISIN (₹35.40); Unpledge free','₹20 + GST/ISIN = ₹23.60 each'],
+      ['Delayed Payment Interest','0.05%/day on negative balance; 0.035%/day on non-cash overuse','0.045%/day on outstanding debit'],
+      ['Off-Market Transfer','₹25 + 18% GST = ₹29.50/security/transaction','~₹16 + GST/ISIN'],
+    ],
+    services:[
+      ['Call & Trade','₹50 + 18% GST = ₹59/order','Not available'],
+      ['Auto Square-off','₹50 + 18% GST = ₹59/order','₹50/position'],
+      ['Payment Gateway','₹9 + 18% GST = ₹10.62','Free',false,true],
+      ['Instant Withdrawal','Free via UPI','Free via UPI',true,true],
+      ['Corporate Action','Free','Free',true,true],
+      ['API Access','Kite Connect: ₹2,000/month','Not offered'],
+      ['API Brokerage','Same as manual trades','Not offered'],
+    ],
+    account:[
+      ['Account Opening','Free','Free',true,true],
+      ['DDPI','₹100 + 18% GST = ₹118','₹100 + 18% GST = ₹118'],
+      ['Account Reactivation','₹50 + GST = ₹59','₹100 + GST = ₹118'],
+      ['NPS','Not offered','Not offered'],
+    ],
+    documents:[
+      ['DIS Slip','₹100 + GST/booklet (not needed with DDPI)','₹100 + GST/booklet'],
+      ['Physical CMR','₹50 + GST','₹50 + GST'],
+      ['P&L / Ledger (Digital)','Free (downloadable from Console)','Free (downloadable)',true,true],
+      ['P&L / Ledger (Physical)','Not available','Not available'],
+    ],
+    instruments:[
+      ['G-Sec / T-Bills','Available on Coin — no additional charge','Not offered',true],
+      ['SLB','Not offered directly','Not offered'],
+      ['LAS','Not offered','Not offered'],
+    ],
+    modifications:[
+      ['Name Change','₹25 + GST (₹29.50)','₹25 + GST'],
+      ['Mobile & Email','Free','Free',true,true],
+      ['Address Change','₹25 + GST (₹29.50)','₹25 + GST'],
+      ['Nominee Change','Adding: Free; Modification ₹25+GST','Free'],
+      ['DOB Change','₹25 + GST (₹29.50)','Free',false,true],
+      ['Bank Account Change','₹25 + GST (₹29.50)','Free',false,true],
+      ['KYC Modification','Re-KYC: Free; Modification ₹25+GST','Free',false,true],
+      ['Cheque Bounce','₹350 + 18% GST = ₹413','Free',false,true],
+    ],
   },
-  {
-    a: { id:'zerodha',  name:'Zerodha',   total:126.58, delivery:0,        intraday:'0.03% or ₹20', options:'₹20/order', dp:15.34, amc:88.50, mtf:'14.6% p.a.' },
-    b: { id:'angelone', name:'Angel One', total:178.44, delivery:'₹2–₹20', intraday:'0.03% or ₹20', options:'₹20/order', dp:20,    amc:283,   mtf:'14.99% p.a.' },
+  'zerodha-angelone':{
+    a:'Zerodha',b:'Angel One',
+    perTrade:[
+      {type:'Delivery',sub:'₹50K round-trip',av:126.85,bv:178.71},
+      {type:'Intraday',sub:'₹1L round-trip',av:83.23,bv:83.23},
+      {type:'Futures',sub:'₹1L round-trip',av:70.69,bv:70.69},
+      {type:'Options',sub:'₹1L round-trip',av:276.30,bv:276.30},
+    ],
+    annual:[
+      {profile:'Passive Investor',sub:'2 delivery/mo, 1 sell day',av:2948.93,al:'Trading ₹2,860.43 · AMC ₹88.50',bv:3231.93,bl:'Trading ₹2,948.93 · AMC ₹283'},
+      {profile:'Swing Trader',sub:'8 delivery/mo, 4 sell days',av:13671.30,al:'Trading ₹13,582.80 · AMC ₹88.50',bv:14244.46,bl:'Trading ₹13,961.46 · AMC ₹283'},
+      {profile:'F&O Active',sub:'30 futures + 60 options/mo',av:224473.62,al:'Trading ₹224,385.12 · AMC ₹88.50',bv:224668.12,bl:'Trading ₹224,385.12 · AMC ₹283'},
+    ],
+    trading:[
+      ['Delivery Brokerage','₹0','₹2–₹20 (min ₹2)',true],
+      ['Intraday Brokerage','0.03% or ₹20, lower','0.03% or ₹20, lower'],
+      ['F&O Futures Brokerage','0.03% or ₹20, lower','Flat ₹20/order'],
+      ['F&O Options Brokerage','Flat ₹20/order','Flat ₹20/order'],
+      ['CDS Futures','0.03% or ₹20, lower','Flat ₹20/order'],
+      ['CDS Options','Flat ₹20/order','Flat ₹20/order'],
+      ['Commodity Futures','0.03% or ₹20, lower','Flat ₹20/order'],
+      ['Commodity Options','Flat ₹20/order','Flat ₹20/order'],
+    ],
+    demat:[
+      ['DP Charge','₹13 + 18% GST = ₹15.34','₹20/scrip per sell transaction'],
+      ['AMC','₹75 + 18% GST = ₹88.50/year','₹240 + GST/year = ₹283'],
+      ['MF DP Charges','Free for MF redemptions','Free',true],
+      ['Dematerialisation','₹150 + GST/certificate + CDSL charges','₹200 + GST/certificate'],
+      ['Failed Demat Transaction','₹50 + GST per failed instruction','₹50 + GST per failed instruction'],
+    ],
+    mtf:[
+      ['MTF Interest Rate','14.60% p.a. (~0.040%/day)','14.99% p.a. (0.0342%/day)'],
+      ['MTF Brokerage','0.3% or ₹20, lower','0.1% or ₹20, lower (min ₹2)'],
+      ['MTF Conversion','Free (auto-conversion at 3:20 PM)','Free',true,true],
+      ['MTF Pledging','Pledge ₹15+GST/ISIN; Unpledge ₹15+GST','₹23.60 each'],
+    ],
+    settlement:[
+      ['Physical Settlement','0.25% on physical delivery value','₹20/order'],
+      ['Clearing Charges','NSE: ₹0/trade (included)','Included in brokerage',true],
+      ['Interest on Margin Shortfall','0.035%/day (12.775%/yr) on shortfall','Additional ₹20 brokerage (intraday)'],
+      ['Pledge / Unpledge','Pledge ₹30+GST/ISIN (₹35.40); Unpledge free','₹23.60 + GST/ISIN each'],
+      ['Delayed Payment Interest','0.05%/day on negative balance','0.049%/day'],
+      ['Off-Market Transfer','₹25 + 18% GST = ₹29.50/security/transaction','₹25 + GST/transaction'],
+    ],
+    services:[
+      ['Call & Trade','₹50 + 18% GST = ₹59/order','₹20/order',false,true],
+      ['Auto Square-off','₹50 + 18% GST = ₹59/order','₹20/order'],
+      ['Payment Gateway','₹9 + 18% GST = ₹10.62','Free',false,true],
+      ['Instant Withdrawal','Free via UPI','Free via UPI',true,true],
+      ['Corporate Action','Free','Free',true,true],
+      ['API Access','Kite Connect: ₹2,000/month','Free (SmartAPI)',false,true],
+      ['API Brokerage','Same as manual trades','Same as regular trades'],
+    ],
+    account:[
+      ['Account Opening','Free','Free',true,true],
+      ['DDPI','₹100 + 18% GST = ₹118','₹100 + 18% GST = ₹118'],
+      ['Account Reactivation','₹50 + GST = ₹59','₹50 + GST = ₹59'],
+    ],
+    documents:[
+      ['DIS Slip','₹100 + GST/booklet','₹100 + GST/booklet'],
+      ['Physical CMR','₹50 + GST','₹50 + GST'],
+      ['P&L / Ledger (Digital)','Free (downloadable from Console)','Free (downloadable)',true,true],
+    ],
+    instruments:[
+      ['G-Sec / T-Bills','Available on Coin — no additional charge','Not offered',true],
+      ['SLB','Not offered directly','Not offered'],
+      ['LAS','Not offered','Not offered'],
+    ],
+    modifications:[
+      ['Name Change','₹25 + GST (₹29.50)','Free',false,true],
+      ['Mobile & Email','Free','Free',true,true],
+      ['Address Change','₹25 + GST (₹29.50)','Free',false,true],
+      ['Nominee Change','Adding: Free; Modification ₹25+GST','Adding: Free; Modification ₹25+GST'],
+      ['Bank Account Change','₹25 + GST (₹29.50)','₹25 + GST (₹29.50)'],
+      ['Cheque Bounce','₹350 + 18% GST = ₹413','Free',false,true],
+    ],
   },
-  {
-    a: { id:'zerodha', name:'Zerodha',          total:126.58, delivery:0,      intraday:'0.03% or ₹20',  options:'₹20/order', dp:15.34, amc:88.50, mtf:'14.6% p.a.' },
-    b: { id:'kotak',   name:'Kotak Securities', total:367.24, delivery:'0.2%', intraday:'₹10 or 0.05%',  options:'₹10/lot',   dp:20,    amc:600,   mtf:'9.69% (Pro)' },
+  'zerodha-kotak':{
+    a:'Zerodha',b:'Kotak Securities',
+    perTrade:[
+      {type:'Delivery',sub:'₹50K round-trip',av:126.85,bv:367.51},
+      {type:'Intraday',sub:'₹1L round-trip',av:83.23,bv:83.23},
+      {type:'Futures',sub:'₹1L round-trip',av:70.69,bv:70.69},
+      {type:'Options',sub:'₹1L round-trip',av:276.30,bv:276.30},
+    ],
+    annual:[
+      {profile:'Passive Investor',sub:'2 delivery/mo, 1 sell day',av:2948.93,al:'Trading ₹2,860.43 · AMC ₹88.50',bv:6688.51,bl:'Trading ₹6,088.51 · AMC ₹600'},
+      {profile:'Swing Trader',sub:'8 delivery/mo, 4 sell days',av:13671.30,al:'Trading ₹13,582.80 · AMC ₹88.50',bv:32097.40,bl:'Trading ₹31,497.40 · AMC ₹600'},
+      {profile:'F&O Active',sub:'30 futures + 60 options/mo',av:224473.62,al:'Trading ₹224,385.12 · AMC ₹88.50',bv:224985.12,bl:'Trading ₹224,385.12 · AMC ₹600'},
+    ],
+    trading:[
+      ['Delivery Brokerage','₹0','0.2%',true],
+      ['Intraday Brokerage','0.03% or ₹20, lower','₹10 or 0.05%, lower'],
+      ['F&O Futures Brokerage','0.03% or ₹20, lower','₹10/order'],
+      ['F&O Options Brokerage','Flat ₹20/order','₹10/lot'],
+      ['CDS Futures','0.03% or ₹20, lower','0.05%/order'],
+      ['CDS Options','Flat ₹20/order','0.05%/order'],
+      ['Commodity Futures','0.03% or ₹20, lower','0.05%/order'],
+      ['Commodity Options','Flat ₹20/order','0.05%/order'],
+    ],
+    demat:[
+      ['DP Charge','₹13 + 18% GST = ₹15.34','0.04% min ₹20'],
+      ['AMC','₹75 + 18% GST = ₹88.50/year','₹600/year'],
+      ['Dematerialisation','₹150 + GST/certificate + CDSL charges','₹150 + GST/certificate'],
+      ['Rematerialisation','₹150 + GST/certificate + CDSL charges','Available at branch'],
+    ],
+    mtf:[
+      ['MTF Interest Rate','14.60% p.a. (~0.040%/day)','9.69% p.a. (Pro plan) / 14.97% (Free plan)'],
+      ['MTF Brokerage','0.3% or ₹20, lower','0–0.30% by plan'],
+      ['MTF Conversion','Free (auto-conversion at 3:20 PM)','Free',true],
+      ['MTF Pledging','Pledge ₹15+GST/ISIN; Unpledge ₹15+GST','₹50 per ISIN + applicable charges'],
+    ],
+    settlement:[
+      ['Physical Settlement','0.25% on physical delivery value','0.5%/order'],
+      ['Clearing Charges','NSE: ₹0/trade (included)','Included in brokerage',true],
+      ['Interest on Margin Shortfall','0.035%/day (12.775%/yr)','0.025%/day (9% p.a.)'],
+      ['Pledge / Unpledge','Pledge ₹30+GST/ISIN (₹35.40); Unpledge free','₹20 each'],
+      ['Delayed Payment Interest','0.05%/day on negative balance','0.0658% per day'],
+      ['Off-Market Transfer','₹25 + 18% GST = ₹29.50/security','₹25 + GST per transaction'],
+    ],
+    services:[
+      ['Call & Trade','₹50 + 18% GST = ₹59/order','₹50 + 18% GST per order'],
+      ['Payment Gateway','₹9 + 18% GST = ₹10.62','Free',false,true],
+      ['Instant Withdrawal','Free via UPI','N/A'],
+      ['API Access','Kite Connect: ₹2,000/month','Free (Kotak Neo API)',false,true],
+    ],
+    account:[
+      ['Account Opening','Free','Free',true,true],
+      ['DDPI','₹100 + 18% GST = ₹118','₹100 + 18% GST = ₹118'],
+      ['Account Reactivation','₹50 + GST = ₹59','₹50 + GST = ₹59'],
+      ['NPS','Not offered','Available'],
+    ],
+    documents:[
+      ['DIS Slip','₹100 + GST/booklet','₹100 + GST/booklet'],
+      ['Physical CMR','₹50 + GST','₹50 + GST'],
+      ['P&L / Ledger (Digital)','Free (Console)','Free (downloadable)',true,true],
+      ['Contract Note (Physical)','₹20 + GST per contract note','Available at branch'],
+    ],
+    instruments:[
+      ['G-Sec / T-Bills','Available on Coin — no additional charge','Available at branch office',true],
+      ['SLB','Not offered directly','Available at branch'],
+      ['LAS','Not offered','Available at branch'],
+    ],
+    modifications:[
+      ['Name Change','₹25 + GST (₹29.50)','Free'],
+      ['Mobile & Email','Free','Free',true,true],
+      ['Address Change','₹25 + GST (₹29.50)','Free'],
+      ['Bank Account Change','₹25 + GST (₹29.50)','Free'],
+      ['Cheque Bounce','₹350 + 18% GST = ₹413','Free'],
+    ],
   },
-  {
-    a: { id:'dhan',  name:'Dhan',  total:125.99, delivery:0,        intraday:'0.03% or ₹20', options:'₹20/order', dp:14.75, amc:0,   mtf:'12.49%–16.49%' },
-    b: { id:'groww', name:'Groww', total:178.44, delivery:'₹5–₹20', intraday:'0.1% or ₹20',  options:'₹20/order', dp:20,    amc:0,   mtf:'14.95% p.a.' },
+  'dhan-groww':{
+    a:'Dhan',b:'Groww',
+    perTrade:[
+      {type:'Delivery',sub:'₹50K round-trip',av:126.26,bv:178.71},
+      {type:'Intraday',sub:'₹1L round-trip',av:83.23,bv:83.23},
+      {type:'Futures',sub:'₹1L round-trip',av:70.69,bv:70.69},
+      {type:'Options',sub:'₹1L round-trip',av:276.30,bv:276.30},
+    ],
+    annual:[
+      {profile:'Passive Investor',sub:'2 delivery/mo, 1 sell day',av:2853.35,al:'Trading ₹2,853.35 · AMC ₹0',bv:4849.15,bl:'Trading ₹4,849.15 · AMC ₹0'},
+      {profile:'Swing Trader',sub:'8 delivery/mo, 4 sell days',av:13554.48,al:'Trading ₹13,554.48 · AMC ₹0',bv:18337.68,bl:'Trading ₹18,337.68 · AMC ₹0'},
+      {profile:'F&O Active',sub:'30 futures + 60 options/mo',av:224385.12,al:'Trading ₹224,385.12 · AMC ₹0',bv:224385.12,bl:'Trading ₹224,385.12 · AMC ₹0'},
+    ],
+    trading:[
+      ['Delivery Brokerage','₹0','0.1% or ₹20, lower (min ₹5)',true],
+      ['Intraday Brokerage','0.03% or ₹20, lower','0.1% or ₹20, lower (min ₹5)'],
+      ['F&O Futures Brokerage','0.03% or ₹20, lower','Flat ₹20/order'],
+      ['F&O Options Brokerage','Flat ₹20/order','Flat ₹20/order'],
+      ['Commodity Futures','0.03% or ₹20, lower','Not offered'],
+      ['Commodity Options','Flat ₹20/order','Not offered'],
+    ],
+    demat:[
+      ['DP Charge','₹12.50 + 18% GST = ₹14.75','₹20/scrip (free under ₹100)'],
+      ['AMC','Free','Free',true,true],
+    ],
+    mtf:[
+      ['MTF Interest Rate','12.49% p.a. (~0.034%/day, tiered)','14.95% p.a.'],
+      ['MTF Brokerage','0.03% or ₹20, lower','0.1% of order value'],
+      ['MTF Conversion','Free','Free',true,true],
+    ],
+    settlement:[
+      ['Interest on Margin Shortfall','0.05%/day on margin shortfall','0.045%/day on outstanding debit'],
+      ['Pledge / Unpledge','Pledge ₹15+GST/ISIN (₹17.70); Unpledge ₹15+GST/ISIN','₹20 + GST/ISIN = ₹23.60 each'],
+      ['Delayed Payment Interest','0.0438%/day or 16.99% p.a.','0.045%/day on outstanding debit'],
+    ],
+    services:[
+      ['Call & Trade','₹50 + GST/order','Not available'],
+      ['Auto Square-off','₹20 + GST/order','₹50/position'],
+      ['Payment Gateway','Free','Free',true,true],
+      ['API Access','Free (Dhan HQ API)','Not offered',true],
+    ],
+    account:[
+      ['Account Opening','Free','Free',true,true],
+      ['DDPI','₹100 + 18% GST = ₹118','₹100 + 18% GST = ₹118'],
+    ],
+    instruments:[
+      ['G-Sec / T-Bills','Not offered','Not offered'],
+      ['SLB','Not offered','Not offered'],
+    ],
+    modifications:[
+      ['Name Change','Free','₹25 + GST',true],
+      ['Address Change','Free','₹25 + GST',true],
+      ['DOB Change','Free','Free',true,true],
+      ['Cheque Bounce','₹500 + 18% GST = ₹590','Free',false,true],
+    ],
   },
-  {
-    a: { id:'dhan',     name:'Dhan',      total:125.99, delivery:0,        intraday:'0.03% or ₹20', options:'₹20/order', dp:14.75, amc:0,   mtf:'12.49%–16.49%' },
-    b: { id:'angelone', name:'Angel One', total:178.44, delivery:'₹2–₹20', intraday:'0.03% or ₹20', options:'₹20/order', dp:20,    amc:283, mtf:'14.99% p.a.' },
+  'dhan-angelone':{
+    a:'Dhan',b:'Angel One',
+    perTrade:[
+      {type:'Delivery',sub:'₹50K round-trip',av:126.26,bv:178.71},
+      {type:'Intraday',sub:'₹1L round-trip',av:83.23,bv:83.23},
+      {type:'Futures',sub:'₹1L round-trip',av:70.69,bv:70.69},
+      {type:'Options',sub:'₹1L round-trip',av:276.30,bv:276.30},
+    ],
+    annual:[
+      {profile:'Passive Investor',sub:'2 delivery/mo, 1 sell day',av:2853.35,al:'Trading ₹2,853.35 · AMC ₹0',bv:3231.93,bl:'Trading ₹2,948.93 · AMC ₹283'},
+      {profile:'Swing Trader',sub:'8 delivery/mo, 4 sell days',av:13554.48,al:'Trading ₹13,554.48 · AMC ₹0',bv:14244.46,bl:'Trading ₹13,961.46 · AMC ₹283'},
+      {profile:'F&O Active',sub:'30 futures + 60 options/mo',av:224385.12,al:'Trading ₹224,385.12 · AMC ₹0',bv:224668.12,bl:'Trading ₹224,385.12 · AMC ₹283'},
+    ],
+    trading:[
+      ['Delivery Brokerage','₹0','₹2–₹20 (min ₹2)',true],
+      ['Intraday Brokerage','0.03% or ₹20, lower','0.03% or ₹20, lower'],
+      ['F&O Options Brokerage','Flat ₹20/order','Flat ₹20/order'],
+    ],
+    demat:[
+      ['DP Charge','₹12.50 + 18% GST = ₹14.75','₹20/scrip per sell transaction'],
+      ['AMC','Free','₹240 + GST/year = ₹283',true],
+    ],
+    mtf:[
+      ['MTF Interest Rate','12.49% p.a. (~0.034%/day, tiered)','14.99% p.a. (0.0342%/day)'],
+      ['MTF Brokerage','0.03% or ₹20, lower','0.1% or ₹20, lower (min ₹2)'],
+      ['MTF Conversion','Free','Free',true,true],
+    ],
+    settlement:[
+      ['Interest on Margin Shortfall','0.05%/day on margin shortfall','Additional ₹20 brokerage (intraday)'],
+      ['Pledge / Unpledge','Pledge ₹17.70; Unpledge ₹17.70','₹23.60 each'],
+      ['Delayed Payment Interest','0.0438%/day or 16.99% p.a.','0.049%/day'],
+    ],
+    services:[
+      ['Call & Trade','₹50 + GST/order','₹20/order',false,true],
+      ['Payment Gateway','Free','Free',true,true],
+      ['API Access','Free (Dhan HQ API)','Free (SmartAPI)',true,true],
+    ],
+    account:[
+      ['Account Opening','Free','Free',true,true],
+      ['DDPI','₹100 + 18% GST = ₹118','₹100 + 18% GST = ₹118'],
+    ],
+    modifications:[
+      ['Name Change','Free','Free',true,true],
+      ['Address Change','Free','Free',true,true],
+      ['DOB Change','Free','Free',true,true],
+      ['Cheque Bounce','₹500 + 18% GST = ₹590','Free',false,true],
+    ],
   },
-  {
-    a: { id:'dhan',  name:'Dhan',             total:125.99, delivery:0,      intraday:'0.03% or ₹20', options:'₹20/order', dp:14.75, amc:0,   mtf:'12.49%–16.49%' },
-    b: { id:'kotak', name:'Kotak Securities', total:367.24, delivery:'0.2%', intraday:'₹10 or 0.05%', options:'₹10/lot',  dp:20,    amc:600, mtf:'9.69% (Pro)' },
+  'dhan-kotak':{
+    a:'Dhan',b:'Kotak Securities',
+    perTrade:[
+      {type:'Delivery',sub:'₹50K round-trip',av:126.26,bv:367.51},
+      {type:'Intraday',sub:'₹1L round-trip',av:83.23,bv:83.23},
+      {type:'Futures',sub:'₹1L round-trip',av:70.69,bv:70.69},
+      {type:'Options',sub:'₹1L round-trip',av:276.30,bv:276.30},
+    ],
+    annual:[
+      {profile:'Passive Investor',sub:'2 delivery/mo, 1 sell day',av:2853.35,al:'Trading ₹2,853.35 · AMC ₹0',bv:6688.51,bl:'Trading ₹6,088.51 · AMC ₹600'},
+      {profile:'Swing Trader',sub:'8 delivery/mo, 4 sell days',av:13554.48,al:'Trading ₹13,554.48 · AMC ₹0',bv:32097.40,bl:'Trading ₹31,497.40 · AMC ₹600'},
+      {profile:'F&O Active',sub:'30 futures + 60 options/mo',av:224385.12,al:'Trading ₹224,385.12 · AMC ₹0',bv:224985.12,bl:'Trading ₹224,385.12 · AMC ₹600'},
+    ],
+    trading:[
+      ['Delivery Brokerage','₹0','0.2%',true],
+      ['Intraday Brokerage','0.03% or ₹20, lower','₹10 or 0.05%, lower'],
+      ['F&O Options Brokerage','Flat ₹20/order','₹10/lot'],
+    ],
+    demat:[
+      ['DP Charge','₹12.50 + 18% GST = ₹14.75','0.04% min ₹20'],
+      ['AMC','Free','₹600/year',true],
+    ],
+    mtf:[
+      ['MTF Interest Rate','12.49% p.a. (tiered)','9.69% p.a. (Pro plan) / 14.97% (Free plan)'],
+      ['MTF Brokerage','0.03% or ₹20, lower','0–0.30% by plan'],
+    ],
+    settlement:[
+      ['Interest on Margin Shortfall','0.05%/day','0.025%/day (9% p.a.)'],
+      ['Delayed Payment Interest','0.0438%/day','0.0658% per day'],
+    ],
+    services:[
+      ['Call & Trade','₹50 + GST/order','₹50 + 18% GST per order'],
+      ['API Access','Free (Dhan HQ API)','Free (Kotak Neo API)',true,true],
+    ],
+    account:[
+      ['Account Opening','Free','Free',true,true],
+      ['DDPI','₹100 + 18% GST = ₹118','₹100 + 18% GST = ₹118'],
+    ],
+    modifications:[
+      ['Name Change','Free','Free',true,true],
+      ['Address Change','Free','Free',true,true],
+    ],
   },
-  {
-    a: { id:'groww',    name:'Groww',     total:178.44, delivery:'₹5–₹20',  intraday:'0.1% or ₹20',  options:'₹20/order', dp:20, amc:0,   mtf:'14.95% p.a.' },
-    b: { id:'angelone', name:'Angel One', total:178.44, delivery:'₹2–₹20',  intraday:'0.03% or ₹20', options:'₹20/order', dp:20, amc:283, mtf:'14.99% p.a.' },
+  'groww-angelone':{
+    a:'Groww',b:'Angel One',
+    perTrade:[
+      {type:'Delivery',sub:'₹50K round-trip',av:178.71,bv:178.71},
+      {type:'Intraday',sub:'₹1L round-trip',av:83.23,bv:83.23},
+      {type:'Futures',sub:'₹1L round-trip',av:70.69,bv:70.69},
+      {type:'Options',sub:'₹1L round-trip',av:276.30,bv:276.30},
+    ],
+    annual:[
+      {profile:'Passive Investor',sub:'2 delivery/mo, 1 sell day',av:4849.15,al:'Trading ₹4,849.15 · AMC ₹0',bv:3231.93,bl:'Trading ₹2,948.93 · AMC ₹283'},
+      {profile:'Swing Trader',sub:'8 delivery/mo, 4 sell days',av:18337.68,al:'Trading ₹18,337.68 · AMC ₹0',bv:14244.46,bl:'Trading ₹13,961.46 · AMC ₹283'},
+      {profile:'F&O Active',sub:'30 futures + 60 options/mo',av:224385.12,al:'Trading ₹224,385.12 · AMC ₹0',bv:224668.12,bl:'Trading ₹224,385.12 · AMC ₹283'},
+    ],
+    trading:[
+      ['Delivery Brokerage','0.1% or ₹20, lower (min ₹5)','₹2–₹20 (min ₹2)'],
+      ['Intraday Brokerage','0.1% or ₹20, lower (min ₹5)','0.03% or ₹20, lower'],
+      ['F&O Options','Flat ₹20/order','Flat ₹20/order'],
+    ],
+    demat:[
+      ['DP Charge','₹20/scrip (free under ₹100)','₹20/scrip per sell transaction'],
+      ['AMC','Free','₹240 + GST/year = ₹283',true],
+    ],
+    mtf:[
+      ['MTF Interest Rate','14.95% p.a.','14.99% p.a.'],
+      ['MTF Brokerage','0.1% of order value','0.1% or ₹20, lower (min ₹2)'],
+    ],
+    settlement:[
+      ['Delayed Payment Interest','0.045%/day on outstanding debit','0.049%/day'],
+      ['Pledge / Unpledge','₹20 + GST/ISIN = ₹23.60 each','₹23.60 each'],
+    ],
+    services:[
+      ['Call & Trade','Not available','₹20/order'],
+      ['API Access','Not offered','Free (SmartAPI)',false,true],
+    ],
+    account:[
+      ['Account Opening','Free','Free',true,true],
+      ['DDPI','₹100 + 18% GST = ₹118','₹100 + 18% GST = ₹118'],
+    ],
+    modifications:[
+      ['Name Change','₹25 + GST','Free',false,true],
+      ['Address Change','₹25 + GST','Free',false,true],
+    ],
   },
-  {
-    a: { id:'groww', name:'Groww',          total:178.44, delivery:'₹5–₹20', intraday:'0.1% or ₹20',  options:'₹20/order', dp:20, amc:0,   mtf:'14.95% p.a.' },
-    b: { id:'kotak', name:'Kotak Securities',total:367.24, delivery:'0.2%',  intraday:'₹10 or 0.05%', options:'₹10/lot',  dp:20, amc:600, mtf:'9.69% (Pro)' },
+  'groww-kotak':{
+    a:'Groww',b:'Kotak Securities',
+    perTrade:[
+      {type:'Delivery',sub:'₹50K round-trip',av:178.71,bv:367.51},
+      {type:'Intraday',sub:'₹1L round-trip',av:83.23,bv:83.23},
+      {type:'Futures',sub:'₹1L round-trip',av:70.69,bv:70.69},
+      {type:'Options',sub:'₹1L round-trip',av:276.30,bv:276.30},
+    ],
+    annual:[
+      {profile:'Passive Investor',sub:'2 delivery/mo, 1 sell day',av:4849.15,al:'Trading ₹4,849.15 · AMC ₹0',bv:6688.51,bl:'Trading ₹6,088.51 · AMC ₹600'},
+      {profile:'Swing Trader',sub:'8 delivery/mo, 4 sell days',av:18337.68,al:'Trading ₹18,337.68 · AMC ₹0',bv:32097.40,bl:'Trading ₹31,497.40 · AMC ₹600'},
+      {profile:'F&O Active',sub:'30 futures + 60 options/mo',av:224385.12,al:'Trading ₹224,385.12 · AMC ₹0',bv:224985.12,bl:'Trading ₹224,385.12 · AMC ₹600'},
+    ],
+    trading:[
+      ['Delivery Brokerage','0.1% or ₹20, lower (min ₹5)','0.2%'],
+      ['Intraday Brokerage','0.1% or ₹20, lower (min ₹5)','₹10 or 0.05%, lower'],
+      ['F&O Options','Flat ₹20/order','₹10/lot'],
+      ['Commodity','Not offered','0.05%/order'],
+    ],
+    demat:[
+      ['DP Charge','₹20/scrip (free under ₹100)','0.04% min ₹20'],
+      ['AMC','Free','₹600/year',true],
+    ],
+    mtf:[
+      ['MTF Interest Rate','14.95% p.a.','9.69% p.a. (Pro plan) / 14.97% (Free plan)'],
+      ['MTF Brokerage','0.1% of order value','0–0.30% by plan'],
+    ],
+    settlement:[
+      ['Interest on Margin Shortfall','0.05%/day on margin shortfall','0.025%/day (9% p.a.)'],
+      ['Delayed Payment Interest','0.045%/day','0.0658% per day'],
+      ['Pledge / Unpledge','₹20 + GST/ISIN = ₹23.60 each','₹20 each'],
+    ],
+    services:[
+      ['Call & Trade','Not available','₹50 + 18% GST per order'],
+      ['API Access','Not offered','Free (Kotak Neo API)',false,true],
+    ],
+    account:[
+      ['Account Opening','Free','Free',true,true],
+      ['DDPI','₹100 + 18% GST = ₹118','₹100 + 18% GST = ₹118'],
+    ],
+    modifications:[
+      ['Name Change','₹25 + GST','Free',false,true],
+      ['Address Change','₹25 + GST','Free',false,true],
+    ],
   },
-  {
-    a: { id:'angelone', name:'Angel One',      total:178.44, delivery:'₹2–₹20', intraday:'0.03% or ₹20', options:'₹20/order', dp:20, amc:283, mtf:'14.99% p.a.' },
-    b: { id:'kotak',    name:'Kotak Securities',total:367.24, delivery:'0.2%',  intraday:'₹10 or 0.05%', options:'₹10/lot',  dp:20, amc:600, mtf:'9.69% (Pro)' },
+  'angelone-kotak':{
+    a:'Angel One',b:'Kotak Securities',
+    perTrade:[
+      {type:'Delivery',sub:'₹50K round-trip',av:178.71,bv:367.51},
+      {type:'Intraday',sub:'₹1L round-trip',av:83.23,bv:83.23},
+      {type:'Futures',sub:'₹1L round-trip',av:70.69,bv:70.69},
+      {type:'Options',sub:'₹1L round-trip',av:276.30,bv:276.30},
+    ],
+    annual:[
+      {profile:'Passive Investor',sub:'2 delivery/mo, 1 sell day',av:3231.93,al:'Trading ₹2,948.93 · AMC ₹283',bv:6688.51,bl:'Trading ₹6,088.51 · AMC ₹600'},
+      {profile:'Swing Trader',sub:'8 delivery/mo, 4 sell days',av:14244.46,al:'Trading ₹13,961.46 · AMC ₹283',bv:32097.40,bl:'Trading ₹31,497.40 · AMC ₹600'},
+      {profile:'F&O Active',sub:'30 futures + 60 options/mo',av:224668.12,al:'Trading ₹224,385.12 · AMC ₹283',bv:224985.12,bl:'Trading ₹224,385.12 · AMC ₹600'},
+    ],
+    trading:[
+      ['Delivery Brokerage','₹2–₹20 (min ₹2)','0.2%'],
+      ['Intraday Brokerage','0.03% or ₹20, lower','₹10 or 0.05%, lower'],
+      ['F&O Options','Flat ₹20/order','₹10/lot'],
+    ],
+    demat:[
+      ['DP Charge','₹20/scrip per sell transaction','0.04% min ₹20'],
+      ['AMC','₹240 + GST/year = ₹283','₹600/year'],
+    ],
+    mtf:[
+      ['MTF Interest Rate','14.99% p.a.','9.69% p.a. (Pro plan) / 14.97% (Free plan)'],
+      ['MTF Brokerage','0.1% or ₹20, lower (min ₹2)','0–0.30% by plan'],
+    ],
+    settlement:[
+      ['Interest on Margin Shortfall','Additional ₹20 brokerage (intraday)','0.025%/day (9% p.a.)'],
+      ['Delayed Payment Interest','0.049%/day','0.0658% per day'],
+    ],
+    services:[
+      ['Call & Trade','₹20/order','₹50 + 18% GST per order'],
+      ['API Access','Free (SmartAPI)','Free (Kotak Neo API)',true,true],
+    ],
+    account:[
+      ['Account Opening','Free','Free',true,true],
+      ['DDPI','₹100 + 18% GST = ₹118','₹100 + 18% GST = ₹118'],
+    ],
+    modifications:[
+      ['Name Change','Free','Free',true,true],
+      ['Address Change','Free','Free',true,true],
+    ],
   },
+};
+
+const PAIR_LIST = [
+  {key:'zerodha-dhan',label:'Zerodha vs Dhan'},
+  {key:'zerodha-groww',label:'Zerodha vs Groww'},
+  {key:'zerodha-angelone',label:'Zerodha vs Angel One'},
+  {key:'zerodha-kotak',label:'Zerodha vs Kotak'},
+  {key:'dhan-groww',label:'Dhan vs Groww'},
+  {key:'dhan-angelone',label:'Dhan vs Angel One'},
+  {key:'dhan-kotak',label:'Dhan vs Kotak'},
+  {key:'groww-angelone',label:'Groww vs Angel One'},
+  {key:'groww-kotak',label:'Groww vs Kotak'},
+  {key:'angelone-kotak',label:'Angel One vs Kotak'},
 ];
 
-function HeadToHead({ brokers }) {
-  const [open, setOpen] = useState(null);
+const SEC = {
+  perTrade:'01  Per-trade cost',annual:'02  Annual cost by profile',
+  trading:'03  Trading',demat:'04  Demat',mtf:'05  MTF',
+  settlement:'06  Settlement',services:'07  Services',account:'08  Account',
+  documents:'09  Documents',instruments:'10  Instruments',modifications:'11  Modifications',
+};
 
-  return (
-    <div className="h2h-wrap">
-      <div className="h2h-header">
-        <div className="h2h-title">Head-to-Head</div>
-        <div className="h2h-sub">Same ₹50,000 delivery trade. Different broker. See exactly where the gap comes from.</div>
-      </div>
-
-      <div className="h2h-list">
-        {H2H_PAIRS.map((pair, i) => {
-          const winner = pair.a.total <= pair.b.total ? pair.a : pair.b;
-          const loser  = pair.a.total <= pair.b.total ? pair.b : pair.a;
-          const saves  = Math.abs(pair.a.total - pair.b.total).toFixed(2);
-          const maxT   = Math.max(pair.a.total, pair.b.total);
-          const isOpen = open === i;
-
-          return (
-            <div key={i} className={`h2h-row${isOpen?' h2h-row-open':''}`}>
-              <div className="h2h-row-head" onClick={() => setOpen(isOpen ? null : i)}>
-                <div className="h2h-names">
-                  <span className={winner.id===pair.a.id?'h2h-name-win':'h2h-name'}>{pair.a.name}</span>
-                  <span className="h2h-vs">vs</span>
-                  <span className={winner.id===pair.b.id?'h2h-name-win':'h2h-name'}>{pair.b.name}</span>
-                </div>
-                <div className="h2h-bars">
-                  <div className="h2h-bar-row">
-                    <span className={`h2h-amt ${winner.id===pair.a.id?'h2h-amt-win':''}`}>₹{fmt(pair.a.total,2)}</span>
-                    <div className="h2h-bar-track">
-                      <div className="h2h-bar-fill" style={{width:`${(pair.a.total/maxT)*100}%`, background: winner.id===pair.a.id?'var(--gain)':'var(--border2)'}}/>
-                    </div>
-                  </div>
-                  <div className="h2h-bar-row">
-                    <span className={`h2h-amt ${winner.id===pair.b.id?'h2h-amt-win':''}`}>₹{fmt(pair.b.total,2)}</span>
-                    <div className="h2h-bar-track">
-                      <div className="h2h-bar-fill" style={{width:`${(pair.b.total/maxT)*100}%`, background: winner.id===pair.b.id?'var(--gain)':'var(--border2)'}}/>
-                    </div>
-                  </div>
-                </div>
-                <div className="h2h-verdict">
-                  <span className="h2h-winner-name" style={{color:'var(--gain)'}}>{winner.name}</span>
-                  <span className="h2h-saves"> saves ₹{saves}</span>
-                </div>
-                <div className="h2h-toggle">{isOpen?'▲':'▼'}</div>
-              </div>
-
-              {isOpen && (
-                <div className="h2h-detail">
-                  <div className="h2h-detail-grid">
-                    {[
-                      ['Delivery brokerage', pair.a.delivery===0?'Zero':pair.a.delivery, pair.b.delivery===0?'Zero':pair.b.delivery],
-                      ['Intraday brokerage', pair.a.intraday, pair.b.intraday],
-                      ['F&O Options',        pair.a.options,  pair.b.options],
-                      ['DP charge',          '₹'+fmt(pair.a.dp,2), '₹'+fmt(pair.b.dp,2)],
-                      ['AMC / year',         pair.a.amc===0?'Free':'₹'+fmt(pair.a.amc,2), pair.b.amc===0?'Free':'₹'+fmt(pair.b.amc,2)],
-                      ['MTF interest',       pair.a.mtf, pair.b.mtf],
-                    ].map(([label, va, vb], j) => (
-                      <div key={j} className="h2h-detail-row">
-                        <span className="h2h-detail-label">{label}</span>
-                        <span className={`h2h-detail-val ${va==='Zero'||va==='Free'?'h2h-green':''}`}>{va}</span>
-                        <span className={`h2h-detail-val ${vb==='Zero'||vb==='Free'?'h2h-green':''}`}>{vb}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="h2h-detail-note">
-                    ₹50,000 delivery trade (buy + sell). Govt charges (STT ₹100, exchange ₹3.07, SEBI ₹0.10, stamp ₹7.50) are identical at every broker — the difference is purely brokerage + DP + AMC.
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+function H2HTable({title,rows,aName,bName}){
+  if(!rows||!rows.length)return null;
+  return(
+    <div className="h2h-section">
+      <div className="h2h-section-title">{title}</div>
+      <div className="h2h-table">
+        <div className="h2h-th"><span>CHARGE</span><span>{aName.toUpperCase()}</span><span>{bName.toUpperCase()}</span></div>
+        {rows.map(([label,av,bv,ag,bg],i)=>(
+          <div key={i} className="h2h-tr">
+            <span className="h2h-td-label">{label}</span>
+            <span className={`h2h-td-val${ag?' h2h-green':''}`}>{av}</span>
+            <span className={`h2h-td-val${bg?' h2h-green':''}`}>{bv}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
+
+function HeadToHead(){
+  const [pair,setPair]=useState('zerodha-dhan');
+  const d=H2H_DATA[pair];
+  const delivA=d.perTrade[0].av, delivB=d.perTrade[0].bv;
+  const winner=delivA<=delivB?d.a:d.b;
+  const saves=Math.abs(delivA-delivB).toFixed(2);
+  const maxT=Math.max(delivA,delivB);
+  return(
+    <div className="h2h-wrap">
+      <div className="h2h-header">
+        <div className="h2h-title">Head-to-Head</div>
+        <div className="h2h-sub">Same trade. Different broker. Pick a matchup — see the full breakdown across all 11 charge categories.</div>
+      </div>
+      <div className="h2h-pair-grid">
+        {PAIR_LIST.map(p=>(
+          <button key={p.key} className={`h2h-pair-btn${pair===p.key?' h2h-pair-active':''}`} onClick={()=>setPair(p.key)}>{p.label}</button>
+        ))}
+      </div>
+      <div className="h2h-hero">
+        <div className="h2h-hero-names">
+          <span className={delivA<=delivB?'h2h-name-win':'h2h-name-lose'}>{d.a}</span>
+          <span className="h2h-hero-vs">vs</span>
+          <span className={delivB<delivA?'h2h-name-win':'h2h-name-lose'}>{d.b}</span>
+        </div>
+        <div className="h2h-hero-bars">
+          {[{n:d.a,v:delivA,w:delivA<=delivB},{n:d.b,v:delivB,w:delivB<delivA}].map((s,i)=>(
+            <div key={i} className="h2h-hero-bar-row">
+              <span className={`h2h-hero-amt${s.w?' h2h-green':''}`}>₹{fmt(s.v,2)}</span>
+              <div className="h2h-hero-track"><div className="h2h-hero-fill" style={{width:`${(s.v/maxT)*100}%`,background:s.w?'var(--gain)':'var(--border2)'}}/></div>
+              <span className="h2h-hero-name">{s.n}</span>
+            </div>
+          ))}
+        </div>
+        <div className="h2h-hero-verdict">
+          {parseFloat(saves)===0
+            ?<span style={{color:'var(--text3)'}}>Same delivery cost on ₹50K trade</span>
+            :<><span className="h2h-green" style={{fontWeight:900}}>{winner}</span><span style={{color:'var(--text3)'}}> saves ₹{saves} on a ₹50K delivery trade</span></>
+          }
+        </div>
+      </div>
+      <div className="h2h-section">
+        <div className="h2h-section-title">{SEC.annual}</div>
+        <div className="h2h-annual-grid">
+          {d.annual.map((p,i)=>{
+            const aW=p.av<=p.bv, diff=Math.abs(p.av-p.bv).toFixed(2);
+            return(
+              <div key={i} className="h2h-annual-card">
+                <div className="h2h-annual-profile">{p.profile}</div>
+                <div className="h2h-annual-sub">{p.sub}</div>
+                <div className="h2h-annual-row">
+                  <div className="h2h-annual-broker">
+                    <div className="h2h-annual-name">{d.a}</div>
+                    <div className={`h2h-annual-amt${aW?' h2h-green':''}`}>₹{fmt(p.av,2)}<span className="h2h-annual-yr">/yr</span></div>
+                    <div className="h2h-annual-breakdown">{p.al}</div>
+                  </div>
+                  <div className="h2h-annual-broker">
+                    <div className="h2h-annual-name">{d.b}</div>
+                    <div className={`h2h-annual-amt${!aW?' h2h-green':''}`}>₹{fmt(p.bv,2)}<span className="h2h-annual-yr">/yr</span></div>
+                    <div className="h2h-annual-breakdown">{p.bl}</div>
+                  </div>
+                </div>
+                {parseFloat(diff)>0&&<div className="h2h-annual-verdict h2h-green">{aW?d.a:d.b} saves ₹{diff}/yr</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="h2h-section">
+        <div className="h2h-section-title">{SEC.perTrade}</div>
+        <div className="h2h-table">
+          <div className="h2h-th"><span>TRADE TYPE</span><span>{d.a.toUpperCase()}</span><span>{d.b.toUpperCase()}</span><span>GAP</span></div>
+          {d.perTrade.map((r,i)=>{
+            const aW=r.av<=r.bv,gap=Math.abs(r.av-r.bv);
+            return(
+              <div key={i} className="h2h-tr">
+                <span className="h2h-td-label"><div>{r.type}</div><div className="h2h-td-sub">{r.sub}</div></span>
+                <span className={`h2h-td-val${aW?' h2h-green':''}`}>₹{fmt(r.av,2)}</span>
+                <span className={`h2h-td-val${(!aW&&gap>0.01)?' h2h-green':''}`}>₹{fmt(r.bv,2)}</span>
+                <span className="h2h-td-gap">{gap<0.01?'—':'₹'+fmt(gap,2)}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <H2HTable title={SEC.trading}       rows={d.trading}       aName={d.a} bName={d.b}/>
+      <H2HTable title={SEC.demat}         rows={d.demat}         aName={d.a} bName={d.b}/>
+      <H2HTable title={SEC.mtf}           rows={d.mtf}           aName={d.a} bName={d.b}/>
+      <H2HTable title={SEC.settlement}    rows={d.settlement}    aName={d.a} bName={d.b}/>
+      <H2HTable title={SEC.services}      rows={d.services}      aName={d.a} bName={d.b}/>
+      <H2HTable title={SEC.account}       rows={d.account}       aName={d.a} bName={d.b}/>
+      {d.documents&&<H2HTable title={SEC.documents} rows={d.documents} aName={d.a} bName={d.b}/>}
+      {d.instruments&&<H2HTable title={SEC.instruments} rows={d.instruments} aName={d.a} bName={d.b}/>}
+      <H2HTable title={SEC.modifications} rows={d.modifications} aName={d.a} bName={d.b}/>
+      <div className="h2h-footnote">Data sourced from comparebroker.info and official broker websites. ₹50K delivery baseline. Govt charges (STT, exchange, SEBI, stamp duty) are identical at every broker and not shown in the gap. Verify all charges before trading.</div>
+    </div>
+  );
+}
+
 
 export default function BrokersPage() {
   const [tab,      setTab]     = useState('Rankings');
