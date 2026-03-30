@@ -24,33 +24,26 @@ const AVG_RANGES = { nifty: 155, banknifty: 450 };
 
 // ── IST helpers ───────────────────────────────────────────────────────────────
 function getIST() { return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })); }
-// NSE Holidays 2026 (same set as timezone.js)
+// NSE Holidays 2026
 const NSE_HOLIDAYS = new Set(['2026-01-15','2026-01-26','2026-03-03','2026-03-26',
   '2026-03-31','2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26',
   '2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25']);
 
-function getISTDateStr(d) { return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); }
-
-function isTradingDay(d) {
-  const dow = d.getDay();
-  if (dow === 0 || dow === 6) return false;
-  return !NSE_HOLIDAYS.has(getISTDateStr(d));
-}
-
-// Get next trading day from a given IST date
-function nextTradingDate(fromIST) {
-  const d = new Date(fromIST);
-  for (let i = 0; i < 14; i++) {
-    d.setDate(d.getDate() + 1);
-    const ist2 = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    if (isTradingDay(ist2)) return getISTDateStr(ist2);
+// Get next trading day string (YYYY-MM-DD) from now
+function nextTradingDate() {
+  const nowMs = Date.now();
+  for (let i = 1; i <= 14; i++) {
+    const candidate = new Date(nowMs + i * 86400000);
+    const dow = new Date(candidate.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay();
+    const dateStr = getISTDateStr(candidate);
+    if (dow !== 0 && dow !== 6 && !NSE_HOLIDAYS.has(dateStr)) return dateStr;
   }
   return null;
 }
 
 function getSlot() {
   const ist = getIST(); const d = ist.getDay(); const m = ist.getHours()*60 + ist.getMinutes();
-  const dateStr = getISTDateStr(ist);
+  const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   if (d===0||d===6) return 'Weekend';
   if (NSE_HOLIDAYS.has(dateStr)) return 'Holiday';
   if (m < 540)  return 'Pre-Market';   // before 9:00
@@ -66,6 +59,7 @@ function getSlot() {
   return 'Evening';                     // after 5:00 PM
 }
 function getMins() { const ist = getIST(); return ist.getHours()*60 + ist.getMinutes(); }
+function getISTDateStr(d) { return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); }
 
 // ── Stance ────────────────────────────────────────────────────────────────────
 function getStance(np, bp) {
@@ -645,8 +639,7 @@ export default function InsightsPage({data={}, nseData={}}) {
   const fmtEvtDate= d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
 
   // Next actual trading day (skips weekends + holidays)
-  const istNow = getIST();
-  const nextTradingStr = nextTradingDate(istNow);
+  const nextTradingStr = nextTradingDate();
   const nextTradingLabel = nextTradingStr
     ? new Date(nextTradingStr+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})
     : 'next trading session';
