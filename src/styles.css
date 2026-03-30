@@ -5494,8 +5494,18 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* Tabs */
 /* Brokers sidebar layout */
-.brk-layout      { display: grid; grid-template-columns: 280px 1fr; align-items: start; min-height: 600px; border-top: 1px solid var(--border); }
-.brk-sidenav     { border-right: 1px solid var(--border); background: var(--bg0); position: sticky; top: 45px; display: flex; flex-direction: column; padding: 8px 0; }
+.brk-layout      { display: block; }
+.brk-tabs-bar    { display: flex; align-items: stretch; border-bottom: 1px solid var(--border); background: linear-gradient(180deg,#0F0F16 0%,#0B0B10 100%); padding: 0 12px; position: sticky; top: 45px; z-index: 10; gap: 0; }
+.brk-tab-btn     { display: flex; align-items: center; gap: 9px; padding: 12px 20px; cursor: pointer; border: none; border-bottom: 2px solid transparent; background: transparent; transition: all .15s; border-right: 1px solid rgba(255,255,255,.04); }
+.brk-tab-btn:last-child { border-right: none; }
+.brk-tab-btn:hover { background: rgba(255,255,255,.03); }
+.brk-tab-btn:hover .brk-tab-label { color: #fff; }
+.brk-tab-icon    { font-size: 15px; flex-shrink: 0; color: var(--text3); width: 18px; text-align: center; font-family: var(--mono); }
+.brk-tab-label   { font-family: var(--mono); font-size: 13px; font-weight: 800; color: var(--text2); letter-spacing: .3px; }
+.brk-tab-active .brk-tab-icon  { color: var(--accent) !important; }
+.brk-tab-active .brk-tab-label { color: #fff !important; }
+.brk-tab-active  { border-bottom-color: var(--accent) !important; background: rgba(74,158,255,.05) !important; }
+.brk-main-content { min-height: 600px; }
 .brk-nav-btn     { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border: none; background: none; cursor: pointer; text-align: left; width: 100%; border-left: 3px solid transparent; transition: all .15s; }
 .brk-nav-btn:hover { background: rgba(255,255,255,.03); }
 .brk-nav-btn:hover .brk-nav-label { color: var(--text); }
@@ -5765,17 +5775,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── Broker Hero v2 ───────────────────────────────────────────────── */
 .brk-hero2        { padding: 20px 24px; border-bottom: 1px solid var(--border); background: var(--bg0); }
-.brk-hero2-top    { display: flex; align-items: flex-start; gap: 32px; }
-.brk-hero2-left   { flex: 0 0 68%; display: flex; flex-direction: column; gap: 16px; }
+.brk-hero2-top    { display: flex; align-items: stretch; gap: 32px; }
+.brk-hero2-left   { flex: 0 0 68%; display: flex; flex-direction: column; gap: 16px; justify-content: space-between; }
 .brk-hero2-title  { font-family: var(--mono); font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; line-height: 1.2; }
 .brk-hero2-stats  { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-.brk-hero2-trade-note { font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.7; padding-top: 12px; border-top: 1px solid var(--border); }
+.brk-hero2-trade-note { font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.7; padding-top: 12px; border-top: 1px solid var(--border); margin-top: auto; }
 .brk-hs2          { display: flex; flex-direction: column; gap: 3px; }
 .brk-hs2-n        { font-family: var(--mono); font-size: 26px; font-weight: 900; letter-spacing: -1px; }
 .brk-hs2-l        { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 .brk-hs2-l strong { font-weight: 800; }
 .brk-hs2-sep      { font-family: var(--mono); font-size: 20px; color: var(--border2); line-height: 1; }
-.brk-hero2-note   { flex: 0 0 30%; font-family: var(--mono); font-size: 11.5px; color: var(--text2); line-height: 1.75; padding: 14px 16px; background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r); box-sizing: border-box; }
+.brk-hero2-note   { flex: 1; font-family: var(--mono); font-size: 11.5px; color: var(--text2); line-height: 1.75; padding: 16px 18px; background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r); box-sizing: border-box; display: flex; align-items: center; }
 .brk-hero2-note a { color: var(--accent); }
 
 /* ── Trade size toggle ────────────────────────────────────────────── */
