@@ -5735,6 +5735,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-ccs-row span:last-child { color: var(--text); font-weight: 700; text-align: right; white-space: nowrap; }
 
 .brk-green { color: var(--gain) !important; }
+.brk-card-red { color: var(--loss) !important; }
 .brk-card-sw { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 14px; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
 .brk-card-sw-col { display: flex; flex-direction: column; gap: 0; padding: 12px 14px; background: var(--bg2); }
 .brk-card-sw-col:first-child { border-right: 1px solid var(--border); }

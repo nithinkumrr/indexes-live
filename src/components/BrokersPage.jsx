@@ -10,21 +10,24 @@ const BROKERS = [
     futures: '0.03% or ₹20', futuresB: 20,
     options: '₹20/order', optionsB: 20,
     dp: 15.34, dpLabel: '₹13 + 18% GST',
-    amc: 88.50, amcLabel: '₹75 + GST/yr',
+    amc: 88.50, amcLabel: '₹75 + GST/quarter',
     mtfRate: 14.6, mtfLabel: '14.6% p.a.',
     mtfSlabs: [['All amounts','14.6% p.a.']],
     mtfBrokerage: '0.3% or ₹20',
     callTrade: 59, squareOff: 59, paymentGw: 10.62, instantWithdrawal: 'Free',
-    api: '₹500/mo', apiNote: 'Kite Connect ₹500/mo — most mature trading API in India',
+    api: '₹500/mo', apiNote: 'Trading API free · Data API ₹500/mo',
     ddpi: 118, reactivation: 0,
     networth: 13500, networthLabel: '₹13,500 Cr',
     activeClients: 6.9, activeClientsLabel: '6.9M',
     total50k: 126.58, brokerCharges50k: 15.34,
     pledgeUnpledge: '₹35.40 pledge / Free unpledge',
     dematerialisation: '₹177/cert',
-    marginShortfall: '0.035%/day (12.78% p.a.) — lowest of all brokers',
-    strengths: ['Highest networth (₹13,500 Cr — #1 in India)','Kite — best trading platform in India','Varsity — free financial education','Zero delivery brokerage','Lowest margin shortfall (0.035%/day)','Coin for direct mutual funds'],
-    watch: ['AMC ₹88.50/yr','API costs ₹500/mo','No SLB or LAS'],
+    marginShortfall: '0.035%/day (12.78% p.a.)',
+    marginShortfallIntraday: 'Additional ₹20 brokerage',
+    marginShortfallOvernight: '0.035%/day (12.78% p.a.)',
+    delayedPayment: '0.05% per day',
+    strengths: ['Kite — robust, with terminal mode for advanced trading setups','Zero delivery brokerage','Lowest margin shortfall (0.035%/day)','Access to govt securities (T-Bills, G-Secs)','Coin for direct mutual funds','Highest networth (₹13,500 Cr)'],
+    watch: ['AMC ₹75+GST/quarter','Kite Connect API ₹500/mo'],
     best: ['equity','options','algo','longterm'], url: 'https://zerodha.com',
   },
   {
@@ -40,7 +43,7 @@ const BROKERS = [
     mtfSlabs: [['≤ ₹5L','12.49%'],['₹5L–₹10L','13.49%'],['₹10L–₹25L','14.49%'],['₹25L–₹50L','15.49%'],['> ₹50L','16.49%']],
     mtfBrokerage: '0.03% or ₹20',
     callTrade: 59, squareOff: 23.60, paymentGw: 0, instantWithdrawal: 'Free',
-    api: 'Free', apiNote: 'Trading API free · Data API ₹499+GST',
+    api: 'Free', apiNote: 'Trading API free · Data API ₹499+GST/mo',
     ddpi: 118, reactivation: 0,
     networth: null, networthLabel: '—',
     activeClients: 1.0, activeClientsLabel: '1.0M',
@@ -48,8 +51,12 @@ const BROKERS = [
     pledgeUnpledge: '₹17.70/ISIN each',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.0438%/day (15.99% p.a.)',
-    strengths: ['Zero AMC','Lowest DP charge (₹14.75 = ₹12.50 + 18% GST)'],
-    watch: ['UI not as refined as top brokers','MTF rates vary by slab','MTF interest charged both days on BTST','Intraday margin shortfall 0.0438%/day (15.99% p.a.)','Newer broker — less track record vs Zerodha'],
+    marginShortfallIntraday: '0.0438%/day (15.99% p.a.)',
+    marginShortfallOvernight: '0.0438%/day (15.99% p.a.)',
+    delayedPayment: '0.0438% per day',
+    cuspaCharge: '₹15/instruction/ISIN + GST',
+    strengths: ['Zero AMC','Lowest DP charge (₹14.75 = ₹12.50 + 18% GST)','Dext trading terminal','Online SLB'],
+    watch: ['UI not as refined as top brokers','MTF rates vary by slab','MTF interest charged both days on BTST','Newer broker — less track record vs Zerodha'],
     best: ['equity','longterm','beginner'], url: 'https://dhan.co',
   },
   {
@@ -679,18 +686,18 @@ export default function BrokersPage() {
                       const brkD   = b.delivery===0 ? 0 : Math.min(b.brokerCharges50k/50000*tv, tv*0.005*2);
                       // Intraday: min(rate%, flat cap) per side × 2
                       const intRate = b.intradayB||20;
-                      const brkI   = Math.min(intRate, tv*0.0003) * 2; // 0.03% or cap, both sides
+                      const brkI   = Math.min(intRate, tv*0.0003) * 2; // 0.03% or cap, buy+sell
                       // MTF: same delivery rate structure
                       const mtfBrkAmt = b.delivery===0
                         ? Math.min(20, tv*0.003) * 2  // use delivery rate for MTF (e.g. Zerodha 0.3% or ₹20)
                         : Math.min(b.brokerCharges50k/50000*tv, tv*0.005*2);
 
                       const gstD   = (brkD + txn + sebi) * 0.18;
-                      const gstI   = (brkI*2 + txn + sebi) * 0.18;
+                      const gstI   = (brkI + txn + sebi) * 0.18;
                       const gstMTF = (mtfBrkAmt + txn + sebi) * 0.18;
 
                       const totD   = brkD + gstD + b.dp + sttD + txn + sebi + stampD;
-                      const totI   = brkI*2 + gstI + sttI + txn + sebi + stampI;
+                      const totI   = brkI + gstI + sttI + txn + sebi + stampI;
                       const totMTF = mtfBrkAmt + gstMTF + b.dp + sttD + txn + sebi + stampD;
 
                       const cheapTot = (sorted[0].delivery===0?0:Math.min(sorted[0].brokerCharges50k/50000*tv,tv*0.005)) + sorted[0].dp + (tv*0.002+tv*2*0.0000307+tv*2/10000000*10+tv*0.00015+(tv*2*0.0000307+tv*2/10000000*10)*0.18);
@@ -745,6 +752,7 @@ export default function BrokersPage() {
                         <div className="brk-ccs-row"><span>Intraday equity</span><span>{b.intraday}</span></div>
                         <div className="brk-ccs-row"><span>F&O Futures</span><span>{b.futures}</span></div>
                         <div className="brk-ccs-row"><span>F&O Options</span><span>{b.options}</span></div>
+                        <div className="brk-ccs-row"><span>MTF brokerage</span><span>{b.mtfBrokerage||'—'}</span></div>
                       </div>
                       <div className="brk-card-charge-section">
                         <div className="brk-ccs-title">DEMAT CHARGES</div>
@@ -761,10 +769,12 @@ export default function BrokersPage() {
                         <div className="brk-ccs-row"><span>Payment gateway</span><span>{b.paymentGw===0?'Free':'₹'+fmt(b.paymentGw,2)}</span></div>
                       </div>
                       <div className="brk-card-charge-section">
-                        <div className="brk-ccs-title">MTF & API</div>
-                        <div className="brk-ccs-row"><span>MTF brokerage</span><span>{b.mtfBrokerage||'—'}</span></div>
+                        <div className="brk-ccs-title">API & DELAYED PAYMENT</div>
                         <div className="brk-ccs-row"><span>API access</span><span>{b.apiNote||b.api}</span></div>
-                        <div className="brk-ccs-row"><span>Margin shortfall</span><span className={b.marginShortfall==='0.035%/day'?'brk-green':''}>{b.marginShortfall}</span></div>
+                        <div className="brk-ccs-row"><span>Intraday margin shortfall</span><span className={b.id==='zerodha'?'brk-green':'brk-card-red'}>{b.marginShortfallIntraday||b.marginShortfall}</span></div>
+                        <div className="brk-ccs-row"><span>Overnight margin shortfall</span><span className={b.id==='zerodha'?'brk-green':''}>{b.marginShortfallOvernight||b.marginShortfall}</span></div>
+                        <div className="brk-ccs-row"><span>Delayed payment</span><span>{b.delayedPayment||'—'}</span></div>
+                        {b.cuspaCharge&&<div className="brk-ccs-row"><span>CUSPA charges</span><span className="brk-card-red">{b.cuspaCharge}</span></div>}
                       </div>
                       <div className="brk-card-charge-section">
                         <div className="brk-ccs-title">ACCOUNT</div>
