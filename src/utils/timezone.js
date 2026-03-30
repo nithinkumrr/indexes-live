@@ -80,67 +80,24 @@ export function getLocalTime(tz) {
   return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-// NSE/BSE market holidays 2026 — update annually
+
+// NSE trading holidays 2026
 const NSE_HOLIDAYS_2026 = new Set([
   '2026-01-15','2026-01-26','2026-03-03','2026-03-26',
   '2026-03-31','2026-04-03','2026-04-14','2026-05-01',
   '2026-05-28','2026-06-26','2026-09-14','2026-10-02',
   '2026-10-20','2026-11-10','2026-11-24','2026-12-25',
 ]);
-
-const NSE_HOLIDAY_NAMES = {
-  '2026-01-15':'Municipal Corporation Elections (Maharashtra)',
-  '2026-01-26':'Republic Day',
-  '2026-03-03':'Holi',
-  '2026-03-26':'Shri Ram Navami',
-  '2026-03-31':'Shri Mahavir Jayanti',
-  '2026-04-03':'Good Friday',
-  '2026-04-14':'Dr. Baba Saheb Ambedkar Jayanti',
-  '2026-05-01':'Maharashtra Day',
-  '2026-05-28':'Bakri Eid',
-  '2026-06-26':'Moharram',
-  '2026-09-14':'Ganesh Chaturthi',
-  '2026-10-02':'Mahatma Gandhi Jayanti',
-  '2026-10-20':'Dussehra',
-  '2026-11-10':'Diwali-Balipratipada',
-  '2026-11-24':'Prakash Gurpurb Sri Guru Nanak Dev',
-  '2026-12-25':'Christmas',
+const NSE_HOLIDAY_NAMES_2026 = {
+  '2026-01-15':'Municipal Corporation Elections','2026-01-26':'Republic Day',
+  '2026-03-03':'Holi','2026-03-26':'Shri Ram Navami',
+  '2026-03-31':'Shri Mahavir Jayanti','2026-04-03':'Good Friday',
+  '2026-04-14':'Dr. Baba Saheb Ambedkar Jayanti','2026-05-01':'Maharashtra Day',
+  '2026-05-28':'Bakri Eid','2026-06-26':'Moharram',
+  '2026-09-14':'Ganesh Chaturthi','2026-10-02':'Mahatma Gandhi Jayanti',
+  '2026-10-20':'Dussehra','2026-11-10':'Diwali-Balipratipada',
+  '2026-11-24':'Prakash Gurpurb Sri Guru Nanak Dev','2026-12-25':'Christmas',
 };
-
-function isTradingHoliday(dateStr) {
-  return NSE_HOLIDAYS_2026.has(dateStr);
-}
-
-function getISTDateStr(d) {
-  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-}
-
-// Find next trading open — skipping weekends + holidays
-function secsToNextOpen(istNow) {
-  // istNow is already an IST-equivalent Date from toLocaleString('en-US', Asia/Kolkata)
-  // We need to find the next trading day and calculate seconds to 9:15 AM IST
-  const nowMs = Date.now(); // actual UTC ms
-  
-  for (let i = 1; i <= 30; i++) {
-    // Check date i days from now
-    const candidate = new Date(nowMs + i * 86400000);
-    const candidateIST = new Date(candidate.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    const dow = candidateIST.getDay();
-    const dateStr = getISTDateStr(candidate);
-    if (dow === 0 || dow === 6 || isTradingHoliday(dateStr)) continue;
-    
-    // Found next trading day — build its 9:15 AM IST as UTC ms
-    // IST is UTC+5:30 = UTC+330 minutes
-    const year  = candidateIST.getFullYear();
-    const month = candidateIST.getMonth();
-    const day   = candidateIST.getDate();
-    // 9:15 AM IST = 3:45 AM UTC
-    const openUTC = Date.UTC(year, month, day, 3, 45, 0);
-    const secs = Math.floor((openUTC - nowMs) / 1000);
-    return { secs: Math.max(0, secs), dateStr, holidayName: NSE_HOLIDAY_NAMES[dateStr] || null };
-  }
-  return { secs: 86400, dateStr: '', holidayName: null };
-}
 
 export function getIndiaMarketStatus() {
   const now = new Date();
@@ -150,41 +107,36 @@ export function getIndiaMarketStatus() {
   const totalMins = h * 60 + m;
   const OPEN_MINS  = 9 * 60 + 15;
   const CLOSE_MINS = 15 * 60 + 30;
-  const todayStr = getISTDateStr(ist);
-  const todayIsHoliday = isTradingHoliday(todayStr);
-  const todayHolidayName = NSE_HOLIDAY_NAMES[todayStr] || null;
+  const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
-  // Weekend
   if (day === 0 || day === 6) {
-    const next = secsToNextOpen();
-    return { status: 'weekend', secondsLeft: next.secs, label: 'Weekend', holidayName: null };
+    const daysToMonday = day === 0 ? 1 : 2;
+    const secsToMonday = daysToMonday * 24 * 3600 - (h * 3600 + m * 60 + s) + OPEN_MINS * 60;
+    return { status: 'weekend', secondsLeft: secsToMonday, label: 'Weekend', holidayName: null };
   }
 
-  // Market holiday today
-  if (todayIsHoliday) {
-    const next = secsToNextOpen();
-    return { status: 'holiday', secondsLeft: next.secs, label: todayHolidayName || 'Market Holiday', holidayName: todayHolidayName };
+  // Market holiday
+  if (NSE_HOLIDAYS_2026.has(todayStr)) {
+    const daysToNext = day === 5 ? 3 : 1;
+    const secsLeft = daysToNext * 24 * 3600 - (h * 3600 + m * 60 + s) + OPEN_MINS * 60;
+    const name = NSE_HOLIDAY_NAMES_2026[todayStr] || 'Market Holiday';
+    return { status: 'holiday', secondsLeft: Math.max(0, secsLeft), label: name, holidayName: name };
   }
-
-  // Market open
   if (totalMins >= OPEN_MINS && totalMins < CLOSE_MINS) {
     const secsLeft  = (CLOSE_MINS - totalMins) * 60 - s;
     const secsTotal = (CLOSE_MINS - OPEN_MINS) * 60;
-    return { status: 'open', secondsLeft: secsLeft, secsTotal, label: 'MARKET OPEN', holidayName: null };
+    return { status: 'open', secondsLeft: secsLeft, secsTotal, label: 'MARKET OPEN' };
   }
-
-  // Pre-open (same trading day)
   if (totalMins < OPEN_MINS) {
     const secsLeft  = (OPEN_MINS - totalMins) * 60 - s;
     const secsTotal = OPEN_MINS * 60;
-    return { status: 'pre', secondsLeft: secsLeft, secsTotal, label: 'Opens in', holidayName: null };
+    return { status: 'pre', secondsLeft: secsLeft, secsTotal, label: 'Opens in' };
   }
-
-  // After close — find next trading day (may skip holidays)
-  const next = secsToNextOpen();
-  return { status: 'closed', secondsLeft: next.secs, label: 'Closed', holidayName: null };
+  const minsToMidnight = 24 * 60 - totalMins;
+  const daysAhead = day === 5 ? 3 : 1;
+  const secsLeft  = (minsToMidnight + (daysAhead - 1) * 24 * 60 + OPEN_MINS) * 60 - s;
+  return { status: 'closed', secondsLeft: secsLeft, label: 'Closed' };
 }
-
 
 export function formatDuration(secs) {
   const h = Math.floor(secs / 3600);

@@ -4,7 +4,9 @@
 
 import { kv } from '@vercel/kv';
 
-const HOLIDAYS = new Set(['2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31','2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25']);
+const HOLIDAYS = new Set(['2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
+  '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14',
+  '2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25']);
 
 function getTradingDays(n) {
   const days = [];
@@ -121,15 +123,11 @@ export default async function handler(req, res) {
   const results = { stored: [], failed: [], skipped: [] };
 
   for (const iso of tradingDays) {
-    // For today: always re-fetch (NSE publishes at ~5 PM, we retry at 5/6:30/7 PM)
-    // For past days: skip if already stored
-    const isToday = iso === todayISO;
-    if (!isToday) {
-      try {
-        const existing = await kv.get(`fiidii:${iso}`);
-        if (existing) { results.skipped.push(iso); continue; }
-      } catch (_) {}
-    }
+    // Skip if already in KV
+    try {
+      const existing = await kv.get(`fiidii:${iso}`);
+      if (existing) { results.skipped.push(iso); continue; }
+    } catch (_) {}
 
     try {
       // Small delay between requests to avoid rate limiting

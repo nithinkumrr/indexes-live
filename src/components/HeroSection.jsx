@@ -95,11 +95,11 @@ function InlineCountdown() {
         {isOpen ? 'LIVE' : isPre ? 'PRE-OPEN' : isHol ? 'HOLIDAY' : s.status === 'weekend' ? 'WEEKEND' : 'OPENS IN'}
       </span>
       {isHol
-        ? <span className="ic-time">{s.label}</span>
+        ? <span className="ic-time" style={{fontSize:11,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.label}</span>
         : <span className="ic-time">{display}</span>
       }
       {!isOpen && !isHol && <span className="ic-sub">{isPre ? '· 09:15 IST' : '· 09:15 IST Mon–Fri'}</span>}
-      {isHol && <span className="ic-sub">· opens next trading day</span>}
+      {isHol && <span className="ic-sub">· opens next session</span>}
     </div>
   );
 }

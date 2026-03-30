@@ -24,7 +24,9 @@ export default async function handler(req, res) {
   const isFII = r => /FII|FPI|FOREIGN/i.test(String(r?.category||r?.clientType||r?.participant||r?.name||''));
   const isDII = r => /DII|DOMESTIC/i.test(String(r?.category||r?.clientType||r?.participant||r?.name||''));
 
-  const HOLIDAYS = new Set(['2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31','2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25']);
+  const HOLIDAYS = new Set(['2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
+    '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14',
+    '2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25']);
 
   const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const today = ist.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
@@ -52,17 +54,10 @@ export default async function handler(req, res) {
     } catch (_) {}
   }
 
-  // Step 2: Fetch live today ONLY if:
-  // 1. It's a trading day
-  // 2. It's past 5:00 PM IST (NSE publishes FII/DII data ~5 PM)
-  const istHour = ist.getHours();
-  const istMin  = ist.getMinutes();
-  const isPast5pm = (istHour > 17) || (istHour === 17 && istMin >= 0);
-
+  // Step 2: Fetch live today only if it's a trading day
   let liveToday = null;
   const todayIsHoliday = HOLIDAYS.has(today) || new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay() === 0 || new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay() === 6;
-
-  if (!todayIsHoliday && isPast5pm) {
+  if (!todayIsHoliday) {
     let cookies = '';
     const home = await fetch('https://www.nseindia.com', {
       headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' }
@@ -84,13 +79,10 @@ export default async function handler(req, res) {
   } // end !todayIsHoliday
 
   // Step 3: Merge today's live data — ONLY if today is a confirmed trading day
-  // AND we got actual non-zero data (NSE sometimes returns zeros before publishing)
+  // Even though we check todayIsHoliday above, NSE sometimes returns data on weekends.
+  // Double-check: verify today is in our trading days list before storing or showing.
   const todayIsTradingDay = tradingDays.includes(today);
-  const todayHasData = liveToday && (
-    Math.abs(liveToday.fiiNet) > 0 || Math.abs(liveToday.diiNet) > 0 ||
-    liveToday.fiiBuy > 0 || liveToday.diiBuy > 0
-  );
-  if (todayHasData && todayIsTradingDay) {
+  if (liveToday && todayIsTradingDay) {
     const existing = history.findIndex(h => h.date === today);
     if (existing >= 0) history[existing] = liveToday;
     else history.push(liveToday);

@@ -36,7 +36,7 @@ function getColor(changePct, hasData) {
     return {
       fill:   `rgba(${r},${g},${b},${0.15 + intensity * 0.35})`,
       border: `rgba(${r},${g},${b},${0.4 + intensity * 0.5})`,
-      text:   '#000000',
+      text:   intensity > 0.4 ? '#00FF94' : '#00C896',
     };
   } else {
     const r = Math.round(180 + intensity * 75);
@@ -45,7 +45,7 @@ function getColor(changePct, hasData) {
     return {
       fill:   `rgba(${r},${g},${b},${0.15 + intensity * 0.35})`,
       border: `rgba(${r},${g},${b},${0.4 + intensity * 0.5})`,
-      text:   '#000000',
+      text:   intensity > 0.4 ? '#FF6070' : '#FF4455',
     };
   }
 }
@@ -84,7 +84,7 @@ function Bubble({ market, d, weight, index }) {
         }}
       >
         <div className="bubble-flag">{market.flag}</div>
-        <div className="bubble-name" style={{ color: hasData ? '#000000' : '#52504D' }}>
+        <div className="bubble-name" style={{ color: hasData ? '#E8E6E1' : '#52504D' }}>
           {r < 44 ? market.exchange : shortName}
         </div>
         {r >= 44 && (
