@@ -949,480 +949,492 @@ function UniversalCalc() {
 
 // ── CHEATSHEET COMPONENT ──────────────────────────────────────────────────────
 
-const CS_BROKERS = ['Dhan','Zerodha','Groww','Angel One','Upstox','Kotak Securities','HDFC Securities'];
-
-const CS_SECTIONS = [
-  { id:'verdict',   label:'Quick verdict',        num:'00' },
-  { id:'annual',    label:'Annual cost',           num:'01' },
-  { id:'delivery',  label:'Delivery brokerage',    num:'02' },
-  { id:'intraday',  label:'Intraday brokerage',    num:'03' },
-  { id:'fno',       label:'F&O brokerage',         num:'04' },
-  { id:'dp',        label:'DP charge',             num:'05' },
-  { id:'amc',       label:'AMC',                   num:'06' },
-  { id:'mtf',       label:'MTF interest & brokerage', num:'07' },
-  { id:'regulatory',label:'Regulatory charges',    num:'08' },
+const CG_SECTIONS = [
+  { id:'verdict',   label:'Quick Verdict' },
+  { id:'annual',    label:'Annual Cost'   },
+  { id:'delivery',  label:'Delivery'      },
+  { id:'intraday',  label:'Intraday'      },
+  { id:'fno',       label:'F&O'           },
+  { id:'dp',        label:'DP Charge'     },
+  { id:'amc',       label:'AMC'           },
+  { id:'mtf',       label:'MTF'           },
+  { id:'regulatory',label:'Regulatory'   },
 ];
 
-
-const CS_DATA = {
-  // Annual cost by profile
-  annual: {
-    longterm: {
-      label: 'Long-term investor',
-      sub: '5 delivery trades/mo, no intraday or F&O',
-      cols: ['BROKER','BROKERAGE','DP','AMC','REGULATORY','TOTAL/YEAR'],
-      rows: [
-        { name:'Dhan',             brokerage:0,      dp:354,  amc:0,   reg:6691, total:7045,    cheapest:true  },
-        { name:'Zerodha',          brokerage:0,      dp:368,  amc:89,  reg:6691, total:7148,    cheapest:true  },
-        { name:'Groww',            brokerage:2832,   dp:480,  amc:0,   reg:6691, total:10003,   cheapest:false },
-        { name:'Angel One',        brokerage:2832,   dp:480,  amc:283, reg:6691, total:10286,   cheapest:false },
-        { name:'Upstox',           brokerage:2832,   dp:480,  amc:300, reg:6691, total:10303,   cheapest:false },
-        { name:'Kotak Securities', brokerage:14160,  dp:480,  amc:600, reg:6691, total:21931,   cheapest:false },
-        { name:'HDFC Securities',  brokerage:35400,  dp:480,  amc:885, reg:6691, total:43456,   cheapest:false },
-      ],
-      gap: 36411,
-    },
-    active: {
-      label: 'Active trader',
-      sub: '3 delivery + 30 intraday trades/mo',
-      cols: ['BROKER','BROKERAGE','DP','AMC','REGULATORY','TOTAL/YEAR'],
-      rows: [
-        { name:'Dhan',             brokerage:6372,  dp:885,  amc:0,   reg:7257, total:14514,   cheapest:true  },
-        { name:'Zerodha',          brokerage:6372,  dp:920,  amc:89,  reg:7257, total:14638,   cheapest:true  },
-        { name:'Angel One',        brokerage:8071,  dp:1200, amc:283, reg:7257, total:16811,   cheapest:false },
-        { name:'Kotak Securities', brokerage:16992, dp:1200, amc:600, reg:7257, total:26049,   cheapest:false },
-        { name:'Groww',            brokerage:18691, dp:1200, amc:0,   reg:7257, total:27148,   cheapest:false },
-        { name:'Upstox',           brokerage:18691, dp:1200, amc:300, reg:7257, total:27448,   cheapest:false },
-        { name:'HDFC Securities',  brokerage:42480, dp:1200, amc:885, reg:7257, total:51822,   cheapest:false },
-      ],
-      gap: 37308,
-    },
-    fno: {
-      label: 'F&O trader',
-      sub: '50 options + 10 futures trades/mo',
-      cols: ['BROKER','BROKERAGE','DP','AMC','REGULATORY','TOTAL/YEAR'],
-      rows: [
-        { name:'Kotak Securities', brokerage:16992,  dp:0, amc:600, reg:82825, total:100417,  cheapest:true  },
-        { name:'Groww',            brokerage:33984,  dp:0, amc:0,   reg:82825, total:116809,  cheapest:false },
-        { name:'Dhan',             brokerage:33984,  dp:0, amc:0,   reg:82825, total:116809,  cheapest:false },
-        { name:'Zerodha',          brokerage:33984,  dp:0, amc:89,  reg:82825, total:116898,  cheapest:false },
-        { name:'Angel One',        brokerage:33984,  dp:0, amc:283, reg:82825, total:117092,  cheapest:false },
-        { name:'Upstox',           brokerage:33984,  dp:0, amc:300, reg:82825, total:117109,  cheapest:false },
-        { name:'HDFC Securities',  brokerage:177000, dp:0, amc:885, reg:82825, total:260710,  cheapest:false },
-      ],
-      gap: 160293,
-    },
+const CG_DATA = {
+  annual:{
+    longterm:{ label:'Long-term investor', sub:'5 delivery trades/mo, ₹50K avg',
+      rows:[
+        {name:'Dhan',            brk:0,     dp:354, amc:0,   reg:6691, total:7045,  second:true},
+        {name:'Zerodha',         brk:0,     dp:368, amc:89,  reg:6691, total:7148,  best:true},
+        {name:'Groww',           brk:2832,  dp:480, amc:0,   reg:6691, total:10003},
+        {name:'Angel One',       brk:2832,  dp:480, amc:283, reg:6691, total:10286},
+        {name:'Upstox',          brk:2832,  dp:480, amc:300, reg:6691, total:10303},
+        {name:'Kotak Securities',brk:14160, dp:480, amc:600, reg:6691, total:21931},
+        {name:'HDFC Securities', brk:35400, dp:480, amc:885, reg:6691, total:43456},
+      ]},
+    active:{ label:'Active trader', sub:'3 delivery + 30 intraday trades/mo',
+      rows:[
+        {name:'Dhan',            brk:6372,  dp:885,  amc:0,   reg:7257, total:14514, second:true},
+        {name:'Zerodha',         brk:6372,  dp:920,  amc:89,  reg:7257, total:14638, best:true},
+        {name:'Angel One',       brk:8071,  dp:1200, amc:283, reg:7257, total:16811},
+        {name:'Kotak Securities',brk:16992, dp:1200, amc:600, reg:7257, total:26049},
+        {name:'Groww',           brk:18691, dp:1200, amc:0,   reg:7257, total:27148},
+        {name:'Upstox',          brk:18691, dp:1200, amc:300, reg:7257, total:27448},
+        {name:'HDFC Securities', brk:42480, dp:1200, amc:885, reg:7257, total:51822},
+      ]},
   },
-
-  // Delivery brokerage — ₹50K trade
-  delivery: {
-    sub: 'How much does a ₹50,000 delivery trade actually cost?',
-    explain: 'The fee your broker charges every time you buy or sell shares held overnight. Some brokers charge zero, others charge a percentage or flat fee. This is the single biggest variable cost for long-term investors.',
-    cols: ['BROKER','RATE','BROKERAGE + GST','TOTAL TRADE COST'],
-    rows: [
-      { name:'Zerodha',          rate:'Zero brokerage',  brk:0,      total:126.85, cheapest:true  },
-      { name:'Dhan',             rate:'Zero brokerage',  brk:0,      total:126.26, cheapest:false },
-      { name:'Groww',            rate:'₹5–₹20',          brk:47.20,  total:178.71, cheapest:false },
-      { name:'Angel One',        rate:'₹2–₹20',          brk:47.20,  total:178.71, cheapest:false },
-      { name:'Upstox',           rate:'₹20 flat',        brk:47.20,  total:178.71, cheapest:false },
-      { name:'Kotak Securities', rate:'0.2%',            brk:236.00, total:367.51, cheapest:false },
-      { name:'HDFC Securities',  rate:'0.5% min ₹25',   brk:590.00, total:721.51, cheapest:false },
+  delivery:{
+    summary:'Zerodha & Dhan charge zero brokerage. Others charge ₹20–₹590 on a ₹50K trade.',
+    rows:[
+      {name:'Zerodha',          rate:'Zero',         brk:0,      total:126.85, best:true},
+      {name:'Dhan',             rate:'Zero',         brk:0,      total:126.26},
+      {name:'Groww',            rate:'₹5–₹20',       brk:47.20,  total:178.71},
+      {name:'Angel One',        rate:'₹2–₹20',       brk:47.20,  total:178.71},
+      {name:'Upstox',           rate:'₹20 flat',     brk:47.20,  total:178.71},
+      {name:'Kotak Securities', rate:'0.2%',         brk:236.00, total:367.51},
+      {name:'HDFC Securities',  rate:'0.5% min ₹25', brk:590.00, total:721.51},
     ],
-    insight: 'Zerodha charges zero delivery brokerage. At HDFC Securities, the same ₹50K trade costs ₹590.00 more. Over 50 trades/year: ₹29,500.00 extra.',
+    insight:'Zerodha charges zero delivery brokerage. At HDFC Securities, the same ₹50K trade costs ₹590.00 more. Over 50 trades/year that\'s ₹29,500 extra.',
   },
-
-  // Intraday — ₹25K round trip
-  intraday: {
-    sub: 'What does a ₹25,000 intraday round trip cost?',
-    explain: 'The fee on same-day buy-and-sell trades. Brokers charge a percentage (0.03%–0.1%) capped at ₹10–₹20 per order. The cap means large trades cost the same as medium ones.',
-    cols: ['BROKER','RATE','BROKERAGE + GST','100 TRADES/MO × 12'],
-    rows: [
-      { name:'Zerodha',          rate:'0.03% or ₹20',   brk:17.70, annual:21240,  cheapest:true  },
-      { name:'Dhan',             rate:'0.03% or ₹20',   brk:17.70, annual:21240,  cheapest:false },
-      { name:'Angel One',        rate:'0.03% or ₹20',   brk:17.70, annual:21240,  cheapest:false },
-      { name:'Kotak Securities', rate:'0.05% or ₹10',   brk:23.60, annual:28320,  cheapest:false },
-      { name:'Groww',            rate:'₹5–₹20',         brk:47.20, annual:56640,  cheapest:false },
-      { name:'Upstox',           rate:'0.1% or ₹20',    brk:47.20, annual:56640,  cheapest:false },
-      { name:'HDFC Securities',  rate:'0.05% min ₹25',  brk:59.00, annual:70800,  cheapest:false },
+  intraday:{
+    summary:'Most brokers cap at ₹20/order. Kotak cheaper at ₹10. Groww/Upstox more expensive on small trades.',
+    rows:[
+      {name:'Zerodha',          rate:'0.03% or ₹20', brk:17.70, annual:21240, best:true},
+      {name:'Dhan',             rate:'0.03% or ₹20', brk:17.70, annual:21240},
+      {name:'Angel One',        rate:'0.03% or ₹20', brk:17.70, annual:21240, best:true},
+      {name:'Kotak Securities', rate:'0.05% or ₹10', brk:23.60, annual:28320},
+      {name:'Groww',            rate:'₹5–₹20',       brk:47.20, annual:56640},
+      {name:'Upstox',           rate:'0.1% or ₹20',  brk:47.20, annual:56640},
+      {name:'HDFC Securities',  rate:'0.05% min ₹25',brk:59.00, annual:70800},
     ],
-    insight: 'For active traders doing 100 trades/month, annual brokerage difference: ₹49,560.00. On trades below ~₹67K, the percentage rate matters more than the cap.',
+    insight:'For active traders doing 100 trades/month, annual brokerage difference: ₹49,560.',
   },
-
-  // F&O brokerage
-  fno: {
-    sub: 'Futures vs options — who charges what?',
-    explain: 'Futures brokerage works like intraday — a percentage capped at a flat fee. Options brokerage is almost always a flat fee per order regardless of lot size or premium.',
-    futures: {
-      label: 'Futures brokerage',
-      sub: '₹5L lot value, round trip',
-      cols: ['BROKER','RATE','BROKERAGE + GST'],
-      rows: [
-        { name:'Kotak Securities', rate:'₹10 flat',        brk:23.60,  cheapest:true  },
-        { name:'Zerodha',          rate:'0.03% or ₹20',   brk:47.20,  cheapest:false },
-        { name:'Groww',            rate:'₹20 flat',        brk:47.20,  cheapest:false },
-        { name:'Dhan',             rate:'0.03% or ₹20',   brk:47.20,  cheapest:false },
-        { name:'Angel One',        rate:'₹20 flat',        brk:47.20,  cheapest:false },
-        { name:'Upstox',           rate:'0.05% or ₹20',   brk:47.20,  cheapest:false },
-        { name:'HDFC Securities',  rate:'0.05% min ₹25',  brk:295.00, cheapest:false },
-      ],
-    },
-    options: {
-      label: 'Options brokerage',
-      sub: 'Flat per order, round trip',
-      cols: ['BROKER','RATE','BROKERAGE + GST','50 TRADES/MO × 12'],
-      rows: [
-        { name:'Kotak Securities', rate:'₹10 flat',  brk:23.60,  annual:14160,  cheapest:true  },
-        { name:'Zerodha',          rate:'₹20 flat',  brk:47.20,  annual:28320,  cheapest:false },
-        { name:'Groww',            rate:'₹20 flat',  brk:47.20,  annual:28320,  cheapest:false },
-        { name:'Dhan',             rate:'₹20 flat',  brk:47.20,  annual:28320,  cheapest:false },
-        { name:'Angel One',        rate:'₹20 flat',  brk:47.20,  annual:28320,  cheapest:false },
-        { name:'Upstox',           rate:'₹20 flat',  brk:47.20,  annual:28320,  cheapest:false },
-        { name:'HDFC Securities',  rate:'₹100 min',  brk:236.00, annual:141600, cheapest:false },
-      ],
-    },
-  },
-
-  // DP charge
-  dp: {
-    sub: 'The cost of selling your stocks',
-    explain: 'Charged every time you sell delivery shares — per scrip per day. Sell 4 different stocks in one day = 4× the DP charge. Each broker marks up the CDSL/NSDL fee differently.',
-    cols: ['BROKER','PER SELL','10 SELLS/MO','ANNUAL (10/MO)'],
-    rows: [
-      { name:'Dhan',             perSell:14.75, ten:147.50, annual:1770, cheapest:true  },
-      { name:'Zerodha',          perSell:15.34, ten:153.40, annual:1841, cheapest:false },
-      { name:'Groww',            perSell:20.00, ten:200.00, annual:2400, cheapest:false },
-      { name:'Angel One',        perSell:20.00, ten:200.00, annual:2400, cheapest:false },
-      { name:'Kotak Securities', perSell:20.00, ten:200.00, annual:2400, cheapest:false },
-      { name:'HDFC Securities',  perSell:20.00, ten:200.00, annual:2400, cheapest:false },
-      { name:'Upstox',           perSell:20.00, ten:200.00, annual:2400, cheapest:false },
+  fno:{
+    summary:'Options: everyone charges ₹20/order flat except Kotak (₹10, cheapest) and HDFC (₹100, most expensive).',
+    futures:[
+      {name:'Kotak Securities', rate:'₹10 flat',       brk:23.60, best:true},
+      {name:'Zerodha',          rate:'0.03% or ₹20',  brk:47.20},
+      {name:'Dhan',             rate:'0.03% or ₹20',  brk:47.20},
+      {name:'Groww',            rate:'₹20 flat',       brk:47.20},
+      {name:'Angel One',        rate:'₹20 flat',       brk:47.20},
+      {name:'Upstox',           rate:'0.05% or ₹20',  brk:47.20},
+      {name:'HDFC Securities',  rate:'0.05% min ₹25', brk:295.00},
     ],
-    insight: 'DP charge gap: ₹5.25/sell. For active delivery sellers (10 sells/mo), that\'s ₹630/year difference.',
-  },
-
-  // AMC
-  amc: {
-    sub: 'What your broker charges for doing nothing',
-    explain: 'Annual Maintenance Charge for your demat account — billed yearly regardless of trading. For low-frequency investors, this can be the single largest cost.',
-    cols: ['BROKER','ANNUAL COST','MONTHLY EQUIV.'],
-    rows: [
-      { name:'Groww',            annual:0,    monthly:null, free:true,  cheapest:true  },
-      { name:'Dhan',             annual:0,    monthly:null, free:true,  cheapest:true  },
-      { name:'Zerodha',          annual:88.50,monthly:7.38, free:false, cheapest:false },
-      { name:'Angel One',        annual:283,  monthly:23.58,free:false, cheapest:false },
-      { name:'Upstox',           annual:300,  monthly:25.00,free:false, cheapest:false },
-      { name:'Kotak Securities', annual:600,  monthly:50.00,free:false, cheapest:false },
-      { name:'HDFC Securities',  annual:885,  monthly:73.75,free:false, cheapest:false },
+    options:[
+      {name:'Kotak Securities', rate:'₹10/lot',  brk:23.60,  annual:14160, best:true},
+      {name:'Zerodha',          rate:'₹20 flat', brk:47.20,  annual:28320},
+      {name:'Dhan',             rate:'₹20 flat', brk:47.20,  annual:28320},
+      {name:'Groww',            rate:'₹20 flat', brk:47.20,  annual:28320},
+      {name:'Angel One',        rate:'₹20 flat', brk:47.20,  annual:28320},
+      {name:'Upstox',           rate:'₹20 flat', brk:47.20,  annual:28320},
+      {name:'HDFC Securities',  rate:'₹100 min', brk:236.00, annual:141600},
     ],
-    insight: '2 of 7 brokers charge zero AMC. If you barely trade, AMC is the one charge that hits you no matter what.',
   },
-
-  // MTF
-  mtf: {
-    sub: 'What does borrowing ₹1 lakh for 30 days cost?',
-    explain: 'Margin Trading Facility — buy stocks with borrowed money. Two costs: (1) interest on borrowed amount (12%–18%+ p.a., compounded daily), (2) MTF brokerage per order (often higher than regular brokerage).',
-    cols: ['BROKER','RATE (P.A.)','30-DAY INTEREST','MTF BROKERAGE','TOTAL COST'],
-    rows: [
-      { name:'Dhan',             rate:12.5, interest:1026.58, brokerage:47.20,  total:1073.78, cheapest:true  },
-      { name:'Zerodha',          rate:14.6, interest:1200.00, brokerage:47.20,  total:1247.20, cheapest:false },
-      { name:'Angel One',        rate:15.0, interest:1232.05, brokerage:47.20,  total:1279.25, cheapest:false },
-      { name:'Groww',            rate:15.8, interest:1294.52, brokerage:236.00, total:1530.52, cheapest:false },
-      { name:'Upstox',           rate:18.3, interest:1500.00, brokerage:47.20,  total:1547.20, cheapest:false },
-      { name:'Kotak Securities', rate:15.0, interest:1230.41, brokerage:472.00, total:1702.41, cheapest:false },
-      { name:'HDFC Securities',  rate:12.0, interest:986.30,  brokerage:755.20, total:1741.50, cheapest:false },
+  dp:{
+    summary:'DP gap is small: ₹5.25/sell between cheapest (Dhan) and rest. But 10 sells/mo = ₹630/year difference.',
+    rows:[
+      {name:'Dhan',             perSell:14.75, ten:147.50, annual:1770, best:true},
+      {name:'Zerodha',          perSell:15.34, ten:153.40, annual:1841, second:true},
+      {name:'Groww',            perSell:20.00, ten:200.00, annual:2400},
+      {name:'Angel One',        perSell:20.00, ten:200.00, annual:2400},
+      {name:'Kotak Securities', perSell:20.00, ten:200.00, annual:2400},
+      {name:'HDFC Securities',  perSell:20.00, ten:200.00, annual:2400},
+      {name:'Upstox',           perSell:20.00, ten:200.00, annual:2400},
     ],
-    insight: 'On a ₹5L position held 30 days, the interest spread means a difference of ₹-201.37. MTF is expensive — only use it if you\'re confident in the trade.',
+  },
+  amc:{
+    summary:'2 brokers charge zero AMC. If you barely trade, AMC is the charge that hits you regardless.',
+    rows:[
+      {name:'Groww',            annual:0,    free:true, best:true},
+      {name:'Dhan',             annual:0,    free:true, best:true},
+      {name:'Zerodha',          annual:88.50,monthly:7.38},
+      {name:'Angel One',        annual:283,  monthly:23.58},
+      {name:'Upstox',           annual:300,  monthly:25.00},
+      {name:'Kotak Securities', annual:600,  monthly:50.00},
+      {name:'HDFC Securities',  annual:885,  monthly:73.75},
+    ],
+  },
+  mtf:{
+    summary:'Dhan cheapest MTF overall. Groww has no brokerage cap — costs jump on large positions.',
+    rows:[
+      {name:'Dhan',            rate:12.49, interest:1026.58, brokerage:47.20,  total:1073.78, best:true},
+      {name:'Zerodha',         rate:14.6,  interest:1200.00, brokerage:47.20,  total:1247.20},
+      {name:'Angel One',       rate:15.0,  interest:1232.05, brokerage:47.20,  total:1279.25},
+      {name:'Groww',           rate:15.8,  interest:1294.52, brokerage:236.00, total:1530.52, warn:true},
+      {name:'Upstox',          rate:18.3,  interest:1500.00, brokerage:47.20,  total:1547.20},
+      {name:'Kotak Securities',rate:15.0,  interest:1230.41, brokerage:472.00, total:1702.41},
+      {name:'HDFC Securities', rate:12.0,  interest:986.30,  brokerage:755.20, total:1741.50},
+    ],
   },
 };
 
-function CsTable({ cols, rows, keys, cheapestKey }) {
-  return (
-    <div className="cs-table">
-      <div className="cs-th" style={{gridTemplateColumns:`2fr ${cols.slice(1).map(()=>'1fr').join(' ')}`}}>
-        {cols.map((c,i) => <span key={i}>{c}</span>)}
-      </div>
-      {rows.map((r, i) => (
-        <div key={i} className={`cs-tr${r.cheapest?' cs-tr-best':''}`} style={{gridTemplateColumns:`2fr ${cols.slice(1).map(()=>'1fr').join(' ')}`}}>
-          <span className="cs-td-name">
-            {r.name}
-            {r.cheapest && <span className="cs-cheapest-tag">CHEAPEST</span>}
-          </span>
-          {keys.map((k,j) => (
-            <span key={j} className={`cs-td${r.cheapest&&j===keys.length-1?' cs-td-win':''}`}>
-              {r[k]===null ? '—' :
-               r[k]===0 && (k==='annual'||k==='brk') ? <span className="cs-green">Free</span> :
-               r[k]===0 && k==='brokerage' ? <span className="cs-green">₹0</span> :
-               r.free && k==='annual' ? <span className="cs-green">Free</span> :
-               typeof r[k]==='number' ? '₹'+fmt(r[k],2) : r[k]}
-            </span>
-          ))}
-        </div>
-      ))}
+function CgBrokerBadge({name, best, second}){
+  return(
+    <span className="cg-broker-cell">
+      {name}
+      {best&&<span className="cg-badge-best">★ PICK</span>}
+      {second&&<span className="cg-badge-second">2ND</span>}
+    </span>
+  );
+}
+
+function CgSummaryLine({text}){
+  return <div className="cg-summary-line">{text}</div>;
+}
+
+function CgTable({children, cols}){
+  return(
+    <div className="cg-table" style={{gridTemplateColumns:cols}}>
+      {children}
     </div>
   );
 }
 
-function CsInsight({ text }) {
-  return <div className="cs-insight">{text}</div>;
-}
-
-function CsSectionHeader({ num, title, sub }) {
-  return (
-    <div className="cs-section-header">
-      <span className="cs-section-num">{num}</span>
-      <div>
-        <div className="cs-section-title">{title}</div>
-        {sub && <div className="cs-section-sub">{sub}</div>}
-      </div>
-    </div>
-  );
-}
-
-function Cheatsheet() {
+function Cheatsheet(){
   const [activeSection, setActiveSection] = useState('verdict');
-  const refs = {};
-  CS_SECTIONS.forEach(s => { refs[s.id] = { current: null }; });
+  const [dropOpen, setDropOpen] = useState(false);
+  const [expandedAnnual, setExpandedAnnual] = useState({});
+  const [expandedFno, setExpandedFno] = useState(false);
+  const [expandMtfCols, setExpandMtfCols] = useState(false);
+
+  const VISIBLE = 4;
+  const visibleSecs = CG_SECTIONS.slice(0, VISIBLE);
+  const overflowSecs = CG_SECTIONS.slice(VISIBLE);
+  const activeLabel = CG_SECTIONS.find(s=>s.id===activeSection)?.label || '';
 
   const scrollTo = (id) => {
     setActiveSection(id);
-    const el = document.getElementById('cs-sec-' + id);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setDropOpen(false);
+    const el = document.getElementById('cg-'+id);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
   };
 
-  return (
-    <div className="cs-wrap">
-      <div className="cs-header">
-        <div className="cs-title">Broker Charges — Decoded</div>
-        <div className="cs-subtitle">8 charge categories · 3 trader profiles · All 7 major brokers · Every rupee calculated</div>
-      </div>
+  return(
+    <div className="cg-wrap">
 
-      {/* Nav pills */}
-      <div className="cs-nav">
-        {CS_SECTIONS.map(s => (
-          <button key={s.id} className={`cs-nav-btn${activeSection===s.id?' cs-nav-active':''}`} onClick={() => scrollTo(s.id)}>
-            <span className="cs-nav-num">{s.num}</span> {s.label}
+      {/* Tab bar — 4 visible + overflow dropdown */}
+      <div className="cg-tabs">
+        {visibleSecs.map(s=>(
+          <button key={s.id}
+            className={`cg-tab${activeSection===s.id?' cg-tab-active':''}`}
+            onClick={()=>scrollTo(s.id)}>
+            {s.label}
           </button>
         ))}
-      </div>
-
-      {/* 00 Quick verdict */}
-      <div id="cs-sec-verdict" className="cs-section">
-        <CsSectionHeader num="00" title="Quick verdict" sub="Which broker for which trader?" />
-        <div className="cs-verdict-grid">
-          <div className="cs-verdict-card">
-            <div className="cs-verdict-profile">LONG-TERM INVESTOR</div>
-            <div className="cs-verdict-tag">NEAR-TIE</div>
-            <div className="cs-verdict-row"><span className="cs-green cs-verdict-name">Dhan</span><span className="cs-green cs-verdict-cost">₹7,045/yr</span></div>
-            <div className="cs-verdict-row"><span className="cs-verdict-name">Zerodha</span><span className="cs-verdict-cost">₹7,148/yr</span></div>
-            <div className="cs-verdict-desc">5 delivery trades/mo, ₹50K avg</div>
-          </div>
-          <div className="cs-verdict-card">
-            <div className="cs-verdict-profile">ACTIVE TRADER</div>
-            <div className="cs-verdict-tag">NEAR-TIE</div>
-            <div className="cs-verdict-row"><span className="cs-green cs-verdict-name">Dhan</span><span className="cs-green cs-verdict-cost">₹14,514/yr</span></div>
-            <div className="cs-verdict-row"><span className="cs-verdict-name">Zerodha</span><span className="cs-verdict-cost">₹14,638/yr</span></div>
-            <div className="cs-verdict-desc">3 delivery + 30 intraday/mo</div>
-          </div>
-          <div className="cs-verdict-card">
-            <div className="cs-verdict-profile">F&O TRADER</div>
-            <div className="cs-verdict-row cs-verdict-row-single"><span className="cs-green cs-verdict-name">Kotak Securities</span><span className="cs-green cs-verdict-cost">₹1,00,417/yr</span></div>
-            <div className="cs-verdict-desc">50 options + 10 futures/mo</div>
-          </div>
+        <div className="cg-tab-more-wrap">
+          <button className={`cg-tab cg-tab-more${overflowSecs.some(s=>s.id===activeSection)?' cg-tab-active':''}`}
+            onClick={()=>setDropOpen(o=>!o)}>
+            {overflowSecs.some(s=>s.id===activeSection) ? activeLabel : 'More'} ▾
+          </button>
+          {dropOpen&&(
+            <div className="cg-tab-dropdown">
+              {overflowSecs.map(s=>(
+                <button key={s.id}
+                  className={`cg-tab-dd-item${activeSection===s.id?' cg-tab-dd-active':''}`}
+                  onClick={()=>scrollTo(s.id)}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        <CsInsight text="These are total costs including brokerage, GST, DP charges, AMC, and all regulatory fees (STT, exchange, SEBI, stamp duty). The cheapest broker changes depending on your trading style — there's no single 'best' broker." />
       </div>
 
-      {/* 01 Annual cost */}
-      <div id="cs-sec-annual" className="cs-section">
-        <CsSectionHeader num="01" title="Total annual cost" sub="What each broker actually costs per year" />
-        <p className="cs-explain"><strong>Why this matters:</strong> Comparing individual charges is misleading — a broker with ₹0 delivery brokerage but high DP charges may cost you more overall. These profiles combine every charge into one annual number.</p>
-
-        {['longterm','active','fno'].map(key => {
-          const d = CS_DATA.annual[key];
-          const maxTotal = Math.max(...d.rows.map(r => r.total));
-          return (
-            <div key={key} className="cs-annual-block">
-              <div className="cs-annual-label">{d.label} <span className="cs-annual-sub">{d.sub}</span></div>
-              <div className="cs-table">
-                <div className="cs-th" style={{gridTemplateColumns:'2fr 1fr 0.7fr 0.7fr 1fr 1.2fr'}}>
-                  {d.cols.map((c,i)=><span key={i}>{c}</span>)}
-                </div>
-                {d.rows.map((r,i) => (
-                  <div key={i} className={`cs-tr${r.cheapest?' cs-tr-best':''}`} style={{gridTemplateColumns:'2fr 1fr 0.7fr 0.7fr 1fr 1.2fr'}}>
-                    <span className="cs-td-name">{r.name}{r.cheapest&&<span className="cs-cheapest-tag">CHEAPEST</span>}</span>
-                    <span className="cs-td">{r.brokerage===0?<span className="cs-green">₹0</span>:'₹'+fmt(r.brokerage,0)}</span>
-                    <span className="cs-td">₹{fmt(r.dp,0)}</span>
-                    <span className="cs-td">{r.amc===0?<span className="cs-green">Free</span>:'₹'+fmt(r.amc,0)}</span>
-                    <span className="cs-td cs-muted">₹{fmt(r.reg,0)}</span>
-                    <span className={`cs-td cs-td-total${r.cheapest?' cs-green':''}`}>₹{fmt(r.total,0)}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="cs-gap-note">Gap between cheapest and costliest: <strong>₹{fmt(d.gap,0)}/year</strong></div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 02 Delivery */}
-      <div id="cs-sec-delivery" className="cs-section">
-        <CsSectionHeader num="02" title="Delivery brokerage" sub="How much does a ₹50,000 delivery trade actually cost?" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.delivery.explain}</p>
-        <div className="cs-table">
-          <div className="cs-th" style={{gridTemplateColumns:'2fr 1.2fr 1fr 1fr'}}>
-            {CS_DATA.delivery.cols.map((c,i)=><span key={i}>{c}</span>)}
-          </div>
-          {CS_DATA.delivery.rows.map((r,i)=>(
-            <div key={i} className={`cs-tr${r.cheapest?' cs-tr-best':''}`} style={{gridTemplateColumns:'2fr 1.2fr 1fr 1fr'}}>
-              <span className="cs-td-name">{r.name}{r.cheapest&&<span className="cs-cheapest-tag">CHEAPEST</span>}</span>
-              <span className="cs-td cs-muted">{r.rate}</span>
-              <span className={`cs-td${r.brk===0?' cs-green':''}`}>{r.brk===0?'₹0.00':'₹'+fmt(r.brk,2)}</span>
-              <span className={`cs-td${r.cheapest?' cs-green':''}`}>₹{fmt(r.total,2)}</span>
-            </div>
-          ))}
+      {/* 00 — Quick Verdict */}
+      <div id="cg-verdict" className="cg-section">
+        <div className="cg-section-hdr">
+          <span className="cg-section-num">00</span>
+          <span className="cg-section-title">Quick Verdict</span>
         </div>
-        <CsInsight text={CS_DATA.delivery.insight} />
-      </div>
-
-      {/* 03 Intraday */}
-      <div id="cs-sec-intraday" className="cs-section">
-        <CsSectionHeader num="03" title="Intraday brokerage" sub="What does a ₹25,000 intraday round trip cost?" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.intraday.explain}</p>
-        <div className="cs-table">
-          <div className="cs-th" style={{gridTemplateColumns:'2fr 1.2fr 1fr 1fr'}}>
-            {CS_DATA.intraday.cols.map((c,i)=><span key={i}>{c}</span>)}
-          </div>
-          {CS_DATA.intraday.rows.map((r,i)=>(
-            <div key={i} className={`cs-tr${r.cheapest?' cs-tr-best':''}`} style={{gridTemplateColumns:'2fr 1.2fr 1fr 1fr'}}>
-              <span className="cs-td-name">{r.name}{r.cheapest&&<span className="cs-cheapest-tag">CHEAPEST</span>}</span>
-              <span className="cs-td cs-muted">{r.rate}</span>
-              <span className={`cs-td${r.cheapest?' cs-green':''}`}>₹{fmt(r.brk,2)}</span>
-              <span className="cs-td">₹{fmt(r.annual,0)}</span>
-            </div>
-          ))}
-        </div>
-        <CsInsight text={CS_DATA.intraday.insight} />
-      </div>
-
-      {/* 04 F&O */}
-      <div id="cs-sec-fno" className="cs-section">
-        <CsSectionHeader num="04" title="F&O brokerage" sub="Futures vs options — who charges what?" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.fno.explain}</p>
-        {['futures','options'].map(key => {
-          const d = CS_DATA.fno[key];
-          const hasFourCols = key==='options';
-          const cols = hasFourCols ? '2fr 1fr 1fr 1fr' : '2fr 1.2fr 1fr';
-          return (
-            <div key={key} className="cs-annual-block">
-              <div className="cs-annual-label">{d.label} <span className="cs-annual-sub">{d.sub}</span></div>
-              <div className="cs-table">
-                <div className="cs-th" style={{gridTemplateColumns:cols}}>
-                  {d.cols.map((c,i)=><span key={i}>{c}</span>)}
-                </div>
-                {d.rows.map((r,i)=>(
-                  <div key={i} className={`cs-tr${r.cheapest?' cs-tr-best':''}`} style={{gridTemplateColumns:cols}}>
-                    <span className="cs-td-name">{r.name}{r.cheapest&&<span className="cs-cheapest-tag">CHEAPEST</span>}</span>
-                    <span className="cs-td cs-muted">{r.rate}</span>
-                    <span className={`cs-td${r.cheapest?' cs-green':''}`}>₹{fmt(r.brk,2)}</span>
-                    {hasFourCols && <span className="cs-td">₹{fmt(r.annual,0)}</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 05 DP charge */}
-      <div id="cs-sec-dp" className="cs-section">
-        <CsSectionHeader num="05" title="DP charge" sub="The cost of selling your stocks" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.dp.explain}</p>
-        <div className="cs-table">
-          <div className="cs-th" style={{gridTemplateColumns:'2fr 1fr 1fr 1fr'}}>
-            {CS_DATA.dp.cols.map((c,i)=><span key={i}>{c}</span>)}
-          </div>
-          {CS_DATA.dp.rows.map((r,i)=>(
-            <div key={i} className={`cs-tr${r.cheapest?' cs-tr-best':''}`} style={{gridTemplateColumns:'2fr 1fr 1fr 1fr'}}>
-              <span className="cs-td-name">{r.name}{r.cheapest&&<span className="cs-cheapest-tag">CHEAPEST</span>}</span>
-              <span className={`cs-td${r.cheapest?' cs-green':''}`}>₹{fmt(r.perSell,2)}</span>
-              <span className="cs-td">₹{fmt(r.ten,2)}</span>
-              <span className="cs-td">₹{fmt(r.annual,0)}</span>
-            </div>
-          ))}
-        </div>
-        <CsInsight text={CS_DATA.dp.insight} />
-      </div>
-
-      {/* 06 AMC */}
-      <div id="cs-sec-amc" className="cs-section">
-        <CsSectionHeader num="06" title="AMC" sub="What your broker charges for doing nothing" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.amc.explain}</p>
-        <div className="cs-table">
-          <div className="cs-th" style={{gridTemplateColumns:'2fr 1fr 1fr'}}>
-            {CS_DATA.amc.cols.map((c,i)=><span key={i}>{c}</span>)}
-          </div>
-          {CS_DATA.amc.rows.map((r,i)=>(
-            <div key={i} className={`cs-tr${r.cheapest?' cs-tr-best':''}`} style={{gridTemplateColumns:'2fr 1fr 1fr'}}>
-              <span className="cs-td-name">{r.name}{r.cheapest&&<span className="cs-cheapest-tag">CHEAPEST</span>}</span>
-              <span className={`cs-td${r.free?' cs-green':''}`}>{r.free?'Free':'₹'+fmt(r.annual,2)}</span>
-              <span className="cs-td cs-muted">{r.monthly===null?'—':'₹'+fmt(r.monthly,2)}</span>
-            </div>
-          ))}
-        </div>
-        <CsInsight text={CS_DATA.amc.insight} />
-      </div>
-
-      {/* 07 MTF */}
-      <div id="cs-sec-mtf" className="cs-section">
-        <CsSectionHeader num="07" title="MTF interest & brokerage" sub="What does borrowing ₹1 lakh for 30 days cost?" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.mtf.explain}</p>
-        <div className="cs-table">
-          <div className="cs-th" style={{gridTemplateColumns:'2fr 0.8fr 1fr 1fr 1fr'}}>
-            {CS_DATA.mtf.cols.map((c,i)=><span key={i}>{c}</span>)}
-          </div>
-          {CS_DATA.mtf.rows.map((r,i)=>(
-            <div key={i} className={`cs-tr${r.cheapest?' cs-tr-best':''}`} style={{gridTemplateColumns:'2fr 0.8fr 1fr 1fr 1fr'}}>
-              <span className="cs-td-name">{r.name}{r.cheapest&&<span className="cs-cheapest-tag">CHEAPEST</span>}</span>
-              <span className="cs-td cs-muted">{r.rate}%</span>
-              <span className="cs-td">₹{fmt(r.interest,2)}</span>
-              <span className="cs-td">₹{fmt(r.brokerage,2)}</span>
-              <span className={`cs-td${r.cheapest?' cs-green':''}`}>₹{fmt(r.total,2)}</span>
-            </div>
-          ))}
-        </div>
-        <CsInsight text={CS_DATA.mtf.insight} />
-      </div>
-
-      {/* 08 Regulatory */}
-      <div id="cs-sec-regulatory" className="cs-section">
-        <CsSectionHeader num="08" title="Regulatory charges" sub="Fixed by government — identical at every broker" />
-        <p className="cs-explain"><strong>What is it?</strong> STT, exchange transaction charges, SEBI fees, and stamp duty are set by the government and exchanges. They are exactly the same at every broker — you cannot save on these by switching.</p>
-        <div className="cs-reg-grid">
+        <div className="cg-verdict-grid">
           {[
-            { name:'STT (Delivery)',   rate:'0.1% on buy + 0.1% on sell',  ex:'₹50K trade = ₹100' },
-            { name:'STT (Intraday)',   rate:'0.025% on sell side only',     ex:'₹50K trade = ₹12.50' },
-            { name:'STT (F&O)',        rate:'Futures 0.02%, Options 0.1%',  ex:'Budget 2026: eff. Apr 1' },
-            { name:'Exchange txn fee', rate:'NSE: 0.00297% on turnover',    ex:'₹50K round trip = ₹3.07' },
-            { name:'SEBI fee',         rate:'₹10 per ₹1 Crore turnover',   ex:'₹50K round trip = ₹0.10' },
-            { name:'Stamp duty',       rate:'0.015% on buy (delivery)',      ex:'₹50K buy = ₹7.50' },
-            { name:'GST',              rate:'18% on (brokerage + exchange + SEBI)', ex:'Not on STT or stamp' },
-          ].map((r,i) => (
-            <div key={i} className="cs-reg-row">
-              <div className="cs-reg-name">{r.name}</div>
-              <div className="cs-reg-rate">{r.rate}</div>
-              <div className="cs-reg-ex">{r.ex}</div>
+            {tag:'Long-term investor',
+             brokers:[
+               {name:'Zerodha', amt:'₹7,148/yr', note:'★ Editor pick — platform + trust', highlight:true},
+               {name:'Dhan',    amt:'₹7,045/yr', note:'₹103/yr cheaper'},
+             ],
+             delta:'₹103/yr apart — effectively a tie',
+             sub:'5 delivery trades/mo, ₹50K avg'},
+            {tag:'Active trader',
+             brokers:[
+               {name:'Zerodha', amt:'₹14,638/yr', note:'★ Editor pick — platform + trust', highlight:true},
+               {name:'Dhan',    amt:'₹14,514/yr', note:'₹124/yr cheaper'},
+             ],
+             delta:'₹124/yr apart — effectively a tie',
+             sub:'3 delivery + 30 intraday/mo'},
+          ].map((c,i)=>(
+            <div key={i} className="cg-verdict-card">
+              <div className="cg-verdict-tag cg-tag-neutral">{c.tag}</div>
+              <div className="cg-verdict-brokers">
+                {c.brokers.map((b,j)=>(
+                  <div key={j} className={`cg-verdict-broker-row${b.highlight?' cg-vb-highlight':''}`}>
+                    <div className="cg-vb-left">
+                      <span className="cg-verdict-name">{b.name}</span>
+                      <span className="cg-vb-note">{b.note}</span>
+                    </div>
+                    <span className="cg-verdict-amt">{b.amt}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="cg-verdict-delta">{c.delta}</div>
+              <div className="cg-verdict-sub">{c.sub}</div>
             </div>
           ))}
         </div>
-        <CsInsight text="On a ₹50,000 delivery trade, regulatory charges total ₹111.24 — identical at Zerodha, Dhan, HDFC, or any other broker. Switching brokers cannot reduce this amount." />
       </div>
 
-      <div className="cs-footnote">
-        All figures include GST where applicable. Annual profiles are indicative — actual costs vary by trade frequency, size and timing. Always verify current charges with your broker before trading.
+      {/* 01 — Annual cost */}
+      <div id="cg-annual" className="cg-section">
+        <div className="cg-section-hdr">
+          <span className="cg-section-num">01</span>
+          <span className="cg-section-title">Total Annual Cost</span>
+          <span className="cg-section-sub">Every charge combined — brokerage + DP + AMC + govt</span>
+        </div>
+        {['longterm','active'].map(key=>{
+          const d = CG_DATA.annual[key];
+          const isExp = expandedAnnual[key];
+          const shown = isExp ? d.rows : d.rows.slice(0,5);
+          const best = d.rows[0];
+          const second = d.rows[1];
+          const gap = fmt(d.rows[d.rows.length-1].total - best.total, 0);
+          return(
+            <div key={key} className="cg-annual-block">
+              <div className="cg-annual-label">{d.label} <span className="cg-annual-sub">{d.sub}</span></div>
+              <div className="cg-table-wrap">
+                <div className="cg-tbl">
+                  <div className="cg-tbl-hdr" style={{gridTemplateColumns:'1.8fr 1fr 0.7fr 0.7fr 1fr 1.2fr'}}>
+                    <span>BROKER</span><span>BROKERAGE</span><span>DP</span><span>AMC</span><span>REGULATORY</span><span>TOTAL / YEAR</span>
+                  </div>
+                  {shown.map((r,i)=>(
+                    <div key={i} className={`cg-tbl-row${r.best?' cg-row-best':r.second?' cg-row-second':''}`}
+                      style={{gridTemplateColumns:'1.8fr 1fr 0.7fr 0.7fr 1fr 1.2fr'}}>
+                      <span className="cg-cell-name"><CgBrokerBadge name={r.name} best={r.best} second={r.second}/></span>
+                      <span className={`cg-cell${r.brk===0?' cg-green':''}`}>{r.brk===0?'₹0':'₹'+fmt(r.brk,0)}</span>
+                      <span className="cg-cell">₹{fmt(r.dp,0)}</span>
+                      <span className={`cg-cell${r.amc===0?' cg-green':''}`}>{r.amc===0?'Free':'₹'+fmt(r.amc,0)}</span>
+                      <span className="cg-cell cg-muted">₹{fmt(r.reg,0)}</span>
+                      <span className={`cg-cell cg-cell-total${r.best?' cg-green':''}`}>₹{fmt(r.total,0)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="cg-annual-footer">
+                <span className="cg-gap-note">Gap cheapest → costliest: <strong>₹{gap}/yr</strong></span>
+                {!isExp&&<button className="cg-expand-btn" onClick={()=>setExpandedAnnual(p=>({...p,[key]:true}))}>Show all {d.rows.length} brokers ▾</button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 02 — Delivery */}
+      <div id="cg-delivery" className="cg-section">
+        <div className="cg-section-hdr">
+          <span className="cg-section-num">02</span>
+          <span className="cg-section-title">Delivery Brokerage</span>
+          <span className="cg-section-sub">₹50,000 trade · buy + sell</span>
+        </div>
+        <CgSummaryLine text={CG_DATA.delivery.summary}/>
+        <div className="cg-tbl">
+          <div className="cg-tbl-hdr" style={{gridTemplateColumns:'1.8fr 1.2fr 1fr 1.1fr'}}>
+            <span>BROKER</span><span>RATE</span><span>BROKERAGE + GST</span><span>TOTAL TRADE COST</span>
+          </div>
+          {CG_DATA.delivery.rows.map((r,i)=>(
+            <div key={i} className={`cg-tbl-row${r.best?' cg-row-best':''}`} style={{gridTemplateColumns:'1.8fr 1.2fr 1fr 1.1fr'}}>
+              <span className="cg-cell-name"><CgBrokerBadge name={r.name} best={r.best}/></span>
+              <span className="cg-cell cg-muted">{r.rate}</span>
+              <span className={`cg-cell${r.brk===0?' cg-green':''}`}>{r.brk===0?'₹0.00':'₹'+fmt(r.brk,2)}</span>
+              <span className={`cg-cell cg-cell-total${r.best?' cg-green':''}`}>₹{fmt(r.total,2)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="cg-insight">{CG_DATA.delivery.insight}</div>
+      </div>
+
+      {/* 03 — Intraday */}
+      <div id="cg-intraday" className="cg-section">
+        <div className="cg-section-hdr">
+          <span className="cg-section-num">03</span>
+          <span className="cg-section-title">Intraday Brokerage</span>
+          <span className="cg-section-sub">₹25,000 round trip</span>
+        </div>
+        <CgSummaryLine text={CG_DATA.intraday.summary}/>
+        <div className="cg-tbl">
+          <div className="cg-tbl-hdr" style={{gridTemplateColumns:'1.8fr 1.2fr 1fr 1fr'}}>
+            <span>BROKER</span><span>RATE</span><span>PER TRADE</span><span>100 TRADES/MO × 12</span>
+          </div>
+          {CG_DATA.intraday.rows.map((r,i)=>(
+            <div key={i} className={`cg-tbl-row${r.best?' cg-row-best':''}`} style={{gridTemplateColumns:'1.8fr 1.2fr 1fr 1fr'}}>
+              <span className="cg-cell-name"><CgBrokerBadge name={r.name} best={r.best}/></span>
+              <span className="cg-cell cg-muted">{r.rate}</span>
+              <span className={`cg-cell${r.best?' cg-green':''}`}>₹{fmt(r.brk,2)}</span>
+              <span className="cg-cell">₹{fmt(r.annual,0)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="cg-insight">{CG_DATA.intraday.insight}</div>
+      </div>
+
+      {/* 04 — F&O */}
+      <div id="cg-fno" className="cg-section">
+        <div className="cg-section-hdr">
+          <span className="cg-section-num">04</span>
+          <span className="cg-section-title">F&O Brokerage</span>
+        </div>
+        <CgSummaryLine text={CG_DATA.fno.summary}/>
+        <div className="cg-fno-tabs">
+          <button className={`cg-fno-tab${!expandedFno?' cg-fno-tab-active':''}`} onClick={()=>setExpandedFno(false)}>Options</button>
+          <button className={`cg-fno-tab${expandedFno?' cg-fno-tab-active':''}`} onClick={()=>setExpandedFno(true)}>Futures</button>
+        </div>
+        {!expandedFno&&(
+          <div className="cg-tbl">
+            <div className="cg-tbl-hdr" style={{gridTemplateColumns:'1.8fr 1fr 1fr 1fr'}}>
+              <span>BROKER</span><span>RATE</span><span>PER ORDER</span><span>50 TRADES/MO × 12</span>
+            </div>
+            {CG_DATA.fno.options.map((r,i)=>(
+              <div key={i} className={`cg-tbl-row${r.best?' cg-row-best':''}`} style={{gridTemplateColumns:'1.8fr 1fr 1fr 1fr'}}>
+                <span className="cg-cell-name"><CgBrokerBadge name={r.name} best={r.best}/></span>
+                <span className="cg-cell cg-muted">{r.rate}</span>
+                <span className={`cg-cell${r.best?' cg-green':''}`}>₹{fmt(r.brk,2)}</span>
+                <span className="cg-cell">₹{fmt(r.annual,0)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {expandedFno&&(
+          <div className="cg-tbl">
+            <div className="cg-tbl-hdr" style={{gridTemplateColumns:'1.8fr 1.2fr 1fr'}}>
+              <span>BROKER</span><span>RATE</span><span>PER TRADE (₹5L lot)</span>
+            </div>
+            {CG_DATA.fno.futures.map((r,i)=>(
+              <div key={i} className={`cg-tbl-row${r.best?' cg-row-best':''}`} style={{gridTemplateColumns:'1.8fr 1.2fr 1fr'}}>
+                <span className="cg-cell-name"><CgBrokerBadge name={r.name} best={r.best}/></span>
+                <span className="cg-cell cg-muted">{r.rate}</span>
+                <span className={`cg-cell${r.best?' cg-green':''}`}>₹{fmt(r.brk,2)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 05 — DP */}
+      <div id="cg-dp" className="cg-section">
+        <div className="cg-section-hdr">
+          <span className="cg-section-num">05</span>
+          <span className="cg-section-title">DP Charge</span>
+          <span className="cg-section-sub">Charged on every delivery sell</span>
+        </div>
+        <CgSummaryLine text={CG_DATA.dp.summary}/>
+        <div className="cg-tbl">
+          <div className="cg-tbl-hdr" style={{gridTemplateColumns:'1.8fr 1fr 1fr 1fr'}}>
+            <span>BROKER</span><span>PER SELL</span><span>10 SELLS/MO</span><span>ANNUAL</span>
+          </div>
+          {CG_DATA.dp.rows.map((r,i)=>(
+            <div key={i} className={`cg-tbl-row${r.best?' cg-row-best':r.second?' cg-row-second':''}`} style={{gridTemplateColumns:'1.8fr 1fr 1fr 1fr'}}>
+              <span className="cg-cell-name"><CgBrokerBadge name={r.name} best={r.best} second={r.second}/></span>
+              <span className={`cg-cell${r.best?' cg-green':''}`}>₹{fmt(r.perSell,2)}</span>
+              <span className="cg-cell">₹{fmt(r.ten,2)}</span>
+              <span className="cg-cell">₹{fmt(r.annual,0)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 06 — AMC */}
+      <div id="cg-amc" className="cg-section">
+        <div className="cg-section-hdr">
+          <span className="cg-section-num">06</span>
+          <span className="cg-section-title">AMC</span>
+          <span className="cg-section-sub">Annual demat maintenance charge</span>
+        </div>
+        <CgSummaryLine text={CG_DATA.amc.summary}/>
+        <div className="cg-tbl">
+          <div className="cg-tbl-hdr" style={{gridTemplateColumns:'1.8fr 1.2fr 1fr'}}>
+            <span>BROKER</span><span>ANNUAL</span><span>MONTHLY EQUIV.</span>
+          </div>
+          {CG_DATA.amc.rows.map((r,i)=>(
+            <div key={i} className={`cg-tbl-row${r.best?' cg-row-best':''}`} style={{gridTemplateColumns:'1.8fr 1.2fr 1fr'}}>
+              <span className="cg-cell-name"><CgBrokerBadge name={r.name} best={r.best}/></span>
+              <span className={`cg-cell${r.free?' cg-cell-free':''}`}>{r.free?<span className="cg-free-badge">FREE</span>:'₹'+fmt(r.annual,2)}</span>
+              <span className="cg-cell cg-muted">{r.monthly?'₹'+fmt(r.monthly,2):'—'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 07 — MTF */}
+      <div id="cg-mtf" className="cg-section">
+        <div className="cg-section-hdr">
+          <span className="cg-section-num">07</span>
+          <span className="cg-section-title">MTF Cost</span>
+          <span className="cg-section-sub">₹1 lakh borrowed for 30 days</span>
+        </div>
+        <CgSummaryLine text={CG_DATA.mtf.summary}/>
+        <div className="cg-tbl">
+          <div className="cg-tbl-hdr" style={{gridTemplateColumns:expandMtfCols?'1.8fr 0.8fr 1fr 1fr 1.1fr':'1.8fr 0.8fr 1.1fr'}}>
+            <span>BROKER</span><span>RATE</span>
+            {expandMtfCols&&<span>30-DAY INTEREST</span>}
+            {expandMtfCols&&<span>MTF BROKERAGE</span>}
+            <span>TOTAL COST</span>
+          </div>
+          {CG_DATA.mtf.rows.map((r,i)=>(
+            <div key={i} className={`cg-tbl-row${r.best?' cg-row-best':''}${r.warn?' cg-row-warn':''}`}
+              style={{gridTemplateColumns:expandMtfCols?'1.8fr 0.8fr 1fr 1fr 1.1fr':'1.8fr 0.8fr 1.1fr'}}>
+              <span className="cg-cell-name">
+                <CgBrokerBadge name={r.name} best={r.best}/>
+                {r.warn&&<span className="cg-warn-tag">NO CAP</span>}
+              </span>
+              <span className={`cg-cell${r.rate<=13?'cg-green':r.rate>=17?' cg-red':''}`}>{r.rate}%</span>
+              {expandMtfCols&&<span className="cg-cell">₹{fmt(r.interest,2)}</span>}
+              {expandMtfCols&&<span className={`cg-cell${r.warn?' cg-red':''}`}>₹{fmt(r.brokerage,2)}</span>}
+              <span className={`cg-cell cg-cell-total${r.best?' cg-green':''}`}>₹{fmt(r.total,2)}</span>
+            </div>
+          ))}
+        </div>
+        <button className="cg-expand-btn" onClick={()=>setExpandMtfCols(o=>!o)}>
+          {expandMtfCols?'Hide breakdown ▴':'Show interest + brokerage breakdown ▾'}
+        </button>
+      </div>
+
+      {/* 08 — Regulatory */}
+      <div id="cg-regulatory" className="cg-section">
+        <div className="cg-section-hdr">
+          <span className="cg-section-num">08</span>
+          <span className="cg-section-title">Regulatory Charges</span>
+        </div>
+        <div className="cg-info-box cg-info-box-accent">
+          <div className="cg-reg-title">Fixed by law — identical at every broker</div>
+          <div className="cg-reg-sub">On a ₹50,000 delivery trade, you pay exactly <strong>₹111.24</strong> in govt charges regardless of which broker you use. Switching brokers cannot reduce this.</div>
+          <div className="cg-reg-breakdown">
+            {[
+              ['STT','₹100.00','0.1% buy + 0.1% sell'],
+              ['Exchange txn fee','₹3.07','NSE 0.00307% on turnover'],
+              ['SEBI fee','₹0.10','₹10 per ₹1Cr turnover'],
+              ['Stamp duty','₹7.50','0.015% on buy side'],
+              ['GST (on non-STT)','₹0.57','18% on exchange + SEBI'],
+            ].map(([label,val,note],i)=>(
+              <div key={i} className="cg-reg-row">
+                <span className="cg-reg-label">{label}</span>
+                <span className="cg-reg-val">{val}</span>
+                <span className="cg-reg-note">{note}</span>
+              </div>
+            ))}
+            <div className="cg-reg-total-row">
+              <span>Total regulatory</span>
+              <span className="cg-reg-total">₹111.24</span>
+              <span>per ₹50K delivery trade</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="cg-footnote">
+        All figures include GST where applicable. Annual profiles are indicative. Always verify current charges with your broker before trading.
       </div>
     </div>
   );
 }
-
 
 // ── HEAD TO HEAD COMPONENT ────────────────────────────────────────────────────
 
@@ -2045,119 +2057,211 @@ const SEC = {
   documents:'09  Documents',instruments:'10  Instruments',modifications:'11  Modifications',
 };
 
-function H2HTable({title,rows,aName,bName}){
+function H2HTable({title,rows,aName,bName,collapsed=true}){
+  const [open,setOpen]=useState(!collapsed);
   if(!rows||!rows.length)return null;
+  // Find key differences only (where values differ)
+  const diffs=rows.filter(([,av,bv])=>av!==bv);
+  const shown=open?rows:diffs.slice(0,3);
   return(
     <div className="h2h-section">
-      <div className="h2h-section-title">{title}</div>
-      <div className="h2h-table">
-        <div className="h2h-th"><span>CHARGE</span><span>{aName.toUpperCase()}</span><span>{bName.toUpperCase()}</span></div>
-        {rows.map(([label,av,bv,ag,bg],i)=>(
-          <div key={i} className="h2h-tr">
-            <span className="h2h-td-label">{label}</span>
-            <span className={`h2h-td-val${ag?' h2h-green':''}`}>{av}</span>
-            <span className={`h2h-td-val${bg?' h2h-green':''}`}>{bv}</span>
-          </div>
-        ))}
-      </div>
+      <button className="h2h-acc-btn" onClick={()=>setOpen(o=>!o)}>
+        <span className="h2h-section-title">{title}</span>
+        <span className="h2h-acc-meta">
+          {!open&&diffs.length>0&&<span className="h2h-acc-diff">{diffs.length} difference{diffs.length>1?'s':''}</span>}
+          <span className="h2h-acc-toggle">{open?'▲':'▼'}</span>
+        </span>
+      </button>
+      {open&&(
+        <div className="h2h-table">
+          <div className="h2h-th"><span>CHARGE</span><span>{aName.toUpperCase()}</span><span>{bName.toUpperCase()}</span></div>
+          {rows.map(([label,av,bv,ag,bg],i)=>(
+            <div key={i} className={`h2h-tr${av!==bv?' h2h-tr-diff':''}`}>
+              <span className="h2h-td-label">{label}</span>
+              <span className={`h2h-td-val${ag?' h2h-green':''}`}>{av}</span>
+              <span className={`h2h-td-val${bg?' h2h-green':''}`}>{bv}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {!open&&diffs.length>0&&(
+        <div className="h2h-acc-preview">
+          {diffs.slice(0,2).map(([label,av,bv,ag,bg],i)=>(
+            <div key={i} className="h2h-prev-row">
+              <span className="h2h-prev-label">{label}</span>
+              <span className={ag?'h2h-green':'h2h-prev-val'}>{av}</span>
+              <span className="h2h-prev-vs">vs</span>
+              <span className={bg?'h2h-green':'h2h-prev-val'}>{bv}</span>
+            </div>
+          ))}
+          {diffs.length>2&&<div className="h2h-acc-more" onClick={()=>setOpen(true)}>+{diffs.length-2} more differences — tap to expand</div>}
+        </div>
+      )}
+      {!open&&diffs.length===0&&(
+        <div className="h2h-acc-same">No differences — identical at both brokers</div>
+      )}
     </div>
   );
 }
 
 function HeadToHead(){
   const [pair,setPair]=useState('zerodha-dhan');
+  const [dropOpen,setDropOpen]=useState(false);
   const d=H2H_DATA[pair];
   const delivA=d.perTrade[0].av, delivB=d.perTrade[0].bv;
   const winner=delivA<=delivB?d.a:d.b;
+  const loser=delivA<=delivB?d.b:d.a;
   const saves=Math.abs(delivA-delivB).toFixed(2);
+  const pct=delivA>0?((Math.abs(delivA-delivB)/Math.min(delivA,delivB))*100).toFixed(1):0;
   const maxT=Math.max(delivA,delivB);
+  const activeLabel=PAIR_LIST.find(p=>p.key===pair)?.label||pair;
+
   return(
     <div className="h2h-wrap">
-      <div className="h2h-header">
-        <div className="h2h-title">Head-to-Head</div>
-        
+      {/* Sticky benchmark label */}
+      <div className="h2h-benchmark-bar">
+        All values based on a <strong>₹50,000 delivery trade</strong> (buy + sell round trip)
       </div>
-      <div className="h2h-pair-grid">
-        {PAIR_LIST.map(p=>(
-          <button key={p.key} className={`h2h-pair-btn${pair===p.key?' h2h-pair-active':''}`} onClick={()=>setPair(p.key)}>{p.label}</button>
-        ))}
-      </div>
-      <div className="h2h-hero">
-        <div className="h2h-hero-names">
-          <span className={delivA<=delivB?'h2h-name-win':'h2h-name-lose'}>{d.a}</span>
-          <span className="h2h-hero-vs">vs</span>
-          <span className={delivB<delivA?'h2h-name-win':'h2h-name-lose'}>{d.b}</span>
-        </div>
-        <div className="h2h-hero-bars">
-          {[{n:d.a,v:delivA,w:delivA<=delivB},{n:d.b,v:delivB,w:delivB<delivA}].map((s,i)=>(
-            <div key={i} className="h2h-hero-bar-row">
-              <span className={`h2h-hero-amt${s.w?' h2h-green':''}`}>₹{fmt(s.v,2)}</span>
-              <div className="h2h-hero-track"><div className="h2h-hero-fill" style={{width:`${(s.v/maxT)*100}%`,background:s.w?'var(--gain)':'var(--border2)'}}/></div>
-              <span className="h2h-hero-name">{s.n}</span>
+
+      {/* Dropdown pair selector */}
+      <div className="h2h-selector-row">
+        <div className="h2h-dropdown-wrap">
+          <button className="h2h-dropdown-btn" onClick={()=>setDropOpen(o=>!o)}>
+            <span className="h2h-dd-label">Comparing</span>
+            <span className="h2h-dd-value">{activeLabel}</span>
+            <span className="h2h-dd-arrow">{dropOpen?'▲':'▼'}</span>
+          </button>
+          {dropOpen&&(
+            <div className="h2h-dropdown-menu">
+              {PAIR_LIST.map(p=>(
+                <button key={p.key}
+                  className={`h2h-dd-item${pair===p.key?' h2h-dd-active':''}`}
+                  onClick={()=>{setPair(p.key);setDropOpen(false);}}>
+                  {p.label}
+                  {pair===p.key&&<span className="h2h-dd-check">✓</span>}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="h2h-hero-verdict">
-          {parseFloat(saves)===0
-            ?<span style={{color:'var(--text3)'}}>Same delivery cost on ₹50K trade</span>
-            :<><span className="h2h-green" style={{fontWeight:900}}>{winner}</span><span style={{color:'var(--text3)'}}> saves ₹{saves} on a ₹50K delivery trade</span></>
-          }
+          )}
         </div>
       </div>
+
+      {/* Hero: winner banner + bars */}
+      <div className="h2h-hero">
+        <div className="h2h-winner-banner">
+          <span className="h2h-winner-badge">CHEAPER</span>
+          <span className="h2h-winner-name">{winner}</span>
+          {parseFloat(saves)>0&&(
+            <span className="h2h-winner-saves">saves <strong>₹{saves}</strong> <span className="h2h-winner-pct">({pct}% less)</span></span>
+          )}
+        </div>
+
+        <div className="h2h-bars-wrap">
+          {[{n:d.a,v:delivA,w:delivA<=delivB},{n:d.b,v:delivB,w:delivB<delivA}].map((s,i)=>{
+            const pctWidth=(s.v/maxT)*100;
+            return(
+              <div key={i} className="h2h-bar-item">
+                <div className="h2h-bar-meta">
+                  <span className={`h2h-bar-broker${s.w?' h2h-bar-broker-win':''}`}>{s.n}</span>
+                  <span className={`h2h-bar-amount${s.w?' h2h-green':''}`}>₹{fmt(s.v,2)}</span>
+                </div>
+                <div className="h2h-bar-track">
+                  <div className="h2h-bar-fill" style={{
+                    width:`${pctWidth}%`,
+                    background:s.w?'var(--gain)':'rgba(255,255,255,0.15)'
+                  }}/>
+                  <span className="h2h-bar-pct-label">{pctWidth.toFixed(0)}%</span>
+                </div>
+              </div>
+            );
+          })}
+          <div className="h2h-bar-context">of ₹50K delivery trade total cost</div>
+        </div>
+
+        {parseFloat(saves)===0&&(
+          <div className="h2h-tie-badge">IDENTICAL COST on ₹50K delivery trade</div>
+        )}
+      </div>
+
+      {/* Annual cost */}
       <div className="h2h-section">
         <div className="h2h-section-title">{SEC.annual}</div>
         <div className="h2h-annual-grid">
           {d.annual.map((p,i)=>{
-            const aW=p.av<=p.bv, diff=Math.abs(p.av-p.bv).toFixed(2);
+            const aW=p.av<=p.bv;
+            const diff=Math.abs(p.av-p.bv);
+            const diffFmt=diff>=1000?'₹'+fmt(diff/1000,1)+'K':'₹'+fmt(diff,0);
             return(
-              <div key={i} className="h2h-annual-card">
-                <div className="h2h-annual-profile">{p.profile}</div>
-                <div className="h2h-annual-sub">{p.sub}</div>
-                <div className="h2h-annual-row">
-                  <div className="h2h-annual-broker">
-                    <div className="h2h-annual-name">{d.a}</div>
-                    <div className={`h2h-annual-amt${aW?' h2h-green':''}`}>₹{fmt(p.av,2)}<span className="h2h-annual-yr">/yr</span></div>
-                    <div className="h2h-annual-breakdown">{p.al}</div>
+              <div key={i} className={`h2h-annual-card${aW?' h2h-ac-a-wins':' h2h-ac-b-wins'}`}>
+                <div className="h2h-ac-profile">{p.profile}</div>
+                <div className="h2h-ac-sub">{p.sub}</div>
+                <div className="h2h-ac-costs">
+                  <div className={`h2h-ac-broker${aW?' h2h-ac-winner':''}`}>
+                    {aW&&<span className="h2h-ac-win-tag">CHEAPER</span>}
+                    <div className="h2h-ac-bname">{d.a}</div>
+                    <div className="h2h-ac-amount">₹{fmt(p.av,0)}<span className="h2h-ac-yr">/yr</span></div>
+                    <div className="h2h-ac-breakdown">{p.al}</div>
                   </div>
-                  <div className="h2h-annual-broker">
-                    <div className="h2h-annual-name">{d.b}</div>
-                    <div className={`h2h-annual-amt${!aW?' h2h-green':''}`}>₹{fmt(p.bv,2)}<span className="h2h-annual-yr">/yr</span></div>
-                    <div className="h2h-annual-breakdown">{p.bl}</div>
+                  <div className="h2h-ac-divider"/>
+                  <div className={`h2h-ac-broker${!aW?' h2h-ac-winner':''}`}>
+                    {!aW&&<span className="h2h-ac-win-tag">CHEAPER</span>}
+                    <div className="h2h-ac-bname">{d.b}</div>
+                    <div className="h2h-ac-amount">₹{fmt(p.bv,0)}<span className="h2h-ac-yr">/yr</span></div>
+                    <div className="h2h-ac-breakdown">{p.bl}</div>
                   </div>
                 </div>
-                {parseFloat(diff)>0&&<div className="h2h-annual-verdict h2h-green">{aW?d.a:d.b} saves ₹{diff}/yr</div>}
+                {diff>0&&(
+                  <div className="h2h-ac-delta">
+                    <span className="h2h-ac-delta-label">Annual saving</span>
+                    <span className="h2h-ac-delta-val h2h-green">{diffFmt}/yr</span>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Per-trade */}
       <div className="h2h-section">
         <div className="h2h-section-title">{SEC.perTrade}</div>
-        <div className="h2h-table">
-          <div className="h2h-th"><span>TRADE TYPE</span><span>{d.a.toUpperCase()}</span><span>{d.b.toUpperCase()}</span><span>GAP</span></div>
+        <div className="h2h-table h2h-table-4col">
+          <div className="h2h-th"><span>TRADE TYPE</span><span>{d.a.toUpperCase()}</span><span>{d.b.toUpperCase()}</span><span>DIFFERENCE</span></div>
           {d.perTrade.map((r,i)=>{
-            const aW=r.av<=r.bv,gap=Math.abs(r.av-r.bv);
+            const aW=r.av<=r.bv, gap=Math.abs(r.av-r.bv);
+            const isDelivery=r.type==='Delivery';
             return(
-              <div key={i} className="h2h-tr">
-                <span className="h2h-td-label"><div>{r.type}</div><div className="h2h-td-sub">{r.sub}</div></span>
-                <span className={`h2h-td-val${aW?' h2h-green':''}`}>₹{fmt(r.av,2)}</span>
-                <span className={`h2h-td-val${(!aW&&gap>0.01)?' h2h-green':''}`}>₹{fmt(r.bv,2)}</span>
-                <span className="h2h-td-gap">{gap<0.01?'—':'₹'+fmt(gap,2)}</span>
+              <div key={i} className={`h2h-tr h2h-tr-trade${isDelivery?' h2h-tr-highlight':''}`}>
+                <span className="h2h-td-label">
+                  <div className="h2h-tl-type">{r.type}</div>
+                  <div className="h2h-tl-sub">{r.sub}</div>
+                </span>
+                <span className={`h2h-td-num${aW?' h2h-green':''}`}>₹{fmt(r.av,2)}</span>
+                <span className={`h2h-td-num${(!aW&&gap>0.01)?' h2h-green':''}`}>₹{fmt(r.bv,2)}</span>
+                <span className="h2h-td-gap-v">
+                  {gap<0.01
+                    ?<span className="h2h-gap-tie">—</span>
+                    :<><span className="h2h-gap-amt">₹{fmt(gap,2)}</span><span className="h2h-gap-who"> cheaper for {aW?d.a:d.b}</span></>
+                  }
+                </span>
               </div>
             );
           })}
         </div>
       </div>
-      <H2HTable title={SEC.trading}       rows={d.trading}       aName={d.a} bName={d.b}/>
-      <H2HTable title={SEC.demat}         rows={d.demat}         aName={d.a} bName={d.b}/>
-      <H2HTable title={SEC.mtf}           rows={d.mtf}           aName={d.a} bName={d.b}/>
-      <H2HTable title={SEC.settlement}    rows={d.settlement}    aName={d.a} bName={d.b}/>
-      <H2HTable title={SEC.services}      rows={d.services}      aName={d.a} bName={d.b}/>
-      <H2HTable title={SEC.account}       rows={d.account}       aName={d.a} bName={d.b}/>
-      {d.documents&&<H2HTable title={SEC.documents} rows={d.documents} aName={d.a} bName={d.b}/>}
-      {d.instruments&&<H2HTable title={SEC.instruments} rows={d.instruments} aName={d.a} bName={d.b}/>}
-      <H2HTable title={SEC.modifications} rows={d.modifications} aName={d.a} bName={d.b}/>
-      <div className="h2h-footnote">₹50K delivery baseline. Govt charges (STT, exchange, SEBI, stamp duty) are identical at every broker and not counted in the gap. Always verify current charges with your broker before trading.</div>
+
+      {/* Collapsible charge sections */}
+      <H2HTable title={SEC.trading}       rows={d.trading}       aName={d.a} bName={d.b} collapsed={true}/>
+      <H2HTable title={SEC.demat}         rows={d.demat}         aName={d.a} bName={d.b} collapsed={true}/>
+      <H2HTable title={SEC.mtf}           rows={d.mtf}           aName={d.a} bName={d.b} collapsed={true}/>
+      <H2HTable title={SEC.settlement}    rows={d.settlement}    aName={d.a} bName={d.b} collapsed={true}/>
+      <H2HTable title={SEC.services}      rows={d.services}      aName={d.a} bName={d.b} collapsed={true}/>
+      <H2HTable title={SEC.account}       rows={d.account}       aName={d.a} bName={d.b} collapsed={true}/>
+      {d.documents&&<H2HTable title={SEC.documents} rows={d.documents} aName={d.a} bName={d.b} collapsed={true}/>}
+      {d.instruments&&<H2HTable title={SEC.instruments} rows={d.instruments} aName={d.a} bName={d.b} collapsed={true}/>}
+      <H2HTable title={SEC.modifications} rows={d.modifications} aName={d.a} bName={d.b} collapsed={true}/>
+
+      <div className="h2h-footnote">Govt charges (STT, exchange, SEBI, stamp duty) are fixed by law — identical at every broker. Always verify current charges before trading.</div>
     </div>
   );
 }
@@ -2540,7 +2644,7 @@ export default function BrokersPage() {
       )}
 
       {/* ── MTF COMPARISON ── */}
-      {tab==='__REMOVED_MTF__' && (
+      {tab==='MTF Comparison' && (
         <div className="brk-content">
           <div className="brk-reg-note">
             <span className="brk-reg-num">MTF = Margin Trading Facility</span> — buy stocks with borrowed money. Two costs hit you: interest on borrowed amount (daily, compounded) + brokerage per order. Rates below are indicative; verify with broker before using MTF.
@@ -2757,58 +2861,103 @@ export default function BrokersPage() {
 
       {tab==='Market Data' && (
         <div className="brk-content">
-          <div className="brk-mkt-grid">
-            <div>
-              <div className="brk-ov-title">Active Clients — NSE January 2026</div>
-              <div className="brk-mkt-list">
+
+          {/* Top insight line */}
+          <div className="mkt-insight-bar">
+            Groww leads in users (12.5M). Zerodha leads in profitability (₹13,500 Cr networth — 1.7× the next broker).
+          </div>
+
+          {/* Two charts side by side — clients primary, networth secondary */}
+          <div className="mkt-charts-grid">
+
+            {/* LEFT — primary: clients */}
+            <div className="mkt-chart-panel mkt-chart-primary">
+              <div className="mkt-chart-title">Market share by clients</div>
+              <div className="mkt-chart-sub">NSE active clients · January 2026 · Total 44.4M</div>
+              <div className="mkt-list">
                 {[
-                  {n:'Groww',v:12.5,pct:'28.1%'},{n:'Zerodha',v:6.9,pct:'15.45%',featured:true},
-                  {n:'Angel One',v:6.7,pct:'15.19%'},{n:'ICICI Securities',v:2.0,pct:'4.60%'},
-                  {n:'Upstox',v:2.0,pct:'4.58%'},{n:'HDFC Securities',v:1.4,pct:'3.22%'},
-                  {n:'Kotak Securities',v:1.4,pct:'3.08%'},{n:'SBI Securities',v:1.1,pct:'2.57%'},
-                  {n:'Dhan',v:1.0,pct:'2.25%'},{n:'Motilal Oswal',v:0.9,pct:'2.04%'},
+                  {n:'Groww',           v:12.5, pct:'28.1%', tag:'#1 by users'},
+                  {n:'Zerodha',         v:6.9,  pct:'15.45%',tag:'#2 · ★ Editor pick', featured:true},
+                  {n:'Angel One',       v:6.7,  pct:'15.19%',tag:'#3'},
+                  {n:'ICICI Securities',v:2.0,  pct:'4.60%'},
+                  {n:'Upstox',          v:2.0,  pct:'4.58%'},
+                  {n:'HDFC Securities', v:1.4,  pct:'3.22%'},
+                  {n:'Kotak Securities',v:1.4,  pct:'3.08%'},
+                  {n:'SBI Securities',  v:1.1,  pct:'2.57%'},
+                  {n:'Dhan',            v:1.0,  pct:'2.25%'},
+                  {n:'Motilal Oswal',   v:0.9,  pct:'2.04%'},
                 ].map((item,i)=>(
-                  <div key={i} className={`brk-mkt-row${item.featured?' brk-mkt-featured':''}`}>
-                    <span className="brk-rank">{i+1}</span>
-                    <span className="brk-broker-name">{item.featured&&<span className="brk-star">★ </span>}{item.n}</span>
-                    <div className="brk-mkt-bar-wrap">
-                      <div className="brk-mkt-bar" style={{width:`${(item.v/12.5)*100}%`, background:item.featured?'var(--accent)':'var(--text3)'}}/>
+                  <div key={i} className={`mkt-row${item.featured?' mkt-row-featured':i<3?' mkt-row-top':''}`}>
+                    <span className="mkt-rank">{i+1}</span>
+                    <div className="mkt-name-col">
+                      <span className="mkt-name">{item.n}</span>
+                      {item.tag&&<span className={`mkt-tag${item.featured?' mkt-tag-feat':''}`}>{item.tag}</span>}
                     </div>
-                    <span className="brk-mkt-val">{item.v}M</span>
-                    <span className="brk-mkt-pct">{item.pct}</span>
+                    <div className="mkt-bar-wrap">
+                      <div className="mkt-bar-fill" style={{
+                        width:`${(item.v/12.5)*100}%`,
+                        background: item.featured ? 'var(--accent)' : i===0 ? 'var(--gain)' : 'rgba(255,255,255,0.15)'
+                      }}/>
+                    </div>
+                    <span className="mkt-val">{item.v}M</span>
+                    <span className="mkt-pct">{item.pct}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <div>
-              <div className="brk-ov-title">Broker Networth — NSE Filing July 2025</div>
-              <div className="brk-mkt-list">
+
+            {/* RIGHT — secondary: networth */}
+            <div className="mkt-chart-panel mkt-chart-secondary">
+              <div className="mkt-chart-title">Financial strength by networth</div>
+              <div className="mkt-chart-sub">NSE filing · July 2025 · Zerodha is 1.7× #2</div>
+              <div className="mkt-list">
                 {[
-                  {n:'Zerodha',v:13500,featured:true},{n:'Kotak Securities',v:7900},
-                  {n:'ICICI Securities',v:4500},{n:'Angel One',v:4400},
-                  {n:'Anand Rathi',v:4000},{n:'Mirae Asset',v:3600},
-                  {n:'HDFC Securities',v:2700},{n:'SBI Securities',v:1900},
-                  {n:'Motilal Oswal',v:1800},{n:'Axis Securities',v:1700},
+                  {n:'Zerodha',         v:13500, featured:true, tag:'#1 · 1.7× next'},
+                  {n:'Kotak Securities',v:7900},
+                  {n:'ICICI Securities',v:4500},
+                  {n:'Angel One',       v:4400},
+                  {n:'Anand Rathi',     v:4000},
+                  {n:'Mirae Asset',     v:3600},
+                  {n:'HDFC Securities', v:2700},
+                  {n:'SBI Securities',  v:1900},
+                  {n:'Motilal Oswal',   v:1800},
+                  {n:'Axis Securities', v:1700},
                 ].map((item,i)=>(
-                  <div key={i} className={`brk-mkt-row${item.featured?' brk-mkt-featured':''}`}>
-                    <span className="brk-rank">{i+1}</span>
-                    <span className="brk-broker-name">{item.featured&&<span className="brk-star">★ </span>}{item.n}</span>
-                    <div className="brk-mkt-bar-wrap">
-                      <div className="brk-mkt-bar" style={{width:`${(item.v/13500)*100}%`, background:item.featured?'var(--gain)':'var(--text3)'}}/>
+                  <div key={i} className={`mkt-row${item.featured?' mkt-row-featured':i<3?' mkt-row-top':''}`}>
+                    <span className="mkt-rank">{i+1}</span>
+                    <div className="mkt-name-col">
+                      <span className="mkt-name">{item.n}</span>
+                      {item.tag&&<span className={`mkt-tag${item.featured?' mkt-tag-feat':''}`}>{item.tag}</span>}
                     </div>
-                    <span className="brk-mkt-val">₹{fmt(item.v)} Cr</span>
+                    <div className="mkt-bar-wrap">
+                      <div className="mkt-bar-fill" style={{
+                        width:`${(item.v/13500)*100}%`,
+                        background: item.featured ? 'var(--gain)' : 'rgba(255,255,255,0.15)'
+                      }}/>
+                    </div>
+                    <span className="mkt-val">₹{fmt(item.v)} Cr</span>
                   </div>
                 ))}
               </div>
-              <div className="brk-table-note">Zerodha's networth (₹13,500 Cr) is 1.7× the second-largest broker. Reflects 15 years of consistent profitability from a lean, tech-first model.</div>
             </div>
           </div>
-          <div className="brk-mkt-summary">
-            <div className="brk-mkt-stat"><div className="brk-mkt-stat-n">44.4M</div><div className="brk-mkt-stat-l">Active clients on NSE</div></div>
-            <div className="brk-mkt-stat"><div className="brk-mkt-stat-n">59%</div><div className="brk-mkt-stat-l">Top 3 concentration (Groww + Zerodha + Angel)</div></div>
-            <div className="brk-mkt-stat"><div className="brk-mkt-stat-n">383%</div><div className="brk-mkt-stat-l">Industry growth since 2020</div></div>
-            <div className="brk-mkt-stat"><div className="brk-mkt-stat-n brk-red">-10.5%</div><div className="brk-mkt-stat-l">Off peak (Jan 2025) — SEBI F&O regulations</div></div>
+
+          {/* Stat cards */}
+          <div className="mkt-stats-row">
+            {[
+              {n:'44.4M',  label:'Total market size',         sub:'Active NSE clients', color:''},
+              {n:'59%',    label:'Top 3 dominance',           sub:'Groww + Zerodha + Angel One', color:''},
+              {n:'383%',   label:'Industry growth',           sub:'Since 2020', color:'var(--gain)'},
+              {n:'-10.5%', label:'Off Jan 2025 peak',         sub:'SEBI F&O regulations', color:'var(--loss)'},
+            ].map((s,i)=>(
+              <div key={i} className="mkt-stat-card">
+                <div className="mkt-stat-n" style={{color:s.color||'var(--text)'}}>{s.n}</div>
+                <div className="mkt-stat-label">{s.label}</div>
+                <div className="mkt-stat-sub">{s.sub}</div>
+              </div>
+            ))}
           </div>
+
         </div>
       )}
 
@@ -2816,7 +2965,7 @@ export default function BrokersPage() {
 
 
       <div className="brk-footer">
-        Data sourced from official broker websites, fee documents, and NSE filings. Regulatory charges (STT, exchange fee, SEBI fee, stamp duty) are fixed by government and exchanges — identical at every broker. Always verify current charges before trading. No affiliates. No paid placements. No sponsored rankings. ★ Editor's Pick = editorial judgment based on platform quality, financial strength, and track record — not cost alone. Not sponsored.
+        Regulatory charges are fixed by law and identical at every broker. Always verify current charges before trading.
       </div>
     </div>
   );
