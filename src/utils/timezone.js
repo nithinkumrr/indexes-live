@@ -116,27 +116,28 @@ function getISTDateStr(d) {
 }
 
 // Find next trading open — skipping weekends + holidays
-function secsToNextOpen(fromIST) {
-  const OPEN_MINS = 9 * 60 + 15;
-  let d = new Date(fromIST);
-  // advance day by day until we find a trading day
-  for (let i = 0; i < 30; i++) {
-    d.setDate(d.getDate() + 1);
-    const dow = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay();
-    const dateStr = getISTDateStr(d);
+function secsToNextOpen(istNow) {
+  // istNow is already an IST-equivalent Date from toLocaleString('en-US', Asia/Kolkata)
+  // We need to find the next trading day and calculate seconds to 9:15 AM IST
+  const nowMs = Date.now(); // actual UTC ms
+  
+  for (let i = 1; i <= 30; i++) {
+    // Check date i days from now
+    const candidate = new Date(nowMs + i * 86400000);
+    const candidateIST = new Date(candidate.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const dow = candidateIST.getDay();
+    const dateStr = getISTDateStr(candidate);
     if (dow === 0 || dow === 6 || isTradingHoliday(dateStr)) continue;
-    // found next trading day — calculate seconds to its 9:15 AM IST
-    const targetIST = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    targetIST.setHours(9, 15, 0, 0);
-    // convert back to UTC for diff
-    const diffMs = targetIST - new Date(fromIST.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })) * 1 || 0;
-    // simpler: get total seconds between now (IST) and next open (IST)
-    const nowIST = new Date(fromIST.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    const openIST = new Date(nowIST);
-    openIST.setFullYear(targetIST.getFullYear(), targetIST.getMonth(), targetIST.getDate());
-    openIST.setHours(9, 15, 0, 0);
-    const secs = Math.floor((openIST - nowIST) / 1000);
-    return { secs: Math.max(0, secs), dateStr: getISTDateStr(d), holidayName: NSE_HOLIDAY_NAMES[getISTDateStr(d)] };
+    
+    // Found next trading day — build its 9:15 AM IST as UTC ms
+    // IST is UTC+5:30 = UTC+330 minutes
+    const year  = candidateIST.getFullYear();
+    const month = candidateIST.getMonth();
+    const day   = candidateIST.getDate();
+    // 9:15 AM IST = 3:45 AM UTC
+    const openUTC = Date.UTC(year, month, day, 3, 45, 0);
+    const secs = Math.floor((openUTC - nowMs) / 1000);
+    return { secs: Math.max(0, secs), dateStr, holidayName: NSE_HOLIDAY_NAMES[dateStr] || null };
   }
   return { secs: 86400, dateStr: '', holidayName: null };
 }
@@ -155,13 +156,13 @@ export function getIndiaMarketStatus() {
 
   // Weekend
   if (day === 0 || day === 6) {
-    const next = secsToNextOpen(ist);
+    const next = secsToNextOpen();
     return { status: 'weekend', secondsLeft: next.secs, label: 'Weekend', holidayName: null };
   }
 
   // Market holiday today
   if (todayIsHoliday) {
-    const next = secsToNextOpen(ist);
+    const next = secsToNextOpen();
     return { status: 'holiday', secondsLeft: next.secs, label: todayHolidayName || 'Market Holiday', holidayName: todayHolidayName };
   }
 
@@ -180,7 +181,7 @@ export function getIndiaMarketStatus() {
   }
 
   // After close — find next trading day (may skip holidays)
-  const next = secsToNextOpen(ist);
+  const next = secsToNextOpen();
   return { status: 'closed', secondsLeft: next.secs, label: 'Closed', holidayName: null };
 }
 
