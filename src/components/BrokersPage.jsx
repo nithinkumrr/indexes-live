@@ -1098,9 +1098,9 @@ function Cheatsheet(){
   const [expandedFno, setExpandedFno] = useState(false);
   const [expandMtfCols, setExpandMtfCols] = useState(false);
 
-  const VISIBLE = 4;
-  const visibleSecs = CG_SECTIONS.slice(0, VISIBLE);
-  const overflowSecs = CG_SECTIONS.slice(VISIBLE);
+  const VISIBLE = CG_SECTIONS.length; // all visible
+  const visibleSecs = CG_SECTIONS;
+  const overflowSecs = [];
   const activeLabel = CG_SECTIONS.find(s=>s.id===activeSection)?.label || '';
 
   const scrollTo = (id) => {

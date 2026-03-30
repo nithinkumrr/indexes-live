@@ -210,10 +210,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 .inline-countdown { display: flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: var(--r); background: var(--bg3); border: 1px solid var(--border2); }
 .ic-open  { border-color: rgba(0,255,148,0.3); background: rgba(0,255,148,0.04); }
-.ic-pre   { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.04); }
+.ic-pre     { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.04); }
+.ic-holiday { border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.04); }
 .ic-label { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; font-weight: 700; color: var(--text3); }
-.ic-open .ic-label { color: var(--live); }
-.ic-pre  .ic-label { color: var(--pre); }
+.ic-open    .ic-label { color: var(--live); }
+.ic-pre     .ic-label { color: var(--pre); }
+.ic-holiday .ic-label { color: #A855F7; }
+.ic-holiday .ic-time  { color: #A855F7; font-size: 11px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ic-time  { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: 1px; }
 .ic-sub   { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 
@@ -6001,8 +6004,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .cg-muted         { color: var(--text3) !important; }
 
 /* Tab bar */
-.cg-tabs          { display: flex; align-items: stretch; gap: 0; margin-bottom: 28px; border-bottom: 2px solid var(--border); position: sticky; top: 45px; z-index: 20; background: var(--bg0); padding-top: 4px; }
-.cg-tab           { font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 10px 16px; border: none; background: transparent; color: var(--text3); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .15s; white-space: nowrap; }
+.cg-tabs          { display: flex; align-items: stretch; gap: 0; margin-bottom: 28px; border-bottom: 2px solid var(--border); position: sticky; top: 45px; z-index: 20; background: var(--bg0); padding-top: 4px; overflow-x: auto; scrollbar-width: none; }
+.cg-tab           { font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 10px 14px; border: none; background: transparent; color: var(--text3); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .15s; white-space: nowrap; flex-shrink: 0; }
 .cg-tab:hover     { color: var(--text); background: rgba(255,255,255,.03); }
 .cg-tab-active    { color: var(--text) !important; background: rgba(74,158,255,.08) !important; border-bottom-color: var(--accent) !important; font-weight: 900; }
 .cg-tab-more-wrap { position: relative; }
@@ -6336,3 +6339,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .cg-vb-highlight .cg-verdict-name { color: var(--accent); }
 .cg-vb-highlight .cg-vb-note      { color: rgba(74,158,255,.7); }
 .cg-verdict-delta { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-bottom: 4px; font-style: italic; }
+
+/* Intraday bias pending state */
+.ip-bias-pending { opacity: 0.4; }

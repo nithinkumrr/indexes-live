@@ -123,11 +123,15 @@ export default async function handler(req, res) {
   const results = { stored: [], failed: [], skipped: [] };
 
   for (const iso of tradingDays) {
-    // Skip if already in KV
-    try {
-      const existing = await kv.get(`fiidii:${iso}`);
-      if (existing) { results.skipped.push(iso); continue; }
-    } catch (_) {}
+    // For today: always re-fetch (NSE publishes at ~5 PM, we retry at 5/6:30/7 PM)
+    // For past days: skip if already stored
+    const isToday = iso === todayISO;
+    if (!isToday) {
+      try {
+        const existing = await kv.get(`fiidii:${iso}`);
+        if (existing) { results.skipped.push(iso); continue; }
+      } catch (_) {}
+    }
 
     try {
       // Small delay between requests to avoid rate limiting
