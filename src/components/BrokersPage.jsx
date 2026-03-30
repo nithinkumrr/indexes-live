@@ -462,7 +462,131 @@ const SCENARIOS = {
 const fmt  = (v, d=0) => v != null ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: d }) : '—';
 const fmtR = (v) => v != null ? `₹${fmt(v)}` : '—';
 
-const TABS = ['Rankings', 'Calculator', 'MTF Comparison', 'All Charges', 'Market Data'];
+const TABS = ['Rankings', 'Head to Head', 'Calculator', 'MTF Comparison', 'All Charges', 'Market Data'];
+
+// ── HEAD TO HEAD COMPONENT ────────────────────────────────────────────────────
+
+// Verified data from comparebroker.info — ₹50K delivery trade baseline
+const H2H_PAIRS = [
+  {
+    a: { id:'zerodha', name:'Zerodha', total:126.58, delivery:0, intraday:'0.03% or ₹20', options:'₹20/order', dp:15.34, amc:88.50, mtf:'14.6% p.a.' },
+    b: { id:'dhan',    name:'Dhan',    total:125.99, delivery:0, intraday:'0.03% or ₹20', options:'₹20/order', dp:14.75, amc:0,     mtf:'12.49%–16.49%' },
+  },
+  {
+    a: { id:'zerodha', name:'Zerodha', total:126.58, delivery:0,         intraday:'0.03% or ₹20',   options:'₹20/order',  dp:15.34, amc:88.50, mtf:'14.6% p.a.' },
+    b: { id:'groww',   name:'Groww',   total:178.44, delivery:'₹5–₹20',  intraday:'0.1% or ₹20',    options:'₹20/order',  dp:20,    amc:0,     mtf:'14.95% p.a.' },
+  },
+  {
+    a: { id:'zerodha',  name:'Zerodha',   total:126.58, delivery:0,        intraday:'0.03% or ₹20', options:'₹20/order', dp:15.34, amc:88.50, mtf:'14.6% p.a.' },
+    b: { id:'angelone', name:'Angel One', total:178.44, delivery:'₹2–₹20', intraday:'0.03% or ₹20', options:'₹20/order', dp:20,    amc:283,   mtf:'14.99% p.a.' },
+  },
+  {
+    a: { id:'zerodha', name:'Zerodha',          total:126.58, delivery:0,      intraday:'0.03% or ₹20',  options:'₹20/order', dp:15.34, amc:88.50, mtf:'14.6% p.a.' },
+    b: { id:'kotak',   name:'Kotak Securities', total:367.24, delivery:'0.2%', intraday:'₹10 or 0.05%',  options:'₹10/lot',   dp:20,    amc:600,   mtf:'9.69% (Pro)' },
+  },
+  {
+    a: { id:'dhan',  name:'Dhan',  total:125.99, delivery:0,        intraday:'0.03% or ₹20', options:'₹20/order', dp:14.75, amc:0,   mtf:'12.49%–16.49%' },
+    b: { id:'groww', name:'Groww', total:178.44, delivery:'₹5–₹20', intraday:'0.1% or ₹20',  options:'₹20/order', dp:20,    amc:0,   mtf:'14.95% p.a.' },
+  },
+  {
+    a: { id:'dhan',     name:'Dhan',      total:125.99, delivery:0,        intraday:'0.03% or ₹20', options:'₹20/order', dp:14.75, amc:0,   mtf:'12.49%–16.49%' },
+    b: { id:'angelone', name:'Angel One', total:178.44, delivery:'₹2–₹20', intraday:'0.03% or ₹20', options:'₹20/order', dp:20,    amc:283, mtf:'14.99% p.a.' },
+  },
+  {
+    a: { id:'dhan',  name:'Dhan',             total:125.99, delivery:0,      intraday:'0.03% or ₹20', options:'₹20/order', dp:14.75, amc:0,   mtf:'12.49%–16.49%' },
+    b: { id:'kotak', name:'Kotak Securities', total:367.24, delivery:'0.2%', intraday:'₹10 or 0.05%', options:'₹10/lot',  dp:20,    amc:600, mtf:'9.69% (Pro)' },
+  },
+  {
+    a: { id:'groww',    name:'Groww',     total:178.44, delivery:'₹5–₹20',  intraday:'0.1% or ₹20',  options:'₹20/order', dp:20, amc:0,   mtf:'14.95% p.a.' },
+    b: { id:'angelone', name:'Angel One', total:178.44, delivery:'₹2–₹20',  intraday:'0.03% or ₹20', options:'₹20/order', dp:20, amc:283, mtf:'14.99% p.a.' },
+  },
+  {
+    a: { id:'groww', name:'Groww',          total:178.44, delivery:'₹5–₹20', intraday:'0.1% or ₹20',  options:'₹20/order', dp:20, amc:0,   mtf:'14.95% p.a.' },
+    b: { id:'kotak', name:'Kotak Securities',total:367.24, delivery:'0.2%',  intraday:'₹10 or 0.05%', options:'₹10/lot',  dp:20, amc:600, mtf:'9.69% (Pro)' },
+  },
+  {
+    a: { id:'angelone', name:'Angel One',      total:178.44, delivery:'₹2–₹20', intraday:'0.03% or ₹20', options:'₹20/order', dp:20, amc:283, mtf:'14.99% p.a.' },
+    b: { id:'kotak',    name:'Kotak Securities',total:367.24, delivery:'0.2%',  intraday:'₹10 or 0.05%', options:'₹10/lot',  dp:20, amc:600, mtf:'9.69% (Pro)' },
+  },
+];
+
+function HeadToHead({ brokers }) {
+  const [open, setOpen] = useState(null);
+
+  return (
+    <div className="h2h-wrap">
+      <div className="h2h-header">
+        <div className="h2h-title">Head-to-Head</div>
+        <div className="h2h-sub">Same ₹50,000 delivery trade. Different broker. See exactly where the gap comes from.</div>
+      </div>
+
+      <div className="h2h-list">
+        {H2H_PAIRS.map((pair, i) => {
+          const winner = pair.a.total <= pair.b.total ? pair.a : pair.b;
+          const loser  = pair.a.total <= pair.b.total ? pair.b : pair.a;
+          const saves  = Math.abs(pair.a.total - pair.b.total).toFixed(2);
+          const maxT   = Math.max(pair.a.total, pair.b.total);
+          const isOpen = open === i;
+
+          return (
+            <div key={i} className={`h2h-row${isOpen?' h2h-row-open':''}`}>
+              <div className="h2h-row-head" onClick={() => setOpen(isOpen ? null : i)}>
+                <div className="h2h-names">
+                  <span className={winner.id===pair.a.id?'h2h-name-win':'h2h-name'}>{pair.a.name}</span>
+                  <span className="h2h-vs">vs</span>
+                  <span className={winner.id===pair.b.id?'h2h-name-win':'h2h-name'}>{pair.b.name}</span>
+                </div>
+                <div className="h2h-bars">
+                  <div className="h2h-bar-row">
+                    <span className={`h2h-amt ${winner.id===pair.a.id?'h2h-amt-win':''}`}>₹{fmt(pair.a.total,2)}</span>
+                    <div className="h2h-bar-track">
+                      <div className="h2h-bar-fill" style={{width:`${(pair.a.total/maxT)*100}%`, background: winner.id===pair.a.id?'var(--gain)':'var(--border2)'}}/>
+                    </div>
+                  </div>
+                  <div className="h2h-bar-row">
+                    <span className={`h2h-amt ${winner.id===pair.b.id?'h2h-amt-win':''}`}>₹{fmt(pair.b.total,2)}</span>
+                    <div className="h2h-bar-track">
+                      <div className="h2h-bar-fill" style={{width:`${(pair.b.total/maxT)*100}%`, background: winner.id===pair.b.id?'var(--gain)':'var(--border2)'}}/>
+                    </div>
+                  </div>
+                </div>
+                <div className="h2h-verdict">
+                  <span className="h2h-winner-name" style={{color:'var(--gain)'}}>{winner.name}</span>
+                  <span className="h2h-saves"> saves ₹{saves}</span>
+                </div>
+                <div className="h2h-toggle">{isOpen?'▲':'▼'}</div>
+              </div>
+
+              {isOpen && (
+                <div className="h2h-detail">
+                  <div className="h2h-detail-grid">
+                    {[
+                      ['Delivery brokerage', pair.a.delivery===0?'Zero':pair.a.delivery, pair.b.delivery===0?'Zero':pair.b.delivery],
+                      ['Intraday brokerage', pair.a.intraday, pair.b.intraday],
+                      ['F&O Options',        pair.a.options,  pair.b.options],
+                      ['DP charge',          '₹'+fmt(pair.a.dp,2), '₹'+fmt(pair.b.dp,2)],
+                      ['AMC / year',         pair.a.amc===0?'Free':'₹'+fmt(pair.a.amc,2), pair.b.amc===0?'Free':'₹'+fmt(pair.b.amc,2)],
+                      ['MTF interest',       pair.a.mtf, pair.b.mtf],
+                    ].map(([label, va, vb], j) => (
+                      <div key={j} className="h2h-detail-row">
+                        <span className="h2h-detail-label">{label}</span>
+                        <span className={`h2h-detail-val ${va==='Zero'||va==='Free'?'h2h-green':''}`}>{va}</span>
+                        <span className={`h2h-detail-val ${vb==='Zero'||vb==='Free'?'h2h-green':''}`}>{vb}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="h2h-detail-note">
+                    ₹50,000 delivery trade (buy + sell). Govt charges (STT ₹100, exchange ₹3.07, SEBI ₹0.10, stamp ₹7.50) are identical at every broker — the difference is purely brokerage + DP + AMC.
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function BrokersPage() {
   const [tab,      setTab]     = useState('Rankings');
@@ -561,7 +685,7 @@ export default function BrokersPage() {
         {TABS.map(t=>(
           <button key={t} className={`brk-tab-btn${tab===t?' brk-tab-active':''}`} onClick={()=>setTab(t)}>
             <span className="brk-tab-icon">{
-              t==='Rankings'?'↓':t==='Calculator'?'₹':t==='MTF Comparison'?'%':t==='All Charges'?'≡':'📊'
+              t==='Rankings'?'↓':t==='Head to Head'?'⚔':t==='Calculator'?'₹':t==='MTF Comparison'?'%':t==='All Charges'?'≡':'📊'
             }</span>
             <span className="brk-tab-label">{t}</span>
           </button>
@@ -1077,6 +1201,12 @@ export default function BrokersPage() {
       )}
 
       {/* ── MARKET DATA ── */}
+      {tab==='Head to Head' && (
+        <div className="brk-content">
+          <HeadToHead brokers={BROKERS} />
+        </div>
+      )}
+
       {tab==='Market Data' && (
         <div className="brk-content">
           <div className="brk-mkt-grid">
