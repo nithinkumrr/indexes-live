@@ -462,7 +462,490 @@ const SCENARIOS = {
 const fmt  = (v, d=0) => v != null ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: d }) : '—';
 const fmtR = (v) => v != null ? `₹${fmt(v)}` : '—';
 
-const TABS = ['Rankings', 'Direct Comparison', 'Cheatsheet', 'Calculator', 'MTF Comparison', 'Market Data'];
+const TABS = ['Rankings', 'Direct Comparison', 'Cheatsheet', 'Brokerage Calc', 'MTF Comparison', 'Market Data'];
+
+// ── UNIVERSAL BROKERAGE CALCULATOR ───────────────────────────────────────────
+
+const CALC_BROKERS = [
+  {
+    id:'zerodha', name:'Zerodha', featured:true,
+    delivery:{ rate:0, type:'zero' },
+    intraday:{ rate:0.0003, cap:20 },
+    futures: { rate:0.0003, cap:20 },
+    options: { flat:20 },
+    mtf:     { rate:0.0003, cap:20 },
+    dp:15.34, dpPerSell:false, amc:88.50, mtfRate:14.6,
+  },
+  {
+    id:'dhan', name:'Dhan',
+    delivery:{ rate:0, type:'zero' },
+    intraday:{ rate:0.0003, cap:20 },
+    futures: { rate:0.0003, cap:20 },
+    options: { flat:20 },
+    mtf:     { rate:0.0003, cap:20 },
+    dp:14.75, dpPerSell:false, amc:0, mtfRate:12.49,
+  },
+  {
+    id:'mstock', name:'mStock',
+    delivery:{ rate:0, type:'zero' },
+    intraday:{ flat:5 },
+    futures: { flat:5 },
+    options: { flat:5 },
+    mtf:     { flat:5 },
+    dp:21.24, dpPerSell:true, amc:259, mtfRate:15.0,
+  },
+  {
+    id:'sahi', name:'Sahi',
+    delivery:{ rate:0.0005, cap:10, min:null },
+    intraday:{ rate:0.0005, cap:10 },
+    futures: { flat:10 },
+    options: { flat:10 },
+    mtf:     { rate:0, type:'zero' }, // no MTF
+    dp:13.50, dpPerSell:false, amc:0, mtfRate:null,
+  },
+  {
+    id:'fyers', name:'Fyers',
+    delivery:{ rate:0.003, cap:20 },
+    intraday:{ rate:0.0003, cap:20 },
+    futures: { rate:0.0003, cap:20 },
+    options: { flat:20 },
+    mtf:     { rate:0.003, cap:20 },
+    dp:14.75, dpPerSell:false, amc:0, mtfRate:15.49,
+  },
+  {
+    id:'sharemarket', name:'Share.Market',
+    delivery:{ rate:0.001, cap:20, min:2 },
+    intraday:{ rate:0.001, cap:20 },
+    futures: { flat:20 },
+    options: { flat:20 },
+    mtf:     { rate:0, type:'zero' }, // no MTF
+    dp:18.50, dpPerSell:true, amc:0, mtfRate:null,
+  },
+  {
+    id:'groww', name:'Groww',
+    delivery:{ rate:0.001, cap:20, min:5 },
+    intraday:{ rate:0.001, cap:20, min:5 },
+    futures: { flat:20 },
+    options: { flat:20 },
+    mtf:     { rate:0.001 }, // no cap
+    dp:20, dpPerSell:true, amc:0, mtfRate:14.95, mtfNoCap:true,
+  },
+  {
+    id:'upstox', name:'Upstox',
+    delivery:{ flat:20 },
+    intraday:{ rate:0.001, cap:20 },
+    futures: { rate:0.0005, cap:20 },
+    options: { flat:20 },
+    mtf:     { flat:20 },
+    dp:20, dpPerSell:true, amc:300, mtfRate:18.25, mtfSpecial:'₹20/day per ₹40K',
+  },
+  {
+    id:'angelone', name:'Angel One',
+    delivery:{ rate:null, min:2, cap:20 },
+    intraday:{ rate:0.0003, cap:20 },
+    futures: { flat:20 },
+    options: { flat:20 },
+    mtf:     { rate:0.001, cap:20, min:2 },
+    dp:20, dpPerSell:true, amc:283, mtfRate:14.99,
+  },
+  {
+    id:'paytm', name:'Paytm Money',
+    delivery:{ flat:20 },
+    intraday:{ rate:0.0005, cap:20 },
+    futures: { rate:0.0002, cap:20 },
+    options: { flat:20 },
+    mtf:     { rate:0.001, cap:20 },
+    dp:23.60, dpPerSell:false, amc:0, mtfRate:7.99,
+  },
+  {
+    id:'indmoney', name:'INDmoney',
+    delivery:{ rate:null, min:2, cap:20 },
+    intraday:{ rate:0.0005, cap:20 },
+    futures: { flat:20 },
+    options: { flat:20 },
+    mtf:     { rate:0.001, cap:20, min:2 },
+    dp:21.83, dpPerSell:false, amc:0, mtfRate:14.6,
+  },
+  {
+    id:'5paisa', name:'5paisa',
+    delivery:{ flat:20 },
+    intraday:{ flat:20 },
+    futures: { flat:20 },
+    options: { flat:20 },
+    mtf:     { flat:20 },
+    dp:23.60, dpPerSell:false, amc:354, mtfRate:9.5,
+  },
+  {
+    id:'kotak', name:'Kotak Securities',
+    delivery:{ rate:0.002 },
+    intraday:{ rate:0.0005, cap:10 },
+    futures: { flat:10 },
+    options: { flat:10 },
+    mtf:     { rate:0.002 },
+    dp:20, dpPerSell:false, amc:600, mtfRate:14.97,
+  },
+  {
+    id:'icici', name:'ICICI Direct',
+    delivery:{ rate:0.0007 },
+    intraday:{ rate:0.0007, cap:20 },
+    futures: { rate:0.00007 },
+    options: { flat:9 },
+    mtf:     { rate:0.0007 },
+    dp:23.60, dpPerSell:false, amc:826, mtfRate:9.69,
+  },
+  {
+    id:'axis', name:'Axis Securities',
+    delivery:{ rate:0.005, min:25 },
+    intraday:{ rate:0.0005, min:25 },
+    futures: { rate:0.0005 },
+    options: { flat:20 },
+    mtf:     { rate:0.005, min:25 },
+    dp:0, dpPerSell:false, amc:885, mtfRate:17.99,
+  },
+  {
+    id:'hdfc', name:'HDFC Securities',
+    delivery:{ rate:0.005, min:25 },
+    intraday:{ rate:0.0005, min:25 },
+    futures: { rate:0.0005, min:25 },
+    options: { flat:100 },
+    mtf:     { rate:0.0032, min:25 },
+    dp:20, dpPerSell:false, amc:885, mtfRate:12.0,
+  },
+];
+
+function calcBrokerage(scheme, tradeValue) {
+  if (!scheme) return 0;
+  if (scheme.type === 'zero') return 0;
+  if (scheme.flat) return scheme.flat * 2; // buy + sell
+  if (scheme.rate) {
+    let b = tradeValue * scheme.rate;
+    if (scheme.cap) b = Math.min(b, scheme.cap);
+    if (scheme.min) b = Math.max(b, scheme.min);
+    return b * 2;
+  }
+  // delivery-style (min ₹2, cap ₹20)
+  let b = Math.max(scheme.min || 0, Math.min(scheme.cap || Infinity, tradeValue * 0.001));
+  return b * 2;
+}
+
+function calcFullCharges(broker, segment, buyPrice, sellPrice, qty) {
+  const buyVal  = buyPrice * qty;
+  const sellVal = sellPrice * qty;
+  const tv      = buyVal; // use buy value as trade value base
+
+  // Brokerage
+  let brokerage = 0;
+  const scheme  = broker[segment];
+  if (scheme) {
+    if (scheme.type === 'zero') brokerage = 0;
+    else if (scheme.flat) brokerage = scheme.flat * 2;
+    else if (scheme.rate !== null && scheme.rate !== undefined) {
+      let b = tv * scheme.rate;
+      if (scheme.cap) b = Math.min(b, scheme.cap);
+      if (scheme.min) b = Math.max(b, scheme.min);
+      brokerage = b * 2;
+    } else {
+      let b = Math.max(scheme.min || 0, Math.min(scheme.cap || Infinity, tv * 0.001));
+      brokerage = b * 2;
+    }
+  }
+
+  // Govt charges
+  let stt = 0, stamp = 0;
+  if (segment === 'delivery') {
+    stt   = buyVal * 0.001 + sellVal * 0.001;
+    stamp = buyVal * 0.00015;
+  } else if (segment === 'intraday') {
+    stt   = sellVal * 0.00025;
+    stamp = buyVal * 0.00003;
+  } else if (segment === 'futures') {
+    stt   = sellVal * 0.0002;
+    stamp = buyVal * 0.00002;
+  } else if (segment === 'options') {
+    stt   = sellVal * 0.001;
+    stamp = buyVal * 0.00003;
+  } else if (segment === 'mtf') {
+    stt   = buyVal * 0.001 + sellVal * 0.001;
+    stamp = buyVal * 0.00015;
+  }
+
+  const turnover  = buyVal + sellVal;
+  const txn       = turnover * 0.0000297;
+  const sebi      = turnover / 10000000 * 10;
+  const gst       = (brokerage + txn + sebi) * 0.18;
+  const dp        = (segment === 'delivery' || segment === 'mtf') ? broker.dp : 0;
+  const totalGovt = stt + txn + sebi + stamp;
+  const total     = brokerage + gst + totalGovt + dp;
+  const grossPnl  = (sellPrice - buyPrice) * qty;
+  const netPnl    = grossPnl - total;
+
+  return { brokerage, stt, txn, sebi, stamp, gst, dp, totalGovt, total, grossPnl, netPnl };
+}
+
+function UniversalCalc() {
+  const [segment,  setSegment]   = useState('delivery');
+  const [buyPrice, setBuyPrice]  = useState('');
+  const [sellPrice,setSellPrice] = useState('');
+  const [qty,      setQty]       = useState('');
+  const [lotSize,  setLotSize]   = useState('');
+  const [lots,     setLots]      = useState('');
+  const [mtfAmt,   setMtfAmt]    = useState('');
+  const [mtfDays,  setMtfDays]   = useState('30');
+  const [selectedId, setSelectedId] = useState(null);
+
+  const isFno = segment==='futures'||segment==='options';
+  const isMtf = segment==='mtf';
+
+  const effQty = isFno ? (parseFloat(lotSize)||0)*(parseFloat(lots)||0) : parseFloat(qty)||0;
+  const bp = parseFloat(buyPrice)||0;
+  const sp = parseFloat(sellPrice)||0;
+  const hasInputs = bp>0 && sp>0 && effQty>0;
+
+  const results = hasInputs
+    ? CALC_BROKERS.map(b=>({broker:b,...calcFullCharges(b,segment,bp,sp,effQty)}))
+        .sort((a,b)=>a.total-b.total)
+    : [];
+
+  const selected = results.find(r=>r.broker.id===selectedId) || results[0] || null;
+  const buyVal = bp*effQty;
+
+  const SEGS = [
+    ['delivery','Equity Delivery'],['intraday','Equity Intraday'],
+    ['futures','F&O Futures'],['options','F&O Options'],['mtf','MTF'],
+  ];
+  const segLabel = SEGS.find(s=>s[0]===segment)?.[1]||segment;
+
+  return (
+    <div className="ucalc-wrap">
+      {/* Header */}
+      <div className="ucalc-header">
+        <div className="ucalc-title">Brokerage Calculator</div>
+        <div className="ucalc-sub">Enter trade details — see exact charges at every broker, instantly. Click any broker for full breakdown.</div>
+      </div>
+
+      {/* Segment */}
+      <div className="ucalc-segs">
+        {SEGS.map(([v,l])=>(
+          <button key={v} className={`ucalc-seg${segment===v?' ucalc-seg-active':''}`}
+            onClick={()=>{setSegment(v);setSelectedId(null);}}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {/* Inputs */}
+      <div className="ucalc-inputs">
+        {!isMtf&&<>
+          <div className="ucalc-field">
+            <label className="ucalc-label">BUY PRICE (₹)</label>
+            <input className="ucalc-input" type="number" min="0" placeholder="0.00" value={buyPrice} onChange={e=>setBuyPrice(e.target.value)}/>
+          </div>
+          <div className="ucalc-field">
+            <label className="ucalc-label">SELL PRICE (₹)</label>
+            <input className="ucalc-input" type="number" min="0" placeholder="0.00" value={sellPrice} onChange={e=>setSellPrice(e.target.value)}/>
+          </div>
+          {isFno?<>
+            <div className="ucalc-field">
+              <label className="ucalc-label">LOT SIZE</label>
+              <input className="ucalc-input" type="number" min="1" placeholder="50" value={lotSize} onChange={e=>setLotSize(e.target.value)}/>
+            </div>
+            <div className="ucalc-field">
+              <label className="ucalc-label">NO. OF LOTS</label>
+              <input className="ucalc-input" type="number" min="1" placeholder="1" value={lots} onChange={e=>setLots(e.target.value)}/>
+            </div>
+          </>:<>
+            <div className="ucalc-field">
+              <label className="ucalc-label">QUANTITY</label>
+              <input className="ucalc-input" type="number" min="1" placeholder="100" value={qty} onChange={e=>setQty(e.target.value)}/>
+            </div>
+          </>}
+          {hasInputs&&<div className="ucalc-summary">
+            <div className="ucalc-summary-item"><span className="ucalc-sl">Trade value</span><span className="ucalc-sv">₹{fmt(buyVal,2)}</span></div>
+            <div className="ucalc-summary-item"><span className="ucalc-sl">Gross P&L</span><span className={`ucalc-sv ${sp>bp?'ucalc-gain':sp<bp?'ucalc-loss':''}`}>₹{fmt((sp-bp)*effQty,2)}</span></div>
+          </div>}
+        </>}
+        {isMtf&&<>
+          <div className="ucalc-field">
+            <label className="ucalc-label">MTF AMOUNT (₹)</label>
+            <input className="ucalc-input" type="number" min="0" placeholder="100000" value={mtfAmt} onChange={e=>setMtfAmt(e.target.value)}/>
+          </div>
+          <div className="ucalc-field">
+            <label className="ucalc-label">HOLDING DAYS</label>
+            <input className="ucalc-input" type="number" min="1" placeholder="30" value={mtfDays} onChange={e=>setMtfDays(e.target.value)}/>
+          </div>
+        </>}
+      </div>
+
+      {/* MTF table */}
+      {isMtf&&parseFloat(mtfAmt)>0&&(()=>{
+        const amt=parseFloat(mtfAmt)||0, days=parseFloat(mtfDays)||30;
+        const mtfBrokers=[
+          {id:'paytm',   name:'Paytm Money',     rate:7.99,  brk:0.001,  brkCap:20},
+          {id:'5paisa',  name:'5paisa',           rate:9.5,   brkFlat:20},
+          {id:'icici',   name:'ICICI Direct',     rate:9.69,  brk:0.0007},
+          {id:'hdfc',    name:'HDFC Securities',  rate:12.0,  brk:0.0032, brkMin:25},
+          {id:'dhan',    name:'Dhan',             rate:12.49, brk:0.0003, brkCap:20},
+          {id:'zerodha', name:'Zerodha',          rate:14.6,  brk:0.003,  brkCap:20, featured:true},
+          {id:'indmoney',name:'INDmoney',         rate:14.6,  brk:0.001,  brkCap:20},
+          {id:'groww',   name:'Groww',            rate:14.95, brk:0.001,  noCap:true},
+          {id:'kotak',   name:'Kotak Securities', rate:14.97, brk:0.002},
+          {id:'angelone',name:'Angel One',        rate:14.99, brk:0.001,  brkCap:20, brkMin:2},
+          {id:'mstock',  name:'mStock',           rate:15.0,  brkFlat:5},
+          {id:'fyers',   name:'Fyers',            rate:15.49, brk:0.003,  brkCap:20},
+          {id:'axis',    name:'Axis Securities',  rate:17.99, brk:0.005,  brkMin:25},
+          {id:'upstox',  name:'Upstox',           special:'₹20/day per ₹40K', brkFlat:20},
+        ].map(b=>{
+          let interest=0;
+          if(b.special){interest=Math.ceil(amt/40000)*20*days;}
+          else if(b.rate){interest=amt*(b.rate/100)/365*days;}
+          let brkAmt=0;
+          if(b.brkFlat){brkAmt=b.brkFlat*2;}
+          else if(b.brk){
+            brkAmt=amt*b.brk*2;
+            if(b.brkCap)brkAmt=Math.min(brkAmt,b.brkCap*2);
+            if(b.brkMin)brkAmt=Math.max(brkAmt,b.brkMin*2);
+            if(b.noCap)brkAmt=amt*b.brk*2;
+          }
+          return {...b,interest,brkAmt,total:interest+brkAmt};
+        }).sort((a,b)=>a.total-b.total);
+
+        return(
+          <div className="ucalc-mtf-panel">
+            <div className="ucalc-results-title">MTF Cost — ₹{fmt(amt,0)} for {days} days</div>
+            <div className="ucalc-rank-table">
+              <div className="ucalc-rank-th" style={{gridTemplateColumns:'28px 1fr 100px 120px 130px 110px'}}>
+                <span>#</span><span>BROKER</span><span>RATE P.A.</span><span>INTEREST ({days}d)</span><span>MTF BROKERAGE</span><span>TOTAL COST</span>
+              </div>
+              {mtfBrokers.map((b,i)=>(
+                <div key={b.id} className={`ucalc-rank-row${i===0?' ucalc-best':''}`} style={{gridTemplateColumns:'28px 1fr 100px 120px 130px 110px'}}>
+                  <span className="ucalc-rank-num">{i+1}</span>
+                  <span className="ucalc-rank-name">
+                    {b.featured&&<span className="ucalc-star">★ </span>}{b.name}
+                    {b.noCap&&<span className="ucalc-warn-tag">NO CAP</span>}
+                  </span>
+                  <span className={b.rate&&b.rate<=10?'ucalc-gain':b.rate&&b.rate>=17?'ucalc-loss':''}>{b.special||((b.rate||0)+'%')}</span>
+                  <span>₹{fmt(b.interest,2)}</span>
+                  <span className={b.noCap?'ucalc-loss':''}>₹{fmt(b.brkAmt,2)}</span>
+                  <span className={i===0?'ucalc-gain':i>=mtfBrokers.length-2?'ucalc-loss':''}>₹{fmt(b.total,2)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="ucalc-dp-note">
+              <span className="ucalc-warn-tag">NO CAP</span> Groww MTF brokerage has no cap — 0.1% of full position per trade. On large positions this is significantly more than flat-₹20 brokers.
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Main two-panel body */}
+      {hasInputs&&results.length>0&&!isMtf&&(
+        <div className="ucalc-body">
+
+          {/* LEFT: ranked list */}
+          <div className="ucalc-list-panel">
+            <div className="ucalc-list-hdr">
+              <span>#</span><span>BROKER</span>
+              <span>TOTAL CHARGES</span><span>NET P&L</span>
+            </div>
+            {results.map((r,i)=>{
+              const isSel = selected&&selected.broker.id===r.broker.id;
+              return(
+                <div key={r.broker.id}
+                  className={`ucalc-list-row${i===0?' ucalc-list-winner':''}${isSel?' ucalc-list-sel':''}`}
+                  onClick={()=>setSelectedId(r.broker.id)}>
+                  <span className="ucalc-list-rank">{i+1}</span>
+                  <span className="ucalc-list-name">
+                    {r.broker.featured&&<span className="ucalc-star">★ </span>}
+                    {r.broker.name}
+                    {r.broker.dpPerSell&&(segment==='delivery'||segment==='intraday')&&
+                      <span className="ucalc-dp-warn">DP/sell</span>}
+                  </span>
+                  <span className={`ucalc-list-charges${i===0?' ucalc-gain':i===results.length-1?' ucalc-loss':''}`}>
+                    ₹{fmt(r.total,2)}
+                  </span>
+                  <span className={`ucalc-list-pnl${r.netPnl>0?' ucalc-gain':r.netPnl<0?' ucalc-loss':''}`}>
+                    ₹{fmt(r.netPnl,2)}
+                  </span>
+                </div>
+              );
+            })}
+            <div className="ucalc-list-note">
+              <span className="ucalc-dp-warn">DP/sell</span> = DP charged on <strong>every sell transaction</strong> (not per stock held). Bad practice — highlighted in red.
+            </div>
+          </div>
+
+          {/* RIGHT: deep breakdown */}
+          {selected&&(
+            <div className="ucalc-detail-panel">
+              <div className="ucalc-detail-hdr">
+                {selected.broker.featured&&<span className="ucalc-star">★</span>}
+                {selected.broker.name}
+                <span className="ucalc-detail-seg">{segLabel}</span>
+              </div>
+
+              {selected.broker.dpPerSell&&(segment==='delivery'||segment==='intraday')&&(
+                <div className="ucalc-dp-alert">
+                  <strong>⚠ Bad practice:</strong> {selected.broker.name} charges DP on <strong>every sell transaction</strong>, not per stock held. Selling 5 stocks = 5× DP charge.
+                </div>
+              )}
+
+              <div className="ucalc-breakdown">
+                <div className="ucalc-bk-section">TRADE SUMMARY</div>
+                <div className="ucalc-bk-row"><span>Buy value</span><span>₹{fmt(bp*effQty,2)}</span></div>
+                <div className="ucalc-bk-row"><span>Sell value</span><span>₹{fmt(sp*effQty,2)}</span></div>
+                <div className="ucalc-bk-row ucalc-bk-gross">
+                  <span>Gross P&L</span>
+                  <span className={selected.grossPnl>0?'ucalc-gain':selected.grossPnl<0?'ucalc-loss':''}>
+                    ₹{fmt(selected.grossPnl,2)}
+                  </span>
+                </div>
+
+                <div className="ucalc-bk-section">CHARGES</div>
+                <div className="ucalc-bk-row">
+                  <span>Brokerage</span>
+                  <span className={selected.brokerage===0?'ucalc-gain':'ucalc-loss'}>
+                    {selected.brokerage===0?'Zero':'₹'+fmt(selected.brokerage,2)}
+                  </span>
+                </div>
+                <div className="ucalc-bk-row ucalc-bk-sub"><span>STT</span><span>₹{fmt(selected.stt,2)}</span></div>
+                <div className="ucalc-bk-row ucalc-bk-sub"><span>Exchange txn fee</span><span>₹{fmt(selected.txn,2)}</span></div>
+                <div className="ucalc-bk-row ucalc-bk-sub"><span>SEBI charges</span><span>₹{fmt(selected.sebi,2)}</span></div>
+                <div className="ucalc-bk-row ucalc-bk-sub"><span>Stamp duty</span><span>₹{fmt(selected.stamp,2)}</span></div>
+                <div className="ucalc-bk-row ucalc-bk-sub"><span>GST (18%)</span><span>₹{fmt(selected.gst,2)}</span></div>
+                {(segment==='delivery'||segment==='mtf')&&(
+                  <div className={`ucalc-bk-row ucalc-bk-sub${selected.broker.dpPerSell?' ucalc-bk-warn':''}`}>
+                    <span>DP charge{selected.broker.dpPerSell&&' ⚠'}</span>
+                    <span className={selected.broker.dpPerSell?'ucalc-loss':''}>₹{fmt(selected.dp,2)}</span>
+                  </div>
+                )}
+                <div className="ucalc-bk-row ucalc-bk-total">
+                  <span>Total charges</span>
+                  <span className="ucalc-loss">₹{fmt(selected.total,2)}</span>
+                </div>
+
+                <div className="ucalc-net-box">
+                  <div className="ucalc-net-label">NET P&L</div>
+                  <div className={`ucalc-net-val${selected.netPnl>0?' ucalc-gain':selected.netPnl<0?' ucalc-loss':''}`}>
+                    ₹{fmt(selected.netPnl,2)}
+                  </div>
+                  <div className="ucalc-net-eq">
+                    ₹{fmt(selected.grossPnl,2)} gross − ₹{fmt(selected.total,2)} charges
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!hasInputs&&!isMtf&&(
+        <div className="ucalc-empty">Enter buy price, sell price and {isFno?'lot details':'quantity'} above to see charges across all 16 brokers instantly.</div>
+      )}
+    </div>
+  );
+}
+
+
 
 // ── CHEATSHEET COMPONENT ──────────────────────────────────────────────────────
 
@@ -1777,7 +2260,7 @@ export default function BrokersPage() {
         {TABS.map(t=>(
           <button key={t} className={`brk-tab-btn${tab===t?' brk-tab-active':''}`} onClick={()=>setTab(t)}>
             <span className="brk-tab-icon">{
-              t==='Rankings'?'↓':t==='Direct Comparison'?'⚔':t==='Cheatsheet'?'≋':t==='Calculator'?'₹':t==='MTF Comparison'?'%':'▦'
+              t==='Rankings'?'↓':t==='Direct Comparison'?'⚔':t==='Cheatsheet'?'≋':t==='Brokerage Calc'?'₹':t==='MTF Comparison'?'%':'▦'
             }</span>
             <span className="brk-tab-label">{t}</span>
           </button>
@@ -2050,42 +2533,9 @@ export default function BrokersPage() {
       )}
 
       {/* ── CALCULATOR ── */}
-      {tab==='Calculator' && (
+      {tab==='Brokerage Calc' && (
         <div className="brk-content">
-          <div className="brk-calc-inputs">
-            <div className="brk-calc-field">
-              <label className="brk-calc-label">TRADE VALUE (₹)</label>
-              <input className="brk-calc-input" type="number" value={tradeVal} onChange={e=>setTradeVal(e.target.value)} placeholder="50000"/>
-            </div>
-            <div className="brk-calc-field">
-              <label className="brk-calc-label">SEGMENT</label>
-              <div className="brk-seg">
-                {[['delivery','Delivery'],['intraday','Intraday'],['futures','F&O Futures'],['options','F&O Options']].map(([v,l])=>(
-                  <button key={v} className={`brk-seg-btn${segment===v?' active':''}`} onClick={()=>setSegment(v)}>{l}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-          {tv>0&&(
-            <div className="brk-calc-results">
-              <div className="brk-calc-head">
-                <span>#</span><span>Broker</span><span>Brokerage</span><span>GST</span><span>Govt + Exchange</span><span>Total</span>
-              </div>
-              {calcResults.map((b,i)=>(
-                <div key={b.id} className={`brk-calc-row${i===0?' brk-calc-best':''}${b.id==='zerodha'?' brk-calc-featured':''}`}>
-                  <span className="brk-rank">{i+1}</span>
-                  <span className="brk-broker-name">{b.id==='zerodha'&&<span className="brk-star">★ </span>}{b.name}</span>
-                  <span>₹{fmt(b.brokerageRaw,2)}</span>
-                  <span>₹{fmt(b.gst,2)}</span>
-                  <span className="brk-govt">₹{fmt(b.regTotal,2)}</span>
-                  <span className="brk-calc-total">₹{fmt(b.total,2)}</span>
-                </div>
-              ))}
-              <div className="brk-calc-note">
-                Regulatory charges (STT, exchange fee, SEBI fee, stamp duty + GST) are fixed by law — identical at every broker. Total: ₹{fmt(REGULATORY[segment]?.total,2)} on this trade. Futures base = ₹1.5L contract (realistic minimum). Budget 2026: futures STT 0.05%, options STT 0.15%.
-              </div>
-            </div>
-          )}
+          <UniversalCalc />
         </div>
       )}
 

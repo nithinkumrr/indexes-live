@@ -1224,35 +1224,97 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 }
 
 
-/* ── Brokerage Calculator ─────────────────────────────────────────────── */
-.bc-wrap         { padding: 24px 0; }
-.bc-title        { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-.bc-subtitle     { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-bottom: 20px; }
-.bc-inputs       { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 14px; }
-.bc-seg-tabs     { display: flex; gap: 6px; flex-wrap: wrap; }
-.bc-seg-btn      { font-family: var(--mono); font-size: 11px; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text3); cursor: pointer; display: flex; flex-direction: column; gap: 2px; transition: all 0.15s; }
-.bc-seg-btn:hover { color: var(--text); }
-.bc-seg-active   { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
-.bc-seg-active .bc-seg-sub { color: rgba(255,255,255,0.7) !important; }
-.bc-seg-sub      { font-size: 9px; color: var(--text3); }
-.bc-input-row    { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
-.bc-input-group  { display: flex; flex-direction: column; gap: 5px; }
-.bc-label        { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--text3); }
-.bc-input        { font-family: var(--mono); font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text); width: 120px; }
-.bc-input-display { font-family: var(--mono); font-size: 14px; font-weight: 700; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--accent); min-width: 150px; }
-.bc-toggle       { font-family: var(--mono); font-size: 11px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border2); background: none; color: var(--text3); cursor: pointer; }
-.bc-table-wrap   { overflow-x: auto; }
-.bc-table        { width: 100%; border-collapse: collapse; font-family: var(--mono); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
-.bc-table th     { background: var(--bg3); font-size: 10px; letter-spacing: 0.5px; font-weight: 700; color: var(--text2); padding: 10px 14px; text-align: right; border-bottom: 2px solid var(--border2); }
-.bc-table th:first-child { text-align: left; }
-.bc-td-name      { font-size: 13px; font-weight: 700; color: var(--text); padding: 11px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-.bc-td           { font-size: 12px; color: var(--text2); padding: 11px 14px; text-align: right; border-bottom: 1px solid var(--border); }
-.bc-td-total     { font-size: 13px; font-weight: 700; }
-.bc-broker-dot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.bc-type-badge   { font-size: 9px; background: var(--bg3); border: 1px solid var(--border); color: var(--text3); padding: 1px 6px; border-radius: 8px; font-weight: 400; margin-left: 4px; }
-.bc-row-best     { background: rgba(0,200,150,0.04); }
-.bc-best-badge   { font-size: 9px; font-weight: 700; color: var(--gain); background: rgba(0,200,150,0.12); padding: 2px 7px; border-radius: 10px; }
-.bc-note         { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 10px; line-height: 1.6; }
+/* ── Brokerage Calculator ─────────────────────────────────────────── */
+.ucalc-wrap       { max-width: 100%; }
+.ucalc-header     { margin-bottom: 16px; }
+.ucalc-title      { font-family: var(--mono); font-size: 20px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px; }
+.ucalc-sub        { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.ucalc-gain       { color: var(--gain) !important; }
+.ucalc-loss       { color: var(--loss) !important; }
+.ucalc-star       { color: var(--accent); }
+
+/* Segment tabs */
+.ucalc-segs       { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.ucalc-seg        { font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 7px 14px; border: 1px solid var(--border); background: var(--bg2); color: var(--text3); border-radius: var(--r); cursor: pointer; transition: all .15s; }
+.ucalc-seg:hover  { background: var(--bg3); color: var(--text); }
+.ucalc-seg-active { background: rgba(74,158,255,.12) !important; border-color: var(--accent) !important; color: var(--accent) !important; font-weight: 900; }
+
+/* Inputs row */
+.ucalc-inputs     { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 20px; padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); }
+.ucalc-field      { display: flex; flex-direction: column; gap: 5px; }
+.ucalc-label      { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.3px; color: var(--text3); }
+.ucalc-input      { font-family: var(--mono); font-size: 18px; font-weight: 900; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 12px; width: 150px; outline: none; transition: border .15s; }
+.ucalc-input:focus { border-color: var(--accent); }
+.ucalc-summary    { display: flex; gap: 24px; align-items: center; padding-left: 16px; border-left: 1px solid var(--border); }
+.ucalc-summary-item { display: flex; flex-direction: column; gap: 2px; }
+.ucalc-sl         { font-family: var(--mono); font-size: 9px; color: var(--text3); font-weight: 700; letter-spacing: 1px; }
+.ucalc-sv         { font-family: var(--mono); font-size: 16px; font-weight: 900; color: var(--text); }
+
+/* Two-panel body */
+.ucalc-body       { display: grid; grid-template-columns: 1fr 360px; gap: 16px; align-items: start; }
+
+/* Left: ranked list */
+.ucalc-list-panel { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ucalc-list-hdr   { display: grid; grid-template-columns: 28px 1fr 130px 120px; background: var(--bg3); border-bottom: 1px solid var(--border); padding: 8px 12px; font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.3px; color: var(--text3); }
+.ucalc-list-row   { display: grid; grid-template-columns: 28px 1fr 130px 120px; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04); cursor: pointer; transition: background .12s; align-items: center; }
+.ucalc-list-row:last-of-type { border-bottom: none; }
+.ucalc-list-row:hover { background: rgba(255,255,255,.03); }
+.ucalc-list-winner { background: rgba(0,255,148,.04); }
+.ucalc-list-sel   { background: rgba(74,158,255,.07) !important; border-left: 3px solid var(--accent); }
+.ucalc-list-rank  { font-family: var(--mono); font-size: 11px; color: var(--text3); font-weight: 700; }
+.ucalc-list-name  { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ucalc-list-charges { font-family: var(--mono); font-size: 14px; font-weight: 900; }
+.ucalc-list-pnl   { font-family: var(--mono); font-size: 14px; font-weight: 900; text-align: right; }
+.ucalc-list-note  { font-family: var(--mono); font-size: 10px; color: var(--text3); padding: 10px 12px; line-height: 1.6; border-top: 1px solid var(--border); background: var(--bg3); }
+.ucalc-dp-warn    { font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--loss); background: rgba(255,80,80,.1); border: 1px solid rgba(255,80,80,.25); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+.ucalc-warn-tag   { font-family: var(--mono); font-size: 8px; font-weight: 800; color: var(--loss); background: rgba(255,80,80,.1); border: 1px solid rgba(255,80,80,.25); border-radius: 3px; padding: 1px 5px; }
+
+/* Right: detail panel */
+.ucalc-detail-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; position: sticky; top: 60px; }
+.ucalc-detail-hdr   { font-family: var(--mono); font-size: 16px; font-weight: 900; color: var(--text); padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: var(--bg3); }
+.ucalc-detail-seg   { font-size: 10px; color: var(--text3); font-weight: 600; letter-spacing: 0.5px; margin-left: auto; }
+.ucalc-dp-alert     { margin: 12px 16px 0; padding: 10px 12px; background: rgba(255,80,80,.08); border: 1px solid rgba(255,80,80,.25); border-left: 3px solid var(--loss); border-radius: var(--r); font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.6; }
+.ucalc-dp-alert strong { color: var(--loss); }
+.ucalc-breakdown    { padding: 14px 16px; display: flex; flex-direction: column; gap: 0; }
+.ucalc-bk-section   { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.3px; color: var(--text3); margin: 12px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+.ucalc-bk-section:first-child { margin-top: 0; }
+.ucalc-bk-row       { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-size: 12px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.ucalc-bk-row span:first-child { color: var(--text3); }
+.ucalc-bk-row span:last-child  { font-weight: 700; color: var(--text); }
+.ucalc-bk-sub span:first-child { font-size: 11px; padding-left: 8px; }
+.ucalc-bk-gross span:last-child { font-size: 13px; font-weight: 900; }
+.ucalc-bk-total     { border-top: 1px solid var(--border) !important; margin-top: 4px; padding-top: 8px !important; }
+.ucalc-bk-total span:first-child { color: var(--text); font-weight: 800; }
+.ucalc-bk-total span:last-child  { font-size: 15px; font-weight: 900; }
+.ucalc-bk-warn span:first-child  { color: var(--loss) !important; }
+.ucalc-net-box      { margin-top: 14px; padding: 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); text-align: center; }
+.ucalc-net-label    { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 6px; }
+.ucalc-net-val      { font-family: var(--mono); font-size: 28px; font-weight: 900; letter-spacing: -1px; }
+.ucalc-net-eq       { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 4px; }
+
+/* MTF panel */
+.ucalc-mtf-panel    { margin-bottom: 20px; }
+.ucalc-results-title { font-family: var(--mono); font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 10px; letter-spacing: 0.3px; }
+
+/* Shared rank table */
+.ucalc-rank-table   { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 10px; }
+.ucalc-rank-th      { display: grid; background: var(--bg3); border-bottom: 1px solid var(--border); padding: 8px 12px; font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.3px; color: var(--text3); }
+.ucalc-rank-th span:not(:first-child) { border-left: 1px solid var(--border); padding-left: 8px; }
+.ucalc-rank-row     { display: grid; padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,.04); align-items: center; font-family: var(--mono); font-size: 12px; }
+.ucalc-rank-row:last-child { border-bottom: none; }
+.ucalc-rank-row span:not(:first-child) { border-left: 1px solid rgba(255,255,255,.05); padding-left: 8px; }
+.ucalc-best         { background: rgba(0,255,148,.04); }
+.ucalc-rank-num     { font-size: 11px; color: var(--text3); font-weight: 700; }
+.ucalc-rank-name    { font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ucalc-dp-note      { font-family: var(--mono); font-size: 10px; color: var(--text3); padding: 10px 0; line-height: 1.6; }
+
+/* Empty state */
+.ucalc-empty        { font-family: var(--mono); font-size: 13px; color: var(--text3); padding: 40px 20px; text-align: center; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); line-height: 1.8; }
+
+@media (max-width: 900px) {
+  .ucalc-body { grid-template-columns: 1fr; }
+  .ucalc-detail-panel { position: static; }
+}
 
 /* ── MCX Futures Strip ──────────────────────────────────────────────── */
 .gold-mcx-strip  { background: linear-gradient(135deg, rgba(212,160,23,0.08), rgba(212,160,23,0.03)); border: 1px solid rgba(212,160,23,0.3); border-radius: var(--r-lg); padding: 14px 20px; margin-bottom: 20px; }
@@ -5967,4 +6029,176 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .cs-verdict-grid { grid-template-columns: 1fr; }
   .cs-nav { gap: 4px; }
   .cs-nav-btn { font-size: 9px; padding: 4px 8px; }
+}
+
+/* ── Universal Calculator ─────────────────────────────────────────── */
+.ucalc-wrap       { max-width: 100%; }
+.ucalc-header     { margin-bottom: 18px; }
+.ucalc-title      { font-family: var(--mono); font-size: 20px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px; }
+.ucalc-sub        { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.ucalc-gain       { color: var(--gain) !important; }
+.ucalc-loss       { color: var(--loss) !important; }
+.ucalc-star       { color: var(--accent); }
+
+/* Segment bar */
+.ucalc-seg-bar    { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+.ucalc-seg-btn    { font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 7px 14px; border: 1px solid var(--border); background: var(--bg2); color: var(--text3); border-radius: var(--r); cursor: pointer; transition: all .15s; }
+.ucalc-seg-btn:hover { background: var(--bg3); color: var(--text); }
+.ucalc-seg-active { background: rgba(74,158,255,.12) !important; border-color: var(--accent) !important; color: var(--accent) !important; font-weight: 900; }
+
+/* Inputs */
+.ucalc-inputs     { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 20px; padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); }
+.ucalc-field      { display: flex; flex-direction: column; gap: 5px; }
+.ucalc-label      { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.3px; color: var(--text3); }
+.ucalc-input      { font-family: var(--mono); font-size: 16px; font-weight: 900; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 12px; width: 140px; outline: none; transition: border .15s; }
+.ucalc-input:focus { border-color: var(--accent); }
+.ucalc-trade-summary { display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: baseline; padding-left: 16px; border-left: 1px solid var(--border); margin-left: 4px; }
+.ucalc-ts-label   { font-family: var(--mono); font-size: 9px; color: var(--text3); font-weight: 700; letter-spacing: 1px; }
+.ucalc-ts-val     { font-family: var(--mono); font-size: 15px; font-weight: 900; color: var(--text); margin-right: 10px; }
+
+/* Body layout */
+.ucalc-body       { display: grid; grid-template-columns: 1fr 380px; gap: 16px; align-items: start; }
+
+/* List panel */
+.ucalc-list-panel { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ucalc-list-hdr   { display: grid; grid-template-columns: 28px 1fr 120px 120px; gap: 0; background: var(--bg3); border-bottom: 1px solid var(--border); padding: 7px 12px; font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.3px; color: var(--text3); }
+.ucalc-list-row   { display: grid; grid-template-columns: 28px 1fr 120px 120px; gap: 0; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04); cursor: pointer; transition: background .12s; align-items: center; }
+.ucalc-list-row:last-of-type { border-bottom: none; }
+.ucalc-list-row:hover { background: rgba(255,255,255,.03); }
+.ucalc-list-sel   { background: rgba(74,158,255,.07) !important; border-left: 2px solid var(--accent); }
+.ucalc-list-winner { background: rgba(0,255,148,.04); }
+.ucalc-list-rank  { font-family: var(--mono); font-size: 11px; color: var(--text3); font-weight: 700; }
+.ucalc-list-name  { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ucalc-list-charges { font-family: var(--mono); font-size: 13px; font-weight: 800; }
+.ucalc-list-pnl   { font-family: var(--mono); font-size: 13px; font-weight: 800; text-align: right; }
+.ucalc-dp-warn    { font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--loss); background: rgba(255,80,80,.1); border: 1px solid rgba(255,80,80,.25); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+.ucalc-list-note  { font-family: var(--mono); font-size: 10px; color: var(--text3); padding: 10px 12px; line-height: 1.6; border-top: 1px solid var(--border); }
+
+/* Detail panel */
+.ucalc-detail-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; position: sticky; top: 60px; }
+.ucalc-detail-hdr   { font-family: var(--mono); font-size: 16px; font-weight: 900; color: var(--text); padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: var(--bg3); }
+.ucalc-detail-seg   { font-size: 10px; color: var(--text3); font-weight: 600; letter-spacing: 0.5px; margin-left: auto; }
+
+/* DP Alert */
+.ucalc-dp-alert   { margin: 12px 16px 0; padding: 10px 12px; background: rgba(255,80,80,.08); border: 1px solid rgba(255,80,80,.25); border-left: 3px solid var(--loss); border-radius: var(--r); font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.6; }
+.ucalc-dp-alert strong { color: var(--loss); }
+
+/* Breakdown */
+.ucalc-breakdown  { padding: 12px 16px; }
+.ucalc-bk-section { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.3px; color: var(--text3); margin: 12px 0 4px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+.ucalc-bk-sec-note { font-size: 9px; font-weight: 400; color: var(--text3); opacity: .7; }
+.ucalc-bk-row     { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-family: var(--mono); font-size: 12px; }
+.ucalc-bk-row:last-child { border-bottom: none; }
+.ucalc-bk-row span:first-child { color: var(--text3); }
+.ucalc-bk-row span:last-child  { color: var(--text); font-weight: 700; }
+.ucalc-bk-subtotal { background: rgba(255,255,255,.02); padding: 6px 4px; border-radius: 3px; }
+.ucalc-bk-subtotal span { font-weight: 800 !important; }
+.ucalc-bk-warn    { background: rgba(255,80,80,.06) !important; border-radius: 3px; padding: 5px 4px !important; }
+.ucalc-bk-warn span:first-child { color: var(--loss) !important; font-weight: 700; }
+.ucalc-bk-warn span:last-child  { color: var(--loss) !important; }
+.ucalc-bk-divider { border-top: 2px solid var(--border); margin: 10px 0 6px; }
+.ucalc-bk-total   { background: var(--bg3); border-radius: var(--r); padding: 8px 6px !important; margin-top: 2px; }
+.ucalc-bk-total span { font-weight: 900 !important; font-size: 14px !important; }
+.ucalc-bk-big     { font-size: 18px !important; }
+.ucalc-breakeven  { font-family: var(--mono); font-size: 11px; color: var(--text2); margin-top: 10px; padding: 8px 10px; background: var(--bg3); border-radius: var(--r); line-height: 1.6; }
+.ucalc-empty      { font-family: var(--mono); font-size: 13px; color: var(--text3); padding: 40px 0; text-align: center; }
+
+@media (max-width: 900px) {
+  .ucalc-body { grid-template-columns: 1fr; }
+  .ucalc-detail-panel { position: static; }
+}
+
+/* ── Universal Brokerage Calculator ──────────────────────────────── */
+.ucalc-wrap       { max-width: 100%; }
+.ucalc-header     { margin-bottom: 18px; }
+.ucalc-title      { font-family: var(--mono); font-size: 20px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px; }
+.ucalc-sub        { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.ucalc-gain       { color: var(--gain) !important; }
+.ucalc-loss       { color: var(--loss) !important; }
+.ucalc-star       { color: var(--accent); }
+
+/* Segment tabs */
+.ucalc-segs       { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+.ucalc-seg        { font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 7px 14px; border: 1px solid var(--border); background: var(--bg2); color: var(--text3); border-radius: var(--r); cursor: pointer; transition: all .15s; }
+.ucalc-seg:hover  { background: var(--bg3); color: var(--text); }
+.ucalc-seg-active { background: rgba(74,158,255,.12) !important; border-color: var(--accent) !important; color: var(--accent) !important; }
+
+/* Inputs */
+.ucalc-inputs     { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); }
+.ucalc-field      { display: flex; flex-direction: column; gap: 5px; }
+.ucalc-label      { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.3px; color: var(--text3); }
+.ucalc-input      { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 12px; width: 150px; outline: none; }
+.ucalc-input:focus { border-color: var(--accent); }
+.ucalc-trade-summary { display: flex; gap: 20px; align-items: baseline; margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--text3); background: var(--bg3); padding: 8px 14px; border-radius: var(--r); border: 1px solid var(--border); }
+.ucalc-tv         { font-size: 16px; font-weight: 900; color: var(--text); margin-left: 6px; }
+
+/* Ranked table */
+.ucalc-results    { margin-bottom: 24px; }
+.ucalc-results-title { font-family: var(--mono); font-size: 11px; font-weight: 800; letter-spacing: 1.3px; color: var(--text3); margin-bottom: 8px; }
+.ucalc-rank-table { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ucalc-rank-th    { display: grid; grid-template-columns: 30px 1.8fr repeat(7,1fr) 1fr 1fr; gap: 0; background: var(--bg3); border-bottom: 1px solid var(--border); }
+.ucalc-rank-th span { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--text3); padding: 7px 10px; white-space: nowrap; }
+.ucalc-rank-th span:not(:first-child) { border-left: 1px solid var(--border); }
+.ucalc-rank-row   { display: grid; grid-template-columns: 30px 1.8fr repeat(7,1fr) 1fr 1fr; gap: 0; border-bottom: 1px solid rgba(255,255,255,.04); cursor: pointer; transition: background .1s; }
+.ucalc-rank-row:last-child { border-bottom: none; }
+.ucalc-rank-row:hover { background: rgba(255,255,255,.03); }
+.ucalc-best       { background: rgba(0,255,148,.05) !important; }
+.ucalc-featured   { border-left: 2px solid var(--accent); }
+.ucalc-selected   { background: rgba(74,158,255,.08) !important; outline: 1px solid var(--accent); }
+.ucalc-rank-row span { font-family: var(--mono); font-size: 11.5px; color: var(--text); padding: 8px 10px; border-left: 1px solid rgba(255,255,255,.04); display: flex; align-items: center; }
+.ucalc-rank-num   { color: var(--text3) !important; font-size: 10px !important; border-left: none !important; }
+.ucalc-rank-name  { font-weight: 700; border-left: none !important; gap: 6px; flex-wrap: wrap; }
+.ucalc-total      { font-weight: 900 !important; }
+.ucalc-dp-warn    { font-family: var(--mono); font-size: 8px; font-weight: 800; letter-spacing: 0.5px; color: var(--loss); background: rgba(255,80,80,.1); border: 1px solid rgba(255,80,80,.25); border-radius: 3px; padding: 1px 5px; }
+.ucalc-warn-tag   { font-family: var(--mono); font-size: 8px; font-weight: 800; letter-spacing: 0.5px; color: #F59E0B; background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.25); border-radius: 3px; padding: 1px 5px; }
+.ucalc-dp-note    { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 8px; line-height: 1.6; }
+
+/* Deep breakdown */
+.ucalc-breakdown  { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin-top: 20px; }
+.ucalc-breakdown-header { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.ucalc-breakdown-title  { font-family: var(--mono); font-size: 16px; font-weight: 900; color: var(--text); }
+.ucalc-breakdown-sub    { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-top: 3px; }
+.ucalc-bd-grid    { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+.ucalc-bd-item    { background: var(--bg3); border-radius: var(--r); padding: 12px 14px; }
+.ucalc-bd-label   { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.2px; color: var(--text3); margin-bottom: 5px; }
+.ucalc-bd-val     { font-family: var(--mono); font-size: 20px; font-weight: 900; color: var(--text); }
+.ucalc-bd-sub     { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 2px; }
+.ucalc-bd-charges { margin-bottom: 14px; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ucalc-bd-ch-title { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.3px; color: var(--text3); padding: 7px 14px; background: var(--bg3); border-bottom: 1px solid var(--border); }
+.ucalc-bd-ch-row  { display: grid; grid-template-columns: 1.5fr 2fr 1fr; gap: 0; padding: 7px 14px; border-bottom: 1px solid rgba(255,255,255,.04); font-family: var(--mono); font-size: 12px; }
+.ucalc-bd-ch-row:last-child { border-bottom: none; }
+.ucalc-bd-ch-label { color: var(--text); font-weight: 600; }
+.ucalc-bd-ch-note { color: var(--text3); font-size: 11px; }
+.ucalc-bd-ch-val  { color: var(--text); font-weight: 700; text-align: right; }
+.ucalc-bd-ch-total { background: var(--bg3); border-top: 1px solid var(--border) !important; }
+.ucalc-bd-ch-total .ucalc-bd-ch-label { font-weight: 900; }
+.ucalc-net-pnl-box { background: var(--bg3); border-radius: var(--r); padding: 16px 18px; text-align: center; }
+.ucalc-net-label  { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1.3px; color: var(--text3); margin-bottom: 8px; }
+.ucalc-net-val    { font-family: var(--mono); font-size: 32px; font-weight: 900; letter-spacing: -1px; margin-bottom: 6px; }
+.ucalc-net-sub    { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+
+/* MTF calc */
+.ucalc-mtf-results { margin-bottom: 20px; }
+.ucalc-mtf-table   { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 10px; }
+.ucalc-mtf-th      { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr 1fr; gap: 0; background: var(--bg3); border-bottom: 1px solid var(--border); }
+.ucalc-mtf-th span { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--text3); padding: 7px 10px; }
+.ucalc-mtf-th span:not(:first-child) { border-left: 1px solid var(--border); }
+.ucalc-mtf-row     { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr 1fr; gap: 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.ucalc-mtf-row:last-child { border-bottom: none; }
+.ucalc-mtf-row span { font-family: var(--mono); font-size: 12px; color: var(--text); padding: 9px 10px; border-left: 1px solid rgba(255,255,255,.04); display: flex; align-items: center; gap: 5px; }
+.ucalc-broker-name  { font-weight: 700; border-left: none !important; }
+.ucalc-mtf-warn    { font-family: var(--mono); font-size: 10px; color: #F59E0B; line-height: 1.6; padding: 8px 12px; background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2); border-radius: var(--r); }
+
+/* Empty state */
+.ucalc-empty      { font-family: var(--mono); font-size: 13px; color: var(--text3); text-align: center; padding: 60px 20px; border: 1px dashed var(--border); border-radius: var(--r); }
+
+/* Delivery has 9 cols (with DP), others 8 */
+@media (max-width: 900px) {
+  .ucalc-rank-th, .ucalc-rank-row { grid-template-columns: 25px 1.5fr repeat(4,1fr) 1fr; }
+  .ucalc-rank-th span:nth-child(4),
+  .ucalc-rank-th span:nth-child(5),
+  .ucalc-rank-th span:nth-child(6),
+  .ucalc-rank-row span:nth-child(4),
+  .ucalc-rank-row span:nth-child(5),
+  .ucalc-rank-row span:nth-child(6) { display: none; }
 }
