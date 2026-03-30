@@ -24,6 +24,25 @@ const AVG_RANGES = { nifty: 155, banknifty: 450 };
 
 // ── IST helpers ───────────────────────────────────────────────────────────────
 function getIST() { return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })); }
+
+const NSE_HOLIDAYS_IP = new Set(['2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
+  '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14',
+  '2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25']);
+
+function getNextTradingDay() {
+  // Returns { iso, label } for next trading session
+  const nowMs = Date.now();
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(nowMs + i * 86400000);
+    const iso = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    const dow = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay();
+    if (dow !== 0 && dow !== 6 && !NSE_HOLIDAYS_IP.has(iso)) {
+      const label = new Date(iso + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+      return { iso, label };
+    }
+  }
+  return { iso: null, label: 'next session' };
+}
 function getSlot() {
   const ist = getIST(); const d = ist.getDay(); const m = ist.getHours()*60 + ist.getMinutes();
   if (d===0||d===6) return 'Weekend';
@@ -93,39 +112,47 @@ function getDayType(price, high, low, np) {
 function getIntradayBias(price, high, low, np) {
   if (!price || !high || !low) return null;
   const mins = getMins();
+  // Only show intraday bias during market hours
+  const isActive = mins >= 555 && mins < 930;
+  if (!isActive) return null;
+
   const posInRange = (price - low) / (high - low);
 
-  // Simulate phase control from price position + changePct
-  // We don't have OHLC per phase, so we use heuristics from available data
-  const openingCtrl = np > 0.3 ? 'Buyers' : np < -0.3 ? 'Sellers' : 'Neutral';
+  // Opening phase: 9:15–10:30 (555–630 mins) — show after 9:30 (570)
+  const showOpening = mins >= 570;
+  const openingCtrl  = showOpening ? (np > 0.3 ? 'Buyers' : np < -0.3 ? 'Sellers' : 'Neutral') : null;
   const openingColor = np > 0.3 ? 'var(--gain)' : np < -0.3 ? 'var(--loss)' : 'var(--text3)';
 
-  // Mid session: infer from where price is vs where it opened
-  // If price is closing near high after falling → buyers came in mid session
-  const midCtrl = posInRange > 0.6 && np < 0 ? 'Buyers' : posInRange < 0.4 && np > 0 ? 'Sellers' : np > 0 ? 'Buyers' : np < 0 ? 'Sellers' : 'Neutral';
+  // Mid session: 10:30–1:30 (630–810 mins) — only show after 10:30
+  const showMid = mins >= 630;
+  const midCtrl  = showMid
+    ? (posInRange > 0.6 && np < 0 ? 'Buyers' : posInRange < 0.4 && np > 0 ? 'Sellers' : np > 0 ? 'Buyers' : np < 0 ? 'Sellers' : 'Neutral')
+    : null;
   const midColor = midCtrl === 'Buyers' ? 'var(--gain)' : midCtrl === 'Sellers' ? 'var(--loss)' : 'var(--text3)';
 
-  // Closing expectation based on day structure
-  let closing, closingColor, closingNote;
-  if (posInRange > 0.75) {
-    closing = 'Strength into close'; closingColor = 'var(--gain)';
-    closingNote = 'Price holding near high. Buyers in control heading into close.';
-  } else if (posInRange < 0.25) {
-    closing = 'Weakness into close'; closingColor = 'var(--loss)';
-    closingNote = 'Price near session low. Sellers dominating the close.';
-  } else {
-    closing = 'Volatility expansion possible'; closingColor = '#F59E0B';
-    closingNote = 'Mid-range close. Directional move often comes in final 30 minutes.';
+  // Closing phase: 1:30–3:30 (810–930 mins) — only show after 1:30 PM
+  const showClosing = mins >= 810;
+  let closing = null, closingColor = 'var(--text3)', closingNote = '';
+  if (showClosing) {
+    if (posInRange > 0.75) {
+      closing = 'Strength into close'; closingColor = 'var(--gain)';
+      closingNote = 'Price holding near high. Buyers in control heading into close.';
+    } else if (posInRange < 0.25) {
+      closing = 'Weakness into close'; closingColor = 'var(--loss)';
+      closingNote = 'Price near session low. Sellers dominating the close.';
+    } else {
+      closing = 'Volatile close'; closingColor = '#F59E0B';
+      closingNote = 'Mid-range close. Directional move often comes in final 30 minutes.';
+    }
   }
 
-  const isActive = mins >= 555 && mins < 930;
-  const phase = mins < 750 ? 'Opening' : mins < 870 ? 'Mid Session' : 'Closing Phase';
+  const phase = mins < 630 ? 'Opening' : mins < 810 ? 'Mid Session' : 'Closing Phase';
 
   return {
-    opening:  { ctrl: openingCtrl, color: openingColor },
-    mid:      { ctrl: midCtrl,     color: midColor },
-    closing:  { ctrl: closing,     color: closingColor, note: closingNote },
-    phase, isActive,
+    opening:  { ctrl: openingCtrl,  color: openingColor,  pending: !showOpening },
+    mid:      { ctrl: midCtrl,      color: midColor,       pending: !showMid },
+    closing:  { ctrl: closing,      color: closingColor,   pending: !showClosing, note: closingNote },
+    phase, isActive, showOpening, showMid, showClosing,
   };
 }
 
@@ -179,20 +206,20 @@ function getChanges(nifty, banknifty, fiiNet, diiNet, fii7d, data) {
 
   if (fiiNet !== null) {
     if (fiiNet < -3000 && fii7d < -10000)
-      items.push({ text: `FII selling continues. Rs.${Math.abs(fiiNet).toLocaleString('en-IN')} Cr outflow today, part of sustained 7-session trend.`, type: 'bear' });
+      items.push({ text: `FII net outflow: Rs.${Math.abs(fiiNet).toLocaleString('en-IN')} Cr — part of a sustained 7-session selling trend.`, type: 'bear' });
     else if (fiiNet > 3000 && fii7d > 10000)
-      items.push({ text: `FII buying sustained. Rs.${fiiNet.toLocaleString('en-IN')} Cr inflow part of consistent 7-session buying.`, type: 'bull' });
+      items.push({ text: `FII net inflow: Rs.${fiiNet.toLocaleString('en-IN')} Cr — consistent buying across 7 sessions.`, type: 'bull' });
     else if (fiiNet < 0 && (diiNet ?? 0) > 0)
-      items.push({ text: `FII selling offset by DII buying. Market absorbed institutional selling today.`, type: 'neutral' });
+      items.push({ text: `FII selling offset by DII buying. Market absorbed institutional selling through the session.`, type: 'neutral' });
   }
 
   const crude = data.crude;
   if (crude?.changePct != null && Math.abs(crude.changePct) > 1.5)
-    items.push({ text: `Crude ${crude.changePct > 0 ? 'spiked up' : 'dropped sharply'} ${Math.abs(crude.changePct).toFixed(1)}% today. Energy sector impact visible.`, type: crude.changePct > 0 ? 'warn' : 'bull' });
+    items.push({ text: `Crude ${crude.changePct > 0 ? 'up' : 'down'} ${Math.abs(crude.changePct).toFixed(1)}% in the session. Energy sector impact visible.`, type: crude.changePct > 0 ? 'warn' : 'bull' });
 
   const gold = data.gold;
   if (gold?.changePct != null && gold.changePct > 0.8)
-    items.push({ text: `Gold rising ${gold.changePct.toFixed(1)}% today. Risk-off tone visible in global asset allocation.`, type: 'warn' });
+    items.push({ text: `Gold up ${gold.changePct.toFixed(1)}% in the session. Risk-off tone visible in global asset allocation.`, type: 'warn' });
 
   if (items.length === 0)
     items.push({ text: 'No significant structural changes detected today. Market continuing prior session character.', type: 'neutral' });
@@ -339,10 +366,19 @@ function buildSignals({ np, bp, vix, niftyPrice, fiiNet, diiNet, fii7d, data, hi
   const cr = v => `Rs.${Math.abs(v).toLocaleString('en-IN')} Cr`;
 
   if (fiiNet !== null && diiNet !== null) {
-    if      (fiiNet < 0 && diiNet > 0) signals.push({ tag:'FLOWS', text:`FIIs net sold ${cr(fiiNet)} today. DIIs absorbed ${cr(diiNet)}. Domestic institutions cushioning the fall.`, type:'warn' });
-    else if (fiiNet > 0 && diiNet > 0) signals.push({ tag:'FLOWS', text:`Both FIIs (${cr(fiiNet)}) and DIIs (${cr(diiNet)}) buying today. Broad institutional conviction.`, type:'bull' });
-    else if (fiiNet < 0 && diiNet < 0) signals.push({ tag:'FLOWS', text:`Both FIIs and DIIs net sellers. No institutional support layer under this market.`, type:'bear' });
-    else                                signals.push({ tag:'FLOWS', text:`FIIs buying ${cr(fiiNet)}, DIIs trimming. Foreign flows are the dominant support today.`, type:'bull' });
+    // Date-aware label: say "on 28 Mar" not "today" if data is from previous session
+    const fiiDateStr = allEvents?.fiiDate || null;
+    const istNow = getIST();
+    const todayIso = istNow.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    const istMins = istNow.getHours()*60 + istNow.getMinutes();
+    const isPast5pm = istMins >= 1020;
+    const fiiLabel = (!fiiDateStr || (fiiDateStr === todayIso && isPast5pm))
+      ? 'today'
+      : new Date(fiiDateStr+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    if      (fiiNet < 0 && diiNet > 0) signals.push({ tag:'FLOWS', text:`FIIs net sold ${cr(fiiNet)} (${fiiLabel}). DIIs absorbed ${cr(diiNet)}. Domestic institutions cushioning the fall.`, type:'warn' });
+    else if (fiiNet > 0 && diiNet > 0) signals.push({ tag:'FLOWS', text:`Both FIIs (${cr(fiiNet)}) and DIIs (${cr(diiNet)}) buying (${fiiLabel}). Broad institutional conviction.`, type:'bull' });
+    else if (fiiNet < 0 && diiNet < 0) signals.push({ tag:'FLOWS', text:`Both FIIs and DIIs net sellers (${fiiLabel}). No institutional support layer under this market.`, type:'bear' });
+    else                                signals.push({ tag:'FLOWS', text:`FIIs buying ${cr(fiiNet)}, DIIs trimming (${fiiLabel}). Foreign flows are the dominant support.`, type:'bull' });
   }
 
   if (fii7d !== null && history?.length >= 3) {
@@ -587,7 +623,7 @@ export default function InsightsPage({data={}, nseData={}}) {
   const fmtEvtDate= d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
 
   const tmrw    = getTomorrow(np, nseData.vix, fiiNet, diiNet, posInRange, dayType, ECON_EVENTS);
-  const signals = buildSignals({np,bp,vix:nseData.vix,niftyPrice:nifty?.price,fiiNet,diiNet,fii7d,data,history,allEvents});
+  const signals = buildSignals({np,bp,vix:nseData.vix,niftyPrice:nifty?.price,fiiNet,diiNet,fii7d,data,history,allEvents:{...allEvents,fiiDate:fiidii?.date}});
 
   const timeStr=clock.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
   const dateStr=clock.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
@@ -666,29 +702,37 @@ export default function InsightsPage({data={}, nseData={}}) {
             </div>
           )}
 
-          {/* Intraday Bias */}
+          {/* Intraday Bias — only during market hours, only show completed phases */}
           {intraday&&(
             <div className="ip-ana-block">
-              <div className="ip-ana-title">INTRADAY BIAS TRACKER</div>
+              <div className="ip-ana-title" style={{display:'flex',alignItems:'center',gap:8}}>
+                INTRADAY BIAS TRACKER
+                <span style={{fontSize:9,color:'var(--accent)',fontWeight:700,letterSpacing:'0.5px'}}>{intraday.phase}</span>
+              </div>
               <div className="ip-bias-grid">
                 {[
-                  {phase:'Opening',ctrl:intraday.opening.ctrl,color:intraday.opening.color,time:'9:15–10:30'},
-                  {phase:'Mid Session',ctrl:intraday.mid.ctrl,color:intraday.mid.color,time:'10:30–1:30'},
-                  {phase:'Closing Phase',ctrl:intraday.closing.ctrl,color:intraday.closing.color,time:'1:30–3:30'},
+                  {phase:'Opening',    ctrl:intraday.opening.ctrl,  color:intraday.opening.color,  time:'9:15–10:30', pending:intraday.opening.pending},
+                  {phase:'Mid Session',ctrl:intraday.mid.ctrl,      color:intraday.mid.color,      time:'10:30–1:30', pending:intraday.mid.pending},
+                  {phase:'Closing',    ctrl:intraday.closing.ctrl,  color:intraday.closing.color,  time:'1:30–3:30',  pending:intraday.closing.pending},
                 ].map((ph,i)=>(
-                  <div key={i} className="ip-bias-item" style={{borderLeftColor:ph.color}}>
+                  <div key={i} className="ip-bias-item" style={{
+                    borderLeftColor: ph.pending ? 'var(--border)' : ph.color,
+                    opacity: ph.pending ? 0.4 : 1,
+                  }}>
                     <div className="ip-bias-phase">{ph.phase}</div>
                     <div className="ip-bias-time">{ph.time}</div>
-                    <div className="ip-bias-ctrl" style={{color:ph.color}}>{ph.ctrl}</div>
+                    <div className="ip-bias-ctrl" style={{color: ph.pending ? 'var(--text3)' : ph.color}}>
+                      {ph.pending ? 'Not yet' : ph.ctrl}
+                    </div>
                   </div>
                 ))}
               </div>
-              <div className="ip-bias-note">{intraday.closing.note}</div>
+              {intraday.closing.note&&!intraday.closing.pending&&<div className="ip-bias-note">{intraday.closing.note}</div>}
             </div>
           )}
 
-          {/* What Changed Today */}
-          {changes.length>0&&(
+          {/* What Changed Today — only after 4:30 PM IST when session is fully settled */}
+          {changes.length>0 && getMins()>=990 &&(
             <div className="ip-ana-block">
               <div className="ip-ana-title">WHAT CHANGED TODAY</div>
               <div className="ip-changes-list">
@@ -813,18 +857,32 @@ export default function InsightsPage({data={}, nseData={}}) {
             </div>
           )}
 
-          {/* What to Watch Tomorrow */}
-          {tmrw.items.length>0&&(
-            <div className="ip-levels-box ip-tomorrow-box ip-tomorrow-full">
-              <div className="ip-box-title">WHAT TO WATCH TOMORROW</div>
-              {tmrw.items.map((item,i)=>(
-                <div key={i} className="ip-tomorrow-row">
-                  <span className="ip-tomorrow-dot"/>
-                  <span className="ip-tomorrow-text">{item}</span>
+          {/* What to Watch — next trading session */}
+          {tmrw.items.length>0&&(()=>{
+            const nextDay = getNextTradingDay();
+            const ist = getIST();
+            const currentMins = ist.getHours()*60 + ist.getMinutes();
+            const isPostClose = currentMins >= 930;
+            const updatedAt = isPostClose
+              ? `Updated ${ist.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} IST`
+              : `Based on last session data`;
+            return (
+              <div className="ip-levels-box ip-tomorrow-box ip-tomorrow-full">
+                <div className="ip-box-title" style={{display:'flex',flexDirection:'column',gap:3}}>
+                  <span>WHAT TO WATCH — <span style={{color:'var(--accent)'}}>{nextDay.label}</span></span>
+                  <span style={{fontSize:9,color:'var(--text3)',fontWeight:400,letterSpacing:0}}>
+                    {updatedAt} · Valid for {nextDay.label} session only
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
+                {tmrw.items.map((item,i)=>(
+                  <div key={i} className="ip-tomorrow-row">
+                    <span className="ip-tomorrow-dot"/>
+                    <span className="ip-tomorrow-text">{item}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
 
         </div>
       </div>

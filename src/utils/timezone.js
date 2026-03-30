@@ -80,6 +80,38 @@ export function getLocalTime(tz) {
   return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
+// NSE/BSE trading holidays 2026
+const _NSE_HOL_2026 = new Set([
+  '2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
+  '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26',
+  '2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25',
+]);
+const _NSE_HOL_NAMES = {
+  '2026-01-15':'Municipal Corporation Elections','2026-01-26':'Republic Day',
+  '2026-03-03':'Holi','2026-03-26':'Shri Ram Navami','2026-03-31':'Shri Mahavir Jayanti',
+  '2026-04-03':'Good Friday','2026-04-14':'Dr. Baba Saheb Ambedkar Jayanti',
+  '2026-05-01':'Maharashtra Day','2026-05-28':'Bakri Eid','2026-06-26':'Moharram',
+  '2026-09-14':'Ganesh Chaturthi','2026-10-02':'Mahatma Gandhi Jayanti',
+  '2026-10-20':'Dussehra','2026-11-10':'Diwali-Balipratipada',
+  '2026-11-24':'Prakash Gurpurb Sri Guru Nanak Dev','2026-12-25':'Christmas',
+};
+
+// Find seconds from now (UTC ms) to 9:15 AM IST on the next trading day
+function _secsToNextOpen() {
+  const nowMs = Date.now();
+  for (let i = 1; i <= 14; i++) {
+    const candidate = new Date(nowMs + i * 86400000);
+    const iso = candidate.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    const dow = new Date(candidate.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay();
+    if (dow === 0 || dow === 6 || _NSE_HOL_2026.has(iso)) continue;
+    // 9:15 AM IST = 3:45 AM UTC
+    const parts = iso.split('-').map(Number);
+    const openUTC = Date.UTC(parts[0], parts[1]-1, parts[2], 3, 45, 0);
+    return { secs: Math.max(0, Math.floor((openUTC - nowMs) / 1000)), iso };
+  }
+  return { secs: 86400, iso: null };
+}
+
 export function getIndiaMarketStatus() {
   const now = new Date();
   const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
@@ -88,26 +120,38 @@ export function getIndiaMarketStatus() {
   const totalMins = h * 60 + m;
   const OPEN_MINS  = 9 * 60 + 15;
   const CLOSE_MINS = 15 * 60 + 30;
+  const todayIso = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
+  // Weekend
   if (day === 0 || day === 6) {
-    const daysToMonday = day === 0 ? 1 : 2;
-    const secsToMonday = daysToMonday * 24 * 3600 - (h * 3600 + m * 60 + s) + OPEN_MINS * 60;
-    return { status: 'weekend', secondsLeft: secsToMonday, label: 'Weekend' };
+    const next = _secsToNextOpen();
+    return { status: 'weekend', secondsLeft: next.secs, label: 'Weekend', holidayName: null };
   }
+
+  // Market holiday today
+  if (_NSE_HOL_2026.has(todayIso)) {
+    const next = _secsToNextOpen();
+    const name = _NSE_HOL_NAMES[todayIso] || 'Market Holiday';
+    return { status: 'holiday', secondsLeft: next.secs, label: name, holidayName: name };
+  }
+
+  // Market open
   if (totalMins >= OPEN_MINS && totalMins < CLOSE_MINS) {
     const secsLeft  = (CLOSE_MINS - totalMins) * 60 - s;
     const secsTotal = (CLOSE_MINS - OPEN_MINS) * 60;
-    return { status: 'open', secondsLeft: secsLeft, secsTotal, label: 'MARKET OPEN' };
+    return { status: 'open', secondsLeft: secsLeft, secsTotal, label: 'MARKET OPEN', holidayName: null };
   }
+
+  // Pre-open same day
   if (totalMins < OPEN_MINS) {
     const secsLeft  = (OPEN_MINS - totalMins) * 60 - s;
     const secsTotal = OPEN_MINS * 60;
-    return { status: 'pre', secondsLeft: secsLeft, secsTotal, label: 'Opens in' };
+    return { status: 'pre', secondsLeft: secsLeft, secsTotal, label: 'Opens in', holidayName: null };
   }
-  const minsToMidnight = 24 * 60 - totalMins;
-  const daysAhead = day === 5 ? 3 : 1;
-  const secsLeft  = (minsToMidnight + (daysAhead - 1) * 24 * 60 + OPEN_MINS) * 60 - s;
-  return { status: 'closed', secondsLeft: secsLeft, label: 'Closed' };
+
+  // After close — find next trading day (skips holidays)
+  const next = _secsToNextOpen();
+  return { status: 'closed', secondsLeft: next.secs, label: 'Closed', holidayName: null };
 }
 
 export function formatDuration(secs) {
