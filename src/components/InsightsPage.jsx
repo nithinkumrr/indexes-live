@@ -513,7 +513,7 @@ function FiiBar({history}) {
 export default function InsightsPage({data={}, nseData={}}) {
   const [fiidii,       setFiidii]   = useState(null);
   const [brief,        setBrief]    = useState(null);
-  const [briefLoading, setBriefLoading] = useState(true);
+  const [briefLoading, setBriefLoading] = useState(false);
   const [clock,        setClock]    = useState(getIST());
   const [slot,         setSlot]     = useState(getSlot());
 
@@ -528,8 +528,11 @@ export default function InsightsPage({data={}, nseData={}}) {
     const nifty=nseData.nifty50||data.nifty50||{};
     const bn=nseData.banknifty||data.banknifty||{};
     const np=nifty.changePct??null,bp=bn.changePct??null;
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 20000);
     fetch('/api/insights-brief',{
       method:'POST',headers:{'Content-Type':'application/json'},
+      signal:ctrl.signal,
       body:JSON.stringify({
         niftyPrice:nifty.price,bnPrice:bn.price,niftyPct:np,bnPct:bp,
         vix:nseData.vix??null,
@@ -541,10 +544,15 @@ export default function InsightsPage({data={}, nseData={}}) {
         hangsengPct:data.hangseng?.changePct??null,
         crudePct:data.crude?.changePct??null,goldPct:data.gold?.changePct??null,
       }),
-    }).then(r=>r.json()).then(d=>{setBrief(d);setBriefLoading(false);}).catch(()=>setBriefLoading(false));
+    })
+    .then(r=>r.json())
+    .then(d=>{clearTimeout(t);setBrief(d);setBriefLoading(false);})
+    .catch(()=>{clearTimeout(t);setBriefLoading(false);});
   },[data,nseData,fiidii]);
 
-  useEffect(()=>{fetchBrief();},[fiidii]);
+  // Fire on mount immediately, and again when fiidii data arrives
+  useEffect(()=>{fetchBrief();},[]);
+  useEffect(()=>{ if(fiidii) fetchBrief(); },[fiidii]);
 
   // Data
   const nifty     = nseData.nifty50        || data.nifty50        || null;
@@ -717,21 +725,32 @@ export default function InsightsPage({data={}, nseData={}}) {
             </div>
           )}
 
-          {/* AI WRITE-UP lives here, directly below warnings, fills the left column */}
+          {/* AI WRITE-UP */}
           <div className="ip-ana-block ip-writeup-block">
             <div className="ip-ana-title" style={{display:'flex',alignItems:'center',gap:8}}>
               AI WRITE-UP
               <span className="ip-writeup-badge">{briefLoading?'GENERATING':brief?.cached?'CACHED':'LIVE'}</span>
+              {!briefLoading && (
+                <button onClick={fetchBrief} style={{marginLeft:'auto',fontSize:9,color:'var(--text3)',background:'transparent',border:'1px solid var(--border)',borderRadius:3,padding:'1px 6px',cursor:'pointer',fontFamily:'var(--mono)'}}>↻ Refresh</button>
+              )}
             </div>
             <div className="ip-writeup-content">
               {briefLoading?(
-                <div className="ip-loading"><div className="ip-spinner"/><span>Generating write-up with live news and market data...</span></div>
+                <div className="ip-loading"><div className="ip-spinner"/><span>Generating write-up...</span></div>
               ):brief?.writeup?(
                 brief.writeup.split('\n').filter(p=>p.trim()).map((para,i)=>(
                   <p key={i} className="ip-writeup-para">{para.trim()}</p>
                 ))
               ):(
-                <p className="ip-writeup-para" style={{color:'var(--text3)'}}>{brief?._error?`AI error: ${brief._error}`:'Write-up not available. Refresh to try again.'}</p>
+                <div style={{display:'flex',flexDirection:'column',gap:10,alignItems:'flex-start'}}>
+                  <p className="ip-writeup-para" style={{color:'var(--text3)'}}>
+                    {brief?._error ? `Error: ${brief._error}` : 'Click to generate the AI market write-up for this session.'}
+                  </p>
+                  <button onClick={fetchBrief} style={{fontSize:11,color:'var(--accent)',background:'rgba(74,158,255,.08)',border:'1px solid rgba(74,158,255,.2)',borderRadius:4,padding:'6px 14px',cursor:'pointer',fontFamily:'var(--mono)',fontWeight:700}}>
+                    Generate Write-Up
+                  </button>
+                </div>
+
               )}
             </div>
           </div>

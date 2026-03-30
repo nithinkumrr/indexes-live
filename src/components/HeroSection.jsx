@@ -87,14 +87,19 @@ function InlineCountdown() {
   const display = formatDuration(secs);
   const isOpen  = s.status === 'open';
   const isPre   = s.status === 'pre';
+  const isHol   = s.status === 'holiday';
   return (
-    <div className={`inline-countdown ${isOpen ? 'ic-open' : isPre ? 'ic-pre' : 'ic-closed'}`}>
+    <div className={`inline-countdown ${isOpen ? 'ic-open' : isPre ? 'ic-pre' : isHol ? 'ic-holiday' : 'ic-closed'}`}>
       {isOpen && <span className="live-pulse" style={{ marginRight: 6 }} />}
       <span className="ic-label">
-        {isOpen ? 'LIVE' : isPre ? 'PRE-OPEN' : s.status === 'weekend' ? 'WEEKEND' : 'OPENS IN'}
+        {isOpen ? 'LIVE' : isPre ? 'PRE-OPEN' : isHol ? 'HOLIDAY' : s.status === 'weekend' ? 'WEEKEND' : 'OPENS IN'}
       </span>
-      <span className="ic-time">{display}</span>
-      {!isOpen && <span className="ic-sub">{isPre ? '· 09:15 IST' : '· 09:15 IST Mon–Fri'}</span>}
+      {isHol
+        ? <span className="ic-time" style={{fontSize:11,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.label}</span>
+        : <span className="ic-time">{display}</span>
+      }
+      {!isOpen && !isHol && <span className="ic-sub">{isPre ? '· 09:15 IST' : '· 09:15 IST Mon–Fri'}</span>}
+      {isHol && <span className="ic-sub">· opens next session</span>}
     </div>
   );
 }
