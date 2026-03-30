@@ -54,10 +54,14 @@ export default async function handler(req, res) {
     } catch (_) {}
   }
 
-  // Step 2: Fetch live today only if it's a trading day
+  // Step 2: Fetch live today ONLY after 5 PM IST (NSE publishes FII/DII at ~5 PM)
+  // Before 5 PM, today's data doesn't exist yet — don't attempt and don't show today's date
   let liveToday = null;
+  const istHour = ist.getHours();
+  const isPast5pm = istHour >= 17;
   const todayIsHoliday = HOLIDAYS.has(today) || new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay() === 0 || new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay() === 6;
-  if (!todayIsHoliday) {
+
+  if (!todayIsHoliday && isPast5pm) {
     let cookies = '';
     const home = await fetch('https://www.nseindia.com', {
       headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' }
@@ -76,13 +80,16 @@ export default async function handler(req, res) {
         liveToday = { date: today, fiiNet: f.net, fiiBuy: f.buy, fiiSell: f.sell, diiNet: d.net, diiBuy: d.buy, diiSell: d.sell };
       }
     }
-  } // end !todayIsHoliday
+  } // end isPast5pm
 
-  // Step 3: Merge today's live data — ONLY if today is a confirmed trading day
-  // Even though we check todayIsHoliday above, NSE sometimes returns data on weekends.
-  // Double-check: verify today is in our trading days list before storing or showing.
+  // Step 3: Merge today's live data — only if confirmed trading day AND non-zero values
+  // NSE sometimes returns all zeros before data is published — ignore those
   const todayIsTradingDay = tradingDays.includes(today);
-  if (liveToday && todayIsTradingDay) {
+  const todayHasRealData = liveToday && (
+    Math.abs(liveToday.fiiNet) > 0 || Math.abs(liveToday.diiNet) > 0 ||
+    liveToday.fiiBuy > 0 || liveToday.diiBuy > 0
+  );
+  if (todayHasRealData && todayIsTradingDay) {
     const existing = history.findIndex(h => h.date === today);
     if (existing >= 0) history[existing] = liveToday;
     else history.push(liveToday);

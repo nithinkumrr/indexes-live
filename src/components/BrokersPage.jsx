@@ -2147,41 +2147,46 @@ function HeadToHead(){
       </div>
 
       {/* Hero: winner banner + bars */}
-      <div className="h2h-hero">
-        <div className="h2h-winner-banner">
-          <span className="h2h-winner-badge">CHEAPER</span>
-          <span className="h2h-winner-name">{winner}</span>
-          {parseFloat(saves)>0&&(
-            <span className="h2h-winner-saves">saves <strong>₹{saves}</strong> <span className="h2h-winner-pct">({pct}% less)</span></span>
-          )}
-        </div>
-
-        <div className="h2h-bars-wrap">
-          {[{n:d.a,v:delivA,w:delivA<=delivB},{n:d.b,v:delivB,w:delivB<delivA}].map((s,i)=>{
-            const pctWidth=(s.v/maxT)*100;
-            return(
-              <div key={i} className="h2h-bar-item">
-                <div className="h2h-bar-meta">
-                  <span className={`h2h-bar-broker${s.w?' h2h-bar-broker-win':''}`}>{s.n}</span>
-                  <span className={`h2h-bar-amount${s.w?' h2h-green':''}`}>₹{fmt(s.v,2)}</span>
-                </div>
-                <div className="h2h-bar-track">
-                  <div className="h2h-bar-fill" style={{
-                    width:`${pctWidth}%`,
-                    background:s.w?'var(--gain)':'rgba(255,255,255,0.15)'
-                  }}/>
-                  <span className="h2h-bar-pct-label">{pctWidth.toFixed(0)}%</span>
-                </div>
+      {(() => {
+        const isTie = parseFloat(saves) < 1;
+        return (
+          <div className="h2h-hero">
+            {isTie ? (
+              <div className="h2h-winner-banner h2h-tie-banner">
+                <span className="h2h-winner-badge h2h-tie-badge-pill">TIE</span>
+                <span className="h2h-winner-name">{d.a} <span style={{color:'var(--text3)',fontWeight:400,fontSize:14}}>vs</span> {d.b}</span>
+                <span className="h2h-winner-saves">₹{saves} difference on ₹50K delivery — essentially identical</span>
               </div>
-            );
-          })}
-          <div className="h2h-bar-context">of ₹50K delivery trade total cost</div>
-        </div>
+            ) : (
+              <div className="h2h-winner-banner">
+                <span className="h2h-winner-badge">CHEAPER</span>
+                <span className="h2h-winner-name">{winner}</span>
+                <span className="h2h-winner-saves">saves <strong>₹{saves}</strong> <span className="h2h-winner-pct">({pct}% less)</span></span>
+              </div>
+            )}
 
-        {parseFloat(saves)===0&&(
-          <div className="h2h-tie-badge">IDENTICAL COST on ₹50K delivery trade</div>
-        )}
-      </div>
+            <div className="h2h-bars-wrap">
+              {[{n:d.a,v:delivA,w:delivA<=delivB,tie:isTie},{n:d.b,v:delivB,w:delivB<delivA,tie:isTie}].map((s,i)=>{
+                const pctWidth=(s.v/maxT)*100;
+                const barColor = s.tie ? (i===0?'#4A9EFF':'var(--gain)') : s.w?'var(--gain)':'rgba(255,255,255,0.15)';
+                return(
+                  <div key={i} className="h2h-bar-item">
+                    <div className="h2h-bar-meta">
+                      <span className={`h2h-bar-broker${(s.w||s.tie)?' h2h-bar-broker-win':''}`} style={s.tie&&i===0?{color:'#4A9EFF'}:{}}>{s.n}</span>
+                      <span className={`h2h-bar-amount${(s.w||s.tie)?' h2h-green':''}`} style={s.tie&&i===0?{color:'#4A9EFF'}:{}}>₹{fmt(s.v,2)}</span>
+                    </div>
+                    <div className="h2h-bar-track">
+                      <div className="h2h-bar-fill" style={{width:`${pctWidth}%`,background:barColor}}/>
+                      <span className="h2h-bar-pct-label">{pctWidth.toFixed(0)}%</span>
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="h2h-bar-context">of ₹50K delivery trade total cost</div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Annual cost */}
       <div className="h2h-section">
@@ -2196,16 +2201,16 @@ function HeadToHead(){
                 <div className="h2h-ac-profile">{p.profile}</div>
                 <div className="h2h-ac-sub">{p.sub}</div>
                 <div className="h2h-ac-costs">
-                  <div className={`h2h-ac-broker${aW?' h2h-ac-winner':''}`}>
+                  <div className={`h2h-ac-broker${aW?' h2h-ac-winner h2h-ac-winner-b':''}`}>
                     {aW&&<span className="h2h-ac-win-tag">CHEAPER</span>}
-                    <div className="h2h-ac-bname">{d.a}</div>
+                    <div className="h2h-ac-bname h2h-ac-bname-a">{d.a}</div>
                     <div className="h2h-ac-amount">₹{fmt(p.av,0)}<span className="h2h-ac-yr">/yr</span></div>
                     <div className="h2h-ac-breakdown">{p.al}</div>
                   </div>
                   <div className="h2h-ac-divider"/>
-                  <div className={`h2h-ac-broker${!aW?' h2h-ac-winner':''}`}>
+                  <div className={`h2h-ac-broker${!aW?' h2h-ac-winner h2h-ac-winner-b':''}`}>
                     {!aW&&<span className="h2h-ac-win-tag">CHEAPER</span>}
-                    <div className="h2h-ac-bname">{d.b}</div>
+                    <div className="h2h-ac-bname h2h-ac-bname-b">{d.b}</div>
                     <div className="h2h-ac-amount">₹{fmt(p.bv,0)}<span className="h2h-ac-yr">/yr</span></div>
                     <div className="h2h-ac-breakdown">{p.bl}</div>
                   </div>
@@ -2232,10 +2237,10 @@ function HeadToHead(){
             const isDelivery=r.type==='Delivery';
             return(
               <div key={i} className={`h2h-tr h2h-tr-trade${isDelivery?' h2h-tr-highlight':''}`}>
-                <span className="h2h-td-label">
+                <div className="h2h-td-label">
                   <div className="h2h-tl-type">{r.type}</div>
                   <div className="h2h-tl-sub">{r.sub}</div>
-                </span>
+                </div>
                 <span className={`h2h-td-num${aW?' h2h-green':''}`}>₹{fmt(r.av,2)}</span>
                 <span className={`h2h-td-num${(!aW&&gap>0.01)?' h2h-green':''}`}>₹{fmt(r.bv,2)}</span>
                 <span className="h2h-td-gap-v">
@@ -2251,15 +2256,15 @@ function HeadToHead(){
       </div>
 
       {/* Collapsible charge sections */}
-      <H2HTable title={SEC.trading}       rows={d.trading}       aName={d.a} bName={d.b} collapsed={true}/>
-      <H2HTable title={SEC.demat}         rows={d.demat}         aName={d.a} bName={d.b} collapsed={true}/>
-      <H2HTable title={SEC.mtf}           rows={d.mtf}           aName={d.a} bName={d.b} collapsed={true}/>
-      <H2HTable title={SEC.settlement}    rows={d.settlement}    aName={d.a} bName={d.b} collapsed={true}/>
-      <H2HTable title={SEC.services}      rows={d.services}      aName={d.a} bName={d.b} collapsed={true}/>
-      <H2HTable title={SEC.account}       rows={d.account}       aName={d.a} bName={d.b} collapsed={true}/>
-      {d.documents&&<H2HTable title={SEC.documents} rows={d.documents} aName={d.a} bName={d.b} collapsed={true}/>}
-      {d.instruments&&<H2HTable title={SEC.instruments} rows={d.instruments} aName={d.a} bName={d.b} collapsed={true}/>}
-      <H2HTable title={SEC.modifications} rows={d.modifications} aName={d.a} bName={d.b} collapsed={true}/>
+      <H2HTable title={SEC.trading}       rows={d.trading}       aName={d.a} bName={d.b} collapsed={false}/>
+      <H2HTable title={SEC.demat}         rows={d.demat}         aName={d.a} bName={d.b} collapsed={false}/>
+      <H2HTable title={SEC.mtf}           rows={d.mtf}           aName={d.a} bName={d.b} collapsed={false}/>
+      <H2HTable title={SEC.settlement}    rows={d.settlement}    aName={d.a} bName={d.b} collapsed={false}/>
+      <H2HTable title={SEC.services}      rows={d.services}      aName={d.a} bName={d.b} collapsed={false}/>
+      <H2HTable title={SEC.account}       rows={d.account}       aName={d.a} bName={d.b} collapsed={false}/>
+      {d.documents&&<H2HTable title={SEC.documents} rows={d.documents} aName={d.a} bName={d.b} collapsed={false}/>}
+      {d.instruments&&<H2HTable title={SEC.instruments} rows={d.instruments} aName={d.a} bName={d.b} collapsed={false}/>}
+      <H2HTable title={SEC.modifications} rows={d.modifications} aName={d.a} bName={d.b} collapsed={false}/>
 
       <div className="h2h-footnote">Govt charges (STT, exchange, SEBI, stamp duty) are fixed by law — identical at every broker. Always verify current charges before trading.</div>
     </div>
