@@ -361,13 +361,13 @@ function getTomorrow(np, vix, fiiNet, diiNet, posInRange, dayType, events) {
 }
 
 // ── Signals engine ────────────────────────────────────────────────────────────
-function buildSignals({ np, bp, vix, niftyPrice, fiiNet, diiNet, fii7d, data, history, allEvents }) {
+function buildSignals({ np, bp, vix, niftyPrice, fiiNet, diiNet, fii7d, data, history, allEvents, fiiDate }) {
   const signals = [];
   const cr = v => `Rs.${Math.abs(v).toLocaleString('en-IN')} Cr`;
 
   if (fiiNet !== null && diiNet !== null) {
     // Date-aware label: say "on 28 Mar" not "today" if data is from previous session
-    const fiiDateStr = allEvents?.fiiDate || null;
+    const fiiDateStr = fiiDate || null;
     const istNow = getIST();
     const todayIso = istNow.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
     const istMins = istNow.getHours()*60 + istNow.getMinutes();
@@ -623,7 +623,7 @@ export default function InsightsPage({data={}, nseData={}}) {
   const fmtEvtDate= d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
 
   const tmrw    = getTomorrow(np, nseData.vix, fiiNet, diiNet, posInRange, dayType, ECON_EVENTS);
-  const signals = buildSignals({np,bp,vix:nseData.vix,niftyPrice:nifty?.price,fiiNet,diiNet,fii7d,data,history,allEvents:{...allEvents,fiiDate:fiidii?.date}});
+  const signals = buildSignals({np,bp,vix:nseData.vix,niftyPrice:nifty?.price,fiiNet,diiNet,fii7d,data,history,allEvents,fiiDate:fiidii?.date});
 
   const timeStr=clock.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
   const dateStr=clock.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
