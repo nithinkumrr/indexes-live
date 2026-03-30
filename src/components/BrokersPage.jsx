@@ -462,7 +462,7 @@ const SCENARIOS = {
 const fmt  = (v, d=0) => v != null ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: d }) : '—';
 const fmtR = (v) => v != null ? `₹${fmt(v)}` : '—';
 
-const TABS = ['Rankings', 'Direct Comparison', 'Charge Guide', 'Brokerage Calc', 'MTF Comparison', 'Market Data'];
+const TABS = ['Rankings', 'Direct Comparison', 'Charge Guide', 'Brokerage Calc', 'Market Data'];
 
 // ── UNIVERSAL BROKERAGE CALCULATOR ───────────────────────────────────────────
 
@@ -1206,7 +1206,7 @@ function Cheatsheet() {
 
       {/* 00 Quick verdict */}
       <div id="cs-sec-verdict" className="cs-section">
-        <CsSectionHeader num="00" title="Quick verdict" sub="Which broker for which trader?" />
+        <CsSectionHeader num="00" title="Quick verdict" sub="" />
         <div className="cs-verdict-grid">
           <div className="cs-verdict-card">
             <div className="cs-verdict-profile">LONG-TERM INVESTOR</div>
@@ -1222,19 +1222,14 @@ function Cheatsheet() {
             <div className="cs-verdict-row"><span className="cs-verdict-name">Zerodha</span><span className="cs-verdict-cost">₹14,638/yr</span></div>
             <div className="cs-verdict-desc">3 delivery + 30 intraday/mo</div>
           </div>
-          <div className="cs-verdict-card">
-            <div className="cs-verdict-profile">F&O TRADER</div>
-            <div className="cs-verdict-row cs-verdict-row-single"><span className="cs-green cs-verdict-name">Kotak Securities</span><span className="cs-green cs-verdict-cost">₹1,00,417/yr</span></div>
-            <div className="cs-verdict-desc">50 options + 10 futures/mo</div>
-          </div>
         </div>
-        <CsInsight text="These are total costs including brokerage, GST, DP charges, AMC, and all regulatory fees (STT, exchange, SEBI, stamp duty). The cheapest broker changes depending on your trading style — there's no single 'best' broker." />
+
       </div>
 
       {/* 01 Annual cost */}
       <div id="cs-sec-annual" className="cs-section">
         <CsSectionHeader num="01" title="Total annual cost" sub="What each broker actually costs per year" />
-        <p className="cs-explain"><strong>Why this matters:</strong> Comparing individual charges is misleading — a broker with ₹0 delivery brokerage but high DP charges may cost you more overall. These profiles combine every charge into one annual number.</p>
+        <p className="cs-explain">Comparing individual charges is misleading. A broker with zero delivery brokerage but high DP charges may cost you more overall. These profiles combine every charge into one annual number.</p>
 
         {['longterm','active','fno'].map(key => {
           const d = CS_DATA.annual[key];
@@ -1266,7 +1261,7 @@ function Cheatsheet() {
       {/* 02 Delivery */}
       <div id="cs-sec-delivery" className="cs-section">
         <CsSectionHeader num="02" title="Delivery brokerage" sub="How much does a ₹50,000 delivery trade actually cost?" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.delivery.explain}</p>
+        <p className="cs-explain">{CS_DATA.delivery.explain}</p>
         <div className="cs-table">
           <div className="cs-th" style={{gridTemplateColumns:'2fr 1.2fr 1fr 1fr'}}>
             {CS_DATA.delivery.cols.map((c,i)=><span key={i}>{c}</span>)}
@@ -1286,7 +1281,7 @@ function Cheatsheet() {
       {/* 03 Intraday */}
       <div id="cs-sec-intraday" className="cs-section">
         <CsSectionHeader num="03" title="Intraday brokerage" sub="What does a ₹25,000 intraday round trip cost?" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.intraday.explain}</p>
+        <p className="cs-explain">{CS_DATA.intraday.explain}</p>
         <div className="cs-table">
           <div className="cs-th" style={{gridTemplateColumns:'2fr 1.2fr 1fr 1fr'}}>
             {CS_DATA.intraday.cols.map((c,i)=><span key={i}>{c}</span>)}
@@ -1306,7 +1301,7 @@ function Cheatsheet() {
       {/* 04 F&O */}
       <div id="cs-sec-fno" className="cs-section">
         <CsSectionHeader num="04" title="F&O brokerage" sub="Futures vs options — who charges what?" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.fno.explain}</p>
+        <p className="cs-explain">{CS_DATA.fno.explain}</p>
         {['futures','options'].map(key => {
           const d = CS_DATA.fno[key];
           const hasFourCols = key==='options';
@@ -1335,7 +1330,7 @@ function Cheatsheet() {
       {/* 05 DP charge */}
       <div id="cs-sec-dp" className="cs-section">
         <CsSectionHeader num="05" title="DP charge" sub="The cost of selling your stocks" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.dp.explain}</p>
+        <p className="cs-explain">{CS_DATA.dp.explain}</p>
         <div className="cs-table">
           <div className="cs-th" style={{gridTemplateColumns:'2fr 1fr 1fr 1fr'}}>
             {CS_DATA.dp.cols.map((c,i)=><span key={i}>{c}</span>)}
@@ -1355,7 +1350,7 @@ function Cheatsheet() {
       {/* 06 AMC */}
       <div id="cs-sec-amc" className="cs-section">
         <CsSectionHeader num="06" title="AMC" sub="What your broker charges for doing nothing" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.amc.explain}</p>
+        <p className="cs-explain">{CS_DATA.amc.explain}</p>
         <div className="cs-table">
           <div className="cs-th" style={{gridTemplateColumns:'2fr 1fr 1fr'}}>
             {CS_DATA.amc.cols.map((c,i)=><span key={i}>{c}</span>)}
@@ -1374,7 +1369,7 @@ function Cheatsheet() {
       {/* 07 MTF */}
       <div id="cs-sec-mtf" className="cs-section">
         <CsSectionHeader num="07" title="MTF interest & brokerage" sub="What does borrowing ₹1 lakh for 30 days cost?" />
-        <p className="cs-explain"><strong>What is it?</strong> {CS_DATA.mtf.explain}</p>
+        <p className="cs-explain">{CS_DATA.mtf.explain}</p>
         <div className="cs-table">
           <div className="cs-th" style={{gridTemplateColumns:'2fr 0.8fr 1fr 1fr 1fr'}}>
             {CS_DATA.mtf.cols.map((c,i)=><span key={i}>{c}</span>)}
@@ -1395,7 +1390,7 @@ function Cheatsheet() {
       {/* 08 Regulatory */}
       <div id="cs-sec-regulatory" className="cs-section">
         <CsSectionHeader num="08" title="Regulatory charges" sub="Fixed by government — identical at every broker" />
-        <p className="cs-explain"><strong>What is it?</strong> STT, exchange transaction charges, SEBI fees, and stamp duty are set by the government and exchanges. They are exactly the same at every broker — you cannot save on these by switching.</p>
+        <p className="cs-explain">STT, exchange transaction charges, SEBI fees, and stamp duty are set by the government and exchanges. They are exactly the same at every broker, you cannot save on these by switching.</p>
         <div className="cs-reg-grid">
           {[
             { name:'STT (Delivery)',   rate:'0.1% on buy + 0.1% on sell',  ex:'₹50K trade = ₹100' },
@@ -2045,119 +2040,211 @@ const SEC = {
   documents:'09  Documents',instruments:'10  Instruments',modifications:'11  Modifications',
 };
 
-function H2HTable({title,rows,aName,bName}){
+function H2HTable({title,rows,aName,bName,collapsed=true}){
+  const [open,setOpen]=useState(!collapsed);
   if(!rows||!rows.length)return null;
+  // Find key differences only (where values differ)
+  const diffs=rows.filter(([,av,bv])=>av!==bv);
+  const shown=open?rows:diffs.slice(0,3);
   return(
     <div className="h2h-section">
-      <div className="h2h-section-title">{title}</div>
-      <div className="h2h-table">
-        <div className="h2h-th"><span>CHARGE</span><span>{aName.toUpperCase()}</span><span>{bName.toUpperCase()}</span></div>
-        {rows.map(([label,av,bv,ag,bg],i)=>(
-          <div key={i} className="h2h-tr">
-            <span className="h2h-td-label">{label}</span>
-            <span className={`h2h-td-val${ag?' h2h-green':''}`}>{av}</span>
-            <span className={`h2h-td-val${bg?' h2h-green':''}`}>{bv}</span>
-          </div>
-        ))}
-      </div>
+      <button className="h2h-acc-btn" onClick={()=>setOpen(o=>!o)}>
+        <span className="h2h-section-title">{title}</span>
+        <span className="h2h-acc-meta">
+          {!open&&diffs.length>0&&<span className="h2h-acc-diff">{diffs.length} difference{diffs.length>1?'s':''}</span>}
+          <span className="h2h-acc-toggle">{open?'▲':'▼'}</span>
+        </span>
+      </button>
+      {open&&(
+        <div className="h2h-table">
+          <div className="h2h-th"><span>CHARGE</span><span>{aName.toUpperCase()}</span><span>{bName.toUpperCase()}</span></div>
+          {rows.map(([label,av,bv,ag,bg],i)=>(
+            <div key={i} className={`h2h-tr${av!==bv?' h2h-tr-diff':''}`}>
+              <span className="h2h-td-label">{label}</span>
+              <span className={`h2h-td-val${ag?' h2h-green':''}`}>{av}</span>
+              <span className={`h2h-td-val${bg?' h2h-green':''}`}>{bv}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {!open&&diffs.length>0&&(
+        <div className="h2h-acc-preview">
+          {diffs.slice(0,2).map(([label,av,bv,ag,bg],i)=>(
+            <div key={i} className="h2h-prev-row">
+              <span className="h2h-prev-label">{label}</span>
+              <span className={ag?'h2h-green':'h2h-prev-val'}>{av}</span>
+              <span className="h2h-prev-vs">vs</span>
+              <span className={bg?'h2h-green':'h2h-prev-val'}>{bv}</span>
+            </div>
+          ))}
+          {diffs.length>2&&<div className="h2h-acc-more" onClick={()=>setOpen(true)}>+{diffs.length-2} more differences — tap to expand</div>}
+        </div>
+      )}
+      {!open&&diffs.length===0&&(
+        <div className="h2h-acc-same">No differences — identical at both brokers</div>
+      )}
     </div>
   );
 }
 
 function HeadToHead(){
   const [pair,setPair]=useState('zerodha-dhan');
+  const [dropOpen,setDropOpen]=useState(false);
   const d=H2H_DATA[pair];
   const delivA=d.perTrade[0].av, delivB=d.perTrade[0].bv;
   const winner=delivA<=delivB?d.a:d.b;
+  const loser=delivA<=delivB?d.b:d.a;
   const saves=Math.abs(delivA-delivB).toFixed(2);
+  const pct=delivA>0?((Math.abs(delivA-delivB)/Math.min(delivA,delivB))*100).toFixed(1):0;
   const maxT=Math.max(delivA,delivB);
+  const activeLabel=PAIR_LIST.find(p=>p.key===pair)?.label||pair;
+
   return(
     <div className="h2h-wrap">
-      <div className="h2h-header">
-        <div className="h2h-title">Head-to-Head</div>
-        
+      {/* Sticky benchmark label */}
+      <div className="h2h-benchmark-bar">
+        All values based on a <strong>₹50,000 delivery trade</strong> (buy + sell round trip)
       </div>
-      <div className="h2h-pair-grid">
-        {PAIR_LIST.map(p=>(
-          <button key={p.key} className={`h2h-pair-btn${pair===p.key?' h2h-pair-active':''}`} onClick={()=>setPair(p.key)}>{p.label}</button>
-        ))}
-      </div>
-      <div className="h2h-hero">
-        <div className="h2h-hero-names">
-          <span className={delivA<=delivB?'h2h-name-win':'h2h-name-lose'}>{d.a}</span>
-          <span className="h2h-hero-vs">vs</span>
-          <span className={delivB<delivA?'h2h-name-win':'h2h-name-lose'}>{d.b}</span>
-        </div>
-        <div className="h2h-hero-bars">
-          {[{n:d.a,v:delivA,w:delivA<=delivB},{n:d.b,v:delivB,w:delivB<delivA}].map((s,i)=>(
-            <div key={i} className="h2h-hero-bar-row">
-              <span className={`h2h-hero-amt${s.w?' h2h-green':''}`}>₹{fmt(s.v,2)}</span>
-              <div className="h2h-hero-track"><div className="h2h-hero-fill" style={{width:`${(s.v/maxT)*100}%`,background:s.w?'var(--gain)':'var(--border2)'}}/></div>
-              <span className="h2h-hero-name">{s.n}</span>
+
+      {/* Dropdown pair selector */}
+      <div className="h2h-selector-row">
+        <div className="h2h-dropdown-wrap">
+          <button className="h2h-dropdown-btn" onClick={()=>setDropOpen(o=>!o)}>
+            <span className="h2h-dd-label">Comparing</span>
+            <span className="h2h-dd-value">{activeLabel}</span>
+            <span className="h2h-dd-arrow">{dropOpen?'▲':'▼'}</span>
+          </button>
+          {dropOpen&&(
+            <div className="h2h-dropdown-menu">
+              {PAIR_LIST.map(p=>(
+                <button key={p.key}
+                  className={`h2h-dd-item${pair===p.key?' h2h-dd-active':''}`}
+                  onClick={()=>{setPair(p.key);setDropOpen(false);}}>
+                  {p.label}
+                  {pair===p.key&&<span className="h2h-dd-check">✓</span>}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="h2h-hero-verdict">
-          {parseFloat(saves)===0
-            ?<span style={{color:'var(--text3)'}}>Same delivery cost on ₹50K trade</span>
-            :<><span className="h2h-green" style={{fontWeight:900}}>{winner}</span><span style={{color:'var(--text3)'}}> saves ₹{saves} on a ₹50K delivery trade</span></>
-          }
+          )}
         </div>
       </div>
+
+      {/* Hero: winner banner + bars */}
+      <div className="h2h-hero">
+        <div className="h2h-winner-banner">
+          <span className="h2h-winner-badge">CHEAPER</span>
+          <span className="h2h-winner-name">{winner}</span>
+          {parseFloat(saves)>0&&(
+            <span className="h2h-winner-saves">saves <strong>₹{saves}</strong> <span className="h2h-winner-pct">({pct}% less)</span></span>
+          )}
+        </div>
+
+        <div className="h2h-bars-wrap">
+          {[{n:d.a,v:delivA,w:delivA<=delivB},{n:d.b,v:delivB,w:delivB<delivA}].map((s,i)=>{
+            const pctWidth=(s.v/maxT)*100;
+            return(
+              <div key={i} className="h2h-bar-item">
+                <div className="h2h-bar-meta">
+                  <span className={`h2h-bar-broker${s.w?' h2h-bar-broker-win':''}`}>{s.n}</span>
+                  <span className={`h2h-bar-amount${s.w?' h2h-green':''}`}>₹{fmt(s.v,2)}</span>
+                </div>
+                <div className="h2h-bar-track">
+                  <div className="h2h-bar-fill" style={{
+                    width:`${pctWidth}%`,
+                    background:s.w?'var(--gain)':'rgba(255,255,255,0.15)'
+                  }}/>
+                  <span className="h2h-bar-pct-label">{pctWidth.toFixed(0)}%</span>
+                </div>
+              </div>
+            );
+          })}
+          <div className="h2h-bar-context">of ₹50K delivery trade total cost</div>
+        </div>
+
+        {parseFloat(saves)===0&&(
+          <div className="h2h-tie-badge">IDENTICAL COST on ₹50K delivery trade</div>
+        )}
+      </div>
+
+      {/* Annual cost */}
       <div className="h2h-section">
         <div className="h2h-section-title">{SEC.annual}</div>
         <div className="h2h-annual-grid">
           {d.annual.map((p,i)=>{
-            const aW=p.av<=p.bv, diff=Math.abs(p.av-p.bv).toFixed(2);
+            const aW=p.av<=p.bv;
+            const diff=Math.abs(p.av-p.bv);
+            const diffFmt=diff>=1000?'₹'+fmt(diff/1000,1)+'K':'₹'+fmt(diff,0);
             return(
-              <div key={i} className="h2h-annual-card">
-                <div className="h2h-annual-profile">{p.profile}</div>
-                <div className="h2h-annual-sub">{p.sub}</div>
-                <div className="h2h-annual-row">
-                  <div className="h2h-annual-broker">
-                    <div className="h2h-annual-name">{d.a}</div>
-                    <div className={`h2h-annual-amt${aW?' h2h-green':''}`}>₹{fmt(p.av,2)}<span className="h2h-annual-yr">/yr</span></div>
-                    <div className="h2h-annual-breakdown">{p.al}</div>
+              <div key={i} className={`h2h-annual-card${aW?' h2h-ac-a-wins':' h2h-ac-b-wins'}`}>
+                <div className="h2h-ac-profile">{p.profile}</div>
+                <div className="h2h-ac-sub">{p.sub}</div>
+                <div className="h2h-ac-costs">
+                  <div className={`h2h-ac-broker${aW?' h2h-ac-winner':''}`}>
+                    {aW&&<span className="h2h-ac-win-tag">CHEAPER</span>}
+                    <div className="h2h-ac-bname">{d.a}</div>
+                    <div className="h2h-ac-amount">₹{fmt(p.av,0)}<span className="h2h-ac-yr">/yr</span></div>
+                    <div className="h2h-ac-breakdown">{p.al}</div>
                   </div>
-                  <div className="h2h-annual-broker">
-                    <div className="h2h-annual-name">{d.b}</div>
-                    <div className={`h2h-annual-amt${!aW?' h2h-green':''}`}>₹{fmt(p.bv,2)}<span className="h2h-annual-yr">/yr</span></div>
-                    <div className="h2h-annual-breakdown">{p.bl}</div>
+                  <div className="h2h-ac-divider"/>
+                  <div className={`h2h-ac-broker${!aW?' h2h-ac-winner':''}`}>
+                    {!aW&&<span className="h2h-ac-win-tag">CHEAPER</span>}
+                    <div className="h2h-ac-bname">{d.b}</div>
+                    <div className="h2h-ac-amount">₹{fmt(p.bv,0)}<span className="h2h-ac-yr">/yr</span></div>
+                    <div className="h2h-ac-breakdown">{p.bl}</div>
                   </div>
                 </div>
-                {parseFloat(diff)>0&&<div className="h2h-annual-verdict h2h-green">{aW?d.a:d.b} saves ₹{diff}/yr</div>}
+                {diff>0&&(
+                  <div className="h2h-ac-delta">
+                    <span className="h2h-ac-delta-label">Annual saving</span>
+                    <span className="h2h-ac-delta-val h2h-green">{diffFmt}/yr</span>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Per-trade */}
       <div className="h2h-section">
         <div className="h2h-section-title">{SEC.perTrade}</div>
-        <div className="h2h-table">
-          <div className="h2h-th"><span>TRADE TYPE</span><span>{d.a.toUpperCase()}</span><span>{d.b.toUpperCase()}</span><span>GAP</span></div>
+        <div className="h2h-table h2h-table-4col">
+          <div className="h2h-th"><span>TRADE TYPE</span><span>{d.a.toUpperCase()}</span><span>{d.b.toUpperCase()}</span><span>DIFFERENCE</span></div>
           {d.perTrade.map((r,i)=>{
-            const aW=r.av<=r.bv,gap=Math.abs(r.av-r.bv);
+            const aW=r.av<=r.bv, gap=Math.abs(r.av-r.bv);
+            const isDelivery=r.type==='Delivery';
             return(
-              <div key={i} className="h2h-tr">
-                <span className="h2h-td-label"><div>{r.type}</div><div className="h2h-td-sub">{r.sub}</div></span>
-                <span className={`h2h-td-val${aW?' h2h-green':''}`}>₹{fmt(r.av,2)}</span>
-                <span className={`h2h-td-val${(!aW&&gap>0.01)?' h2h-green':''}`}>₹{fmt(r.bv,2)}</span>
-                <span className="h2h-td-gap">{gap<0.01?'—':'₹'+fmt(gap,2)}</span>
+              <div key={i} className={`h2h-tr h2h-tr-trade${isDelivery?' h2h-tr-highlight':''}`}>
+                <span className="h2h-td-label">
+                  <div className="h2h-tl-type">{r.type}</div>
+                  <div className="h2h-tl-sub">{r.sub}</div>
+                </span>
+                <span className={`h2h-td-num${aW?' h2h-green':''}`}>₹{fmt(r.av,2)}</span>
+                <span className={`h2h-td-num${(!aW&&gap>0.01)?' h2h-green':''}`}>₹{fmt(r.bv,2)}</span>
+                <span className="h2h-td-gap-v">
+                  {gap<0.01
+                    ?<span className="h2h-gap-tie">—</span>
+                    :<><span className="h2h-gap-amt">₹{fmt(gap,2)}</span><span className="h2h-gap-who"> cheaper for {aW?d.a:d.b}</span></>
+                  }
+                </span>
               </div>
             );
           })}
         </div>
       </div>
-      <H2HTable title={SEC.trading}       rows={d.trading}       aName={d.a} bName={d.b}/>
-      <H2HTable title={SEC.demat}         rows={d.demat}         aName={d.a} bName={d.b}/>
-      <H2HTable title={SEC.mtf}           rows={d.mtf}           aName={d.a} bName={d.b}/>
-      <H2HTable title={SEC.settlement}    rows={d.settlement}    aName={d.a} bName={d.b}/>
-      <H2HTable title={SEC.services}      rows={d.services}      aName={d.a} bName={d.b}/>
-      <H2HTable title={SEC.account}       rows={d.account}       aName={d.a} bName={d.b}/>
-      {d.documents&&<H2HTable title={SEC.documents} rows={d.documents} aName={d.a} bName={d.b}/>}
-      {d.instruments&&<H2HTable title={SEC.instruments} rows={d.instruments} aName={d.a} bName={d.b}/>}
-      <H2HTable title={SEC.modifications} rows={d.modifications} aName={d.a} bName={d.b}/>
-      <div className="h2h-footnote">₹50K delivery baseline. Govt charges (STT, exchange, SEBI, stamp duty) are identical at every broker and not counted in the gap. Always verify current charges with your broker before trading.</div>
+
+      {/* Collapsible charge sections */}
+      <H2HTable title={SEC.trading}       rows={d.trading}       aName={d.a} bName={d.b} collapsed={true}/>
+      <H2HTable title={SEC.demat}         rows={d.demat}         aName={d.a} bName={d.b} collapsed={true}/>
+      <H2HTable title={SEC.mtf}           rows={d.mtf}           aName={d.a} bName={d.b} collapsed={true}/>
+      <H2HTable title={SEC.settlement}    rows={d.settlement}    aName={d.a} bName={d.b} collapsed={true}/>
+      <H2HTable title={SEC.services}      rows={d.services}      aName={d.a} bName={d.b} collapsed={true}/>
+      <H2HTable title={SEC.account}       rows={d.account}       aName={d.a} bName={d.b} collapsed={true}/>
+      {d.documents&&<H2HTable title={SEC.documents} rows={d.documents} aName={d.a} bName={d.b} collapsed={true}/>}
+      {d.instruments&&<H2HTable title={SEC.instruments} rows={d.instruments} aName={d.a} bName={d.b} collapsed={true}/>}
+      <H2HTable title={SEC.modifications} rows={d.modifications} aName={d.a} bName={d.b} collapsed={true}/>
+
+      <div className="h2h-footnote">Govt charges (STT, exchange, SEBI, stamp duty) are fixed by law — identical at every broker. Always verify current charges before trading.</div>
     </div>
   );
 }
@@ -2260,7 +2347,7 @@ export default function BrokersPage() {
         {TABS.map(t=>(
           <button key={t} className={`brk-tab-btn${tab===t?' brk-tab-active':''}`} onClick={()=>setTab(t)}>
             <span className="brk-tab-icon">{
-              t==='Rankings'?'↓':t==='Direct Comparison'?'⚔':t==='Charge Guide'?'≋':t==='Brokerage Calc'?'₹':t==='MTF Comparison'?'%':'▦'
+              t==='Rankings'?'↓':t==='Direct Comparison'?'⚔':t==='Charge Guide'?'≋':t==='Brokerage Calc'?'₹':'▦'
             }</span>
             <span className="brk-tab-label">{t}</span>
           </button>
@@ -2816,7 +2903,7 @@ export default function BrokersPage() {
 
 
       <div className="brk-footer">
-        Data sourced from official broker websites, fee documents, and NSE filings. Regulatory charges (STT, exchange fee, SEBI fee, stamp duty) are fixed by government and exchanges — identical at every broker. Always verify current charges before trading. No affiliates. No paid placements. No sponsored rankings. ★ Editor's Pick = editorial judgment based on platform quality, financial strength, and track record — not cost alone. Not sponsored.
+        Regulatory charges are fixed by law and identical at every broker. Always verify current charges before trading.
       </div>
     </div>
   );
