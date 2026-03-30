@@ -17,7 +17,7 @@ function fmtCr(n) {
   return `${sign}₹${abs.toFixed(0)} Cr`;
 }
 const HOLIDAYS_FIIDII = new Set([
-  '2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31',
+  '2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
   '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26',
   '2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25',
 ]);
@@ -150,15 +150,30 @@ function FiiDiiChart({ history }) {
 }
 
 export default function FiiDii() {
-  const [d, setD]       = useState(null);
-  const [loading, setL] = useState(true);
-  const [error, setE]   = useState(false);
+  const [d, setD]           = useState(null);
+  const [loading, setL]     = useState(true);
+  const [error, setE]       = useState(false);
+  const [refreshing, setR]  = useState(false);
+  const [lastFetch, setLF]  = useState(null);
 
-  const doFetch = () => {
+  const doFetch = (manual = false) => {
+    if (manual) setR(true); else setL(true);
     fetch('/api/fiidii')
       .then(r => r.json())
-      .then(data => { if (data.error) setE(true); else { setD(data); setE(false); } setL(false); })
-      .catch(() => { setE(true); setL(false); });
+      .then(data => {
+        if (data.error) setE(true);
+        else { setD(data); setE(false); setLF(new Date()); }
+        setL(false); setR(false);
+      })
+      .catch(() => { setE(true); setL(false); setR(false); });
+  };
+
+  const manualRefresh = async () => {
+    setR(true);
+    // First trigger the store to fetch fresh data
+    try { await fetch('/api/fiidii-store', { method: 'GET' }); } catch(_) {}
+    // Then fetch the updated data
+    setTimeout(() => doFetch(true), 2000);
   };
 
   useEffect(() => {
@@ -172,6 +187,9 @@ export default function FiiDii() {
     <div className="fiidii-unavail">
       <div className="fiidii-unavail-msg">FII / DII data unavailable</div>
       <div className="fiidii-unavail-sub">NSE intermittently blocks server requests. Updates at 5pm / 6:30pm / 7pm IST.</div>
+      <button onClick={manualRefresh} disabled={refreshing} style={{marginTop:10,fontFamily:'var(--mono)',fontSize:11,fontWeight:700,color:'var(--accent)',background:'rgba(74,158,255,0.08)',border:'1px solid rgba(74,158,255,0.2)',borderRadius:4,padding:'6px 14px',cursor:'pointer'}}>
+        {refreshing ? '⟳ Fetching...' : '↻ Refresh Now'}
+      </button>
     </div>
   );
 
@@ -253,6 +271,19 @@ export default function FiiDii() {
           {fP && !dP  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">FII buying · DII selling</div></>}
           {!fP && dP  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">DII buying · FII selling</div></>}
           <div className="fiidii-cv2-sub">{latest.date ? `As of ${fmtDateFull(latest.date)}` : 'Latest'} · Updates 5pm / 6:30pm / 7pm IST</div>
+          <button
+            onClick={manualRefresh}
+            disabled={refreshing}
+            style={{
+              marginTop:8, fontFamily:'var(--mono)', fontSize:10, fontWeight:700,
+              color: refreshing ? 'var(--text3)' : 'var(--accent)',
+              background: 'rgba(74,158,255,0.08)', border: '1px solid rgba(74,158,255,0.2)',
+              borderRadius:4, padding:'4px 10px', cursor: refreshing ? 'default' : 'pointer',
+              display:'block', width:'100%',
+            }}
+          >
+            {refreshing ? '⟳ Fetching...' : '↻ Refresh Now'}
+          </button>
         </div>
       </div>
     </div>

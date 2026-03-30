@@ -1151,26 +1151,29 @@ function Cheatsheet(){
           {[
             {tag:'Long-term investor',
              brokers:[
-               {name:'Zerodha', amt:'₹7,148/yr', note:'★ Editor pick — platform + trust', highlight:true},
-               {name:'Dhan',    amt:'₹7,045/yr', note:'₹103/yr cheaper'},
+               {name:'Zerodha', amt:'₹7,148/yr', note:'★ Editor pick — platform + trust', hlZerodha:true},
+               {name:'Dhan',    amt:'₹7,045/yr', note:'₹103/yr cheaper', hlDhan:true},
              ],
              delta:'₹103/yr apart — effectively a tie',
              sub:'5 delivery trades/mo, ₹50K avg'},
             {tag:'Active trader',
              brokers:[
-               {name:'Zerodha', amt:'₹14,638/yr', note:'★ Editor pick — platform + trust', highlight:true},
-               {name:'Dhan',    amt:'₹14,514/yr', note:'₹124/yr cheaper'},
+               {name:'Zerodha', amt:'₹14,638/yr', note:'★ Editor pick — platform + trust', hlZerodha:true},
+               {name:'Dhan',    amt:'₹14,514/yr', note:'₹124/yr cheaper', hlDhan:true},
              ],
              delta:'₹124/yr apart — effectively a tie',
              sub:'3 delivery + 30 intraday/mo'},
           ].map((c,i)=>(
             <div key={i} className="cg-verdict-card">
-              <div className="cg-verdict-tag cg-tag-neutral">{c.tag}</div>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+                <div className="cg-verdict-tag cg-tag-neutral">{c.tag}</div>
+                <span style={{fontFamily:'var(--mono)',fontSize:9,fontWeight:900,letterSpacing:'1px',color:'#A855F7',background:'rgba(168,85,247,0.1)',border:'1px solid rgba(168,85,247,0.2)',borderRadius:3,padding:'2px 7px'}}>TIE</span>
+              </div>
               <div className="cg-verdict-brokers">
                 {c.brokers.map((b,j)=>(
-                  <div key={j} className={`cg-verdict-broker-row${b.highlight?' cg-vb-highlight':''}`}>
+                  <div key={j} className={`cg-verdict-broker-row${b.hlZerodha?' cg-vb-highlight-green':b.hlDhan?' cg-vb-highlight-dhan':''}`}>
                     <div className="cg-vb-left">
-                      <span className="cg-verdict-name">{b.name}</span>
+                      <span className={`cg-verdict-name${b.hlZerodha?' cg-verdict-name-green':b.hlDhan?' cg-verdict-name-dhan':''}`}>{b.name}</span>
                       <span className="cg-vb-note">{b.note}</span>
                     </div>
                     <span className="cg-verdict-amt">{b.amt}</span>

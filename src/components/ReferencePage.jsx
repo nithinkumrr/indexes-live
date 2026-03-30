@@ -102,11 +102,11 @@ function getTodayInfo() {
     subAction = holidayName || 'National holiday';
     expiryNote = null;
   } else if (isExpiryToday && isMonthlyExpiry) {
-    riskLevel = 'EXTREME'; action = 'Monthly expiry. Avoid new positions after 1 PM';
-    subAction = 'Gamma and theta spike. Exits before close.';
+    riskLevel = 'EXTREME'; action = 'Monthly expiry. Gamma and volatility elevated — premium decay accelerates into close.';
+    subAction = 'OTM options can go to zero rapidly in final 30 minutes.';
     expiryNote = 'Nifty Monthly Expiry today';
   } else if (isExpiryToday) {
-    riskLevel = 'HIGH'; action = 'Expiry day. Avoid new positions after 2 PM';
+    riskLevel = 'HIGH'; action = 'Expiry day. Elevated gamma risk — bid-ask spreads widen in final 90 minutes.';
     subAction = 'Theta decay is fastest today. Close or roll by 3:20 PM.';
     expiryNote = 'Nifty Weekly Expiry today';
   } else if (isExpiryWeek) {
@@ -683,7 +683,7 @@ function TodayPlaybook() {
     tips = [t.holidayName || 'Market closed', 'Use today to review open positions', 'Plan entries for next trading day', 'No SL orders needed'];
   } else if (t.riskLevel === 'EXTREME') {
     marketType = 'Monthly Expiry Day'; strategy = 'High gamma risk, exits before close';
-    tips = ['Maximum gamma risk', 'Avoid new positions after 1 PM', 'Spreads only if entering', 'Close all before 3:20 PM'];
+    tips = ['Maximum gamma risk — premiums move faster', 'OTM options can go to zero rapidly', 'Wide bid-ask spreads common near close', 'Volume-weighted pricing often skewed near 3:20 PM'];
   } else if (t.riskLevel === 'HIGH') {
     marketType = 'Weekly Expiry Day'; strategy = 'Fastest theta decay of the week';
     tips = ['Theta decay is fastest today', 'Avoid buying after 2 PM', 'OTM selling works if trend is clear', 'Roll or close by 3:20 PM'];

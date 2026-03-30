@@ -6338,7 +6338,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .cg-tag-neutral   { color: var(--text2); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
 .cg-verdict-brokers { display: flex; flex-direction: column; gap: 0; margin: 10px 0 8px; }
 .cg-verdict-broker-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: var(--r); margin-bottom: 4px; background: transparent; }
-.cg-vb-highlight  { background: rgba(74,158,255,.07); border: 1px solid rgba(74,158,255,.12); }
+.cg-vb-highlight        { background: rgba(74,158,255,.07); border: 1px solid rgba(74,158,255,.12); }
+.cg-vb-highlight-green  { background: rgba(0,200,150,.07); border: 1px solid rgba(0,200,150,.18); border-radius: var(--r); }
+.cg-vb-highlight-dhan   { background: rgba(0,200,150,.04); border: 1px solid rgba(0,200,150,.1); border-radius: var(--r); }
+.cg-verdict-name-green  { color: var(--gain) !important; }
+.cg-verdict-name-dhan   { color: var(--gain) !important; }
+.cg-vb-highlight-green .cg-vb-note { color: rgba(0,200,150,.7); }
+.cg-vb-highlight-dhan  .cg-vb-note { color: rgba(0,200,150,.5); }
 .cg-vb-left       { display: flex; flex-direction: column; gap: 3px; }
 .cg-vb-note       { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 .cg-vb-highlight .cg-verdict-name { color: var(--accent); }
