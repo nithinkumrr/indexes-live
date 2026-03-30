@@ -462,7 +462,7 @@ const SCENARIOS = {
 const fmt  = (v, d=0) => v != null ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: d }) : '—';
 const fmtR = (v) => v != null ? `₹${fmt(v)}` : '—';
 
-const TABS = ['Rankings', 'Direct Comparison', 'Cheatsheet', 'Brokerage Calc', 'MTF Comparison', 'Market Data'];
+const TABS = ['Rankings', 'Direct Comparison', 'Charge Guide', 'Brokerage Calc', 'MTF Comparison', 'Market Data'];
 
 // ── UNIVERSAL BROKERAGE CALCULATOR ───────────────────────────────────────────
 
@@ -963,7 +963,7 @@ const CS_SECTIONS = [
   { id:'regulatory',label:'Regulatory charges',    num:'08' },
 ];
 
-// All data verified from comparebroker.info screenshots
+
 const CS_DATA = {
   // Annual cost by profile
   annual: {
@@ -1191,8 +1191,8 @@ function Cheatsheet() {
   return (
     <div className="cs-wrap">
       <div className="cs-header">
-        <div className="cs-title">Every charge, every broker</div>
-        <div className="cs-subtitle">8 charge categories. 3 trader profiles. The only comparison you need before picking a broker.</div>
+        <div className="cs-title">Broker Charges — Decoded</div>
+        <div className="cs-subtitle">8 charge categories · 3 trader profiles · All 7 major brokers · Every rupee calculated</div>
       </div>
 
       {/* Nav pills */}
@@ -1417,7 +1417,7 @@ function Cheatsheet() {
       </div>
 
       <div className="cs-footnote">
-        Data verified from comparebroker.info and official broker websites. Annual profiles are illustrative — actual costs depend on trade frequency, size, and timing. All figures include GST where applicable. Verify before trading.
+        All figures include GST where applicable. Annual profiles are indicative — actual costs vary by trade frequency, size and timing. Always verify current charges with your broker before trading.
       </div>
     </div>
   );
@@ -2157,7 +2157,7 @@ function HeadToHead(){
       {d.documents&&<H2HTable title={SEC.documents} rows={d.documents} aName={d.a} bName={d.b}/>}
       {d.instruments&&<H2HTable title={SEC.instruments} rows={d.instruments} aName={d.a} bName={d.b}/>}
       <H2HTable title={SEC.modifications} rows={d.modifications} aName={d.a} bName={d.b}/>
-      <div className="h2h-footnote">Data sourced from comparebroker.info and official broker websites. ₹50K delivery baseline. Govt charges (STT, exchange, SEBI, stamp duty) are identical at every broker and not shown in the gap. Verify all charges before trading.</div>
+      <div className="h2h-footnote">₹50K delivery baseline. Govt charges (STT, exchange, SEBI, stamp duty) are identical at every broker and not counted in the gap. Always verify current charges with your broker before trading.</div>
     </div>
   );
 }
@@ -2260,7 +2260,7 @@ export default function BrokersPage() {
         {TABS.map(t=>(
           <button key={t} className={`brk-tab-btn${tab===t?' brk-tab-active':''}`} onClick={()=>setTab(t)}>
             <span className="brk-tab-icon">{
-              t==='Rankings'?'↓':t==='Direct Comparison'?'⚔':t==='Cheatsheet'?'≋':t==='Brokerage Calc'?'₹':t==='MTF Comparison'?'%':'▦'
+              t==='Rankings'?'↓':t==='Direct Comparison'?'⚔':t==='Charge Guide'?'≋':t==='Brokerage Calc'?'₹':t==='MTF Comparison'?'%':'▦'
             }</span>
             <span className="brk-tab-label">{t}</span>
           </button>
@@ -2743,7 +2743,7 @@ export default function BrokersPage() {
       )}
 
       {/* ── MARKET DATA ── */}
-      {tab==='Cheatsheet' && (
+      {tab==='Charge Guide' && (
         <div className="brk-content">
           <Cheatsheet />
         </div>
