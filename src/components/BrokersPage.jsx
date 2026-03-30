@@ -462,7 +462,7 @@ const SCENARIOS = {
 const fmt  = (v, d=0) => v != null ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: d }) : '—';
 const fmtR = (v) => v != null ? `₹${fmt(v)}` : '—';
 
-const TABS = ['Rankings', 'Direct Comparison', 'Charge Guide', 'Brokerage Calc', 'Market Data'];
+const TABS = ['Rankings', 'Direct Comparison', 'Charges Guide', 'Brokerage Calc', 'Market Data'];
 
 // ── UNIVERSAL BROKERAGE CALCULATOR ───────────────────────────────────────────
 
@@ -965,8 +965,8 @@ const CG_DATA = {
   annual:{
     longterm:{ label:'Long-term investor', sub:'5 delivery trades/mo, ₹50K avg',
       rows:[
-        {name:'Dhan',            brk:0,     dp:354, amc:0,   reg:6691, total:7045,  best:true},
-        {name:'Zerodha',         brk:0,     dp:368, amc:89,  reg:6691, total:7148,  second:true},
+        {name:'Dhan',            brk:0,     dp:354, amc:0,   reg:6691, total:7045,  second:true},
+        {name:'Zerodha',         brk:0,     dp:368, amc:89,  reg:6691, total:7148,  best:true},
         {name:'Groww',           brk:2832,  dp:480, amc:0,   reg:6691, total:10003},
         {name:'Angel One',       brk:2832,  dp:480, amc:283, reg:6691, total:10286},
         {name:'Upstox',          brk:2832,  dp:480, amc:300, reg:6691, total:10303},
@@ -975,8 +975,8 @@ const CG_DATA = {
       ]},
     active:{ label:'Active trader', sub:'3 delivery + 30 intraday trades/mo',
       rows:[
-        {name:'Dhan',            brk:6372,  dp:885,  amc:0,   reg:7257, total:14514, best:true},
-        {name:'Zerodha',         brk:6372,  dp:920,  amc:89,  reg:7257, total:14638, second:true},
+        {name:'Dhan',            brk:6372,  dp:885,  amc:0,   reg:7257, total:14514, second:true},
+        {name:'Zerodha',         brk:6372,  dp:920,  amc:89,  reg:7257, total:14638, best:true},
         {name:'Angel One',       brk:8071,  dp:1200, amc:283, reg:7257, total:16811},
         {name:'Kotak Securities',brk:16992, dp:1200, amc:600, reg:7257, total:26049},
         {name:'Groww',           brk:18691, dp:1200, amc:0,   reg:7257, total:27148},
@@ -988,7 +988,7 @@ const CG_DATA = {
     summary:'Zerodha & Dhan charge zero brokerage. Others charge ₹20–₹590 on a ₹50K trade.',
     rows:[
       {name:'Zerodha',          rate:'Zero',         brk:0,      total:126.85, best:true},
-      {name:'Dhan',             rate:'Zero',         brk:0,      total:126.26, best:true},
+      {name:'Dhan',             rate:'Zero',         brk:0,      total:126.26},
       {name:'Groww',            rate:'₹5–₹20',       brk:47.20,  total:178.71},
       {name:'Angel One',        rate:'₹2–₹20',       brk:47.20,  total:178.71},
       {name:'Upstox',           rate:'₹20 flat',     brk:47.20,  total:178.71},
@@ -1001,7 +1001,7 @@ const CG_DATA = {
     summary:'Most brokers cap at ₹20/order. Kotak cheaper at ₹10. Groww/Upstox more expensive on small trades.',
     rows:[
       {name:'Zerodha',          rate:'0.03% or ₹20', brk:17.70, annual:21240, best:true},
-      {name:'Dhan',             rate:'0.03% or ₹20', brk:17.70, annual:21240, best:true},
+      {name:'Dhan',             rate:'0.03% or ₹20', brk:17.70, annual:21240},
       {name:'Angel One',        rate:'0.03% or ₹20', brk:17.70, annual:21240, best:true},
       {name:'Kotak Securities', rate:'0.05% or ₹10', brk:23.60, annual:28320},
       {name:'Groww',            rate:'₹5–₹20',       brk:47.20, annual:56640},
@@ -1073,7 +1073,7 @@ function CgBrokerBadge({name, best, second}){
   return(
     <span className="cg-broker-cell">
       {name}
-      {best&&<span className="cg-badge-best">CHEAPEST</span>}
+      {best&&<span className="cg-badge-best">★ PICK</span>}
       {second&&<span className="cg-badge-second">2ND</span>}
     </span>
   );
@@ -1149,34 +1149,38 @@ function Cheatsheet(){
         </div>
         <div className="cg-verdict-grid">
           {[
-            {tag:'Best for long-term investing', tagColor:'gain',
-             winner:'Dhan', winAmt:'₹7,045/yr',
-             second:'Zerodha', secAmt:'₹7,148/yr',
-             delta:'₹103/yr difference',
+            {tag:'Long-term investor',
+             brokers:[
+               {name:'Zerodha', amt:'₹7,148/yr', note:'★ Editor pick — platform + trust', highlight:true},
+               {name:'Dhan',    amt:'₹7,045/yr', note:'₹103/yr cheaper'},
+             ],
+             delta:'₹103/yr apart — effectively a tie',
              sub:'5 delivery trades/mo, ₹50K avg'},
-            {tag:'Best for active trading', tagColor:'gain',
-             winner:'Dhan', winAmt:'₹14,514/yr',
-             second:'Zerodha', secAmt:'₹14,638/yr',
-             delta:'₹124/yr difference',
+            {tag:'Active trader',
+             brokers:[
+               {name:'Zerodha', amt:'₹14,638/yr', note:'★ Editor pick — platform + trust', highlight:true},
+               {name:'Dhan',    amt:'₹14,514/yr', note:'₹124/yr cheaper'},
+             ],
+             delta:'₹124/yr apart — effectively a tie',
              sub:'3 delivery + 30 intraday/mo'},
           ].map((c,i)=>(
             <div key={i} className="cg-verdict-card">
-              <div className={`cg-verdict-tag cg-tag-${c.tagColor}`}>{c.tag}</div>
-              <div className="cg-verdict-winner">
-                <span className="cg-verdict-name">{c.winner}</span>
-                <span className="cg-verdict-amt">{c.winAmt}</span>
+              <div className="cg-verdict-tag cg-tag-neutral">{c.tag}</div>
+              <div className="cg-verdict-brokers">
+                {c.brokers.map((b,j)=>(
+                  <div key={j} className={`cg-verdict-broker-row${b.highlight?' cg-vb-highlight':''}`}>
+                    <div className="cg-vb-left">
+                      <span className="cg-verdict-name">{b.name}</span>
+                      <span className="cg-vb-note">{b.note}</span>
+                    </div>
+                    <span className="cg-verdict-amt">{b.amt}</span>
+                  </div>
+                ))}
               </div>
-              <div className="cg-verdict-runner">
-                <span className="cg-verdict-runner-label">vs {c.second}</span>
-                <span className="cg-verdict-runner-amt">{c.secAmt}</span>
-              </div>
-              <div className="cg-verdict-delta">{c.delta} — near tie</div>
+              <div className="cg-verdict-delta">{c.delta}</div>
               <div className="cg-verdict-sub">{c.sub}</div>
             </div>
           ))}
-        </div>
-        <div className="cg-info-box">
-          The cheapest broker depends on your trading style. No single broker wins across all categories. These totals include brokerage, GST, DP, AMC and all regulatory charges.
         </div>
       </div>
 
@@ -2360,7 +2364,7 @@ export default function BrokersPage() {
         {TABS.map(t=>(
           <button key={t} className={`brk-tab-btn${tab===t?' brk-tab-active':''}`} onClick={()=>setTab(t)}>
             <span className="brk-tab-icon">{
-              t==='Rankings'?'↓':t==='Direct Comparison'?'⚔':t==='Charge Guide'?'≋':t==='Brokerage Calc'?'₹':'▦'
+              t==='Rankings'?'↓':t==='Direct Comparison'?'⚔':t==='Charges Guide'?'≋':t==='Brokerage Calc'?'₹':'▦'
             }</span>
             <span className="brk-tab-label">{t}</span>
           </button>
@@ -2843,7 +2847,7 @@ export default function BrokersPage() {
       )}
 
       {/* ── MARKET DATA ── */}
-      {tab==='Charge Guide' && (
+      {tab==='Charges Guide' && (
         <div className="brk-content">
           <Cheatsheet />
         </div>

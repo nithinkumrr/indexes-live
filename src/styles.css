@@ -6071,7 +6071,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* Badges */
 .cg-broker-cell   { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
-.cg-badge-best    { font-family: var(--mono); font-size: 8px; font-weight: 900; letter-spacing: 1px; color: var(--gain); background: rgba(0,255,148,.12); border: 1px solid rgba(0,255,148,.25); border-radius: 3px; padding: 1px 5px; flex-shrink: 0; }
+.cg-badge-best    { font-family: var(--mono); font-size: 8px; font-weight: 900; letter-spacing: 1px; color: var(--accent); background: rgba(74,158,255,.12); border: 1px solid rgba(74,158,255,.25); border-radius: 3px; padding: 1px 5px; flex-shrink: 0; }
 .cg-badge-second  { font-family: var(--mono); font-size: 8px; font-weight: 900; letter-spacing: 1px; color: var(--accent); background: rgba(74,158,255,.1); border: 1px solid rgba(74,158,255,.2); border-radius: 3px; padding: 1px 5px; flex-shrink: 0; }
 .cg-free-badge    { font-family: var(--mono); font-size: 11px; font-weight: 900; letter-spacing: 1px; color: var(--gain); background: rgba(0,255,148,.1); border: 1px solid rgba(0,255,148,.2); border-radius: 3px; padding: 2px 8px; }
 .cg-warn-tag      { font-family: var(--mono); font-size: 8px; font-weight: 900; color: var(--loss); background: rgba(255,80,80,.1); border: 1px solid rgba(255,80,80,.25); border-radius: 3px; padding: 1px 5px; }
@@ -6325,3 +6325,14 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .mkt-charts-grid { grid-template-columns: 1fr; }
   .mkt-stats-row   { grid-template-columns: repeat(2,1fr); }
 }
+
+/* Verdict card redesign */
+.cg-tag-neutral   { color: var(--text2); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
+.cg-verdict-brokers { display: flex; flex-direction: column; gap: 0; margin: 10px 0 8px; }
+.cg-verdict-broker-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: var(--r); margin-bottom: 4px; background: transparent; }
+.cg-vb-highlight  { background: rgba(74,158,255,.07); border: 1px solid rgba(74,158,255,.12); }
+.cg-vb-left       { display: flex; flex-direction: column; gap: 3px; }
+.cg-vb-note       { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.cg-vb-highlight .cg-verdict-name { color: var(--accent); }
+.cg-vb-highlight .cg-vb-note      { color: rgba(74,158,255,.7); }
+.cg-verdict-delta { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-bottom: 4px; font-style: italic; }
