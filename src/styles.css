@@ -5823,7 +5823,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 
 /* ── Head-to-Head ─────────────────────────────────────────────────── */
-.h2h-wrap         { max-width: 960px; }
+.h2h-wrap         { max-width: 100%; }
 .h2h-header       { margin-bottom: 20px; }
 .h2h-title        { font-family: var(--mono); font-size: 20px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; margin-bottom: 5px; }
 .h2h-sub          { font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.6; }

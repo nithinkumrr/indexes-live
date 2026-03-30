@@ -462,7 +462,7 @@ const SCENARIOS = {
 const fmt  = (v, d=0) => v != null ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: d }) : '—';
 const fmtR = (v) => v != null ? `₹${fmt(v)}` : '—';
 
-const TABS = ['Rankings', 'Head to Head', 'Cheatsheet', 'Calculator', 'MTF Comparison', 'All Charges', 'Market Data'];
+const TABS = ['Rankings', 'Direct Comparison', 'Cheatsheet', 'Calculator', 'MTF Comparison', 'Market Data'];
 
 // ── CHEATSHEET COMPONENT ──────────────────────────────────────────────────────
 
@@ -1592,7 +1592,7 @@ function HeadToHead(){
     <div className="h2h-wrap">
       <div className="h2h-header">
         <div className="h2h-title">Head-to-Head</div>
-        <div className="h2h-sub">Same trade. Different broker. Pick a matchup — see the full breakdown across all 11 charge categories.</div>
+        
       </div>
       <div className="h2h-pair-grid">
         {PAIR_LIST.map(p=>(
@@ -1777,7 +1777,7 @@ export default function BrokersPage() {
         {TABS.map(t=>(
           <button key={t} className={`brk-tab-btn${tab===t?' brk-tab-active':''}`} onClick={()=>setTab(t)}>
             <span className="brk-tab-icon">{
-              t==='Rankings'?'↓':t==='Head to Head'?'⚔':t==='Cheatsheet'?'≋':t==='Calculator'?'₹':t==='MTF Comparison'?'%':t==='All Charges'?'≡':'📊'
+              t==='Rankings'?'↓':t==='Direct Comparison'?'⚔':t==='Cheatsheet'?'≋':t==='Calculator'?'₹':t==='MTF Comparison'?'%':'▦'
             }</span>
             <span className="brk-tab-label">{t}</span>
           </button>
@@ -2185,7 +2185,7 @@ export default function BrokersPage() {
       )}
 
             {/* ── ALL CHARGES ── */}
-      {tab==='All Charges' && (
+      {tab==='__REMOVED__' && (
         <div className="brk-content">
           <div className="brk-charge-nav">
             {[['demat','Demat Charges'],['mtf','MTF'],['settlement','Settlement'],['service','Services'],['account','Account'],['mods','Modifications']].map(([v,l])=>(
@@ -2299,7 +2299,7 @@ export default function BrokersPage() {
         </div>
       )}
 
-      {tab==='Head to Head' && (
+      {tab==='Direct Comparison' && (
         <div className="brk-content">
           <HeadToHead brokers={BROKERS} />
         </div>
