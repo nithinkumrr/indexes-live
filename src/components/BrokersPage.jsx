@@ -578,11 +578,6 @@ export default function BrokersPage() {
             </div>
           </div>
 
-          {/* Regulatory note */}
-          <div className="brk-reg-note">
-            <span className="brk-reg-num">₹111.24</span> govt charges on ₹50K delivery — STT ₹100 + exchange ₹3.07 + SEBI ₹0.10 + stamp ₹7.50 + GST ₹0.57. Fixed by law, same at every broker.<br/>Futures calculated on ₹1.5L contract (realistic minimum). Budget 2026: futures STT 0.05%, options STT 0.15%, effective April 1 2026.
-          </div>
-
           {/* Broker cards */}
           <div className="brk-cards-list">
             {sorted.map((b,i)=>(
@@ -767,13 +762,7 @@ export default function BrokersPage() {
                       </div>
                       <div className="brk-card-charge-section">
                         <div className="brk-ccs-title">MTF & API</div>
-                        {b.mtfSlabs ? b.mtfSlabs.map((s,si)=>(
-                          <div key={si} className="brk-ccs-row">
-                            <span>{s[0]}</span>
-                            <span className={parseFloat(s[1])>=15?'brk-card-red':parseFloat(s[1])<=13?'brk-green':''}>{s[1]}</span>
-                          </div>
-                        )) : <div className="brk-ccs-row"><span>MTF interest</span><span>{b.mtfLabel||'—'}</span></div>}
-                        <div className="brk-ccs-row" style={{marginTop:4,borderTop:'1px solid var(--border)',paddingTop:4}}><span>MTF brokerage</span><span>{b.mtfBrokerage}</span></div>
+                        <div className="brk-ccs-row"><span>MTF brokerage</span><span>{b.mtfBrokerage||'—'}</span></div>
                         <div className="brk-ccs-row"><span>API access</span><span>{b.apiNote||b.api}</span></div>
                         <div className="brk-ccs-row"><span>Margin shortfall</span><span className={b.marginShortfall==='0.035%/day'?'brk-green':''}>{b.marginShortfall}</span></div>
                       </div>
