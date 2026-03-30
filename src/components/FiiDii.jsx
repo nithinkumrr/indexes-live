@@ -16,11 +16,7 @@ function fmtCr(n) {
   if (abs >= 10000) return `${sign}₹${(abs / 100).toFixed(1)}K Cr`;
   return `${sign}₹${abs.toFixed(0)} Cr`;
 }
-const HOLIDAYS_FIIDII = new Set([
-  '2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31',
-  '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26',
-  '2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25',
-]);
+const HOLIDAYS_FIIDII = new Set(['2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31','2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25']);
 
 function isTradingDay() {
   const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
@@ -252,7 +248,21 @@ export default function FiiDii() {
           {!fP && !dP && <><div className="fiidii-mood fiidii-bearish">BEARISH</div><div className="fiidii-mood-sub">Both selling</div></>}
           {fP && !dP  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">FII buying · DII selling</div></>}
           {!fP && dP  && <><div className="fiidii-mood fiidii-mixed">MIXED</div><div className="fiidii-mood-sub">DII buying · FII selling</div></>}
-          <div className="fiidii-cv2-sub">{latest.date ? `As of ${fmtDateFull(latest.date)}` : 'Latest'} · Updates 5pm / 6:30pm / 7pm IST</div>
+          <div className="fiidii-cv2-sub">{(() => {
+            if (!latest.date) return 'Latest · Updates 5pm / 6:30pm / 7pm IST';
+            const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+            const dow = ist.getDay();
+            const todayIso = ist.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+            const isClosedDay = dow === 0 || dow === 6 || HOLIDAYS_FIIDII.has(todayIso);
+            const mins = ist.getHours() * 60 + ist.getMinutes();
+            const isPast5 = mins >= 1020;
+            const isToday = latest.date === todayIso && isPast5;
+            const dateLabel = isToday ? 'Today' : `As of ${fmtDateFull(latest.date)}`;
+            const updateNote = isClosedDay
+              ? 'Market closed today — data from last trading session'
+              : isPast5 ? 'Final for today' : 'Updates 5pm / 6:30pm / 7pm IST';
+            return `${dateLabel} · ${updateNote}`;
+          })()}</div>
         </div>
       </div>
     </div>

@@ -20,17 +20,17 @@ function isNSEOpen() {
 }
 
 function getHeatColor(pct) {
-  if (pct == null) return { bg:'rgba(60,62,68,0.9)', border:'rgba(80,82,90,0.5)', text:'#666' };
+  if (pct == null) return { bg:'rgba(60,62,68,0.9)', border:'rgba(80,82,90,0.5)', text:'#999' };
   const abs = Math.abs(pct), intensity = Math.min(abs / 3, 1);
   if (pct > 0) return {
     bg:     `rgba(0,${Math.round(140+intensity*60)},${Math.round(80+intensity*20)},${0.18+intensity*0.38})`,
     border: `rgba(0,${Math.round(150+intensity*55)},${Math.round(100+intensity*20)},${0.45+intensity*0.45})`,
-    text:   intensity > 0.35 ? '#00FF94' : '#00C896',
+    text:   '#000000',
   };
   return {
     bg:     `rgba(${Math.round(180+intensity*65)},${Math.round(35-intensity*15)},${Math.round(40-intensity*15)},${0.18+intensity*0.38})`,
     border: `rgba(${Math.round(200+intensity*55)},40,40,${0.45+intensity*0.45})`,
-    text:   intensity > 0.35 ? '#FF6070' : '#FF4455',
+    text:   '#000000',
   };
 }
 

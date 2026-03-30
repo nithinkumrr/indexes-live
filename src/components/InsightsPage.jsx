@@ -241,19 +241,19 @@ function getWarnings(np, vix, fiiNet, diiNet, posInRange, range) {
   const avg = AVG_RANGES.nifty;
 
   if (range > avg * 1.5 && np < -1)
-    warnings.push('Avoid chasing breakdowns after large red candles. Extended moves often see brief bounces before continuation.');
+    warnings.push('Extended moves after large red candles historically see brief bounces before continuation. Momentum often stalls temporarily.');
   if (vix && vix > 18)
     warnings.push(`VIX at ${vix.toFixed(1)} is elevated. High volatility means wider stop-losses needed. Reduce position size accordingly.`);
   if (fiiNet !== null && fiiNet < 0 && diiNet !== null && diiNet > 0)
-    warnings.push('FIIs selling while DIIs absorb creates a choppy, two-sided market. Momentum trades can fail quickly in this setup.');
+    warnings.push('FII selling with DII absorption creates two-sided institutional flow. This pattern historically produces choppy intraday price action.');
   if (posInRange !== null && posInRange > 0.8 && np > 1.2)
-    warnings.push('Price near session high after a strong move. Buying near highs late in the session carries increased reversal risk.');
+    warnings.push('Price near session high after a strong move. Historical sessions with similar profiles show increased reversal risk late in session.');
   if (posInRange !== null && posInRange < 0.2 && np < -1.2)
-    warnings.push('Price near session low after a large decline. Shorting near lows late in session carries increased bounce risk.');
+    warnings.push('Price near session low after a large decline. Historical sessions with similar profiles show elevated bounce probability near close.');
   if (range < avg * 0.65)
-    warnings.push('Compressed range day. Avoid overtrading in low-volatility environments. Wait for a clear breakout with volume.');
+    warnings.push('Compressed range. Low-volatility sessions often see a directional breakout with volume as the next move. Range is tightening.');
   if (vix && vix < 12 && Math.abs(np ?? 0) < 0.3)
-    warnings.push('Low VIX with flat market. Options sellers benefit but be aware sudden events can cause sharp VIX spikes.');
+    warnings.push('Low VIX with flat market. Historically, low VIX environments can see sharp reversals when unexpected events occur.');
 
   return warnings.slice(0, 3);
 }
@@ -575,8 +575,14 @@ export default function InsightsPage({data={}, nseData={}}) {
     const nifty=nseData.nifty50||data.nifty50||{};
     const bn=nseData.banknifty||data.banknifty||{};
     const np=nifty.changePct??null,bp=bn.changePct??null;
+
+    // 15s timeout so it never hangs forever
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
     fetch('/api/insights-brief',{
       method:'POST',headers:{'Content-Type':'application/json'},
+      signal: controller.signal,
       body:JSON.stringify({
         niftyPrice:nifty.price,bnPrice:bn.price,niftyPct:np,bnPct:bp,
         vix:nseData.vix??null,
@@ -588,10 +594,15 @@ export default function InsightsPage({data={}, nseData={}}) {
         hangsengPct:data.hangseng?.changePct??null,
         crudePct:data.crude?.changePct??null,goldPct:data.gold?.changePct??null,
       }),
-    }).then(r=>r.json()).then(d=>{setBrief(d);setBriefLoading(false);}).catch(()=>setBriefLoading(false));
+    })
+    .then(r=>r.json())
+    .then(d=>{clearTimeout(timeout);setBrief(d);setBriefLoading(false);})
+    .catch(()=>{clearTimeout(timeout);setBriefLoading(false);});
   },[data,nseData,fiidii]);
 
-  useEffect(()=>{fetchBrief();},[fiidii]);
+  // Trigger on mount AND when fiidii arrives
+  useEffect(()=>{fetchBrief();},[]);
+  useEffect(()=>{ if(fiidii) fetchBrief(); },[fiidii]);
 
   // Data
   const nifty     = nseData.nifty50        || data.nifty50        || null;
@@ -792,21 +803,27 @@ export default function InsightsPage({data={}, nseData={}}) {
             </div>
           )}
 
-          {/* AI WRITE-UP lives here, directly below warnings, fills the left column */}
+          {/* AI WRITE-UP */}
           <div className="ip-ana-block ip-writeup-block">
             <div className="ip-ana-title" style={{display:'flex',alignItems:'center',gap:8}}>
               AI WRITE-UP
               <span className="ip-writeup-badge">{briefLoading?'GENERATING':brief?.cached?'CACHED':'LIVE'}</span>
+              {!briefLoading&&<button onClick={fetchBrief} style={{fontSize:9,color:'var(--text3)',background:'transparent',border:'1px solid var(--border)',borderRadius:3,padding:'1px 6px',cursor:'pointer',marginLeft:'auto',fontFamily:'var(--mono)'}}>↻ Refresh</button>}
             </div>
             <div className="ip-writeup-content">
               {briefLoading?(
-                <div className="ip-loading"><div className="ip-spinner"/><span>Generating write-up with live news and market data...</span></div>
+                <div className="ip-loading"><div className="ip-spinner"/><span>Generating write-up with live market data...</span></div>
               ):brief?.writeup?(
                 brief.writeup.split('\n').filter(p=>p.trim()).map((para,i)=>(
                   <p key={i} className="ip-writeup-para">{para.trim()}</p>
                 ))
               ):(
-                <p className="ip-writeup-para" style={{color:'var(--text3)'}}>{brief?._error?`AI error: ${brief._error}`:'Write-up not available. Refresh to try again.'}</p>
+                <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'flex-start'}}>
+                  <p className="ip-writeup-para" style={{color:'var(--text3)'}}>
+                    {brief?._error?`Could not generate write-up. ${brief._error}`:'Write-up unavailable.'}
+                  </p>
+                  <button onClick={fetchBrief} style={{fontSize:11,color:'var(--accent)',background:'rgba(74,158,255,.08)',border:'1px solid rgba(74,158,255,.2)',borderRadius:4,padding:'5px 12px',cursor:'pointer',fontFamily:'var(--mono)',fontWeight:700}}>↻ Try again</button>
+                </div>
               )}
             </div>
           </div>
@@ -925,14 +942,25 @@ export default function InsightsPage({data={}, nseData={}}) {
               const ist = getIST();
               const todayStr = getISTDateStr(ist);
               const dataDate = fiidii.date;
+              const dow = ist.getDay();
+              const isWeekend = dow === 0 || dow === 6;
+              const isHolidayToday = NSE_HOLIDAYS.has(todayStr);
+              const isClosedDay = isWeekend || isHolidayToday;
               const isPast5 = getMins() >= 1020;
               const isToday = dataDate === todayStr && isPast5;
+              const dataDateObj = new Date(dataDate+'T00:00:00');
               const dateDisplay = isToday
                 ? 'Today'
-                : new Date(dataDate+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+                : dataDateObj.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+              // Update note — only relevant on trading days after market closes
+              const updateNote = isClosedDay
+                ? `· next update: ${nextTradingLabel}`
+                : isPast5
+                  ? '· final for today'
+                  : '· updates 5 PM / 6:30 PM / 7 PM IST';
               return (
                 <span style={{fontSize:10,color:'var(--text3)',fontWeight:400,letterSpacing:0}}>
-                  · {dateDisplay} · Updates 5 PM / 6:30 PM / 7 PM IST
+                  · Data: {dateDisplay} {updateNote}
                 </span>
               );
             })()}
