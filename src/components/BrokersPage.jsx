@@ -503,11 +503,11 @@ export default function BrokersPage() {
       {/* HEADER */}
       <div className="brk-hero2">
         <div className="brk-hero2-title">Indian Broker Charges — Every Fee, Calculated</div>
-        <div className="brk-hero2-sub">16 brokers covered. No bias from affiliates or paid placements.</div>
+        
         <div className="brk-hero2-stats">
           <div className="brk-hs2">
             <div className="brk-hs2-n" style={{color:'var(--gain)'}}>₹125.99</div>
-            <div className="brk-hs2-l">Cheapest — <strong style={{color:'var(--text)'}}>Dhan</strong> &amp; <strong style={{color:'var(--accent)'}}>Zerodha ★</strong></div>
+            <div className="brk-hs2-l">Cheapest — <strong style={{color:'var(--text)',fontSize:15}}>Dhan</strong> &amp; <strong style={{color:'var(--accent)',fontSize:15}}>Zerodha ★</strong></div>
           </div>
           <div className="brk-hs2-sep">vs</div>
           <div className="brk-hs2">
@@ -525,6 +525,7 @@ export default function BrokersPage() {
             <div className="brk-hs2-l">Difference between cheapest and costliest</div>
           </div>
         </div>
+        <div className="brk-hero2-trade-note">📊 Sample trade: ₹50,000 delivery (buy + sell) — includes brokerage, STT, exchange fees, SEBI charges, stamp duty &amp; DP charge. Adjust trade size using the calculator.</div>
         <div className="brk-hero2-note">
           <span style={{color:'var(--accent)',fontWeight:900,fontSize:15}}>★ Zerodha</span> — Widely considered for combination of low cost, robust trading experience, reliability and trust. ₹13,500 Cr networth (highest of any broker in India), 15+ year track record, Kite platform, <a href="https://zerodha.com/varsity/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)',textDecoration:'underline'}}>Varsity</a> education.<br/>Costs just ₹0.59 more than Dhan on a ₹50,000 delivery trade.
 
