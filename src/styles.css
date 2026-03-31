@@ -116,6 +116,95 @@
 /* Borders — subtle on white cards */
 [data-theme="light"] .border { border-color: rgba(0,0,0,0.08) !important; }
 
+/* ── LIGHT THEME: COMPREHENSIVE DARK ELEMENT OVERRIDES ── */
+
+/* Nav bars — all sticky bars */
+[data-theme="light"] .fno-tabs-bar { background: #F0EBE2 !important; border-bottom-color: rgba(0,0,0,0.10) !important; }
+[data-theme="light"] .fno-tab-btn { color: #6B5A45; }
+[data-theme="light"] .fno-tab-btn:hover { background: rgba(0,0,0,.04) !important; color: #1A1410; }
+[data-theme="light"] .fno-tab-active .fno-tab-label { color: #1A1410 !important; }
+[data-theme="light"] .fno-tab-active .fno-tab-icon { color: #1BAF8E !important; }
+[data-theme="light"] .fno-tab-active { border-bottom-color: #1BAF8E !important; background: rgba(27,175,142,.06) !important; }
+[data-theme="light"] .brk-tabs-bar { background: #F0EBE2 !important; border-bottom-color: rgba(0,0,0,0.10) !important; }
+[data-theme="light"] .brk-tab-btn { color: #6B5A45; }
+[data-theme="light"] .brk-tab-active .brk-tab-label { color: #1A1410 !important; }
+[data-theme="light"] .brk-tab-active .brk-tab-icon { color: #1BAF8E !important; }
+[data-theme="light"] .brk-tab-active { border-bottom-color: #1BAF8E !important; background: rgba(27,175,142,.06) !important; }
+[data-theme="light"] .rc-page-nav { background: #F0EBE2 !important; border-bottom-color: rgba(0,0,0,0.10) !important; }
+[data-theme="light"] .rc-page-nav-btn { color: #6B5A45; }
+[data-theme="light"] .rc-page-nav-active { color: #1A1410 !important; background: #E8E1D6 !important; box-shadow: 0 0 0 1px #1BAF8E !important; }
+
+/* Expiry countdown strip */
+[data-theme="light"] .fno-expiry-strip-v2 { background: #F0EBE2 !important; border-bottom-color: rgba(0,0,0,0.10) !important; }
+[data-theme="light"] .fno-esv2-sep { background: rgba(0,0,0,0.08) !important; }
+
+/* India/Mumbai clock strip */
+[data-theme="light"] .clock-primary { background: rgba(180,100,0,0.07) !important; border-bottom-color: #D4730A !important; }
+[data-theme="light"] .clock-strip { background: var(--bg0) !important; }
+[data-theme="light"] .clock-time { color: #D4730A !important; }
+
+/* Strategy page — hardcoded dark backgrounds */
+[data-theme="light"] .spc-chart { background: #F5F0E8 !important; border-color: rgba(0,0,0,0.10) !important; }
+[data-theme="light"] .spc-sliders-modern { background: #EDE8DF !important; border-color: rgba(0,0,0,0.08) !important; }
+[data-theme="light"] .spc-greek { background: #EDE8DF !important; border-color: rgba(0,0,0,0.08) !important; }
+[data-theme="light"] .spc-greek-v2 { background: #EDE8DF !important; }
+[data-theme="light"] .spc-payoff-wrap { background: #F5F0E8 !important; }
+[data-theme="light"] .spc-header { background: #F5F0E8 !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .spc-section { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .spc-wrap { background: var(--bg) !important; }
+[data-theme="light"] .fnos-sidebar { background: #F5F0E8 !important; border-right-color: rgba(0,0,0,0.10) !important; }
+[data-theme="light"] .fnos-sidebar-inner { background: #F5F0E8 !important; }
+[data-theme="light"] .edu-section { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .edu-type-tag.credit { background: rgba(27,175,142,0.12) !important; color: #0D8C6E !important; }
+[data-theme="light"] .edu-type-tag.debit { background: rgba(201,54,10,0.10) !important; color: #C9360A !important; }
+[data-theme="light"] .edu-leg-action.buy { background: rgba(27,175,142,0.15) !important; color: #0D8C6E !important; }
+[data-theme="light"] .edu-leg-action.sell { background: rgba(201,54,10,0.12) !important; color: #C9360A !important; }
+
+/* 5 Laws of Risk — law cards */
+[data-theme="light"] .rc-law-card { background: #fff !important; }
+[data-theme="light"] .rc-law-body { color: #2A1F12 !important; }
+[data-theme="light"] .rc-law-title { color: #1A1410 !important; }
+[data-theme="light"] .rc-law-example { background: rgba(0,0,0,0.05) !important; border-color: rgba(0,0,0,0.09) !important; color: #3A2E20 !important; }
+[data-theme="light"] .rc-principle-body { color: #2A1F12 !important; }
+
+/* Risk calc general */
+[data-theme="light"] .rc-top-left { background: #F5F0E8 !important; }
+[data-theme="light"] .rc-top-right { background: #FAF8F4 !important; }
+[data-theme="light"] .rc-section { background: var(--bg) !important; }
+[data-theme="light"] .rc-tab-bar { background: #F0EBE2 !important; border-color: rgba(0,0,0,0.10) !important; }
+[data-theme="light"] .rc-tab-btn { color: #6B5A45 !important; }
+[data-theme="light"] .rc-tab-active { color: #1A1410 !important; border-bottom-color: #1BAF8E !important; background: rgba(27,175,142,.06) !important; }
+
+/* India MUMBAI time — bright dark amber */
+[data-theme="light"] .india-label { color: #C87000 !important; font-weight: 800; }
+[data-theme="light"] .clock-city { color: #C87000 !important; }
+
+/* FnO overview backgrounds */
+[data-theme="light"] .fno-overview-row1 { background: var(--bg) !important; }
+[data-theme="light"] .fno-overview-row2 { background: var(--bg) !important; }
+[data-theme="light"] .fno-cheatcode { background: var(--bg) !important; }
+[data-theme="light"] .fno-cc-strat { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
+
+/* Ticker strips */
+[data-theme="light"] .ip-ticker-block { background: #F5F0E8 !important; }
+[data-theme="light"] .ip-toprow { background: #F5F0E8 !important; }
+[data-theme="light"] .ip-toprow-right { background: #F5F0E8 !important; }
+[data-theme="light"] .ip-toprow-left { background: #FAF8F4 !important; }
+
+/* Broker page backgrounds */
+[data-theme="light"] .brk-hero2 { background: #F5F0E8 !important; }
+[data-theme="light"] .brk-card-detail { background: #F8F5F0 !important; }
+[data-theme="light"] .brk-card-totals { background: #F5F0E8 !important; }
+[data-theme="light"] .brk-card-charge-section { background: #fff !important; }
+[data-theme="light"] .cg-wrap { background: var(--bg) !important; }
+[data-theme="light"] .cg-section { background: var(--bg) !important; }
+[data-theme="light"] .cg-tbl { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .cg-tbl-hdr { background: #F0EBE2 !important; }
+[data-theme="light"] .h2h-wrap { background: var(--bg) !important; }
+[data-theme="light"] .h2h-hero { background: #F5F0E8 !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .h2h-table { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .h2h-th { background: #F0EBE2 !important; }
+
 
 
 
@@ -567,6 +656,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .ht-ist   { display: flex; align-items: center; gap: 5px; }
 .ht-flag  { font-size: 11px; }
 .ht-ist span:last-child { font-family: var(--mono); font-size: 10px; font-weight: 400; color: #FF9933; letter-spacing: 0.3px; }
+[data-theme="light"] .hours-tooltip { background: #fff !important; border-color: rgba(0,0,0,0.15) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important; }
+[data-theme="light"] .ht-local { color: #1A1410 !important; }
+[data-theme="light"] .ht-ist span:last-child { color: #C87000 !important; font-weight: 600; }
 
 ::selection { background: rgba(74,158,255,0.2); }
 
