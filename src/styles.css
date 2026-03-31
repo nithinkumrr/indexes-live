@@ -6581,58 +6581,108 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 /* ── DAILY INSIGHTS PAGE ─────────────────────────────────── */
 @media (max-width: 768px) {
   .ip-wrap { padding-bottom: 80px; }
-  .ip-section { padding: 10px; }
+  .ip-section { padding: 12px 14px; }
 
-  /* Ticker items - scrollable */
+  /* ── TOP ROW: stack vertically on mobile ── */
+  .ip-toprow { grid-template-columns: 1fr !important; }
+  .ip-toprow-right { border-right: none !important; border-bottom: 1px solid var(--border); flex-direction: column; }
+  .ip-toprow-left  { border-left: none !important; }
+
+  /* Indices ticker — horizontal scroll */
+  .ip-ticker-indices { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ip-ticker-item { min-width: 90px; padding: 8px 12px; }
+  .ip-ticker-price { font-size: 18px !important; }
+  .ip-ticker-pct   { font-size: 11px; }
+  .ip-ticker-meta  { padding: 8px 12px; border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; align-items: center; gap: 10px; }
+  .ip-ticker-vix   { padding: 8px 12px; border-left: none; border-top: 1px solid var(--border); flex-direction: row; align-items: center; gap: 10px; }
+  .ip-ticker-vix-val { font-size: 16px; }
+
+  /* Commodities — 3-column grid */
+  .ip-commstrip-v { grid-template-columns: repeat(3, 1fr) !important; }
+  .ip-commstrip { flex-direction: column; border-right: none !important; border-bottom: 1px solid var(--border); padding: 8px 12px; }
+  .ip-commstrip-name  { font-size: 9px; letter-spacing: 0.5px; }
+  .ip-commstrip-price { font-size: 14px; }
+  .ip-commstrip-pct   { font-size: 10px; }
+  .ip-toprow-label { padding: 8px 12px 4px; }
+
+  /* ── MAIN CONTENT: stack columns ── */
+  .ip-row-half { grid-template-columns: 1fr !important; }
+  .ip-half-left  { padding-right: 0 !important; border-right: none !important; border-bottom: 1px solid var(--border); padding-bottom: 14px; gap: 10px; }
+  .ip-half-right { padding-left: 0 !important; padding-top: 14px; }
+
+  /* Ticker strip */
   .ip-ticker-strip { overflow-x: auto; scrollbar-width: none; }
   .ip-ticker-strip::-webkit-scrollbar { display: none; }
 
-  /* Market signals - full width */
+  /* Market signals */
   .ip-signal { grid-template-columns: auto 1fr; gap: 6px; padding: 8px 10px; }
-  .ip-signal-tag { font-size: 8px; padding: 2px 5px; }
+  .ip-signal-tag  { font-size: 8px; padding: 2px 5px; }
   .ip-signal-text { font-size: 11px; line-height: 1.5; }
+  .ip-block-label { font-size: 9px; letter-spacing: 1.5px; margin-bottom: 6px; }
+
+  /* Day profile + analysis blocks */
+  .ip-ana-block { padding: 10px 12px; }
+  .ip-ana-title { font-size: 9px; }
+  .ip-day-type-row { flex-wrap: wrap; gap: 6px; }
 
   /* AI writeup */
   .ip-writeup-block { padding: 12px; }
   .ip-writeup-para { font-size: 12px; line-height: 1.7; }
-  .ip-ana-title { font-size: 9px; }
+  .ip-writeup-lead { font-size: 14px !important; line-height: 1.6; }
 
-  /* Intraday bias - horizontal on mobile */
-  .ip-bias-grid { grid-template-columns: repeat(3,1fr); gap: 6px; }
-  .ip-bias-item { padding: 8px; }
-  .ip-bias-phase { font-size: 9px; }
-  .ip-bias-time { font-size: 8px; }
-  .ip-bias-ctrl { font-size: 11px; }
+  /* Intraday bias */
+  .ip-bias-grid { grid-template-columns: 1fr !important; gap: 6px; }
+  .ip-bias-item { padding: 8px 12px; flex-direction: row; justify-content: space-between; align-items: center; }
+  .ip-bias-phase { font-size: 10px; }
+  .ip-bias-time  { font-size: 9px; }
+  .ip-bias-ctrl  { font-size: 12px; }
 
   /* FII/DII flows */
   .ip-flow-today { grid-template-columns: 1fr 1fr; }
-  .ip-flow-net { font-size: 20px; }
-  .ip-flow-7d { grid-template-columns: 1fr 1fr 1fr; }
-  .ip-flow-7d-val { font-size: 13px; }
-
-  /* What to watch */
-  .ip-tomorrow-box { padding: 12px; }
-  .ip-tomorrow-text { font-size: 12px; line-height: 1.6; }
-
-  /* Key levels */
-  .ip-zone { padding: 6px 10px; }
-  .ip-zone-level { font-size: 16px; }
+  .ip-flow-net   { font-size: 18px; }
+  .ip-flow-7d    { grid-template-columns: 1fr 1fr 1fr; }
+  .ip-flow-7d-val { font-size: 12px; }
 
   /* Risk meter */
-  .ip-risk-meter { padding: 10px; }
-  .ip-risk-level { font-size: 14px; }
+  .ip-risk-meter  { padding: 10px 12px; }
+  .ip-risk-level  { font-size: 13px; }
+  .ip-risk-factors { gap: 6px; flex-wrap: wrap; }
+
+  /* Bias direction / Strong Bear card */
+  .ip-bias-dir    { padding: 12px 14px; }
+  .ip-bias-arrow  { font-size: 28px; }
+  .ip-bias-label  { font-size: 20px; }
+  .ip-bias-sub    { font-size: 11px; }
+
+  /* Key levels */
+  .ip-zone       { padding: 6px 10px; }
+  .ip-zone-level { font-size: 15px; }
+  .ip-zones-list { gap: 6px; }
+
+  /* Scenario framework */
+  .ip-scenario-block { padding: 10px 12px; }
+  .ip-scenario-cond  { font-size: 10px; }
+  .ip-scenario-name  { font-size: 14px; }
+
+  /* What to watch */
+  .ip-tomorrow-box  { padding: 12px; }
+  .ip-tomorrow-text { font-size: 11px; line-height: 1.6; }
+  .ip-tomorrow-list { padding-left: 14px; }
 
   /* Economic calendar */
-  .ip-econ-2col { grid-template-columns: 1fr; }
-  .ip-econ-row { padding: 10px; }
+  .ip-econ-2col  { grid-template-columns: 1fr !important; }
+  .ip-econ-row   { padding: 10px 12px; }
   .ip-econ-event { font-size: 12px; }
-  .ip-econ-note { font-size: 11px; }
+  .ip-econ-note  { font-size: 10px; }
+  .ip-econ-date  { font-size: 9px; }
+
+  /* Section spacing */
+  .ip-ana-block + .ip-ana-block { margin-top: 8px; }
 }
 
 @media (max-width: 480px) {
+  .ip-commstrip-v { grid-template-columns: repeat(2, 1fr) !important; }
   .ip-flow-7d { grid-template-columns: 1fr 1fr; }
-  .ip-bias-grid { grid-template-columns: 1fr; }
-  .ip-bias-item { flex-direction: row; justify-content: space-between; align-items: center; }
 }
 
 /* ── BROKERS PAGE ────────────────────────────────────────── */
@@ -6662,34 +6712,103 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .brk-tab-label-short { display: block; }
   .brk-tab-label { font-size: 10px; letter-spacing: 0; text-align: center; font-weight: 700; }
 
-  /* Broker cards — 2×2 grid layout */
-  .brk-card-cols { flex-wrap: wrap; overflow-x: unset; padding: 10px 14px; gap: 0; }
-  .brk-col { min-width: calc(50% - 1px); flex: unset; width: 50%; align-items: flex-start; text-align: left; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
-  .brk-col:nth-child(odd) { border-right: 1px solid rgba(255,255,255,.05); padding-right: 12px; }
-  .brk-col:nth-child(even) { padding-left: 12px; }
-  .brk-col-wide { min-width: 100%; flex: unset; width: 100%; border-right: none !important; padding-left: 0 !important; }
+  /* ── BROKER RANKING CARDS — mobile compact redesign ── */
+  /* Card container */
+  .brk-card { margin-bottom: 8px; border-radius: 10px; }
+
+  /* Card header — rank + name + type in one clean row */
+  .brk-card-top {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .brk-card-rank-badge { font-size: 11px; padding: 2px 6px; }
+  .brk-card-name { font-size: 16px; letter-spacing: -0.3px; }
+  .brk-card-typetag { font-size: 9px; padding: 2px 7px; }
+  .brk-card-expand-hint { font-size: 10px; }
+
+  /* Brokerage columns — 2×2 compact grid */
+  .brk-card-cols {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    padding: 0 !important;
+    overflow-x: unset;
+    gap: 0;
+  }
+  .brk-col {
+    flex: unset !important;
+    min-width: 0 !important;
+    width: auto !important;
+    align-items: flex-start;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    border-right: 1px solid rgba(255,255,255,.05);
+  }
+  .brk-col:nth-child(2n) { border-right: none !important; }
+  .brk-col-wide {
+    grid-column: 1 / -1;
+    border-right: none !important;
+  }
   .brk-col-divider { display: none; }
-  .brk-col-val { font-size: 15px; }
-  .brk-col-label { font-size: 9px; }
-  .brk-card-name { font-size: 17px; }
-  .brk-card-top { padding: 10px 14px; }
+  .brk-col-label { font-size: 8px; letter-spacing: 0.8px; margin-bottom: 2px; }
+  .brk-col-val { font-size: 13px; }
+  .brk-col-sub { font-size: 10px; }
+  .brk-col-slabs { gap: 1px; }
+  .brk-col-slab { font-size: 10px; }
+
+  /* All-in totals row — compact */
+  .brk-card-totals { padding: 8px 12px; }
+  .brk-card-totals-label { font-size: 8px; margin-bottom: 5px; }
+  .brk-card-totals-row { gap: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; }
+  .brk-total-seg { font-size: 8px; }
+  .brk-total-num { font-size: 16px; }
+  .brk-total-vs { display: none; }
+
+  /* Expanded detail */
+  .brk-card-detail { padding: 12px; }
+  .brk-card-tagline { font-size: 10px; margin-bottom: 10px; padding-bottom: 10px; }
+  .brk-card-charge-grid { grid-template-columns: 1fr 1fr !important; }
+  .brk-card-charge-section { padding: 8px 10px; }
+  .brk-ccs-title { font-size: 8px; margin-bottom: 5px; }
+  .brk-ccs-row { font-size: 11px; padding: 3px 0; }
+  .brk-card-sw { grid-template-columns: 1fr !important; }
+  .brk-sw-item { font-size: 11px; }
+  .brk-expand-footer { flex-direction: column; gap: 8px; }
 
   /* Rankings table */
   .brk-rank-table { font-size: 11px; }
   .brk-rank-name { font-size: 12px; }
 
-  /* Direct comparison */
-  .h2h-wrap { padding: 12px; }
-  .h2h-hero { padding: 12px; }
-  .h2h-winner-name { font-size: 18px; }
-  .h2h-bars-wrap { gap: 8px; }
+  /* ── DIRECT COMPARISON — mobile redesign ── */
+  .h2h-wrap { padding: 0 !important; }
+  .h2h-hero { padding: 12px 14px; margin-bottom: 0; border-radius: 0; border-left: none; border-right: none; }
+  .h2h-winner-banner { flex-direction: row; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .h2h-winner-name { font-size: 20px; }
+  .h2h-winner-saves { font-size: 12px; }
+  .h2h-bars-wrap { gap: 6px; }
+  .h2h-bar-label { font-size: 9px; }
   .h2h-bar-amount { font-size: 13px; }
-  .h2h-annual-grid { grid-template-columns: 1fr; gap: 10px; }
-  .h2h-ac-bname { font-size: 13px; }
-  .h2h-ac-amount { font-size: 18px; }
-  .h2h-section-title { font-size: 12px; }
-  .h2h-tr { font-size: 11px; }
-  .h2h-td-num { font-size: 13px; }
+  .h2h-bar-fill { height: 6px !important; }
+  
+  /* Annual cost by profile — single column */
+  .h2h-annual-grid { grid-template-columns: 1fr !important; gap: 8px; }
+  .h2h-annual-card { border-radius: 8px; }
+  .h2h-ac-costs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .h2h-ac-bname { font-size: 12px; }
+  .h2h-ac-amount { font-size: 16px; }
+  .h2h-ac-detail { font-size: 9px; }
+  .h2h-ac-divider { width: 1px; height: auto; background: var(--border); }
+
+  /* Tables — horizontal scroll */
+  .h2h-section { padding: 12px 14px; margin-bottom: 12px; }
+  .h2h-section-title { font-size: 10px !important; letter-spacing: 1px; margin-bottom: 8px; }
+  .h2h-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .h2h-th, .h2h-tr { min-width: 380px; }
+  .h2h-td-label { font-size: 10px !important; padding: 9px 10px !important; }
+  .h2h-td-val { font-size: 10px !important; padding: 9px 10px !important; }
+  .h2h-td-num { font-size: 12px !important; padding: 9px 10px !important; }
+  .h2h-td-gap-v { font-size: 9px !important; padding: 9px 8px !important; }
+  .h2h-tr-diff .h2h-td-gap-v strong { font-size: 11px; }
 
   /* Charges guide — wrap tabs, no scroll */
   .cg-tabs { overflow-x: unset !important; flex-wrap: wrap !important; position: static !important; padding: 6px 8px 4px; gap: 4px; margin-bottom: 12px; border-bottom: none; }
