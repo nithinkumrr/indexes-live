@@ -5559,13 +5559,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 /* Tabs */
 /* Brokers sidebar layout */
 .brk-layout      { display: block; }
-.brk-tabs-bar    { display: flex; align-items: stretch; border-bottom: 1px solid var(--border); background: linear-gradient(180deg,#0F0F16 0%,#0B0B10 100%); padding: 0 12px; position: sticky; top: 45px; z-index: 10; gap: 0; }
-.brk-tab-btn     { display: flex; align-items: center; gap: 9px; padding: 12px 20px; cursor: pointer; border: none; border-bottom: 2px solid transparent; background: transparent; transition: all .15s; border-right: 1px solid rgba(255,255,255,.04); }
+.brk-tabs-bar    { display: flex; align-items: stretch; border-bottom: 1px solid var(--border); background: linear-gradient(180deg,#0F0F16 0%,#0B0B10 100%); padding: 0 8px; position: sticky; top: 45px; z-index: 10; gap: 0; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
+.brk-tab-btn     { display: flex; align-items: center; gap: 6px; padding: 11px 14px; cursor: pointer; border: none; border-bottom: 2px solid transparent; background: transparent; transition: all .15s; border-right: 1px solid rgba(255,255,255,.04); white-space: nowrap; flex-shrink: 0; }
 .brk-tab-btn:last-child { border-right: none; }
 .brk-tab-btn:hover { background: rgba(255,255,255,.03); }
 .brk-tab-btn:hover .brk-tab-label { color: #fff; }
-.brk-tab-icon    { font-size: 15px; flex-shrink: 0; color: var(--text2); width: 18px; text-align: center; font-family: var(--mono); }
-.brk-tab-label   { font-family: var(--mono); font-size: 13px; font-weight: 800; color: var(--text); letter-spacing: .3px; }
+.brk-tab-icon    { font-size: 13px; flex-shrink: 0; color: var(--text2); width: 16px; text-align: center; font-family: var(--mono); }
+.brk-tab-label   { font-family: var(--mono); font-size: 11.5px; font-weight: 800; color: var(--text); letter-spacing: .2px; white-space: nowrap; }
 .brk-tab-active .brk-tab-icon  { color: var(--accent) !important; }
 .brk-tab-active .brk-tab-label { color: #fff !important; }
 .brk-tab-active  { border-bottom-color: var(--accent) !important; background: rgba(74,158,255,.05) !important; }
