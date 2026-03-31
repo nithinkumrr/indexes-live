@@ -557,6 +557,9 @@ export default function InsightsPage({data={}, nseData={}}) {
   const [newsLoading,  setNewsLoading] = useState(true);
   const [newsFilter,   setNewsFilter] = useState('All');
   const [newsError,    setNewsError]  = useState(false);
+  const [newsPage,     setNewsPage]   = useState(1);
+  const [bookmarks,    setBookmarks]  = useState(()=>{ try{ return JSON.parse(sessionStorage.getItem('nr_bm')||'[]'); }catch{ return []; } });
+  const PAGE_SIZE = 8;
 
   useEffect(()=>{
     setNewsLoading(true);
@@ -698,64 +701,105 @@ export default function InsightsPage({data={}, nseData={}}) {
       {subTab==='news' && (
         <div className="ip-news-wrap">
 
-          {/* Category filter bar */}
-          <div className="ip-news-filterbar">
-            {['All','Markets','Economy','Stocks','Global'].map(f=>(
-              <button key={f} className={`ip-news-filter ${newsFilter===f?'ip-news-filter-on':''}`} onClick={()=>setNewsFilter(f)}>{f}</button>
-            ))}
-            <span className="ip-news-count">
-              {newsLoading ? 'Loading…' : `${newsItems.filter(i=>newsFilter==='All'||i.cat===newsFilter).length} articles`}
+          {/* ── PULSE HEADER ── */}
+          <div className="ip-news-pulse">
+            <div className="ip-news-pulse-left">
+              <span className="ip-news-pulse-dot"/>
+              <span className="ip-news-pulse-label">Market Pulse</span>
+              <span className="ip-news-pulse-sub">Live headlines · Indian &amp; global markets</span>
+            </div>
+            <span className="ip-news-pulse-count">
+              {!newsLoading && !newsError && `${newsItems.length} stories`}
             </span>
           </div>
 
+          {/* ── CATEGORY TABS ── */}
+          <div className="ip-news-tabs">
+            {['All','Markets','Economy','Stocks','Global'].map(f=>(
+              <button key={f} className={`ip-news-tab ${newsFilter===f?'ip-news-tab-on':''}`}
+                onClick={()=>{ setNewsFilter(f); setNewsPage(1); }}>{f}</button>
+            ))}
+          </div>
+
+          {/* ── STATES ── */}
           {newsLoading ? (
             <div className="ip-news-loading">
               <div className="ip-news-spinner"/>
-              <span>Fetching latest news…</span>
+              <span>Fetching latest headlines…</span>
             </div>
           ) : newsError ? (
             <div className="ip-news-empty">
               <div style={{fontSize:28,marginBottom:8}}>⚠️</div>
-              <div style={{fontWeight:700,marginBottom:4}}>Could not load news</div>
-              <div style={{fontSize:12,color:'var(--text3)'}}>Check back shortly — feed may be temporarily unavailable.</div>
+              <div style={{fontWeight:700,marginBottom:4}}>Feed unavailable</div>
+              <div style={{fontSize:12,color:'var(--text3)'}}>Check back shortly.</div>
             </div>
           ) : (()=>{
+            const catColors = { Markets:'#4A9EFF', Economy:'#A78BFA', Stocks:'#00C896', Global:'#F59E0B' };
+            const timeAgo = pd => {
+              if (!pd) return '';
+              const d = (Date.now() - new Date(pd).getTime()) / 60000;
+              if (d < 60)   return `${Math.round(d)}m ago`;
+              if (d < 1440) return `${Math.round(d/60)}h ago`;
+              return `${Math.round(d/1440)}d ago`;
+            };
             const filtered = newsFilter==='All' ? newsItems : newsItems.filter(i=>i.cat===newsFilter);
-            if (!filtered.length) return <div className="ip-news-empty"><div style={{color:'var(--text3)',fontSize:13}}>No articles found.</div></div>;
+            if (!filtered.length) return <div className="ip-news-empty"><span style={{color:'var(--text3)'}}>No articles found.</span></div>;
 
-            // Group by source category
-            const catOrder = ['Markets','Economy','Stocks','Global'];
-            const grouped = newsFilter==='All'
-              ? catOrder.map(cat=>({ cat, items: filtered.filter(i=>i.cat===cat) })).filter(g=>g.items.length)
-              : [{ cat: newsFilter, items: filtered }];
+            const topStories = newsFilter==='All' ? filtered.slice(0,2) : [];
+            const rest       = newsFilter==='All' ? filtered.slice(2)   : filtered;
+            const pageItems  = rest.slice(0, newsPage * PAGE_SIZE);
+            const hasMore    = pageItems.length < rest.length;
+
+            const toggleBM = (link, e) => {
+              e.preventDefault(); e.stopPropagation();
+              setBookmarks(prev => {
+                const next = prev.includes(link) ? prev.filter(x=>x!==link) : [...prev, link];
+                try { sessionStorage.setItem('nr_bm', JSON.stringify(next)); } catch{}
+                return next;
+              });
+            };
+
+            const NewsCard = ({item, top=false}) => {
+              const ta = timeAgo(item.pubDate);
+              const bm = bookmarks.includes(item.link);
+              const cc = catColors[item.cat]||'var(--accent)';
+              return (
+                <a href={item.link} target="_blank" rel="noopener noreferrer"
+                  className={`ip-nc ${top?'ip-nc-top':''}`}
+                  style={top ? {borderLeftColor: cc} : {}}>
+                  {top && <span className="ip-nc-badge">TOP STORY</span>}
+                  <div className="ip-nc-title">{item.title}</div>
+                  <div className="ip-nc-foot">
+                    <span className="ip-nc-cat" style={{color:cc}}>{item.cat}</span>
+                    <span className="ip-nc-sep">·</span>
+                    <span className="ip-nc-src">{item.source}</span>
+                    {ta && <><span className="ip-nc-sep">·</span><span className="ip-nc-time">{ta}</span></>}
+                    <button className={`ip-nc-bm ${bm?'ip-nc-bm-on':''}`}
+                      onClick={e=>toggleBM(item.link,e)} title={bm?'Remove bookmark':'Bookmark'}>
+                      {bm ? '★' : '☆'}
+                    </button>
+                  </div>
+                </a>
+              );
+            };
 
             return (
               <div className="ip-news-body">
-                {grouped.map(({cat, items})=>(
-                  <div key={cat} className="ip-news-group">
-                    <div className="ip-news-group-label">{cat}</div>
-                    <div className="ip-news-list">
-                      {items.map((item,i)=>{
-                        const timeAgo = (()=>{
-                          if (!item.pubDate) return '';
-                          const diff = (Date.now() - new Date(item.pubDate).getTime()) / 60000;
-                          if (diff < 60) return `${Math.round(diff)}m ago`;
-                          if (diff < 1440) return `${Math.round(diff/60)}h ago`;
-                          return `${Math.round(diff/1440)}d ago`;
-                        })();
-                        return (
-                          <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className="ip-news-item">
-                            <div className="ip-news-item-title">{item.title}</div>
-                            <div className="ip-news-item-meta">
-                              <span className="ip-news-item-src">{item.source}</span>
-                              {timeAgo && <span className="ip-news-item-time">{timeAgo}</span>}
-                            </div>
-                          </a>
-                        );
-                      })}
-                    </div>
+                {topStories.length > 0 && (
+                  <div className="ip-news-heroes">
+                    {topStories.map((item,i) => <NewsCard key={i} item={item} top />)}
                   </div>
-                ))}
+                )}
+                <div className="ip-news-feed">
+                  {pageItems.map((item,i) => <NewsCard key={i} item={item} />)}
+                </div>
+                {hasMore && (
+                  <div className="ip-news-more-wrap">
+                    <button className="ip-news-more" onClick={()=>setNewsPage(p=>p+1)}>
+                      Load more stories
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })()}
