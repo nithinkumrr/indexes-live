@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Ticker from './Ticker';
-import NewsPage from './NewsPage';
 
 // ── Economic calendar ─────────────────────────────────────────────────────────
 const ECON_EVENTS = [
@@ -547,7 +546,7 @@ function FiiBar({history}) {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-function InsightsInner({data={}, nseData={}}) {
+export default function InsightsPage({data={}, nseData={}}) {
   const [fiidii,       setFiidii]   = useState(null);
   const [brief,        setBrief]    = useState(null);
   const [briefLoading, setBriefLoading] = useState(true);
@@ -997,38 +996,6 @@ function InsightsInner({data={}, nseData={}}) {
       <div className="ip-footer-bold">
         Data-driven signals from live market data. Not investment advice.
       </div>
-    </div>
-  );
-}
-
-// ── Top-level Insights/News shell ─────────────────────────────────────────────
-export default function InsightsPage({ data = {}, nseData = {} }) {
-  const [tab, setTab] = useState('news');
-  return (
-    <div className="inspage-shell">
-      {/* Tab switcher */}
-      <div className="inspage-tabbar">
-        <button
-          className={`inspage-tab${tab === 'news' ? ' inspage-tab-active' : ''}`}
-          onClick={() => setTab('news')}
-        >
-          <span className="inspage-tab-icon">📰</span>
-          <span>News</span>
-        </button>
-        <button
-          className={`inspage-tab${tab === 'insights' ? ' inspage-tab-active' : ''}`}
-          onClick={() => setTab('insights')}
-        >
-          <span className="inspage-tab-icon">💡</span>
-          <span>Daily Insights</span>
-        </button>
-      </div>
-
-      {/* Content */}
-      {tab === 'news'
-        ? <NewsPage data={data} />
-        : <InsightsInner data={data} nseData={nseData} />
-      }
     </div>
   );
 }
