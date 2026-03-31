@@ -632,7 +632,11 @@ export default function InsightsPage({data={}, nseData={}}) {
   const diiNet  = fiidii?.diiNet??null;
   const diiBuy  = fiidii?.diiBuy??null;
   const diiSell = fiidii?.diiSell??null;
-  const history = fiidii?.history||[];
+  // Deduplicate history by date — keep last occurrence of each date
+  const rawHistory = fiidii?.history||[];
+  const historyMap = new Map();
+  rawHistory.forEach(d => { if (d.date) historyMap.set(d.date, d); });
+  const history = Array.from(historyMap.values()).sort((a,b)=>a.date.localeCompare(b.date));
   const fii7d   = history.slice(-7).reduce((s,d)=>s+(d.fiiNet??0),0);
   const dii7d   = history.slice(-7).reduce((s,d)=>s+(d.diiNet??0),0);
 
@@ -933,7 +937,7 @@ export default function InsightsPage({data={}, nseData={}}) {
                 {[{label:'FII 7D',val:fii7d},{label:'DII 7D',val:dii7d},{label:'COMBINED',val:fii7d+dii7d,sub:(fii7d+dii7d)>=0?'Net inflow':'Net outflow'}].map((c,i)=>(
                   <div key={i} className="ip-flow-7d-item">
                     <div className="ip-flow-7d-label">{c.label}</div>
-                    <div className="ip-flow-7d-val" style={{color:pColor(c.val)}}>{c.val>=0?'+':''}₹{Math.abs(c.val).toLocaleString('en-IN')} Cr</div>
+                    <div className="ip-flow-7d-val" style={{color:pColor(c.val)}}>{c.val>=0?'+':'-'}₹{Math.abs(c.val).toLocaleString('en-IN')} Cr</div>
                     {c.sub&&<div className="ip-flow-7d-sub">{c.sub}</div>}
                   </div>
                 ))}
