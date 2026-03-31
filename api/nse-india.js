@@ -20,6 +20,28 @@ export default async function handler(req, res) {
       const cached = await kv.get('mmi_data_v1');
       if (cached) {
         const data = typeof cached === 'string' ? JSON.parse(cached) : cached;
+        // Patch FII: cached snapshot may have 0 (before 5 PM). Find latest real value.
+        if (!data.fiiNet || data.fiiNet === 0) {
+          for (let i = 1; i <= 10; i++) {
+            const fd = new Date(Date.now() - i * 86400000);
+            const iso = fd.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+            const fdow = new Date(fd.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay();
+            if (fdow === 0 || fdow === 6) continue;
+            try {
+              const raw = await kv.get(`fiidii:${iso}`);
+              if (raw) {
+                const rec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                if (rec?.fiiNet != null && rec.fiiNet !== 0) {
+                  data.fiiNet  = rec.fiiNet;
+                  data.fiiBuy  = rec.fiiBuy;
+                  data.fiiSell = rec.fiiSell;
+                  data.fiiDate = rec.date || iso;
+                  break;
+                }
+              }
+            } catch(_) {}
+          }
+        }
         return res.json({ ...data, cached: true });
       }
     } catch(_) {}
