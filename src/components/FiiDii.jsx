@@ -13,8 +13,9 @@ function fmtDateFull(str) {
 function fmtCr(n) {
   if (n == null || isNaN(n)) return '-';
   const abs = Math.abs(n), sign = n >= 0 ? '+' : '-';
-  if (abs >= 10000) return `${sign}₹${(abs / 100).toFixed(1)}K Cr`;
-  return `${sign}₹${abs.toFixed(0)} Cr`;
+  // Show full number with commas — same as NSE
+  if (abs >= 100000) return `${sign}₹${(abs / 100000).toFixed(2)}L Cr`; // lakh crore
+  return `${sign}₹${abs.toLocaleString('en-IN', {maximumFractionDigits: 2})} Cr`;
 }
 const HOLIDAYS_FIIDII = new Set([
   '2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
@@ -129,8 +130,10 @@ function FiiDiiChart({ history }) {
               font: { family: 'monospace', size: 10 },
               callback: v => {
                 const abs = Math.abs(v);
-                if (abs >= 1000) return `${v < 0 ? '-' : ''}${(abs/100).toFixed(0)}K`;
-                return `${v < 0 ? '-' : ''}${abs}`;
+                const sign = v < 0 ? '-' : '';
+                if (abs >= 100000) return `${sign}${(abs/100000).toFixed(1)}L`;
+                if (abs >= 1000) return `${sign}${(abs/1000).toFixed(0)}K`;
+                return `${sign}${abs}`;
               },
             },
             title: { display: true, text: '₹ Crore', color: '#6B7280', font: { size: 9, family: 'monospace' } },
