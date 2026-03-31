@@ -560,27 +560,45 @@ export default function InsightsPage({data={}, nseData={}}) {
   },[]);
 
   const fetchBrief=useCallback(()=>{
-    setBriefLoading(true);
     const nifty=nseData.nifty50||data.nifty50||{};
     const bn=nseData.banknifty||data.banknifty||{};
     const np=nifty.changePct??null,bp=bn.changePct??null;
+
+    // Don't fire with empty data — wait until prices are loaded
+    if (!nifty.price) return;
+
+    setBriefLoading(true);
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 20000);
     fetch('/api/insights-brief',{
       method:'POST',headers:{'Content-Type':'application/json'},
+      signal:ctrl.signal,
       body:JSON.stringify({
-        niftyPrice:nifty.price,bnPrice:bn.price,niftyPct:np,bnPct:bp,
-        vix:nseData.vix??null,
-        stance:getStance(np,bp)?.label||'Neutral',
-        structure:np<-0.5?'Downtrend':np>0.5?'Uptrend':'Range',
-        volLabel:Math.abs(np??0)>1.5?'High':Math.abs(np??0)>0.7?'Moderate':'Low',
-        fiiNet:fiidii?.fiiNet??null,diiNet:fiidii?.diiNet??null,
-        sp500Pct:data.sp500?.changePct??null,nikkeiPct:data.nikkei?.changePct??null,
+        niftyPrice: nifty.price,     bnPrice:    bn.price,
+        niftyHigh:  nifty.high,      niftyLow:   nifty.low,
+        niftyPct:   np,              bnPct:      bp,
+        vix:        nseData.vix??null,
+        stance:     getStance(np,bp)?.label||'Neutral',
+        structure:  np<-0.5?'Downtrend':np>0.5?'Uptrend':'Range',
+        volLabel:   Math.abs(np??0)>1.5?'High':Math.abs(np??0)>0.7?'Moderate':'Low',
+        fiiNet:     fiidii?.fiiNet??null,  diiNet: fiidii?.diiNet??null,
+        fiiDate:    fiidii?.date??null,
+        sp500Pct:   data.sp500?.changePct??null,
+        nikkeiPct:  data.nikkei?.changePct??null,
         hangsengPct:data.hangseng?.changePct??null,
-        crudePct:data.crude?.changePct??null,goldPct:data.gold?.changePct??null,
+        crudePct:   data.crude?.changePct??null,  crudePrc: data.crude?.price??null,
+        goldPct:    data.gold?.changePct??null,    goldPrc:  data.gold?.price??null,
+        usdInr:     data.usdinr?.price??null,
       }),
-    }).then(r=>r.json()).then(d=>{setBrief(d);setBriefLoading(false);}).catch(()=>setBriefLoading(false));
+    })
+    .then(r=>r.json())
+    .then(d=>{clearTimeout(t);setBrief(d);setBriefLoading(false);})
+    .catch(()=>{clearTimeout(t);setBriefLoading(false);});
   },[data,nseData,fiidii]);
 
-  useEffect(()=>{fetchBrief();},[fiidii]);
+  // Fire when data arrives, and again when FII data updates
+  useEffect(()=>{ fetchBrief(); },[data.nifty50, nseData.nifty50]);
+  useEffect(()=>{ if(fiidii) fetchBrief(); },[fiidii]);
 
   // Data
   const nifty     = nseData.nifty50        || data.nifty50        || null;

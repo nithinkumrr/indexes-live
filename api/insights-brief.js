@@ -187,9 +187,10 @@ FII and DII institutional flow data from the previous session remains the latest
 
 // ── AI call ──────────────────────────────────────────────────────────────────
 async function callGemini(apiKey, slot, d) {
-  const { niftyPct, bnPct, vix, stance, structure, volLabel, sessionChar,
-          fiiNet, diiNet, sp500Pct, nikkeiPct, hangsengPct, niftyPrice, bnPrice,
-          crudePct, goldPct } = d;
+  const { niftyPct, bnPct, vix, stance, structure, volLabel,
+          fiiNet, diiNet, fiiDate, sp500Pct, nikkeiPct, hangsengPct,
+          niftyPrice, bnPrice, niftyHigh, niftyLow,
+          crudePct, crudePrc, goldPct, goldPrc, usdInr } = d;
 
   const prompt = `You are a market context engine for an Indian financial markets dashboard. You describe what is happening in the market. You do not give advice or recommendations.
 
@@ -198,20 +199,19 @@ Context for this session: ${slot.context}
 Date: ${new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' })}
 
 Market data:
-- Nifty 50: ${niftyPrice ? niftyPrice.toLocaleString('en-IN') : 'unavailable'} (${niftyPct >= 0 ? '+' : ''}${niftyPct?.toFixed(2) ?? '0'}%)
-- Bank Nifty: ${bnPrice ? bnPrice.toLocaleString('en-IN') : 'unavailable'} (${bnPct >= 0 ? '+' : ''}${bnPct?.toFixed(2) ?? '0'}%)
-- India VIX: ${vix ?? 'unavailable'}
+- Nifty 50: ${niftyPrice ? niftyPrice.toLocaleString('en-IN') : 'unavailable'} (${niftyPct != null ? (niftyPct >= 0 ? '+' : '') + niftyPct.toFixed(2) + '%' : 'unavailable'})${niftyHigh && niftyLow ? ' | High: ' + niftyHigh.toLocaleString('en-IN') + ' Low: ' + niftyLow.toLocaleString('en-IN') : ''}
+- Bank Nifty: ${bnPrice ? bnPrice.toLocaleString('en-IN') : 'unavailable'} (${bnPct != null ? (bnPct >= 0 ? '+' : '') + bnPct.toFixed(2) + '%' : 'unavailable'})
+- India VIX: ${vix != null ? vix.toFixed(2) : 'unavailable'}
 - Market stance: ${stance}
 - Structure: ${structure}
-- Volatility: ${volLabel}
-- Session character: ${sessionChar ?? 'unknown'}
-- FII net today: ${fiiNet !== null && fiiNet !== undefined ? (fiiNet >= 0 ? '+' : '') + fiiNet.toLocaleString('en-IN') + ' Cr' : 'unavailable'}
-- DII net today: ${diiNet !== null && diiNet !== undefined ? (diiNet >= 0 ? '+' : '') + diiNet.toLocaleString('en-IN') + ' Cr' : 'unavailable'}
-- S&P 500: ${sp500Pct !== null && sp500Pct !== undefined ? (sp500Pct >= 0 ? '+' : '') + sp500Pct.toFixed(2) + '%' : 'unavailable'}
-- Nikkei: ${nikkeiPct !== null && nikkeiPct !== undefined ? (nikkeiPct >= 0 ? '+' : '') + nikkeiPct.toFixed(2) + '%' : 'unavailable'}
-- Hang Seng: ${hangsengPct !== null && hangsengPct !== undefined ? (hangsengPct >= 0 ? '+' : '') + hangsengPct.toFixed(2) + '%' : 'unavailable'}
-- Crude WTI: ${crudePct !== null && crudePct !== undefined ? (crudePct >= 0 ? '+' : '') + crudePct.toFixed(2) + '%' : 'unavailable'}
-- Gold: ${goldPct !== null && goldPct !== undefined ? (goldPct >= 0 ? '+' : '') + goldPct.toFixed(2) + '%' : 'unavailable'}
+- FII net (${fiiDate || 'latest'}): ${fiiNet != null ? (fiiNet >= 0 ? '+' : '') + fiiNet.toLocaleString('en-IN') + ' Cr' : 'unavailable'}
+- DII net (${fiiDate || 'latest'}): ${diiNet != null ? (diiNet >= 0 ? '+' : '') + diiNet.toLocaleString('en-IN') + ' Cr' : 'unavailable'}
+- S&P 500: ${sp500Pct != null ? (sp500Pct >= 0 ? '+' : '') + sp500Pct.toFixed(2) + '%' : 'unavailable'}
+- Nikkei: ${nikkeiPct != null ? (nikkeiPct >= 0 ? '+' : '') + nikkeiPct.toFixed(2) + '%' : 'unavailable'}
+- Hang Seng: ${hangsengPct != null ? (hangsengPct >= 0 ? '+' : '') + hangsengPct.toFixed(2) + '%' : 'unavailable'}
+- Crude WTI: ${crudePrc != null ? '$' + crudePrc.toFixed(1) : 'unavailable'} (${crudePct != null ? (crudePct >= 0 ? '+' : '') + crudePct.toFixed(2) + '%' : 'unavailable'})
+- Gold: ${goldPrc != null ? '$' + goldPrc.toFixed(0) : 'unavailable'} (${goldPct != null ? (goldPct >= 0 ? '+' : '') + goldPct.toFixed(2) + '%' : 'unavailable'})
+- USD/INR: ${usdInr != null ? usdInr.toFixed(2) : 'unavailable'}
 
 Use Google Search to find what is actually driving Indian markets today. Search for and include:
 - Any news that is moving Nifty and Bank Nifty today specifically
@@ -231,7 +231,7 @@ INVESTOR_STRUCTURE: [1 sentence]
 INVESTOR_WATCH: [1 sentence]
 INVESTOR_RISK: [1 sentence]
 WRITEUP_START
-[Write 4 to 5 substantial paragraphs, minimum 300 words. This is a professional market desk factsheet for the ${slot.label} session. Use your Google Search results to include actual current news and data. Write in plain English, third person, with specific numbers throughout. Structure as follows:
+[Write 6 to 7 substantial paragraphs, minimum 900 words, target 1000 words. This is a professional market desk factsheet for the ${slot.label} session. Use your Google Search results to include actual current news and data. Write in plain English, third person, with specific numbers throughout. Structure as follows:
 
 Paragraph 1 (Opening context): State exactly where Nifty and Bank Nifty are with levels and percentage change. Describe the overall character of the session so far and what drove the previous session close. Include any gap at open vs prior close.
 
