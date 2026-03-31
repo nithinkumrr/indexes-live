@@ -126,6 +126,7 @@ function FearGreedMeter() {
     { label: 'India VIX',    val: mmi.scores.vixScore, display: mmi.vix ? mmi.vix.toFixed(1) : null, detail: mmi.vix ? 'VIX ' + mmi.vix.toFixed(2) : 'NSE data unavailable' },
     { label: mmi.fiiDate ? 'FII (' + new Date(mmi.fiiDate+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}) + ')' : 'FII Activity',
       val: mmi.scores.fiiScore,
+      display: mmi.fiiNet != null && mmi.fiiNet !== 0 ? (mmi.fiiNet > 0 ? '+' : '') + Math.round(mmi.fiiNet).toLocaleString('en-IN') : null,
       detail: mmi.fiiNet ? ('Net ' + (mmi.fiiNet > 0 ? '+' : '') + Math.round(mmi.fiiNet) + ' Cr') : 'Not published yet' },
     { label: 'Momentum',     val: mmi.scores.momScore, detail: (mmi.ema30 && mmi.ema90) ? 'EMA30 vs EMA90' : 'NSE data unavailable' },
     { label: 'Breadth',      val: mmi.scores.adScore,  detail: (mmi.advancers && mmi.decliners) ? (mmi.advancers + 'A / ' + mmi.decliners + 'D') : 'NSE data unavailable' },
@@ -178,7 +179,7 @@ function FearGreedMeter() {
               <span className="fg-comp-label">{c.label}</span>
               <div className="fg-comp-bar-wrap">
                 {c.val != null
-                  ? <div className="fg-comp-bar" style={{ width: c.val + '%', background: barColor }}/>
+                  ? <div className="fg-comp-bar" style={{ width: Math.max(c.val, 2) + '%', background: barColor }}/>
                   : <span style={{fontSize:9,color:'var(--text3)',fontFamily:'var(--mono)'}}>NSE feed unavailable</span>
                 }
               </div>
