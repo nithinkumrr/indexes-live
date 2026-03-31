@@ -556,23 +556,15 @@ export default function InsightsPage({data={}, nseData={}}) {
   const [newsItems,    setNewsItems] = useState([]);
   const [newsLoading,  setNewsLoading] = useState(true);
   const [newsFilter,   setNewsFilter] = useState('All');
+  const [newsError,    setNewsError]  = useState(false);
 
-  // Fetch financeradar.news feed via RSS/JSON
   useEffect(()=>{
     setNewsLoading(true);
-    fetch('https://api.rss2json.com/v1/api.json?rss_url=https://financeradar.news/feed.xml&count=60')
+    setNewsError(false);
+    fetch('/api/news')
       .then(r=>r.json())
-      .then(d=>{
-        if(d.items) setNewsItems(d.items);
-        setNewsLoading(false);
-      })
-      .catch(()=>{
-        // Fallback: scrape via allorigins proxy
-        fetch('https://api.allorigins.win/get?url='+encodeURIComponent('https://financeradar.news/'))
-          .then(r=>r.json())
-          .then(()=>setNewsLoading(false))
-          .catch(()=>setNewsLoading(false));
-      });
+      .then(d=>{ setNewsItems(d.items||[]); setNewsLoading(false); })
+      .catch(()=>{ setNewsError(true); setNewsLoading(false); });
   },[]);
 
   useEffect(()=>{
@@ -705,46 +697,68 @@ export default function InsightsPage({data={}, nseData={}}) {
       {/* NEWS TAB */}
       {subTab==='news' && (
         <div className="ip-news-wrap">
-          <div className="ip-news-header">
-            <div className="ip-news-title">Indian Finance — Curated</div>
-            <div className="ip-news-meta">via <a href="https://financeradar.news" target="_blank" rel="noopener noreferrer" className="ip-news-src-link">Finance Radar</a></div>
-          </div>
-          <div className="ip-news-filters">
-            {['All','News','Reports','Papers','YouTube','Twitter'].map(f=>(
+
+          {/* Category filter bar */}
+          <div className="ip-news-filterbar">
+            {['All','Markets','Economy','Stocks','Global'].map(f=>(
               <button key={f} className={`ip-news-filter ${newsFilter===f?'ip-news-filter-on':''}`} onClick={()=>setNewsFilter(f)}>{f}</button>
             ))}
+            <span className="ip-news-count">
+              {newsLoading ? 'Loading…' : `${newsItems.filter(i=>newsFilter==='All'||i.cat===newsFilter).length} articles`}
+            </span>
           </div>
+
           {newsLoading ? (
             <div className="ip-news-loading">
               <div className="ip-news-spinner"/>
-              <span>Loading news feed…</span>
+              <span>Fetching latest news…</span>
             </div>
-          ) : newsItems.length > 0 ? (
-            <div className="ip-news-list">
-              {newsItems.map((item,i)=>{
-                const domain = (() => { try { return new URL(item.link).hostname.replace('www.',''); } catch{ return ''; } })();
-                const date = item.pubDate ? new Date(item.pubDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:true}) : '';
-                return (
-                  <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className="ip-news-item">
-                    <div className="ip-news-item-title">{item.title}</div>
-                    <div className="ip-news-item-meta">
-                      <span className="ip-news-item-src">{domain}</span>
-                      {date && <span className="ip-news-item-date">{date}</span>}
-                    </div>
-                  </a>
-                );
-              })}
-            </div>
-          ) : (
+          ) : newsError ? (
             <div className="ip-news-empty">
-              <div style={{fontSize:32,marginBottom:12}}>📰</div>
-              <div style={{fontWeight:700,marginBottom:6}}>News feed unavailable</div>
-              <div style={{fontSize:12,color:'var(--text3)',marginBottom:16}}>Could not load the Finance Radar feed directly.</div>
-              <a href="https://financeradar.news" target="_blank" rel="noopener noreferrer" className="ip-news-visit-btn">
-                Open Finance Radar →
-              </a>
+              <div style={{fontSize:28,marginBottom:8}}>⚠️</div>
+              <div style={{fontWeight:700,marginBottom:4}}>Could not load news</div>
+              <div style={{fontSize:12,color:'var(--text3)'}}>Check back shortly — feed may be temporarily unavailable.</div>
             </div>
-          )}
+          ) : (()=>{
+            const filtered = newsFilter==='All' ? newsItems : newsItems.filter(i=>i.cat===newsFilter);
+            if (!filtered.length) return <div className="ip-news-empty"><div style={{color:'var(--text3)',fontSize:13}}>No articles found.</div></div>;
+
+            // Group by source category
+            const catOrder = ['Markets','Economy','Stocks','Global'];
+            const grouped = newsFilter==='All'
+              ? catOrder.map(cat=>({ cat, items: filtered.filter(i=>i.cat===cat) })).filter(g=>g.items.length)
+              : [{ cat: newsFilter, items: filtered }];
+
+            return (
+              <div className="ip-news-body">
+                {grouped.map(({cat, items})=>(
+                  <div key={cat} className="ip-news-group">
+                    <div className="ip-news-group-label">{cat}</div>
+                    <div className="ip-news-list">
+                      {items.map((item,i)=>{
+                        const timeAgo = (()=>{
+                          if (!item.pubDate) return '';
+                          const diff = (Date.now() - new Date(item.pubDate).getTime()) / 60000;
+                          if (diff < 60) return `${Math.round(diff)}m ago`;
+                          if (diff < 1440) return `${Math.round(diff/60)}h ago`;
+                          return `${Math.round(diff/1440)}d ago`;
+                        })();
+                        return (
+                          <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className="ip-news-item">
+                            <div className="ip-news-item-title">{item.title}</div>
+                            <div className="ip-news-item-meta">
+                              <span className="ip-news-item-src">{item.source}</span>
+                              {timeAgo && <span className="ip-news-item-time">{timeAgo}</span>}
+                            </div>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
 
