@@ -3036,7 +3036,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   border: none; border-bottom: 2px solid transparent;
   background: transparent;
   transition: all .15s; border-right: 1px solid rgba(255,255,255,.04);
-  text-align: left; min-width: 0;
+  text-align: left; min-width: 0; white-space: nowrap;
 }
 .fno-tab-btn:last-child { border-right: none; }
 .fno-tab-btn:hover { background: rgba(255,255,255,.03); }
@@ -3090,9 +3090,44 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-estrip-meta  { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-left: auto; padding-left: 16px; white-space: nowrap; flex-shrink: 0; }
 
 @media (max-width: 768px) {
-  .fno-tabs-bar { top: 40px; padding: 0 8px; }
-  .fno-tab-btn  { padding: 10px 12px; font-size: 11px; }
+  .fno-tabs-bar { top: 40px; padding: 0; gap: 0; }
+  .fno-tab-btn  {
+    flex: 1; flex-direction: column; align-items: center;
+    padding: 8px 4px; gap: 3px;
+    border-right: 1px solid rgba(255,255,255,.04);
+    justify-content: center;
+  }
+  .fno-tab-icon  { font-size: 15px; width: auto; }
+  .fno-tab-label { font-size: 9px; letter-spacing: 0.3px; }
   .fno-estrip-meta { display: none; }
+
+  /* Expiry strip — 2x2 grid on mobile */
+  .fno-expiry-strip-v2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    overflow-x: unset !important;
+    padding: 0 !important;
+    min-height: unset !important;
+    gap: 0;
+  }
+  .fno-esv2-label { display: none; }
+  .fno-esv2-sep   { display: none; }
+  .fno-esv2-meta  { display: none; }
+  .fno-esv2-item  {
+    flex: unset !important;
+    padding: 10px 12px !important;
+    border-right: 1px solid rgba(255,255,255,.06) !important;
+    border-bottom: 1px solid rgba(255,255,255,.06) !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+  .fno-esv2-item:nth-child(even) { border-right: none !important; }
+  .fno-esv2-item:nth-last-child(-n+2) { border-bottom: none !important; }
+  .fno-esv2-top   { justify-content: flex-start !important; }
+  .fno-esv2-clock { justify-content: flex-start !important; }
+  .fno-esv2-name  { font-size: 10px !important; }
+  .fno-esv2-date  { font-size: 9px !important; }
 }
 
 /* ── VIX Zone Card (Overview inline playbook) ────────────────────────────── */
@@ -3553,6 +3588,37 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .fno-esv2-meta  {
   font-family: var(--mono); font-size: 9px; color: var(--text3);
   margin-left: auto; flex-shrink: 0; padding-left: 16px; white-space: nowrap;
+}
+
+.fno-esv2-desktop-items { display: flex; align-items: center; flex: 1; }
+.fno-esv2-mobile-grid  { display: none; }
+
+@media (max-width: 768px) {
+  .fno-expiry-strip-v2 { overflow-x: unset !important; padding: 0 !important; min-height: unset !important; display: block !important; }
+  .fno-esv2-label       { display: none !important; }
+  .fno-esv2-meta        { display: none !important; }
+  .fno-esv2-desktop-items { display: none !important; }
+  .fno-esv2-mobile-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .fno-esv2-mobile-grid .fno-esv2-item {
+    flex: unset !important;
+    padding: 10px 14px !important;
+    border-right: 1px solid rgba(255,255,255,.07) !important;
+    border-bottom: 1px solid rgba(255,255,255,.07) !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+  .fno-esv2-mobile-grid .fno-esv2-item:nth-child(2n) { border-right: none !important; }
+  .fno-esv2-mobile-grid .fno-esv2-item:nth-last-child(-n+2) { border-bottom: none !important; }
+  .fno-esv2-mobile-grid .fno-esv2-top   { justify-content: flex-start !important; }
+  .fno-esv2-mobile-grid .fno-esv2-clock { justify-content: flex-start !important; }
+  .fno-esv2-mobile-grid .fno-esv2-name  { font-size: 10px !important; }
+  .fno-esv2-mobile-grid .fno-esv2-date  { font-size: 9px !important; }
+  .fno-esv2-mobile-grid .fno-esv2-n     { font-size: 18px !important; }
+  .fno-esv2-mobile-grid .fno-esv2-u     { font-size: 9px !important; }
 }
 
 /* ── F&O India Ticker — scrolling ───────────────────────────────────────── */
@@ -4600,6 +4666,15 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .rc-page-nav-active {
   color: var(--text) !important; background: var(--bg2) !important;
   box-shadow: 0 0 0 1px var(--accent); font-weight: 700 !important;
+}
+@media (max-width: 768px) {
+  .rc-page-nav { padding: 0 8px; }
+  .rc-page-nav-inner { gap: 0; padding: 4px 0; overflow-x: unset; }
+  .rc-page-nav-btn {
+    flex: 1; padding: 7px 4px; font-size: 10px;
+    letter-spacing: 0; text-align: center;
+    border-radius: 4px; white-space: nowrap;
+  }
 }
 
 /* ── Top row: Hero left + Start Here right ── */

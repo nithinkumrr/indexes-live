@@ -1976,12 +1976,21 @@ function ExpiryStrip({ expiries, holidayLive, holidayNames = {} }) {
         <span className="fno-esv2-label-top">EXPIRY</span>
         <span className="fno-esv2-label-bot">COUNTDOWN</span>
       </div>
-      {CONTRACTS.map(({ key, label, rule, color, exp }) => (
-        <React.Fragment key={key}>
-          <div className="fno-esv2-sep" />
-          <ExpiryStripItem label={label} rule={rule} color={color} exp={exp} holidayNames={holidayNames} />
-        </React.Fragment>
-      ))}
+      {/* Desktop: separators between items */}
+      <div className="fno-esv2-desktop-items">
+        {CONTRACTS.map(({ key, label, rule, color, exp }) => (
+          <React.Fragment key={key}>
+            <div className="fno-esv2-sep" />
+            <ExpiryStripItem label={label} rule={rule} color={color} exp={exp} holidayNames={holidayNames} />
+          </React.Fragment>
+        ))}
+      </div>
+      {/* Mobile: clean 2x2 grid */}
+      <div className="fno-esv2-mobile-grid">
+        {CONTRACTS.map(({ key, label, rule, color, exp }) => (
+          <ExpiryStripItem key={key} label={label} rule={rule} color={color} exp={exp} holidayNames={holidayNames} />
+        ))}
+      </div>
       <div className="fno-esv2-meta">
         Holiday-adjusted · 15:30 IST
         {holidayLive && <span style={{ color: 'var(--accent)', marginLeft: 5 }}>· NSE live</span>}
