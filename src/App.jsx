@@ -119,11 +119,20 @@ export default function App() {
     brokers:  'Indian Broker Charges — indexes.live',
   };
 
+  // Fire GA pageview
+  const gaPageview = (path, title) => {
+    if (window.gtag) {
+      window.gtag('config', 'G-208DE1M9RR', { page_path: path, page_title: title });
+    }
+  };
+
   const navigate = (v) => {
     setView(v);
     const path = VIEW_PATH[v] || '/markets';
+    const title = PAGE_TITLES[v] || 'indexes.live';
     window.history.pushState({}, '', path);
-    document.title = PAGE_TITLES[v] || 'indexes.live';
+    document.title = title;
+    gaPageview(path, title);
   };
 
   // Meta descriptions per sub-page
@@ -153,6 +162,7 @@ export default function App() {
   const navigateSub = (path, title) => {
     window.history.pushState({}, '', path);
     document.title = title || 'indexes.live';
+    gaPageview(path, title || 'indexes.live');
     // Update meta description
     const desc = META_DESCS[path];
     if (desc) {
