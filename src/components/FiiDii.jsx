@@ -172,9 +172,9 @@ export default function FiiDii() {
 
   const manualRefresh = async () => {
     setR(true);
-    // Trigger store to fetch fresh data from NSE
-    try { await fetch('/api/fiidii-store', { method: 'GET' }); } catch(_) {}
-    // Wait 3 seconds for NSE fetch + KV write to complete, then reload
+    // Trigger store with days=1 to force-fetch today specifically
+    try { await fetch('/api/fiidii-store?days=1', { method: 'GET' }); } catch(_) {}
+    // Wait for NSE fetch + KV write to complete
     setTimeout(() => doFetch(true), 3000);
   };
 

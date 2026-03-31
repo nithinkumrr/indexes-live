@@ -4,7 +4,7 @@
 
 import { kv } from '@vercel/kv';
 
-const HOLIDAYS = new Set(['2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31',
+const HOLIDAYS = new Set(['2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
   '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14',
   '2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25']);
 
@@ -35,11 +35,21 @@ async function fetchDayData(iso, H) {
   const [y, m, d] = iso.split('-');
   const nseDate = `${d}-${m}-${y}`;
 
-  // Try with date param
-  const r = await fetch(`https://www.nseindia.com/api/fiidiiTradeReact?date=${nseDate}`, { headers: H });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  const data = await r.json();
-  const rows = Array.isArray(data) ? data : (data.data || []);
+  // Try combined NSE+BSE+MSEI endpoint first (matches what NSE website shows)
+  let rows = [];
+  const endpoints = [
+    `https://www.nseindia.com/api/fiidiiTradeReact?date=${nseDate}`,
+    `https://www.nseindia.com/api/fiidiiTradeReact`,
+  ];
+  for (const url of endpoints) {
+    try {
+      const r = await fetch(url, { headers: H });
+      if (!r.ok) continue;
+      const data = await r.json();
+      const found = Array.isArray(data) ? data : (data.data || []);
+      if (found.length) { rows = found; break; }
+    } catch(_) {}
+  }
   if (!rows.length) throw new Error('empty');
 
   const fiiRow = rows.find(isFII);

@@ -24,7 +24,7 @@ export default async function handler(req, res) {
   const isFII = r => /FII|FPI|FOREIGN/i.test(String(r?.category||r?.clientType||r?.participant||r?.name||''));
   const isDII = r => /DII|DOMESTIC/i.test(String(r?.category||r?.clientType||r?.participant||r?.name||''));
 
-  const HOLIDAYS = new Set(['2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31',
+  const HOLIDAYS = new Set(['2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
     '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14',
     '2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25']);
 
@@ -68,7 +68,18 @@ export default async function handler(req, res) {
     });
     cookies = (home.headers.get('set-cookie')||'').split(/,(?=[^;]+=)/).map(c=>c.split(';')[0].trim()).filter(Boolean).join('; ');
     const H = { 'User-Agent': UA, 'Accept': 'application/json', 'Referer': 'https://www.nseindia.com/', Cookie: cookies };
-    const r = await fetch('https://www.nseindia.com/api/fiidiiTradeReact', { headers: H });
+    // Try dated endpoint first, fall back to latest
+    let liveData = null;
+    for (const url of [
+      `https://www.nseindia.com/api/fiidiiTradeReact`,
+      `https://www.nseindia.com/api/fiidiiTradeReact?type=equity`,
+    ]) {
+      try {
+        const r = await fetch(url, { headers: H });
+        if (r.ok) { liveData = await r.json(); break; }
+      } catch(_) {}
+    }
+    const r = { ok: !!liveData, json: async () => liveData };
     if (r.ok) {
       const data = await r.json();
       const rows = Array.isArray(data) ? data : (data.data || []);
