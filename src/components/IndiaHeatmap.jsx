@@ -20,16 +20,29 @@ function isNSEOpen() {
 }
 
 function getHeatColor(pct) {
-  if (pct == null) return { bg:'rgba(60,62,68,0.9)', border:'rgba(80,82,90,0.5)', text:'#666' };
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (pct == null) return { bg: isLight ? '#E8E3DA' : 'rgba(60,62,68,0.9)', border: isLight ? '#D0C8BC' : 'rgba(80,82,90,0.5)', text: '#888' };
   const abs = Math.abs(pct), intensity = Math.min(abs / 3, 1);
-  if (pct > 0) return {
-    bg:     `rgba(0,${Math.round(140+intensity*60)},${Math.round(80+intensity*20)},${0.18+intensity*0.38})`,
-    border: `rgba(0,${Math.round(150+intensity*55)},${Math.round(100+intensity*20)},${0.45+intensity*0.45})`,
-    text:   intensity > 0.35 ? '#00FF94' : '#00C896',
+  if (pct > 0) {
+    if (isLight) return {
+      bg:     `rgba(0,${Math.round(130+intensity*70)},${Math.round(80+intensity*30)},${0.12+intensity*0.55})`,
+      border: `rgba(0,${Math.round(140+intensity*60)},90,${0.5+intensity*0.4})`,
+      text:   intensity > 0.3 ? '#006845' : '#008A60',
+    };
+    return {
+      bg:     `rgba(0,${Math.round(140+intensity*60)},${Math.round(80+intensity*20)},${0.18+intensity*0.42})`,
+      border: `rgba(0,${Math.round(150+intensity*55)},${Math.round(100+intensity*20)},${0.5+intensity*0.45})`,
+      text:   intensity > 0.35 ? '#00FF94' : '#00C896',
+    };
+  }
+  if (isLight) return {
+    bg:     `rgba(${Math.round(190+intensity*55)},${Math.round(30-intensity*20)},${Math.round(20-intensity*10)},${0.12+intensity*0.55})`,
+    border: `rgba(${Math.round(200+intensity*45)},30,20,${0.5+intensity*0.4})`,
+    text:   intensity > 0.3 ? '#8B0000' : '#B22222',
   };
   return {
-    bg:     `rgba(${Math.round(180+intensity*65)},${Math.round(35-intensity*15)},${Math.round(40-intensity*15)},${0.18+intensity*0.38})`,
-    border: `rgba(${Math.round(200+intensity*55)},40,40,${0.45+intensity*0.45})`,
+    bg:     `rgba(${Math.round(180+intensity*65)},${Math.round(35-intensity*15)},${Math.round(40-intensity*15)},${0.18+intensity*0.42})`,
+    border: `rgba(${Math.round(200+intensity*55)},40,40,${0.5+intensity*0.45})`,
     text:   intensity > 0.35 ? '#FF6070' : '#FF4455',
   };
 }
@@ -148,8 +161,8 @@ function HeatmapCanvas({ stocks, sectorOrder, title, indexKey }) {
                 setHovered({stock:rect,x:e.clientX-box.left,y:e.clientY-box.top});
               }}>
               {showSector&&<span className="hm-cell-sector" style={{color:SECTOR_COLORS[rect._sectorLabel]}}>{rect._sectorLabel}</span>}
-              {showName&&<span className="hm-cell-name" style={{color:"rgba(255,255,255,0.90)"}}>{rect.name}</span>}
-              {showPct&&<span className="hm-cell-pct" style={{color:"rgba(255,255,255,0.85)"}}>{rect.changePct>=0?'+':''}{formatPct(rect.changePct)}</span>}
+              {showName&&<span className="hm-cell-name" style={{color:colors.text,opacity:0.9}}>{rect.name}</span>}
+              {showPct&&<span className="hm-cell-pct" style={{color:colors.text}}>{rect.changePct>=0?'+':''}{formatPct(rect.changePct)}</span>}
             </div>
           );
         })}

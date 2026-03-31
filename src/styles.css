@@ -39,7 +39,7 @@
   --border2:  rgba(0,0,0,0.16);
   --text:     #1A1410;
   --text2:    #3A2E20;
-  --text3:    #9C8B75;
+  --text3:    #4A3828;
   --gain:     #1BAF8E;
   --gain-bg:  rgba(27,175,142,0.12);
   --loss:     #E8621A;
@@ -70,10 +70,51 @@
 [data-theme="light"] .live-pulse { background: #1BAF8E; }
 [data-theme="light"] .update-dot { background: #1BAF8E; }
 [data-theme="light"] .theme-toggle { background: #EDE8DF; border-color: rgba(0,0,0,0.12); color: #3A2E20; }
-[data-theme="light"] .hero-card { background: #fff; border-color: rgba(0,0,0,0.08); }
+/* ── LIGHT THEME: ALL CARDS WHITE ── */
+[data-theme="light"] .hero-card { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
 [data-theme="light"] .hero-card-live { border-top-color: #1BAF8E !important; }
-[data-theme="light"] .gain { color: #1BAF8E !important; }
-[data-theme="light"] .loss { color: #E8621A !important; }
+[data-theme="light"] .market-card { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .market-card:hover { background: #F8F5F0 !important; }
+[data-theme="light"] .wb-card { background: #fff !important; }
+[data-theme="light"] .wb-card:hover { background: #F5F1EB !important; }
+[data-theme="light"] .fno-widget { background: #fff; }
+[data-theme="light"] .fno-vix-card { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .rc-card { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .brk-card { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .ip-ana-block { background: #fff; border-color: rgba(0,0,0,0.09); }
+[data-theme="light"] .ip-signals-list .ip-signal { background: #fff; border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .st-bm-col .wb-card { background: #fff !important; }
+
+/* Gift Nifty — teal highlight */
+[data-theme="light"] .hero-card-gift {
+  border: 1px solid rgba(27,175,142,0.4) !important;
+  border-top: 3px solid #1BAF8E !important;
+  background: linear-gradient(180deg, rgba(27,175,142,0.08) 0%, #fff 55%) !important;
+  box-shadow: 0 0 20px rgba(27,175,142,0.12) !important;
+}
+
+/* VIX card — strong amber highlight */
+[data-theme="light"] .wb-vix {
+  border: 1px solid rgba(220,100,0,0.4) !important;
+  background: linear-gradient(135deg, rgba(220,100,0,0.08), rgba(220,100,0,0.02)) !important;
+  box-shadow: 0 0 16px rgba(220,100,0,0.1) !important;
+}
+
+/* FnO active zone "NOW" — force stronger color in light theme */
+[data-theme="light"] .fno-strategy-zone[style*="borderColor"] {
+  border-width: 2px !important;
+  box-shadow: 0 0 12px rgba(0,0,0,0.08);
+}
+[data-theme="light"] .fno-strategy-current { filter: brightness(0.75) saturate(1.5); }
+[data-theme="light"] .fno-strategy-zone-label[style*="color"] { filter: brightness(0.7) saturate(1.4); }
+
+/* Gain/loss colors — rich, not washed */
+[data-theme="light"] .gain { color: #0D8C6E !important; }
+[data-theme="light"] .loss { color: #C9360A !important; }
+[data-theme="light"] .market-card-live { border-top-color: #1BAF8E !important; }
+
+/* Borders — subtle on white cards */
+[data-theme="light"] .border { border-color: rgba(0,0,0,0.08) !important; }
 
 
 
