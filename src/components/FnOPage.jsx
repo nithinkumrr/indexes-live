@@ -1797,25 +1797,34 @@ export default function FnOPage({ data = {} }) {
       {tab === 'overview' && (
         <div className="fno-tab-content">
 
-          {/* Row 1: VIX 20% + Cheat Code 80% */}
-          <div className="fno-overview-row1">
-            <div className="fno-overview-vix">
-              <VIXCard onVix={setLiveVix} />
+          {/* ── DESKTOP layout ── */}
+          <div className="fno-ov-desktop">
+            {/* Row 1: VIX 25% + Cheat Code 75% */}
+            <div className="fno-overview-row1">
+              <div className="fno-overview-vix">
+                <VIXCard onVix={setLiveVix} />
+              </div>
+              <div className="fno-overview-cheatcode">
+                <StrategySheet vixLevel={liveVix} compact />
+              </div>
             </div>
-            <div className="fno-overview-cheatcode">
-              <StrategySheet vixLevel={liveVix} compact />
+            {/* Row 2: Metrics left + Pivots right */}
+            <div className="fno-overview-row2">
+              <div className="fno-overview-metrics">
+                <ExpectedMove data={data} expiries={expiries} />
+                <RolloverMeter expiries={expiries} />
+              </div>
+              <div className="fno-overview-pivots">
+                <PivotPointsV2 data={data} />
+              </div>
             </div>
           </div>
 
-          {/* Row 2: Metrics left + Pivots + extras right */}
-          <div className="fno-overview-row2">
-            <div className="fno-overview-metrics">
-              <ExpectedMove data={data} expiries={expiries} />
-              <RolloverMeter expiries={expiries} />
-            </div>
-            <div className="fno-overview-pivots">
-              <PivotPointsV2 data={data} />
-            </div>
+          {/* ── MOBILE layout — vertical stack ── */}
+          <div className="fno-ov-mobile">
+            <VIXCard onVix={setLiveVix} />
+            <PivotPointsV2 data={data} />
+            <RolloverMeter expiries={expiries} />
           </div>
 
         </div>
