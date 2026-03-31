@@ -6617,36 +6617,41 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── BROKERS PAGE ────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Hero */
-  .brk-hero2 { padding: 14px; }
-  .brk-hero2-top { grid-template-columns: 1fr; gap: 12px; }
+  /* Hero — compact 2×2 stats grid */
+  .brk-hero2 { padding: 12px 14px; }
+  .brk-hero2-top { grid-template-columns: 1fr; gap: 10px; }
   .brk-hero2-left { width: 100%; }
-  .brk-hero2-note { width: 100%; box-sizing: border-box; }
-  .brk-hero2-title { font-size: 15px; }
-  .brk-hero2-stats { gap: 10px; }
+  .brk-hero2-title { font-size: 13px; letter-spacing: 0; line-height: 1.3; }
+  .brk-hero2-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .brk-hs2 { padding: 8px 10px; border: 1px solid rgba(255,255,255,.07); border-radius: 0; margin: -0.5px; }
+  .brk-hs2-n { font-size: 17px !important; letter-spacing: -0.5px; }
+  .brk-hs2-l { font-size: 9px !important; line-height: 1.4; }
+  .brk-hs2-sep { display: none; }
+  .brk-hero2-trade-note { font-size: 9px; line-height: 1.5; }
+  .brk-hero2-note { width: 100%; box-sizing: border-box; font-size: 10px; line-height: 1.5; }
 
   /* Tab bar — icon + short label, no scroll */
   .brk-tabs-bar { overflow-x: unset; flex-wrap: nowrap; padding: 0; }
   .brk-tab-btn {
     flex: 1; flex-direction: column; align-items: center;
-    padding: 7px 2px; gap: 2px; justify-content: center;
+    padding: 8px 2px; gap: 3px; justify-content: center;
     border-right: 1px solid rgba(255,255,255,.04);
   }
-  .brk-tab-icon  { font-size: 14px; width: auto; }
+  .brk-tab-icon  { font-size: 16px; width: auto; }
   .brk-tab-label-full  { display: none; }
   .brk-tab-label-short { display: block; }
-  .brk-tab-label { font-size: 8px; letter-spacing: 0; text-align: center; }
+  .brk-tab-label { font-size: 10px; letter-spacing: 0; text-align: center; font-weight: 700; }
 
-  /* Broker cards — stack columns vertically, no horizontal scroll */
+  /* Broker cards — 2×2 grid layout */
   .brk-card-cols { flex-wrap: wrap; overflow-x: unset; padding: 10px 14px; gap: 0; }
   .brk-col { min-width: calc(50% - 1px); flex: unset; width: 50%; align-items: flex-start; text-align: left; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
   .brk-col:nth-child(odd) { border-right: 1px solid rgba(255,255,255,.05); padding-right: 12px; }
   .brk-col:nth-child(even) { padding-left: 12px; }
   .brk-col-wide { min-width: 100%; flex: unset; width: 100%; border-right: none !important; padding-left: 0 !important; }
   .brk-col-divider { display: none; }
-  .brk-col-val { font-size: 16px; }
+  .brk-col-val { font-size: 15px; }
   .brk-col-label { font-size: 9px; }
-  .brk-card-name { font-size: 18px; }
+  .brk-card-name { font-size: 17px; }
   .brk-card-top { padding: 10px 14px; }
 
   /* Rankings table */
@@ -6666,15 +6671,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .h2h-tr { font-size: 11px; }
   .h2h-td-num { font-size: 13px; }
 
-  /* Charges guide */
-  .cg-tabs { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; top: 44px; }
-  .cg-tabs::-webkit-scrollbar { display: none; }
-  .cg-tab { font-size: 11px; padding: 8px 12px; flex-shrink: 0; }
+  /* Charges guide — wrap tabs, no scroll */
+  .cg-tabs { overflow-x: unset !important; flex-wrap: wrap !important; position: static !important; padding: 6px 8px 4px; gap: 4px; margin-bottom: 12px; border-bottom: none; }
+  .cg-tab { font-size: 10px !important; padding: 5px 10px !important; flex-shrink: 0; border: 1px solid var(--border) !important; border-radius: 5px !important; border-bottom-color: var(--border) !important; margin-bottom: 0 !important; }
+  .cg-tab-active { border-color: var(--accent) !important; color: var(--text) !important; background: rgba(74,158,255,.1) !important; }
+  .cg-tab-more-wrap { flex-shrink: 0; }
   .cg-verdict-grid { grid-template-columns: 1fr; }
-  .cg-verdict-name { font-size: 18px; }
-  .cg-verdict-amt { font-size: 15px; }
-  .cg-table th, .cg-table td { font-size: 11px; padding: 8px 10px; }
-  .cg-section-title { font-size: 15px; }
+  .cg-verdict-name { font-size: 16px; }
+  .cg-verdict-amt { font-size: 14px; }
+  .cg-table th, .cg-table td { font-size: 10px !important; padding: 7px 8px !important; }
+  .cg-section-title { font-size: 14px; }
+  .cg-table-wrap { overflow-x: auto; }
 
   /* Brokerage calculator */
   .brk-calc-layout { flex-direction: column; }

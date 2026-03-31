@@ -1085,8 +1085,10 @@ function CgSummaryLine({text}){
 
 function CgTable({children, cols}){
   return(
-    <div className="cg-table" style={{gridTemplateColumns:cols}}>
-      {children}
+    <div className="cg-table-wrap">
+      <div className="cg-table" style={{gridTemplateColumns:cols}}>
+        {children}
+      </div>
     </div>
   );
 }
