@@ -23,10 +23,12 @@ function getTradingDays(n) {
 const pn = v => { const n = parseFloat(String(v||'').replace(/,/g,'')); return isNaN(n) ? 0 : n; };
 const parseRow = row => {
   if (!row) return { net: 0, buy: 0, sell: 0 };
-  const net  = pn(row.netValue ?? row.net ?? row.netPurchaseSales ?? row.NET ?? 0);
   const buy  = pn(row.buyValue ?? row.grossPurchase ?? row.BUY ?? row.buy ?? 0);
   const sell = pn(row.sellValue ?? row.grossSales ?? row.SELL ?? row.sell ?? 0);
-  return { net: net || (buy - sell), buy, sell };
+  const netRaw = pn(row.netValue ?? row.net ?? row.netPurchaseSales ?? row.NET ?? 0);
+  // Always prefer buy-sell calculation over netValue field (more accurate)
+  const net = (buy > 0 || sell > 0) ? (buy - sell) : netRaw;
+  return { net, buy, sell };
 };
 const isFII = r => /FII|FPI|FOREIGN/i.test(String(r?.category||r?.clientType||r?.participant||r?.name||''));
 const isDII = r => /DII|DOMESTIC/i.test(String(r?.category||r?.clientType||r?.participant||r?.name||''));
@@ -91,6 +93,13 @@ export default async function handler(req, res) {
       try { const val = await kv.get(`fiidii:${iso}`); if (val) results[`fiidii:${iso}`] = typeof val === 'string' ? JSON.parse(val) : val; } catch(_) {}
     }
     return res.status(200).json({ stored: Object.keys(results).length, data: results });
+  }
+
+  // force=1: delete today's KV entry to force fresh fetch
+  if (req.query?.force === '1' || req.query?.force === 1) {
+    try {
+      await kv.del(`fiidii:${todayISO}`);
+    } catch(_) {}
   }
 
   // Guard: don't run the store on weekends or holidays  -  the cron runs Mon-Fri

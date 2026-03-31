@@ -15,10 +15,11 @@ export default async function handler(req, res) {
 
   const parseRow = row => {
     if (!row) return { net: 0, buy: 0, sell: 0 };
-    const net  = pn(row.netValue ?? row.net ?? row.netPurchaseSales ?? row.NET ?? 0);
     const buy  = pn(row.buyValue ?? row.grossPurchase ?? row.BUY ?? row.buy ?? 0);
     const sell = pn(row.sellValue ?? row.grossSales ?? row.SELL ?? row.sell ?? 0);
-    return { net: net || (buy - sell), buy, sell };
+    const netRaw = pn(row.netValue ?? row.net ?? row.netPurchaseSales ?? row.NET ?? 0);
+    const net = (buy > 0 || sell > 0) ? (buy - sell) : netRaw;
+    return { net, buy, sell };
   };
 
   const isFII = r => /FII|FPI|FOREIGN/i.test(String(r?.category||r?.clientType||r?.participant||r?.name||''));

@@ -172,10 +172,15 @@ export default function FiiDii() {
 
   const manualRefresh = async () => {
     setR(true);
-    // Trigger store with days=1 to force-fetch today specifically
-    try { await fetch('/api/fiidii-store?days=1', { method: 'GET' }); } catch(_) {}
-    // Wait for NSE fetch + KV write to complete
-    setTimeout(() => doFetch(true), 3000);
+    // Step 1: Delete stale KV entry so fresh data is fetched
+    try {
+      const ist = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+      const iso = ist.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
+      // POST to fiidii-store with empty records just to trigger a fresh fetch
+      await fetch('/api/fiidii-store?days=1&force=1', { method: 'GET' });
+    } catch(_) {}
+    // Step 2: Wait and reload
+    setTimeout(() => doFetch(true), 4000);
   };
 
   useEffect(() => {
