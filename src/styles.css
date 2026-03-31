@@ -3218,7 +3218,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* Mobile pivot tab switcher — hidden on desktop */
 .fno-pv2-mobile-tabs { display: none; }
-.fno-pv2-col-hidden  { display: none !important; }
 .fno-pv2-mtab {
   background: none; border: none; border-bottom: 2px solid transparent;
   font-family: var(--mono); font-size: 11px; font-weight: 700;
@@ -3231,18 +3230,28 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .fno-overview-row1 { grid-template-columns: 1fr; }
   .fno-overview-vix  { border-right: none; border-bottom: 1px solid var(--border); }
   .fno-cc-strategies { grid-template-columns: 1fr; }
-  .fno-overview-row2 { grid-template-columns: 1fr; }
+  .fno-overview-row2 { grid-template-columns: 1fr !important; }
   .fno-overview-metrics { border-right: none; border-bottom: 1px solid var(--border); }
   .fno-pvh-row       { grid-template-columns: 80px 70px repeat(7, 1fr); font-size: 9px; padding: 5px 10px; }
 
   /* Pivot V2 — show tab switcher, one column at a time */
   .fno-pv2-mobile-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; width: 100%; border-top: 1px solid var(--border); padding-top: 6px; }
-  .fno-pv2-col-hidden  { display: none !important; }
   .fno-pv2-cols { grid-template-columns: 1fr !important; }
   .fno-pv2-col  { border-right: none !important; }
+  /* Hide all columns by default on mobile */
+  .fno-pv2-cols .fno-pv2-col-m0,
+  .fno-pv2-cols .fno-pv2-col-m1,
+  .fno-pv2-cols .fno-pv2-col-m2,
+  .fno-pv2-cols .fno-pv2-col-m3 { display: none !important; }
+  /* Show only the selected one */
+  .fno-pv2-cols[data-midx="0"] .fno-pv2-col-m0,
+  .fno-pv2-cols[data-midx="1"] .fno-pv2-col-m1,
+  .fno-pv2-cols[data-midx="2"] .fno-pv2-col-m2,
+  .fno-pv2-cols[data-midx="3"] .fno-pv2-col-m3 { display: flex !important; }
 
-  /* Overview row2 metrics — compact on mobile */
-  .fno-overview-metrics > .fno-widget { padding: 10px 12px; }
+  /* Overview row2 — hide sidebar metrics on mobile, full-width pivots */
+  .fno-overview-metrics { display: none !important; }
+  .fno-overview-pivots  { width: 100%; }
 }
 
 /* ── StrategySheet compact mode (Overview tab) ───────────────────────────── */

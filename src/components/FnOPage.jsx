@@ -1497,12 +1497,12 @@ function PivotPointsV2({ data }) {
       </div>
 
       {/* columns — on mobile only show selected index */}
-      <div className="fno-pv2-cols">
+      <div className="fno-pv2-cols" data-midx={mobileIdx}>
         {INDICES.map(({ id, label, color }, idx) => {
           const d = data?.[id];
           const p = computePivots(d);
           if (!p) return (
-            <div key={id} className="fno-pv2-col" data-mobile-idx={idx} style={{}}>
+            <div key={id} className={`fno-pv2-col fno-pv2-col-m${idx}`} data-midx={idx}>
               <div className="fno-pv2-col-hdr" style={{ borderTopColor: color }}>
                 <span className="fno-pv2-col-name">{label}</span>
               </div>
@@ -1524,7 +1524,7 @@ function PivotPointsV2({ data }) {
           const gain = chg >= 0;
 
           return (
-            <div key={id} className={`fno-pv2-col${mobileIdx===idx?'':' fno-pv2-col-hidden'}`}>
+            <div key={id} className={`fno-pv2-col fno-pv2-col-m${idx}`} data-midx={idx}>
               <div className="fno-pv2-col-hdr" style={{ borderTopColor: color }}>
                 <span className="fno-pv2-col-name" style={{ color }}>{label}</span>
                 <span className="fno-pv2-col-price">{fmt(p.C)}</span>
@@ -1572,7 +1572,7 @@ function PivotPointsV2({ data }) {
         })}
 
         {/* 4th column: Breadth + summary */}
-        <div className={`fno-pv2-col fno-pv2-extra${mobileIdx===3?'':' fno-pv2-col-hidden'}`}>
+        <div className="fno-pv2-col fno-pv2-extra fno-pv2-col-m3">
           <div className="fno-pv2-col-hdr" style={{ borderTopColor: '#64748B' }}>
             <span className="fno-pv2-col-name" style={{ color: 'var(--text)' }}>Market Pulse</span>
           </div>
