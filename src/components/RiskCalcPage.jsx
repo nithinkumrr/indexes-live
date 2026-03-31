@@ -1709,10 +1709,13 @@ function PageNav({ activeSection, onNav }) {
 // MAIN PAGE
 // ==============================================================================
 
-export default function RiskCalcPage() {
+export default function RiskCalcPage({ initialTab = null, navigateSub = null }) {
   const [shared, setShared] = useState({});
   const [activeTab,   setActiveTab]   = useState('trade');
-  const [activeSection,setActiveSection] = useState('start');
+  const CALC_SECTION_PATHS = { start:'/calc', calculators:'/calc/calculators', recovery:'/calc/recovery', principles:'/calc/principles', glossary:'/calc/glossary' };
+  const CALC_SECTION_TITLES = { start:'Risk Calculator — indexes.live', calculators:'Risk Calculators — indexes.live', recovery:'Recovery Trap — indexes.live', principles:'5 Laws of Risk — indexes.live', glossary:'Risk Glossary — indexes.live' };
+  const [activeSection, setActiveSectionRaw] = useState(initialTab || 'start');
+  const setActiveSection = (s) => { setActiveSectionRaw(s); if (navigateSub) navigateSub(CALC_SECTION_PATHS[s]||'/calc', CALC_SECTION_TITLES[s]); };
   const calcRef = useRef(null);
 
   const tab = TABS.find(t=>t.id===activeTab);

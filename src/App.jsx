@@ -23,35 +23,61 @@ const FiiDii       = lazy(() => import('./components/FiiDii'));
 const InsightsPage = lazy(() => import('./components/InsightsPage'));
 const BrokersPage  = lazy(() => import('./components/BrokersPage'));
 
-const HASH_MAP = {
-  '':           'grid',
-  'markets':    'grid',
-  'sentiment':  'bubble',
-  'fno':        'fno',
-  'gold':       'gold',
-  'ipo':        'ipo',
-  'calc':       'calc',
-  'insights':   'insights',
-  'brokers':    'brokers',
-  'blog':       'insights',
+// Sub-tab path maps per page
+const SUB_PATH = {
+  // FnO
+  '/fno':           { view: 'fno',     tab: 'overview'  },
+  '/fno/overview':  { view: 'fno',     tab: 'overview'  },
+  '/fno/strategy':  { view: 'fno',     tab: 'strategy'  },
+  '/fno/learn':     { view: 'fno',     tab: 'backtest'  },
+  '/fno/reference': { view: 'fno',     tab: 'reference' },
+  // Brokers
+  '/brokers':             { view: 'brokers', tab: 'Rankings'    },
+  '/brokers/rankings':    { view: 'brokers', tab: 'Rankings'    },
+  '/brokers/compare':     { view: 'brokers', tab: 'Direct Comparison' },
+  '/brokers/charges':     { view: 'brokers', tab: 'Charges Guide' },
+  '/brokers/calculator':  { view: 'brokers', tab: 'Brokerage Calc' },
+  '/brokers/data':        { view: 'brokers', tab: 'Market Data' },
+  // Risk calc
+  '/calc':              { view: 'calc', tab: 'start'       },
+  '/calc/calculators':  { view: 'calc', tab: 'calculators' },
+  '/calc/recovery':     { view: 'calc', tab: 'recovery'    },
+  '/calc/principles':   { view: 'calc', tab: 'principles'  },
+  '/calc/glossary':     { view: 'calc', tab: 'glossary'    },
 };
 
-const VIEW_HASH = {
-  'grid':      'markets',
-  'bubble':    'sentiment',
-  'fno':       'fno',
-  'gold':      'gold',
-  'ipo':       'ipo',
-  'calc':      'calc',
-  'insights':  'insights',
-  'brokers':   'brokers',
+const PATH_MAP = {
+  '/':           'grid',
+  '/markets':    'grid',
+  '/sentiment':  'bubble',
+  '/gold':       'gold',
+  '/ipo':        'ipo',
+  '/insights':   'insights',
+  '/blog':       'insights',
+};
+
+const VIEW_PATH = {
+  'grid':      '/markets',
+  'bubble':    '/sentiment',
+  'fno':       '/fno',
+  'gold':      '/gold',
+  'ipo':       '/ipo',
+  'calc':      '/calc',
+  'insights':  '/insights',
+  'brokers':   '/brokers',
 };
 
 const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc', 'insights', 'brokers']);
 
-function getViewFromHash() {
-  const hash = window.location.hash.replace('#/', '').replace('#', '').toLowerCase();
-  return HASH_MAP[hash] || 'grid';
+function getStateFromPath() {
+  const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
+  if (SUB_PATH[path]) return SUB_PATH[path];
+  if (PATH_MAP[path]) return { view: PATH_MAP[path], tab: null };
+  return { view: 'grid', tab: null };
+}
+
+function getViewFromPath() {
+  return getStateFromPath().view;
 }
 
 function PageSpinner() {
@@ -68,18 +94,39 @@ function PageSpinner() {
 export default function App() {
   const region = useMemo(() => detectRegion(), []);
   const { data, lastUpdate, nseData } = useMarketData();
-  const [view, setView]             = useState(getViewFromHash);
+  const initState                   = getStateFromPath();
+  const [view, setView]             = useState(initState.view);
+  const [initialTab]                = useState(initState.tab);
   const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
-    const onHash = () => setView(getViewFromHash());
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    const onPop = () => setView(getViewFromPath());
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
   }, []);
+
+  const PAGE_TITLES = {
+    grid:     'indexes.live — Global Market Indexes Live',
+    bubble:   'Market Sentiment — indexes.live',
+    fno:      'F&O — Futures & Options — indexes.live',
+    gold:     'Gold Prices Live — indexes.live',
+    ipo:      'IPO Tracker — indexes.live',
+    calc:     'Risk Calculator — indexes.live',
+    insights: 'Daily Market Insights — indexes.live',
+    brokers:  'Indian Broker Charges — indexes.live',
+  };
 
   const navigate = (v) => {
     setView(v);
-    window.location.hash = '#/' + (VIEW_HASH[v] || v);
+    const path = VIEW_PATH[v] || '/markets';
+    window.history.pushState({}, '', path);
+    document.title = PAGE_TITLES[v] || 'indexes.live';
+  };
+
+  // Called by sub-pages when switching tabs
+  const navigateSub = (path, title) => {
+    window.history.pushState({}, '', path);
+    document.title = title || 'indexes.live';
   };
 
   const selectedMarket = selectedId ? MARKETS.find(m => m.id === selectedId) : null;
@@ -94,12 +141,12 @@ export default function App() {
 
       <Suspense fallback={<PageSpinner />}>
         {isFullPage ? (
-          view === 'fno'       ? <FnOPage data={data} nseData={nseData} /> :
+          view === 'fno'       ? <FnOPage data={data} nseData={nseData} initialTab={initialTab} navigateSub={navigateSub} /> :
           view === 'gold'      ? <GoldPage /> :
           view === 'ipo'       ? <IpoPage /> :
-          view === 'calc'      ? <RiskCalcPage /> :
+          view === 'calc'      ? <RiskCalcPage initialTab={initialTab} navigateSub={navigateSub} /> :
           view === 'insights'  ? <InsightsPage data={data} nseData={nseData} /> :
-          view === 'brokers'   ? <BrokersPage /> :
+          view === 'brokers'   ? <BrokersPage initialTab={initialTab} navigateSub={navigateSub} /> :
           null
         ) : (
           <>

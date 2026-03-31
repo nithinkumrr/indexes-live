@@ -1,18 +1,45 @@
 {
   "rewrites": [
-    { "source": "/api/kite-callback", "destination": "/api/kite-auth" },
-    { "source": "/api/(.*)", "destination": "/api/$1" }
+    {
+      "source": "/api/kite-callback",
+      "destination": "/api/kite-auth"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
       "source": "/api/(.*)",
-      "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }]
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
     }
   ],
   "crons": [
-    { "path": "/api/fiidii-store", "schedule": "30 11 * * 1-5" },
-    { "path": "/api/fiidii-store", "schedule": "0 13 * * 1-5" },
-    { "path": "/api/fiidii-store", "schedule": "30 13 * * 1-5" },
-    { "path": "/api/fiidii-store", "schedule": "0 14 * * 1-5" }
+    {
+      "path": "/api/fiidii-store",
+      "schedule": "30 11 * * 1-5"
+    },
+    {
+      "path": "/api/fiidii-store",
+      "schedule": "0 13 * * 1-5"
+    },
+    {
+      "path": "/api/fiidii-store",
+      "schedule": "30 13 * * 1-5"
+    },
+    {
+      "path": "/api/fiidii-store",
+      "schedule": "0 14 * * 1-5"
+    }
   ]
 }

@@ -302,7 +302,8 @@
 
 
 html { font-size: 14px; }
-body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+html { overflow-x: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100vh; overflow-x: hidden; }
 
 .app { width: 100%; min-height: 100vh; }
 
@@ -389,7 +390,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .app { padding-bottom: 60px; }
 
   /* Slim down top header on mobile */
-  .header { padding: 8px 12px; position: sticky; top: 0; z-index: 100; }
+  .header { padding: 8px 12px; position: -webkit-sticky; position: sticky; top: 0; z-index: 1000; }
   .header-left { gap: 8px; flex: 1; justify-content: space-between; }
   .logo-text, .logo-dot, .logo-live { font-size: 17px; }
   .update-time { display: none; }

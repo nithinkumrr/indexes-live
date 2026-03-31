@@ -1737,7 +1737,7 @@ function VixZoneCard({ vixLevel, onStrategyClick }) {
   );
 }
 
-export default function FnOPage({ data = {} }) {
+export default function FnOPage({ data = {}, nseData = {}, initialTab = null, navigateSub = null }) {
   const FALLBACK_HOLIDAYS = ['2026-01-26','2026-02-17','2026-03-03','2026-03-26','2026-03-31','2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14','2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25'];
   const FALLBACK_NAMES    = {'2026-01-26':'Republic Day','2026-02-17':'Mahashivratri','2026-03-03':'Holi','2026-03-26':'Ram Navami','2026-03-31':'Mahavir Jayanti','2026-04-03':'Good Friday','2026-04-14':'Ambedkar Jayanti','2026-05-01':'Maharashtra Day','2026-05-28':'Bakri Id','2026-06-26':'Muharram','2026-09-14':'Ganesh Chaturthi','2026-10-02':'Gandhi Jayanti','2026-10-20':'Dussehra','2026-11-10':'Diwali Balipratipada','2026-11-24':'Guru Nanak Jayanti','2026-12-25':'Christmas'};
 
@@ -1746,7 +1746,10 @@ export default function FnOPage({ data = {} }) {
   const [expiries, setExpiries]         = useState(() => getNiftyExpiries(FALLBACK_HOLIDAYS, FALLBACK_NAMES));
   const [holidayLive, setHolidayLive]   = useState(false);
   const [liveVix, setLiveVix]           = useState(null);
-  const [tab, setTab]                   = useState('overview');
+  const FNO_TAB_PATHS = { overview:'/fno/overview', strategy:'/fno/strategy', backtest:'/fno/learn', reference:'/fno/reference' };
+  const FNO_TAB_TITLES = { overview:'F&O Overview — indexes.live', strategy:'Options Strategy — indexes.live', backtest:'Learn Options — indexes.live', reference:'F&O Reference — indexes.live' };
+  const [tab, setTabRaw] = useState(initialTab || 'overview');
+  const setTab = (t) => { setTabRaw(t); if (navigateSub) navigateSub(FNO_TAB_PATHS[t]||'/fno', FNO_TAB_TITLES[t]); };
 
   useEffect(() => {
     fetch('/api/holidays').then(r => r.json()).then(d => {

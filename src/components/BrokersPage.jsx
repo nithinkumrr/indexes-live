@@ -2277,8 +2277,11 @@ function HeadToHead(){
 }
 
 
-export default function BrokersPage() {
-  const [tab,      setTab]     = useState('Rankings');
+export default function BrokersPage({ initialTab = null, navigateSub = null }) {
+  const BRK_TAB_PATHS = { 'Rankings':'/brokers/rankings','Direct Comparison':'/brokers/compare','Charges Guide':'/brokers/charges','Brokerage Calc':'/brokers/calculator','Market Data':'/brokers/data' };
+  const BRK_TAB_TITLES = { 'Rankings':'Indian Broker Rankings — indexes.live','Direct Comparison':'Compare Brokers — indexes.live','Charges Guide':'Broker Charges Guide — indexes.live','Brokerage Calc':'Brokerage Calculator — indexes.live','Market Data':'Broker Market Data — indexes.live' };
+  const [tab, setTabRaw] = useState(initialTab || 'Rankings');
+  const setTab = (t) => { setTabRaw(t); if (navigateSub) navigateSub(BRK_TAB_PATHS[t]||'/brokers', BRK_TAB_TITLES[t]); };
   const [sort,     setSort]    = useState('total50k');
   const [filter,   setFilter]  = useState('all');
   const [expanded, setExpanded]= useState(null);
