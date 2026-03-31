@@ -5842,8 +5842,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── Broker Hero v2 ───────────────────────────────────────────────── */
 .brk-hero2        { padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--bg0); }
-.brk-hero2-top    { display: flex; align-items: stretch; gap: 14px; }
-.brk-hero2-left   { flex: 0 0 64%; display: flex; flex-direction: column; gap: 8px; justify-content: space-between; }
+.brk-hero2-top    { display: grid; grid-template-columns: 1fr 340px; gap: 14px; align-items: start; }
+.brk-hero2-left   { display: flex; flex-direction: column; gap: 8px; }
 .brk-hero2-title  { font-family: var(--mono); font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; line-height: 1.2; }
 .brk-hero2-stats  { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 .brk-hero2-trade-note { font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.55; padding-top: 8px; border-top: 1px solid var(--border); margin-top: auto; }
@@ -5852,7 +5852,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-hs2-l        { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 .brk-hs2-l strong { font-weight: 800; }
 .brk-hs2-sep      { font-family: var(--mono); font-size: 20px; color: var(--border2); line-height: 1; }
-.brk-hero2-note   { flex: 1; font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.65; padding: 10px 13px; background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r); box-sizing: border-box; word-break: break-word; align-self: stretch; display: block; }
+.brk-hero2-note   { font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.65; padding: 10px 13px; background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r); box-sizing: border-box; word-break: break-word; display: block; }
 .brk-hero2-note a { color: var(--accent); }
 
 /* ── Trade size toggle ────────────────────────────────────────────── */
@@ -6492,9 +6492,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 @media (max-width: 768px) {
   /* Hero */
   .brk-hero2 { padding: 14px; }
-  .brk-hero2-top { flex-direction: column; gap: 14px; }
-  .brk-hero2-left { flex: none; width: 100%; }
-  .brk-hero2-note { flex: none; width: 100%; box-sizing: border-box; }
+  .brk-hero2-top { grid-template-columns: 1fr; gap: 12px; }
+  .brk-hero2-left { width: 100%; }
+  .brk-hero2-note { width: 100%; box-sizing: border-box; }
   .brk-hero2-title { font-size: 15px; }
   .brk-hero2-stats { gap: 10px; }
 
