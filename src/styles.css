@@ -5672,6 +5672,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-tab-btn:hover .brk-tab-label { color: #fff; }
 .brk-tab-icon    { font-size: 13px; flex-shrink: 0; color: var(--text2); width: 16px; text-align: center; font-family: var(--mono); }
 .brk-tab-label   { font-family: var(--mono); font-size: 11.5px; font-weight: 800; color: var(--text); letter-spacing: .2px; white-space: nowrap; }
+.brk-tab-label-short { display: none; }
 .brk-tab-active .brk-tab-icon  { color: var(--accent) !important; }
 .brk-tab-active .brk-tab-label { color: #fff !important; }
 .brk-tab-active  { border-bottom-color: var(--accent) !important; background: rgba(74,158,255,.05) !important; }
@@ -6604,11 +6605,29 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .brk-hero2-title { font-size: 15px; }
   .brk-hero2-stats { gap: 10px; }
 
-  /* Tab bar - scrollable */
-  .brk-tabs-bar { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
-  .brk-tabs-bar::-webkit-scrollbar { display: none; }
-  .brk-tab-btn { flex-shrink: 0; padding: 8px 14px; }
-  .brk-tab-label { font-size: 11px; }
+  /* Tab bar — icon + short label, no scroll */
+  .brk-tabs-bar { overflow-x: unset; flex-wrap: nowrap; padding: 0; }
+  .brk-tab-btn {
+    flex: 1; flex-direction: column; align-items: center;
+    padding: 7px 2px; gap: 2px; justify-content: center;
+    border-right: 1px solid rgba(255,255,255,.04);
+  }
+  .brk-tab-icon  { font-size: 14px; width: auto; }
+  .brk-tab-label-full  { display: none; }
+  .brk-tab-label-short { display: block; }
+  .brk-tab-label { font-size: 8px; letter-spacing: 0; text-align: center; }
+
+  /* Broker cards — stack columns vertically, no horizontal scroll */
+  .brk-card-cols { flex-wrap: wrap; overflow-x: unset; padding: 10px 14px; gap: 0; }
+  .brk-col { min-width: calc(50% - 1px); flex: unset; width: 50%; align-items: flex-start; text-align: left; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .brk-col:nth-child(odd) { border-right: 1px solid rgba(255,255,255,.05); padding-right: 12px; }
+  .brk-col:nth-child(even) { padding-left: 12px; }
+  .brk-col-wide { min-width: 100%; flex: unset; width: 100%; border-right: none !important; padding-left: 0 !important; }
+  .brk-col-divider { display: none; }
+  .brk-col-val { font-size: 16px; }
+  .brk-col-label { font-size: 9px; }
+  .brk-card-name { font-size: 18px; }
+  .brk-card-top { padding: 10px 14px; }
 
   /* Rankings table */
   .brk-rank-table { font-size: 11px; }

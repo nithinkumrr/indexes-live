@@ -2374,7 +2374,10 @@ export default function BrokersPage() {
             <span className="brk-tab-icon">{
               t==='Rankings'?'↓':t==='Direct Comparison'?'⚔':t==='Charges Guide'?'≋':t==='Brokerage Calc'?'₹':'▦'
             }</span>
-            <span className="brk-tab-label">{t}</span>
+            <span className="brk-tab-label brk-tab-label-full">{t}</span>
+            <span className="brk-tab-label brk-tab-label-short">{
+              t==='Rankings'?'Rank':t==='Direct Comparison'?'Compare':t==='Charges Guide'?'Charges':t==='Brokerage Calc'?'Calc':'Data'
+            }</span>
           </button>
         ))}
       </div>
