@@ -115,7 +115,7 @@ export default function App() {
     gold:     'Gold Prices Live | indexes.live',
     ipo:      'IPO Tracker | indexes.live',
     calc:     'Risk Calculator | indexes.live',
-    insights: 'Daily Market Insights | indexes.live',
+    insights: 'News & Market Insights | indexes.live',
     brokers:  'Indian Broker Charges | indexes.live',
   };
 

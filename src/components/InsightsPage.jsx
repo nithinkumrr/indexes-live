@@ -552,6 +552,28 @@ export default function InsightsPage({data={}, nseData={}}) {
   const [briefLoading, setBriefLoading] = useState(true);
   const [clock,        setClock]    = useState(getIST());
   const [slot,         setSlot]     = useState(getSlot());
+  const [subTab,       setSubTab]   = useState('news');
+  const [newsItems,    setNewsItems] = useState([]);
+  const [newsLoading,  setNewsLoading] = useState(true);
+  const [newsFilter,   setNewsFilter] = useState('All');
+
+  // Fetch financeradar.news feed via RSS/JSON
+  useEffect(()=>{
+    setNewsLoading(true);
+    fetch('https://api.rss2json.com/v1/api.json?rss_url=https://financeradar.news/feed.xml&count=60')
+      .then(r=>r.json())
+      .then(d=>{
+        if(d.items) setNewsItems(d.items);
+        setNewsLoading(false);
+      })
+      .catch(()=>{
+        // Fallback: scrape via allorigins proxy
+        fetch('https://api.allorigins.win/get?url='+encodeURIComponent('https://financeradar.news/'))
+          .then(r=>r.json())
+          .then(()=>setNewsLoading(false))
+          .catch(()=>setNewsLoading(false));
+      });
+  },[]);
 
   useEffect(()=>{
     fetch('/api/fiidii').then(r=>r.json()).then(setFiidii).catch(()=>{});
@@ -669,6 +691,65 @@ export default function InsightsPage({data={}, nseData={}}) {
 
   return (
     <div className="ip-wrap">
+
+      {/* SUB-TAB NAV */}
+      <div className="ip-subnav">
+        <button className={`ip-subtab ${subTab==='news'?'ip-subtab-on':''}`} onClick={()=>setSubTab('news')}>
+          📰 News
+        </button>
+        <button className={`ip-subtab ${subTab==='insights'?'ip-subtab-on':''}`} onClick={()=>setSubTab('insights')}>
+          ◐ Market Insights
+        </button>
+      </div>
+
+      {/* NEWS TAB */}
+      {subTab==='news' && (
+        <div className="ip-news-wrap">
+          <div className="ip-news-header">
+            <div className="ip-news-title">Indian Finance — Curated</div>
+            <div className="ip-news-meta">via <a href="https://financeradar.news" target="_blank" rel="noopener noreferrer" className="ip-news-src-link">Finance Radar</a></div>
+          </div>
+          <div className="ip-news-filters">
+            {['All','News','Reports','Papers','YouTube','Twitter'].map(f=>(
+              <button key={f} className={`ip-news-filter ${newsFilter===f?'ip-news-filter-on':''}`} onClick={()=>setNewsFilter(f)}>{f}</button>
+            ))}
+          </div>
+          {newsLoading ? (
+            <div className="ip-news-loading">
+              <div className="ip-news-spinner"/>
+              <span>Loading news feed…</span>
+            </div>
+          ) : newsItems.length > 0 ? (
+            <div className="ip-news-list">
+              {newsItems.map((item,i)=>{
+                const domain = (() => { try { return new URL(item.link).hostname.replace('www.',''); } catch{ return ''; } })();
+                const date = item.pubDate ? new Date(item.pubDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:true}) : '';
+                return (
+                  <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className="ip-news-item">
+                    <div className="ip-news-item-title">{item.title}</div>
+                    <div className="ip-news-item-meta">
+                      <span className="ip-news-item-src">{domain}</span>
+                      {date && <span className="ip-news-item-date">{date}</span>}
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="ip-news-empty">
+              <div style={{fontSize:32,marginBottom:12}}>📰</div>
+              <div style={{fontWeight:700,marginBottom:6}}>News feed unavailable</div>
+              <div style={{fontSize:12,color:'var(--text3)',marginBottom:16}}>Could not load the Finance Radar feed directly.</div>
+              <a href="https://financeradar.news" target="_blank" rel="noopener noreferrer" className="ip-news-visit-btn">
+                Open Finance Radar →
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MARKET INSIGHTS TAB — existing content */}
+      {subTab==='insights' && (<>
 
       {/* SENTIMENT-STYLE TICKER (Global + India rows) */}
       <Ticker data={data} nseData={nseData} />
@@ -996,6 +1077,7 @@ export default function InsightsPage({data={}, nseData={}}) {
       <div className="ip-footer-bold">
         Data-driven signals from live market data. Not investment advice.
       </div>
+      </>)}
     </div>
   );
 }

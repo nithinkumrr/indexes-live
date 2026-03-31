@@ -36,7 +36,7 @@ export default function Header({ lastUpdate, view, setView }) {
 
   const moreTabs = [
     { id: 'brokers',  label: 'Brokers',        icon: '⊞' },
-    { id: 'insights', label: 'Daily Insights', icon: '◐', cls: 'tab-purple' },
+    { id: 'insights', label: 'News & Insights', icon: '◐', cls: 'tab-purple' },
   ];
 
   const allTabs = [...mainTabs, ...moreTabs];
