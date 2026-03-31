@@ -206,9 +206,9 @@ function getChanges(nifty, banknifty, fiiNet, diiNet, fii7d, data) {
 
   if (fiiNet !== null) {
     if (fiiNet < -3000 && fii7d < -10000)
-      items.push({ text: `FII net outflow: Rs.${Math.abs(fiiNet).toLocaleString('en-IN')} Cr  -  part of a sustained 7-session selling trend.`, type: 'bear' });
+      items.push({ text: `FII net outflow: ₹${Math.abs(fiiNet).toLocaleString('en-IN')} Cr, part of a sustained 7-session selling trend.`, type: 'bear' });
     else if (fiiNet > 3000 && fii7d > 10000)
-      items.push({ text: `FII net inflow: Rs.${fiiNet.toLocaleString('en-IN')} Cr  -  consistent buying across 7 sessions.`, type: 'bull' });
+      items.push({ text: `FII net inflow: ₹${fiiNet.toLocaleString('en-IN')} Cr, consistent buying across 7 sessions.`, type: 'bull' });
     else if (fiiNet < 0 && (diiNet ?? 0) > 0)
       items.push({ text: `FII selling offset by DII buying. Market absorbed institutional selling through the session.`, type: 'neutral' });
   }
@@ -324,9 +324,9 @@ function getTomorrow(np, vix, fiiNet, diiNet, posInRange, dayType, events) {
 
   // 3  -  FII/DII
   if (fiiNet !== null && fiiNet < -3000)
-    items.push(`FII outflow was Rs.${Math.abs(fiiNet).toLocaleString('en-IN')} Cr today. Tomorrow morning\'s DII data will show whether domestic institutions step up absorption again.`);
+    items.push(`FII outflow was ₹${Math.abs(fiiNet).toLocaleString('en-IN')} Cr today. Tomorrow morning\'s DII data will show whether domestic institutions step up absorption again.`);
   else if (fiiNet !== null && fiiNet > 3000)
-    items.push(`FII inflow of Rs.${fiiNet.toLocaleString('en-IN')} Cr today. Sustained foreign buying over multiple sessions is typically supportive for index levels.`);
+    items.push(`FII inflow of ₹${fiiNet.toLocaleString('en-IN')} Cr today. Sustained foreign buying over multiple sessions is typically supportive for index levels.`);
   else if (fiiNet !== null && fiiNet < 0 && diiNet !== null && diiNet > 0)
     items.push('FIIs selling, DIIs absorbing  -  this two-sided flow pattern often creates choppy intraday conditions. Range-bound behaviour is common in such setups.');
 
@@ -363,7 +363,7 @@ function getTomorrow(np, vix, fiiNet, diiNet, posInRange, dayType, events) {
 // ── Signals engine ────────────────────────────────────────────────────────────
 function buildSignals({ np, bp, vix, niftyPrice, fiiNet, diiNet, fii7d, data, history, allEvents, fiiDate }) {
   const signals = [];
-  const cr = v => `Rs.${Math.abs(v).toLocaleString('en-IN')} Cr`;
+  const cr = v => `₹${Math.abs(v).toLocaleString('en-IN')} Cr`;
 
   if (fiiNet !== null && diiNet !== null) {
     // Date-aware label: say "on 28 Mar" not "today" if data is from previous session
@@ -383,8 +383,8 @@ function buildSignals({ np, bp, vix, niftyPrice, fiiNet, diiNet, fii7d, data, hi
 
   if (fii7d !== null && history?.length >= 3) {
     const sellDays = history.slice(-7).filter(d => (d.fiiNet ?? 0) < 0).length;
-    if      (fii7d < -8000) signals.push({ tag:'FLOWS', text:`FIIs net sold Rs.${Math.abs(fii7d).toLocaleString('en-IN')} Cr over 7 sessions. Structural outflow, not a single-day event.`, type:'bear' });
-    else if (fii7d > 8000)  signals.push({ tag:'FLOWS', text:`FIIs net bought Rs.${fii7d.toLocaleString('en-IN')} Cr over 7 sessions. Consistent inflow supports large-cap indices.`, type:'bull' });
+    if      (fii7d < -8000) signals.push({ tag:'FLOWS', text:`FIIs net sold ₹${Math.abs(fii7d).toLocaleString('en-IN')} Cr over 7 sessions. Structural outflow, not a single-day event.`, type:'bear' });
+    else if (fii7d > 8000)  signals.push({ tag:'FLOWS', text:`FIIs net bought ₹${fii7d.toLocaleString('en-IN')} Cr over 7 sessions. Consistent inflow supports large-cap indices.`, type:'bull' });
     else if (sellDays >= 5) signals.push({ tag:'FLOWS', text:`FIIs sold on ${sellDays} of last 7 sessions. Selling trend persistent even if daily amounts are moderate.`, type:'warn' });
   }
 
@@ -530,7 +530,7 @@ function FiiBar({history}) {
       {last7.map((d,i)=>{
         const fii=d.fiiNet??0,dii=d.diiNet??0;
         const dt=d.date?new Date(d.date):null;
-        const lbl=dt?dt.toLocaleDateString('en-IN',{weekday:'short'}):`D${i+1}`;
+        const lbl=dt?dt.toLocaleDateString('en-IN',{day:'numeric',month:'short'}):`D${i+1}`;
         return (
           <div key={i} className="ip-fii-bar-col">
             <div className="ip-fii-bar-pair">
@@ -933,7 +933,7 @@ export default function InsightsPage({data={}, nseData={}}) {
                 {[{label:'FII 7D',val:fii7d},{label:'DII 7D',val:dii7d},{label:'COMBINED',val:fii7d+dii7d,sub:(fii7d+dii7d)>=0?'Net inflow':'Net outflow'}].map((c,i)=>(
                   <div key={i} className="ip-flow-7d-item">
                     <div className="ip-flow-7d-label">{c.label}</div>
-                    <div className="ip-flow-7d-val" style={{color:pColor(c.val)}}>{c.val>=0?'+':''}Rs.{Math.abs(c.val).toLocaleString('en-IN')} Cr</div>
+                    <div className="ip-flow-7d-val" style={{color:pColor(c.val)}}>{c.val>=0?'+':''}₹{Math.abs(c.val).toLocaleString('en-IN')} Cr</div>
                     {c.sub&&<div className="ip-flow-7d-sub">{c.sub}</div>}
                   </div>
                 ))}
@@ -941,16 +941,16 @@ export default function InsightsPage({data={}, nseData={}}) {
               <div className="ip-flow-today">
                 <div className="ip-flow-side">
                   <div className="ip-flow-who">FII / FPI</div>
-                  <div className="ip-flow-net" style={{color:pColor(fiiNet)}}>{fiiNet>=0?'+':''}Rs.{Math.abs(fiiNet).toLocaleString('en-IN')} Cr</div>
+                  <div className="ip-flow-net" style={{color:pColor(fiiNet)}}>{fiiNet>=0?'+':''}₹{Math.abs(fiiNet).toLocaleString('en-IN')} Cr</div>
                   <div className="ip-flow-dir" style={{color:pColor(fiiNet)}}>{fiiNet>=0?'↑ Net Buyers':'↓ Net Sellers'}</div>
-                  {fiiBuy!=null&&fiiSell!=null&&<div className="ip-flow-buysell"><span>Buy Rs.{Math.round(fiiBuy).toLocaleString('en-IN')} Cr</span><span>Sell Rs.{Math.round(fiiSell).toLocaleString('en-IN')} Cr</span></div>}
+                  {fiiBuy!=null&&fiiSell!=null&&<div className="ip-flow-buysell"><span>Buy ₹{Math.round(fiiBuy).toLocaleString('en-IN')} Cr</span><span>Sell ₹{Math.round(fiiSell).toLocaleString('en-IN')} Cr</span></div>}
                   <div className="ip-flow-type">Foreign Institutional</div>
                 </div>
                 <div className="ip-flow-side">
                   <div className="ip-flow-who">DII</div>
-                  <div className="ip-flow-net" style={{color:pColor(diiNet)}}>{(diiNet??0)>=0?'+':''}Rs.{Math.abs(diiNet??0).toLocaleString('en-IN')} Cr</div>
+                  <div className="ip-flow-net" style={{color:pColor(diiNet)}}>{(diiNet??0)>=0?'+':''}₹{Math.abs(diiNet??0).toLocaleString('en-IN')} Cr</div>
                   <div className="ip-flow-dir" style={{color:pColor(diiNet)}}>{(diiNet??0)>=0?'↑ Net Buyers':'↓ Net Sellers'}</div>
-                  {diiBuy!=null&&diiSell!=null&&<div className="ip-flow-buysell"><span>Buy Rs.{Math.round(diiBuy).toLocaleString('en-IN')} Cr</span><span>Sell Rs.{Math.round(diiSell).toLocaleString('en-IN')} Cr</span></div>}
+                  {diiBuy!=null&&diiSell!=null&&<div className="ip-flow-buysell"><span>Buy ₹{Math.round(diiBuy).toLocaleString('en-IN')} Cr</span><span>Sell ₹{Math.round(diiSell).toLocaleString('en-IN')} Cr</span></div>}
                   <div className="ip-flow-type">Domestic Institutional</div>
                 </div>
               </div>
