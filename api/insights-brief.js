@@ -151,18 +151,35 @@ function buildFallback(d, slot) {
   const isEOD = ['close','evening'].includes(slot.name);
 
   let writeup;
+  const vixLine = vix ? `India VIX is at ${vix.toFixed(1)}, ${vix > 18 ? 'an elevated reading reflecting heightened uncertainty and wider options premiums' : vix > 14 ? 'a moderately elevated reading reflecting normal market uncertainty' : 'a subdued reading indicating calm conditions in the derivatives market'}.` : '';
+  const strucLine = structure === 'Downtrend' ? 'Short-term price structure shows lower highs forming, consistent with a distribution pattern.' : structure === 'Uptrend' ? 'Short-term price structure shows higher lows holding, consistent with systematic accumulation.' : 'Price structure remains range-bound without a clear directional sequence.';
+
   if (isPreMarket) {
-    writeup = 'NSE has not yet opened. GIFT Nifty futures are the pre-open indicator for where Nifty may gap at open. Global cues, crude oil, gold, and USD/INR are the key inputs to watch before 9:15 AM IST.' + commodLine + goldLine;
+    writeup = `NSE has not yet opened for the day. GIFT Nifty futures are the only live indicator before 9:15 AM IST, showing where Nifty may gap at the open. The premium or discount of GIFT Nifty to the previous Nifty cash close gives the implied opening direction.${commodLine}${goldLine}
+
+Global markets provide the overnight context. US equity performance, Asian indices including Nikkei and Hang Seng, crude oil direction, gold, and the USD/INR rate are the primary inputs that typically shape the Nifty opening gap and early session momentum.
+
+FII and DII flow data from the previous session remains the latest available institutional activity. Any pre-market block deals or bulk deals reported on the NSE website will indicate early large-participant positioning before the 9:15 AM open.`;
   } else if (isEOD) {
-    const direction = np < -1.5 ? 'a sharp decline' : np < -0.5 ? 'a weak session' : np > 1.5 ? 'a strong rally' : np > 0.5 ? 'a positive session' : 'a flat session';
-    writeup = `Nifty closed at ${pStr} (${npStr})${bnStr ? `, Bank Nifty at ${bnStr}${bpStr ? ' (' + bpStr + ')' : ''}` : ''}  -  ${direction} through the day. ${tone}.${commodLine}${goldLine}
+    const dir = np < -1.5 ? 'a sharp decline' : np < -0.5 ? 'a weak session' : np > 1.5 ? 'a strong rally' : np > 0.5 ? 'a positive session' : 'a flat session';
+    const theme = np < -0.5 ? 'Selling was the dominant theme through the session, with broad-based weakness visible across most sectors.' : np > 0.5 ? 'Buying was the dominant theme through the session, with broad-based strength across most sectors.' : 'The session saw two-sided activity with neither buyers nor sellers establishing clear dominance.';
+    writeup = `Nifty closed at ${pStr} (${npStr})${bnStr ? `, with Bank Nifty at ${bnStr}${bpStr ? ' (' + bpStr + ')' : ''}` : ''}, marking ${dir} for Monday's session. ${tone}.${commodLine}${goldLine}
 
-${np < -0.5 ? 'Selling was the dominant theme through the session.' : np > 0.5 ? 'Buying was the dominant theme through the session.' : 'Neither side established clear control through the session.'} Structure: ${struc.toLowerCase()}. ${vix ? 'India VIX at ' + vix.toFixed(1) + '.' : ''}`;
+${theme} ${vixLine}
+
+${strucLine} The session close relative to the day's range provides a useful read on which side was in control into the final 30 minutes. A close near the session low indicates sellers held control through the close, while a close near the high shows buyers absorbed late selling.
+
+FII and DII data will be published by NSE after 5:00 PM IST, providing the definitive institutional flow picture for the session. Global cues including US market direction, crude oil, gold, and USD/INR will shape the overnight setup for the next trading session.`;
   } else {
-    const direction = np < -1.5 ? 'under sharp selling pressure' : np < -0.5 ? 'under selling pressure' : np > 1.5 ? 'in a strong rally' : np > 0.5 ? 'with a positive bias' : 'in a flat session';
-    writeup = `Nifty is at ${pStr} (${npStr})${bnStr ? `, Bank Nifty at ${bnStr}${bpStr ? ' (' + bpStr + ')' : ''}` : ''}  -  ${direction}. ${tone}.${commodLine}${goldLine}
+    const dir = np < -1.5 ? 'under sharp selling pressure' : np < -0.5 ? 'under selling pressure' : np > 1.5 ? 'in a strong rally' : np > 0.5 ? 'with a positive bias' : 'in a flat, range-bound session';
+    const theme = np < -0.5 ? 'Selling pressure has been the dominant theme, with broad-based weakness across sectors.' : np > 0.5 ? 'Buying interest has been the dominant theme, with broad-based strength across sectors.' : 'Neither buyers nor sellers have established clear dominance, producing a two-sided session.';
+    writeup = `Nifty is trading at ${pStr} (${npStr})${bnStr ? `, with Bank Nifty at ${bnStr}${bpStr ? ' (' + bpStr + ')' : ''}` : ''} in ${dir}. ${tone}.${commodLine}${goldLine}
 
-${np < -0.5 ? 'Selling pressure is the dominant theme.' : np > 0.5 ? 'Buying interest is the dominant theme.' : 'Neither side in clear control.'} Structure: ${struc.toLowerCase()}. ${vix ? 'India VIX at ' + vix.toFixed(1) + '.' : ''}`;
+${theme} ${vixLine}
+
+${strucLine} The current session range relative to the previous close gives a read on opening gap behavior and whether the initial direction is holding or reversing as the session progresses.
+
+FII and DII institutional flow data from the previous session remains the latest available. Commodity signals including crude oil and gold are providing additional context, with their direction influencing the energy, metals, and defensive sectors within the Nifty basket.`;
   }
 
   return { trader: { tone, control: ctrl, behavior: beh, risk }, investor: { context: ctx, structure: struc, watch, risk: prisk }, writeup, fallback: true };
@@ -214,7 +231,19 @@ INVESTOR_STRUCTURE: [1 sentence]
 INVESTOR_WATCH: [1 sentence]
 INVESTOR_RISK: [1 sentence]
 WRITEUP_START
-[3 to 4 paragraphs, 220 to 260 words total. Educational and factual market context for the ${slot.label} session. Use actual news and data from your search. Plain English. Third person. Specific numbers. Structure the writeup to cover: (1) what the indices are doing with specific levels and what drove yesterday's session close, (2) what is driving the move today based on actual news including any Nifty 50 quarterly results and their numbers, (3) open interest picture: mention Nifty PCR, max pain level, and any significant OI buildup or writing at key strikes if data is available, (4) what participants are watching in this session and key commodity signals (crude, gold). Do not tell the reader what to do. Do not use the words buy, sell, invest, enter, exit, recommend, should, must, or consider. No predictions. Every statement must be descriptive of what is happening, not prescriptive of what to do. Reads like a market desk factsheet, not a tip sheet. No em dashes anywhere.]
+[Write 4 to 5 substantial paragraphs, minimum 300 words. This is a professional market desk factsheet for the ${slot.label} session. Use your Google Search results to include actual current news and data. Write in plain English, third person, with specific numbers throughout. Structure as follows:
+
+Paragraph 1 (Opening context): State exactly where Nifty and Bank Nifty are with levels and percentage change. Describe the overall character of the session so far and what drove the previous session close. Include any gap at open vs prior close.
+
+Paragraph 2 (What is driving the move): Based on your search, describe the specific news catalysts driving the market today. Include any Nifty 50 quarterly results announced this week with actual revenue/profit numbers. Include global triggers (US Fed, crude oil moves, dollar index, Asian market performance with specific numbers).
+
+Paragraph 3 (Options and institutional flow): Describe the Nifty options open interest picture. State the PCR (put-call ratio), max pain level, and any significant OI buildup at specific strikes. Describe FII and DII activity with rupee amounts.
+
+Paragraph 4 (Sector and commodity context): Describe which sectors are leading or lagging with specific index levels (Bank Nifty, IT, Pharma, Auto, Metal). State crude oil price and change, gold price and change, USD/INR level. Explain how commodities are affecting specific sectors.
+
+Paragraph 5 (Session outlook): Describe the key levels participants are watching, what technical structure looks like, and what the VIX level indicates about market conditions. Do NOT give predictions or say what will happen.
+
+Rules: No em dashes. No advice. No predictions. Do not use: buy, sell, invest, enter, exit, recommend, should, must, consider, might, could. Every sentence must describe what IS happening, not what might happen. This must read like a Bloomberg terminal factsheet.]
 WRITEUP_END`;
 
   const res = await fetch(
@@ -225,7 +254,7 @@ WRITEUP_END`;
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         tools: [{ google_search: {} }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 1500 },
+        generationConfig: { temperature: 0.4, maxOutputTokens: 2500 },
       }),
     }
   );
@@ -262,7 +291,7 @@ export default async function handler(req, res) {
   const slot = getSlotInfo();
 
   try {
-    const cached = await kv.get(`insights_v7_${slot.key}`);
+    const cached = await kv.get(`insights_v8_${slot.key}`);
     if (cached) return res.json({ ...cached, cached: true, slot });
   } catch (_) {}
 
@@ -284,6 +313,6 @@ export default async function handler(req, res) {
   }
 
   result.generatedAt = new Date().toISOString();
-  try { await kv.set(`insights_v7_${slot.key}`, result, { ex: slot.ttl }); } catch (_) {}
+  try { await kv.set(`insights_v8_${slot.key}`, result, { ex: slot.ttl }); } catch (_) {}
   return res.json({ ...result, cached: false, slot });
 }
