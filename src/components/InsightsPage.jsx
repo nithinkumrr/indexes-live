@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Ticker from './Ticker';
 
 // ── Economic calendar ─────────────────────────────────────────────────────────
@@ -596,9 +596,26 @@ export default function InsightsPage({data={}, nseData={}}) {
     .catch(()=>{clearTimeout(t);setBriefLoading(false);});
   },[data,nseData,fiidii]);
 
-  // Fire when data arrives, and again when FII data updates
-  useEffect(()=>{ fetchBrief(); },[data.nifty50, nseData.nifty50]);
-  useEffect(()=>{ if(fiidii) fetchBrief(); },[fiidii]);
+  // Only fetch brief when slot changes (max 10x/day) or when FII data first arrives
+  // Do NOT fire every time market data refreshes (every 20s)
+  const prevSlotRef = useRef(null);
+  useEffect(()=>{
+    // Fire on mount
+    fetchBrief();
+  },[]);
+
+  useEffect(()=>{
+    // Fire when slot changes (9:30, 10:30, 12:00, 1:00, 2:00, 3:00, 3:30, 5:00)
+    if (slot !== prevSlotRef.current) {
+      prevSlotRef.current = slot;
+      if (slot !== 'Weekend' && slot !== 'Holiday') fetchBrief();
+    }
+  },[slot]);
+
+  useEffect(()=>{
+    // Fire once when FII date changes (new day's data arrived)
+    if (fiidii?.date) fetchBrief();
+  },[fiidii?.date]); // eslint-disable-line
 
   // Data
   const nifty     = nseData.nifty50        || data.nifty50        || null;

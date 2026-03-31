@@ -192,20 +192,18 @@ async function callGemini(apiKey, slot, d) {
           niftyPrice, bnPrice, niftyHigh, niftyLow,
           crudePct, crudePrc, goldPct, goldPrc, usdInr } = d;
 
-  const prompt = `You are a market context engine for an Indian financial markets dashboard. You describe what is happening in the market. You do not give advice or recommendations.
+  const prompt = `You are a market context engine for an Indian financial markets dashboard.
+Your role is to describe what is happening in the market based only on verified, observable data. You do not predict, infer, or give advice.
 
 Session: ${slot.label} (${slot.window})
-Context for this session: ${slot.context}
 Date: ${new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' })}
 
-Market data:
-- Nifty 50: ${niftyPrice ? niftyPrice.toLocaleString('en-IN') : 'unavailable'} (${niftyPct != null ? (niftyPct >= 0 ? '+' : '') + niftyPct.toFixed(2) + '%' : 'unavailable'})${niftyHigh && niftyLow ? ' | High: ' + niftyHigh.toLocaleString('en-IN') + ' Low: ' + niftyLow.toLocaleString('en-IN') : ''}
+LIVE DATA:
+- Nifty 50: ${niftyPrice ? niftyPrice.toLocaleString('en-IN') : 'unavailable'} (${niftyPct != null ? (niftyPct >= 0 ? '+' : '') + niftyPct.toFixed(2) + '%' : 'unavailable'})${niftyHigh && niftyLow ? ' | High: ' + niftyHigh.toLocaleString('en-IN') + ' | Low: ' + niftyLow.toLocaleString('en-IN') : ''}
 - Bank Nifty: ${bnPrice ? bnPrice.toLocaleString('en-IN') : 'unavailable'} (${bnPct != null ? (bnPct >= 0 ? '+' : '') + bnPct.toFixed(2) + '%' : 'unavailable'})
 - India VIX: ${vix != null ? vix.toFixed(2) : 'unavailable'}
-- Market stance: ${stance}
-- Structure: ${structure}
-- FII net (${fiiDate || 'latest'}): ${fiiNet != null ? (fiiNet >= 0 ? '+' : '') + fiiNet.toLocaleString('en-IN') + ' Cr' : 'unavailable'}
-- DII net (${fiiDate || 'latest'}): ${diiNet != null ? (diiNet >= 0 ? '+' : '') + diiNet.toLocaleString('en-IN') + ' Cr' : 'unavailable'}
+- FII Net (${fiiDate || 'latest'}): ${fiiNet != null ? (fiiNet >= 0 ? '+' : '') + fiiNet.toLocaleString('en-IN') + ' Cr' : 'unavailable'}
+- DII Net (${fiiDate || 'latest'}): ${diiNet != null ? (diiNet >= 0 ? '+' : '') + diiNet.toLocaleString('en-IN') + ' Cr' : 'unavailable'}
 - S&P 500: ${sp500Pct != null ? (sp500Pct >= 0 ? '+' : '') + sp500Pct.toFixed(2) + '%' : 'unavailable'}
 - Nikkei: ${nikkeiPct != null ? (nikkeiPct >= 0 ? '+' : '') + nikkeiPct.toFixed(2) + '%' : 'unavailable'}
 - Hang Seng: ${hangsengPct != null ? (hangsengPct >= 0 ? '+' : '') + hangsengPct.toFixed(2) + '%' : 'unavailable'}
@@ -213,38 +211,43 @@ Market data:
 - Gold: ${goldPrc != null ? '$' + goldPrc.toFixed(0) : 'unavailable'} (${goldPct != null ? (goldPct >= 0 ? '+' : '') + goldPct.toFixed(2) + '%' : 'unavailable'})
 - USD/INR: ${usdInr != null ? usdInr.toFixed(2) : 'unavailable'}
 
-Use Google Search to find what is actually driving Indian markets today. Search for and include:
-- Any news that is moving Nifty and Bank Nifty today specifically
-- Nifty options open interest: max pain level, PCR (put-call ratio), and any significant OI buildup at key strikes
-- Quarterly results from Nifty 50 companies announced this week, with actual numbers
-- RBI news, global macro, geopolitical developments, or sector-specific news
-- What happened in the last session (previous day close levels and any significant developments overnight)
+GLOBAL RULES (STRICT):
+- Only describe what is visible or confirmed
+- If a reason is not explicitly reported in news, do not state a cause
+- Do not connect multiple events into a narrative unless confirmed
+- Do not fill gaps with assumptions
+- No advice, no forward-looking language
+- No words: buy, sell, invest, enter, exit, recommend, should, must, consider, might, could
+- No em dashes anywhere
+- Every sentence must reflect observed reality
+- Failsafe: if insufficient data, write "Market movement is currently not linked to any single confirmed trigger and reflects ongoing positioning."
 
-Respond in EXACTLY this format. Nothing before or after. No em dashes anywhere. No advice:
+SLOT BEHAVIOUR:
+${['open15','opening'].includes(slot.name) ? 'MODE: Opening Snapshot. Focus: opening levels, gap vs previous close, early sector movement. Do NOT explain reasons unless confirmed in news. Do NOT mention derivatives unless strong data available. Length: 3 to 4 paragraphs, 300 to 500 words.' :
+  slot.name === 'midmorn' ? 'MODE: Early Trend. Focus: first hour trend, sector leaders, initial flows. News only if directly reported. Length: 4 paragraphs, 400 to 600 words.' :
+  ['midday','afternoon'].includes(slot.name) ? 'MODE: Midday Structure. Focus: index stability, sector rotation, options positioning. Introduce PCR, max pain, OI if available. Length: 4 to 5 paragraphs, 500 to 700 words.' :
+  slot.name === 'latesess' ? 'MODE: Late Positioning. Focus: institutional flows, OI shifts, key strikes. Do NOT describe closing direction. Length: 4 to 5 paragraphs, 500 to 700 words.' :
+  slot.name === 'closing' ? 'MODE: Closing Snapshot. Focus: closing levels, intraday range, sector contribution. Reasons only if confirmed. Length: 5 paragraphs, 600 to 800 words.' :
+  ['close','evening'].includes(slot.name) ? 'MODE: End of Day Wrap. Full structure required: (1) Index summary with range and gap from open, (2) News drivers with specific numbers, (3) Options data PCR max pain OI at key strikes, (4) FII/DII exact amounts, (5) Sector performance with levels, (6) Global and commodities crude gold USD/INR, (7) VIX and structure. Length: 6 to 7 paragraphs, 900 to 1000 words.' :
+  'MODE: Pre-Market. Focus: GIFT Nifty implied gap, global overnight cues, commodities. Do NOT mention Nifty cash price. Length: 3 to 4 paragraphs, 300 to 500 words.'}
 
-TRADER_TONE: [1 sentence]
-TRADER_CONTROL: [1 sentence]
-TRADER_BEHAVIOR: [1 sentence]
-TRADER_RISK: [1 sentence]
-INVESTOR_CONTEXT: [1 sentence]
-INVESTOR_STRUCTURE: [1 sentence]
-INVESTOR_WATCH: [1 sentence]
-INVESTOR_RISK: [1 sentence]
-WRITEUP_START
-[Write 6 to 7 substantial paragraphs, minimum 900 words, target 1000 words. This is a professional market desk factsheet for the ${slot.label} session. Use your Google Search results to include actual current news and data. Write in plain English, third person, with specific numbers throughout. Structure as follows:
+MANDATORY ORDER (all slots):
+1. Index movement (Nifty, Bank Nifty, range)
+2. Sector behavior
+3. Derivatives (only if data available)
+4. Institutional flows
+5. News (only if confirmed with numbers)
+6. Global context (S&P 500, Asia, crude, gold, USD/INR)
 
-Paragraph 1 (Opening context): State exactly where Nifty and Bank Nifty are with levels and percentage change. Describe the overall character of the session so far and what drove the previous session close. Include any gap at open vs prior close.
+SEARCH INSTRUCTIONS:
+Search for all of these before writing:
+- "Nifty market news today ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' })}"
+- "Nifty PCR max pain OI NSE today"
+- "India Nifty 50 company earnings results today"
+- "RBI news India today"
+Use only same-day verified information. If conflicting reasons, list them separately. If no confirmed reason: "No confirmed news-based trigger is observed for the move so far."
 
-Paragraph 2 (What is driving the move): Based on your search, describe the specific news catalysts driving the market today. Include any Nifty 50 quarterly results announced this week with actual revenue/profit numbers. Include global triggers (US Fed, crude oil moves, dollar index, Asian market performance with specific numbers).
-
-Paragraph 3 (Options and institutional flow): Describe the Nifty options open interest picture. State the PCR (put-call ratio), max pain level, and any significant OI buildup at specific strikes. Describe FII and DII activity with rupee amounts.
-
-Paragraph 4 (Sector and commodity context): Describe which sectors are leading or lagging with specific index levels (Bank Nifty, IT, Pharma, Auto, Metal). State crude oil price and change, gold price and change, USD/INR level. Explain how commodities are affecting specific sectors.
-
-Paragraph 5 (Session outlook): Describe the key levels participants are watching, what technical structure looks like, and what the VIX level indicates about market conditions. Do NOT give predictions or say what will happen.
-
-Rules: No em dashes. No advice. No predictions. Do not use: buy, sell, invest, enter, exit, recommend, should, must, consider, might, could. Every sentence must describe what IS happening, not what might happen. This must read like a Bloomberg terminal factsheet.]
-WRITEUP_END`;
+Output: Plain flowing prose paragraphs separated by blank lines. No headers, no labels, no bullets. No em dashes.`;
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -291,7 +294,7 @@ export default async function handler(req, res) {
   const slot = getSlotInfo();
 
   try {
-    const cached = await kv.get(`insights_v8_${slot.key}`);
+    const cached = await kv.get(`insights_v9_${slot.key}`);
     if (cached) return res.json({ ...cached, cached: true, slot });
   } catch (_) {}
 
@@ -313,6 +316,6 @@ export default async function handler(req, res) {
   }
 
   result.generatedAt = new Date().toISOString();
-  try { await kv.set(`insights_v8_${slot.key}`, result, { ex: slot.ttl }); } catch (_) {}
+  try { await kv.set(`insights_v9_${slot.key}`, result, { ex: slot.ttl }); } catch (_) {}
   return res.json({ ...result, cached: false, slot });
 }
