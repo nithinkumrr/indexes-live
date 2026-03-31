@@ -389,7 +389,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .app { padding-bottom: 60px; }
 
   /* Slim down top header on mobile */
-  .header { padding: 8px 12px; }
+  .header { padding: 8px 12px; position: sticky; top: 0; z-index: 100; }
   .header-left { gap: 8px; flex: 1; justify-content: space-between; }
   .logo-text, .logo-dot, .logo-live { font-size: 17px; }
   .update-time { display: none; }
@@ -622,13 +622,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .footer-brand { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--live); }
 .footer-sep   { font-family: var(--mono); font-size: 13px; color: var(--text3); }
 .footer-text  { font-family: var(--mono); font-size: 12px; color: var(--text2); }
-.footer-india { font-family: var(--mono); font-size: 12px; font-weight: 600; color: #4ade80; background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); border-radius: 6px; padding: 3px 10px; white-space: nowrap; }
+.footer-india { font-family: var(--mono); font-size: 12px; font-weight: 700; color: #ffffff; background: linear-gradient(135deg, rgba(255,153,51,0.25) 0%, rgba(19,136,8,0.25) 100%); border: 1px solid rgba(255,153,51,0.55); border-radius: 6px; padding: 3px 10px; white-space: nowrap; text-shadow: 0 0 12px rgba(255,153,51,0.6); box-shadow: 0 0 10px rgba(255,153,51,0.15), inset 0 0 8px rgba(19,136,8,0.1); }
+[data-theme="light"] .footer-india { color: #1A1410; background: linear-gradient(135deg, rgba(255,153,51,0.18) 0%, rgba(19,136,8,0.12) 100%); border-color: rgba(255,120,0,0.55); text-shadow: none; box-shadow: 0 0 8px rgba(255,120,0,0.15); }
 
 /* MEA horizontal strip */
 .mea-strip        { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
 .mea-strip-card   { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 10px; transition: border-color 0.15s; min-width: 0; }
 .mea-strip-card:hover { border-color: var(--border2); }
 .mea-strip-live   { border-top: 2px solid rgba(0,255,148,0.45); }
+[data-theme="light"] .mea-strip-card  { background: #FFFFFF; border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .mea-strip-card:hover { background: #F5F0E8; }
+[data-theme="light"] .mea-strip-live  { border-top-color: rgba(27,175,142,0.5); }
 .mea-top          { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
 .mea-flag         { font-size: 13px; line-height: 1; flex-shrink: 0; }
 .mea-name         { font-family: var(--mono); font-size: 9px; font-weight: 600; color: var(--text2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
