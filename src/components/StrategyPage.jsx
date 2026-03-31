@@ -738,7 +738,7 @@ function Detail({ strat, spot, vix, dte, expiry, lots, setLots, onBT, onShare, s
           </div>
           <div className="spc-dh-actions">
             <button className="spc-btn-share" onClick={handleShare}>{copied?'✓ Copied':'🔗 Share'}</button>
-            <button className="spc-btn-bt" onClick={()=>onBT&&onBT(strat.id)}>Backtest →</button>
+            <button className="spc-btn-bt" onClick={()=>onBT&&onBT(strat.id)}>Learn →</button>
           </div>
         </div>
       </div>

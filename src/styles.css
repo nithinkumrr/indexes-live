@@ -281,6 +281,10 @@
 [data-theme="light"] .spc-filters { background: var(--bg2) !important; }
 [data-theme="light"] .spc-fb { border-color: rgba(0,0,0,0.12) !important; background: rgba(0,0,0,0.03) !important; }
 [data-theme="light"] .spc-fb:hover { color: var(--text) !important; background: rgba(74,158,255,0.08) !important; }
+[data-theme="light"] .spc-tb-lots-input { color: var(--text) !important; }
+[data-theme="light"] .spc-dh-name { color: var(--text) !important; }
+[data-theme="light"] .spc-tb-lots-wrap { background: rgba(0,0,0,0.05) !important; border-color: rgba(0,0,0,0.12) !important; }
+[data-theme="light"] .spc-tb-lots-btn { background: rgba(0,0,0,0.05) !important; color: var(--text) !important; }
 
 /* Strategy list item hover/active — white text fix */
 [data-theme="light"] .spc-item:hover .spc-item-name { color: var(--text) !important; }
