@@ -1,8 +1,6 @@
 User-agent: *
 Allow: /
-
-# Sitemap
-Sitemap: https://indexes.live/sitemap.xml
-
-# Block API routes from crawling
 Disallow: /api/
+
+Sitemap: https://www.indexes.live/sitemap.xml
+Sitemap: https://indexes.live/sitemap.xml

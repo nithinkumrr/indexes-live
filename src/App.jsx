@@ -50,9 +50,12 @@ const PATH_MAP = {
   '/':           'grid',
   '/markets':    'grid',
   '/sentiment':  'bubble',
+  '/fno':        'fno',
   '/gold':       'gold',
   '/ipo':        'ipo',
+  '/calc':       'calc',
   '/insights':   'insights',
+  '/brokers':    'brokers',
   '/blog':       'insights',
 };
 
