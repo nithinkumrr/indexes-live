@@ -1,29 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Header({ lastUpdate, view, setView }) {
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem('indexeslive_theme') || 'dark'; } catch { return 'dark'; }
   });
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     try { localStorage.setItem('indexeslive_theme', theme); } catch {}
   }, [theme]);
 
+  useEffect(() => {
+    function handleClick(e) {
+      if (moreRef.current && !moreRef.current.contains(e.target)) setMoreOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('touchstart', handleClick);
+    return () => { document.removeEventListener('mousedown', handleClick); document.removeEventListener('touchstart', handleClick); };
+  }, []);
+
   const timeStr = lastUpdate
     ? lastUpdate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
     : null;
 
-  const tabs = [
-    { id: 'grid',     label: 'Markets',         icon: '📊', cls: '' },
-    { id: 'bubble',   label: 'Sentiment',       icon: '💭', cls: '' },
-    { id: 'fno',      label: 'F&O',             icon: '📈', cls: '' },
-    { id: 'calc',     label: 'Risk Calculator', icon: '🎯', cls: '' },
-    { id: 'ipo',      label: 'IPO',             icon: '🚀', cls: 'tab-teal' },
-    { id: 'gold',     label: 'Gold',            icon: '🥇', cls: 'tab-gold' },
-    { id: 'brokers',  label: 'Brokers',         icon: '🏦', cls: '' },
-    { id: 'insights', label: 'Daily Insights',  icon: '📝', cls: 'tab-purple' },
+  const mainTabs = [
+    { id: 'grid',     label: 'Markets',    icon: '◈' },
+    { id: 'bubble',   label: 'Sentiment',  icon: '◉' },
+    { id: 'fno',      label: 'F&O',        icon: '◬' },
+    { id: 'calc',     label: 'Risk',       icon: '⊕' },
+    { id: 'ipo',      label: 'IPO',        icon: '◎', cls: 'tab-teal' },
+    { id: 'gold',     label: 'Gold',       icon: '◆', cls: 'tab-gold' },
   ];
+
+  const moreTabs = [
+    { id: 'brokers',  label: 'Brokers',        icon: '⊞' },
+    { id: 'insights', label: 'Daily Insights', icon: '◐', cls: 'tab-purple' },
+  ];
+
+  const allTabs = [...mainTabs, ...moreTabs];
+  const isMoreActive = moreTabs.some(t => t.id === view);
 
   return (
     <>
@@ -50,11 +67,11 @@ export default function Header({ lastUpdate, view, setView }) {
             </div>
           </div>
         </div>
-        {/* Desktop nav — hidden on mobile */}
+        {/* Desktop nav */}
         <nav className="desktop-nav">
-          {tabs.map(tab => (
+          {allTabs.map(tab => (
             <button key={tab.id}
-              className={`view-btn ${tab.cls} ${view === tab.id ? 'view-active' : ''}`}
+              className={`view-btn ${tab.cls||''} ${view === tab.id ? 'view-active' : ''}`}
               onClick={() => setView(tab.id)}>
               {tab.label}
             </button>
@@ -62,16 +79,37 @@ export default function Header({ lastUpdate, view, setView }) {
         </nav>
       </header>
 
-      {/* Mobile bottom tab bar — visible only on mobile */}
+      {/* Mobile bottom tab bar */}
       <nav className="mobile-nav">
-        {tabs.map(tab => (
+        {mainTabs.map(tab => (
           <button key={tab.id}
-            className={`mnav-btn ${tab.cls} ${view === tab.id ? 'mnav-active' : ''}`}
+            className={`mnav-btn ${tab.cls||''} ${view === tab.id ? 'mnav-active' : ''}`}
             onClick={() => setView(tab.id)}>
             <span className="mnav-icon">{tab.icon}</span>
             <span className="mnav-label">{tab.label}</span>
           </button>
         ))}
+        {/* More menu */}
+        <div className="mnav-more-wrap" ref={moreRef}>
+          <button
+            className={`mnav-btn ${isMoreActive ? 'mnav-active' : ''}`}
+            onClick={() => setMoreOpen(o => !o)}>
+            <span className="mnav-icon">⋯</span>
+            <span className="mnav-label">More</span>
+          </button>
+          {moreOpen && (
+            <div className="mnav-more-menu">
+              {moreTabs.map(tab => (
+                <button key={tab.id}
+                  className={`mnav-more-item ${tab.cls||''} ${view === tab.id ? 'mnav-more-active' : ''}`}
+                  onClick={() => { setView(tab.id); setMoreOpen(false); }}>
+                  <span className="mnav-more-icon">{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </nav>
     </>
   );
