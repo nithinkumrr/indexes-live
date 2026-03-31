@@ -152,6 +152,7 @@
 [data-theme="light"] .spc-header { background: #F5F0E8 !important; border-color: rgba(0,0,0,0.09) !important; }
 [data-theme="light"] .spc-section { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
 [data-theme="light"] .spc-wrap { background: var(--bg) !important; }
+[data-theme="light"] .spc-topbar { background: var(--bg2) !important; }
 [data-theme="light"] .fnos-sidebar { background: #F5F0E8 !important; border-right-color: rgba(0,0,0,0.10) !important; }
 [data-theme="light"] .fnos-sidebar-inner { background: #F5F0E8 !important; }
 [data-theme="light"] .edu-section { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
