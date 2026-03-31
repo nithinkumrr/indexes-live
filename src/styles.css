@@ -6597,13 +6597,32 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .ip-ticker-vix   { padding: 8px 12px; border-left: none; border-top: 1px solid var(--border); flex-direction: row; align-items: center; gap: 10px; }
   .ip-ticker-vix-val { font-size: 16px; }
 
-  /* Commodities — 3-column grid */
-  .ip-commstrip-v { grid-template-columns: repeat(3, 1fr) !important; }
-  .ip-commstrip { flex-direction: column; border-right: none !important; border-bottom: 1px solid var(--border); padding: 8px 12px; }
-  .ip-commstrip-name  { font-size: 9px; letter-spacing: 0.5px; }
-  .ip-commstrip-price { font-size: 14px; }
-  .ip-commstrip-pct   { font-size: 10px; }
-  .ip-toprow-label { padding: 8px 12px 4px; }
+  /* Commodities — horizontal scroll strip matching indices style */
+  .ip-toprow-left { overflow: hidden; }
+  .ip-toprow-label { padding: 6px 12px 2px; }
+  .ip-commstrip-v {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    width: 100%;
+  }
+  .ip-commstrip-v::-webkit-scrollbar { display: none; }
+  .ip-commstrip-item {
+    flex-shrink: 0;
+    min-width: 80px;
+    padding: 8px 12px;
+    border-right: 1px solid var(--border);
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-content: center;
+  }
+  .ip-commstrip-name  { font-size: 9px; letter-spacing: 0.8px; }
+  .ip-commstrip-price { font-size: 16px; }
+  .ip-commstrip-pct   { font-size: 11px; }
 
   /* ── MAIN CONTENT: stack columns ── */
   .ip-row-half { grid-template-columns: 1fr !important; }
@@ -6681,7 +6700,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 }
 
 @media (max-width: 480px) {
-  .ip-commstrip-v { grid-template-columns: repeat(2, 1fr) !important; }
   .ip-flow-7d { grid-template-columns: 1fr 1fr; }
 }
 
@@ -6756,14 +6774,33 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .brk-slab-r { font-size: 9px; min-width: 50px; }
   .brk-slab-v { font-size: 11px; }
 
-  /* All-in total section — key focus on delivery cost */
+  /* All-in total section — centered 3-col layout */
   .brk-col-total { padding: 8px 12px; }
-  .brk-total-3 { gap: 0; }
-  .brk-t3-row { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
-  .brk-t3-row:last-child { border-bottom: none; }
-  .brk-t3-seg { font-size: 10px; }
-  .brk-t3-num { font-size: 15px; }
-  .brk-t3-brk { font-size: 9px; }
+  .brk-total-3 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .brk-t3-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 8px 4px !important;
+    border-bottom: none !important;
+    border-right: 1px solid rgba(255,255,255,.06);
+    gap: 2px;
+  }
+  .brk-t3-row:last-child { border-right: none !important; }
+  .brk-t3-row-mtf { align-items: center !important; }
+  .brk-t3-seg { font-size: 8px; letter-spacing: 0.5px; color: var(--text3); }
+  .brk-t3-num { font-size: 13px; font-weight: 900; }
+  .brk-t3-mtf-stack { align-items: center !important; gap: 1px; }
+  .brk-t3-brk { font-size: 8px; }
+  .brk-col-sub { text-align: center; }
 
   /* Expanded detail */
   .brk-card-detail { padding: 12px; }
@@ -6778,14 +6815,20 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .brk-expand-footer { flex-direction: column; gap: 8px; margin-top: 10px; }
   .brk-disclaimer { font-size: 9px; }
 
-  /* Filter controls — compact */
-  .brk-filters { gap: 8px; margin-bottom: 10px; padding: 10px 12px; }
-  .brk-filter-group { gap: 4px; }
-  .brk-filter-label { font-size: 9px; letter-spacing: 0.8px; }
-  .brk-filter-btn { font-size: 11px; padding: 5px 11px; border-radius: 6px; }
-  .brk-seg { gap: 4px; }
-  .brk-seg-btn { font-size: 11px; padding: 6px 12px; border-radius: 6px; }
-  .brk-main-content { padding: 8px 10px; }
+  /* Filter controls — mobile, no scroll, everything fits */
+  .brk-content { padding: 10px; }
+  .brk-main-content { padding: 0; }
+
+  /* Trade size */
+  .brk-size-bar { padding: 6px 0 4px; gap: 5px; flex-wrap: nowrap; }
+  .brk-size-label { font-size: 8px; letter-spacing: 0.8px; margin-right: 2px; }
+  .brk-size-btn { font-size: 10px; padding: 4px 12px; border-radius: 20px; border-width: 1px; }
+
+  /* Filter groups — no scroll, all fit on one line */
+  .brk-filters { gap: 5px; margin-bottom: 8px; flex-direction: column; }
+  .brk-filter-group { gap: 3px; align-items: center; flex-wrap: nowrap; overflow-x: unset; }
+  .brk-filter-label { font-size: 7px; letter-spacing: 0.5px; flex-shrink: 0; min-width: 52px; }
+  .brk-filter-btn { font-size: 9px; padding: 3px 7px; border-radius: 4px; flex-shrink: 1; white-space: nowrap; }
 
   /* Rankings table */
   .brk-rank-table { font-size: 11px; }
