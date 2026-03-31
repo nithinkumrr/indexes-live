@@ -109,14 +109,14 @@ export default function App() {
   }, []);
 
   const PAGE_TITLES = {
-    grid:     'indexes.live — Global Market Indexes Live',
-    bubble:   'Market Sentiment — indexes.live',
-    fno:      'F&O — Futures & Options — indexes.live',
-    gold:     'Gold Prices Live — indexes.live',
-    ipo:      'IPO Tracker — indexes.live',
-    calc:     'Risk Calculator — indexes.live',
-    insights: 'Daily Market Insights — indexes.live',
-    brokers:  'Indian Broker Charges — indexes.live',
+    grid:     'indexes.live | Markets, F&O, IPO, Gold, Risk and Brokers',
+    bubble:   'Market Sentiment | indexes.live',
+    fno:      'F&O | Futures and Options | indexes.live',
+    gold:     'Gold Prices Live | indexes.live',
+    ipo:      'IPO Tracker | indexes.live',
+    calc:     'Risk Calculator | indexes.live',
+    insights: 'Daily Market Insights | indexes.live',
+    brokers:  'Indian Broker Charges | indexes.live',
   };
 
   // Fire GA pageview
@@ -137,25 +137,25 @@ export default function App() {
 
   // Meta descriptions per sub-page
   const META_DESCS = {
-    '/markets':             'Live global market indexes. 30+ markets across Asia, Europe and Americas. Real-time prices for Indian traders.',
-    '/sentiment':           'India market sentiment — FII/DII flows, Nifty heatmap, Fear & Greed index. Live institutional data.',
-    '/fno':                 'F&O live data — VIX, expiry countdown, pivot points, option strategy cheat codes for Nifty and Bank Nifty.',
-    '/fno/overview':        'F&O Overview — India VIX, expiry countdown, pivot points and rollover meter for Nifty and Bank Nifty.',
-    '/fno/strategy':        '30+ option strategies with payoff charts, Greeks and live VIX context. Long Straddle, Iron Condor, Credit Spreads and more.',
-    '/fno/learn':           'Learn every option strategy — how it works, when to use it, max profit/loss and real Nifty examples.',
-    '/fno/reference':       'F&O reference — expiry calendar, lot sizes, margin requirements and theta decay tables.',
-    '/brokers':             'Indian broker charges compared — every fee calculated. Zerodha vs Dhan vs Groww vs Angel One.',
-    '/brokers/rankings':    'Indian broker rankings by total cost on ₹50K delivery trade. All charges included — brokerage, DP, AMC, govt.',
-    '/brokers/compare':     'Compare any two Indian brokers head to head — per-trade cost, annual cost by profile, all charges.',
-    '/brokers/charges':     'Complete Indian broker charge guide — delivery, intraday, F&O, DP, AMC, MTF, settlement charges explained.',
-    '/brokers/calculator':  'Brokerage calculator — calculate exact charges for any trade size across 15+ Indian brokers.',
-    '/calc':                'Risk calculator for Indian traders — position sizing, stop loss, risk/reward, drawdown recovery.',
-    '/calc/calculators':    'Trading risk calculators — position size, max loss per trade, stop loss distance, risk reward ratio.',
-    '/calc/recovery':       'The recovery trap — why a 50% loss needs 100% gain to recover. Visual drawdown calculator.',
-    '/calc/principles':     '5 laws of risk management every Indian trader must know. Patterns from thousands of trading outcomes.',
-    '/gold':                'Live gold and silver prices — spot price, USD/oz, INR/10g. MCX gold live.',
-    '/ipo':                 'IPO tracker — upcoming IPOs, GMP, subscription status and allotment dates.',
-    '/insights':            'Daily market insights — AI-powered write-up, FII/DII flows, intraday bias and key levels for Nifty.',
+    '/markets':             'Track 30+ global market indexes live. Real-time prices, status and changes across world markets, all in one place. Your edge starts here.',
+    '/sentiment':           'Read the room before you trade. Live FII and DII flows, Nifty heatmap and Fear and Greed index. Know where the big money is moving.',
+    '/fno':                 'Everything F&O traders need in one place. Live VIX, expiry countdown, pivot points and option strategy cheat codes for Nifty and Bank Nifty.',
+    '/fno/overview':        'Live F&O dashboard. India VIX, expiry countdown, pivot points and rollover meter for Nifty and Bank Nifty. Updated in real time.',
+    '/fno/strategy':        '30+ option strategies with payoff charts, Greeks and live VIX context. Long Straddle, Iron Condor, Credit Spreads and more. Know before you trade.',
+    '/fno/learn':           'Learn every option strategy. How it works, when to use it, max profit and loss, and real Nifty examples. Build your edge from the ground up.',
+    '/fno/reference':       'F&O quick reference. Expiry calendar, lot sizes, margin requirements and theta decay tables. Everything you need, nothing you do not.',
+    '/brokers':             'Every Indian broker charge calculated and compared. Zerodha vs Dhan vs Groww vs Angel One. Find the broker that keeps more money in your pocket.',
+    '/brokers/rankings':    'Indian brokers ranked by total cost on a 50K delivery trade. All charges included: brokerage, DP, AMC and government fees. No guesswork.',
+    '/brokers/compare':     'Compare any two Indian brokers head to head. Per-trade cost, annual cost by profile and all charges. Pick the one that actually costs less.',
+    '/brokers/charges':     'Complete guide to Indian broker charges. Delivery, intraday, F&O, DP, AMC, MTF and settlement fees all explained. Know every rupee you pay.',
+    '/brokers/calculator':  'Calculate the exact brokerage and charges for any trade across 15+ Indian brokers. Enter your trade size. See the real cost instantly.',
+    '/calc':                'Stop guessing your risk. Position sizing, stop loss distance, risk reward ratio and drawdown recovery. Built for traders who trade with discipline.',
+    '/calc/calculators':    'Stop guessing your risk. Calculate position size, max loss, stop loss distance and risk reward ratio instantly. Trade with discipline, not luck.',
+    '/calc/recovery':       'A 50% loss needs a 100% gain to recover. See exactly how deep the hole gets and how long it takes to climb out. Never ignore drawdown again.',
+    '/calc/principles':     '5 laws of risk management every trader must know. Hard rules backed by real trading outcomes. Read them before your next trade.',
+    '/gold':                'Live gold and silver prices right now. Spot price in USD per oz and INR per 10g. MCX gold live. Track the metal that never sleeps.',
+    '/ipo':                 'Never miss an IPO. Upcoming listings, grey market premium, live subscription status and allotment dates. Stay ahead of every opening.',
+    '/insights':            'Daily market write-up before the bell. FII and DII flows, intraday bias and key Nifty levels. Know what to watch before the market opens.',
   };
 
   // Called by sub-pages when switching tabs
