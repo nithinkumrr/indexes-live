@@ -24,11 +24,21 @@ function parseRSS(xml, feed) {
   while ((m = itemRegex.exec(xml)) !== null) {
     const block = m[1];
     const get = (tag) => {
-      const r = new RegExp(`<${tag}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${tag}>`, 'i');
+      // Match both plain text and CDATA-wrapped content
+      const r = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i');
       const match = r.exec(block);
-      return match ? match[1].trim() : '';
+      if (!match) return '';
+      let val = match[1].trim();
+      // Strip CDATA wrapper if present
+      val = val.replace(/^<!\[CDATA\[/, '').replace(/\]\]>$/, '').trim();
+      // Strip any trailing ]]> that leaked through
+      val = val.replace(/\]\]>\s*$/, '').trim();
+      return val;
     };
-    const title = get('title').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+    const title = get('title')
+      .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+      .replace(/&#39;/g,"'").replace(/&quot;/g,'"')
+      .replace(/\]\]>\s*$/,'').trim();
     const link  = get('link') || get('guid');
     const pubDate = get('pubDate') || get('dc:date') || '';
     if (title && link) {

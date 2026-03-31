@@ -690,10 +690,10 @@ export default function InsightsPage({data={}, nseData={}}) {
       {/* SUB-TAB NAV */}
       <div className="ip-subnav">
         <button className={`ip-subtab ${subTab==='news'?'ip-subtab-on':''}`} onClick={()=>setSubTab('news')}>
-          📰 News
+          <span className="ip-subtab-icon">◈</span> News
         </button>
         <button className={`ip-subtab ${subTab==='insights'?'ip-subtab-on':''}`} onClick={()=>setSubTab('insights')}>
-          ◐ Market Insights
+          <span className="ip-subtab-icon">◐</span> Market Insights
         </button>
       </div>
 
@@ -798,6 +798,34 @@ export default function InsightsPage({data={}, nseData={}}) {
                     <button className="ip-news-more" onClick={()=>setNewsPage(p=>p+1)}>
                       Load more stories
                     </button>
+                  </div>
+                )}
+
+                {/* ── NEWS BRIEF ── */}
+                {filtered.length > 0 && (
+                  <div className="ip-news-brief">
+                    <div className="ip-news-brief-hdr">
+                      <span className="ip-news-brief-icon">⚡</span>
+                      <span className="ip-news-brief-title">Today's Brief</span>
+                      <span className="ip-news-brief-sub">{filtered.length} stories across {[...new Set(filtered.map(i=>i.cat))].join(', ')}</span>
+                    </div>
+                    <div className="ip-news-brief-grid">
+                      {['Markets','Economy','Stocks','Global'].map(cat=>{
+                        const catItems = filtered.filter(i=>i.cat===cat);
+                        if (!catItems.length) return null;
+                        const catColors = { Markets:'#4A9EFF', Economy:'#A78BFA', Stocks:'#00C896', Global:'#F59E0B' };
+                        return (
+                          <div key={cat} className="ip-news-brief-col">
+                            <div className="ip-news-brief-col-hdr" style={{color:catColors[cat]}}>{cat}</div>
+                            {catItems.slice(0,3).map((item,i)=>(
+                              <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className="ip-news-brief-item">
+                                {item.title}
+                              </a>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
