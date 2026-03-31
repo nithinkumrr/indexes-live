@@ -32,9 +32,14 @@ export default async function handler(req, res) {
   const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const today = ist.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
-  // Build list of last 7 trading days
+  // Build list of last 7 trading days — never include today if holiday/weekend, never include future
   const tradingDays = [];
   const cur = new Date(ist);
+  // If today is a holiday or weekend, start from yesterday so we never include future dates
+  const todayDow = cur.getDay();
+  if (todayDow === 0 || todayDow === 6 || HOLIDAYS.has(today)) {
+    cur.setDate(cur.getDate() - 1);
+  }
   while (tradingDays.length < 7) {
     const iso = cur.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
     const dow = cur.getDay();
