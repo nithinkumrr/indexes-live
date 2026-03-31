@@ -168,6 +168,7 @@ export default function App() {
     }}>
       <Header lastUpdate={lastUpdate} view={view} setView={navigate} />
 
+      <div className="app-content">
       <Suspense fallback={<PageSpinner />}>
         {isFullPage ? (
           view === 'fno'       ? <FnOPage data={data} nseData={nseData} initialTab={initialTab} navigateSub={navigateSub} /> :
@@ -198,6 +199,7 @@ export default function App() {
           </>
         )}
       </Suspense>
+      </div>
 
       <Footer />
 
