@@ -61,7 +61,7 @@
 [data-theme="light"] .logo-text { color: #1A1410; }
 [data-theme="light"] .logo-dot  { color: #9C8B75; }
 [data-theme="light"] .header { background: #F5F0E8; border-bottom-color: rgba(0,0,0,0.1); }
-[data-theme="light"] .view-btn { color: #9C8B75; }
+[data-theme="light"] .view-btn { color: #3A2E20; }
 [data-theme="light"] .view-btn:hover { background: rgba(0,0,0,.04); color: #1A1410; }
 [data-theme="light"] .view-active { color: #1A1410 !important; border-bottom-color: #1BAF8E !important; background: rgba(27,175,142,.08) !important; }
 [data-theme="light"] .mobile-nav { background: #F5F0E8; border-top-color: rgba(0,0,0,0.1); }
@@ -204,6 +204,20 @@
 [data-theme="light"] .h2h-hero { background: #F5F0E8 !important; border-color: rgba(0,0,0,0.09) !important; }
 [data-theme="light"] .h2h-table { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
 [data-theme="light"] .h2h-th { background: #F0EBE2 !important; }
+
+/* ── LEARN TAB: edu payoff + example sections ── */
+[data-theme="light"] .edu-payoff-wrap { background: #F0EBE2 !important; border-color: rgba(0,0,0,0.10) !important; }
+[data-theme="light"] .edu-example { background: #F8F5F0 !important; border-color: rgba(0,0,0,0.10) !important; }
+[data-theme="light"] .edu-section-text { color: #2A1F12 !important; }
+[data-theme="light"] .edu-tips li { color: #2A1F12 !important; }
+[data-theme="light"] .edu-leg-detail { color: #1A1410 !important; }
+[data-theme="light"] .edu-leg-premium { color: #4A3828 !important; }
+[data-theme="light"] .edu-result-label { color: #6B5A45 !important; }
+[data-theme="light"] .edu-result-val { color: #1A1410 !important; }
+[data-theme="light"] .edu-result-val.gain { color: #0D8C6E !important; }
+[data-theme="light"] .edu-result-val.loss { color: #C9360A !important; }
+[data-theme="light"] .edu-legs { border-bottom-color: rgba(0,0,0,0.08) !important; }
+[data-theme="light"] .edu-right { background: #FAF8F4 !important; }
 
 /* ── STRATEGY PAGE: payoff chart + example ── */
 [data-theme="light"] .spc-chart-wrap { background: #F5F0E8 !important; }
