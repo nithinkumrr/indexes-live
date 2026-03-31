@@ -6808,32 +6808,34 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .brk-slab-v { font-size: 11px; }
 
   /* All-in total section — centered 3-col layout */
-  .brk-col-total { padding: 8px 12px; text-align: center; }
+  .brk-col-total { padding: 10px 12px; text-align: center; }
+  .brk-col-label { text-align: center; }
   .brk-total-3 {
     display: grid !important;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 0;
-    border: 1px solid rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.07);
     border-radius: 6px;
     overflow: hidden;
+    margin-bottom: 6px;
   }
   .brk-t3-row {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     text-align: center !important;
-    padding: 8px 4px !important;
+    padding: 10px 4px !important;
     border-bottom: none !important;
-    border-right: 1px solid rgba(255,255,255,.06);
-    gap: 2px;
+    border-right: 1px solid rgba(255,255,255,.07);
+    gap: 3px;
   }
   .brk-t3-row:last-child { border-right: none !important; }
   .brk-t3-row-mtf { align-items: center !important; }
-  .brk-t3-seg { font-size: 8px; letter-spacing: 0.5px; color: var(--text3); }
-  .brk-t3-num { font-size: 13px; font-weight: 900; }
+  .brk-t3-seg { font-size: 9px; letter-spacing: 0.5px; color: var(--text3); font-weight: 700; }
+  .brk-t3-num { font-size: 16px; font-weight: 900; }
   .brk-t3-mtf-stack { align-items: center !important; gap: 1px; }
-  .brk-t3-brk { font-size: 8px; }
-  .brk-col-sub { text-align: center; }
+  .brk-t3-brk { font-size: 9px; }
+  .brk-col-sub { text-align: center; font-size: 9px; }
 
   /* Expanded detail */
   .brk-card-detail { padding: 12px; }
@@ -6848,19 +6850,19 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .brk-expand-footer { flex-direction: column; gap: 8px; margin-top: 10px; }
   .brk-disclaimer { font-size: 9px; }
 
-  /* Filter controls — mobile, centred, no scroll */
+  /* Filter controls — mobile, no scroll */
   .brk-content { padding: 10px; }
   .brk-main-content { padding: 0; }
 
-  /* Trade size — centred row */
-  .brk-size-bar { padding: 6px 0 4px; gap: 5px; flex-wrap: nowrap; justify-content: center; }
+  /* Trade size */
+  .brk-size-bar { padding: 6px 0 4px; gap: 5px; flex-wrap: nowrap; }
   .brk-size-label { font-size: 8px; letter-spacing: 0.8px; margin-right: 2px; }
   .brk-size-btn { font-size: 10px; padding: 4px 12px; border-radius: 20px; border-width: 1px; }
 
-  /* Filter groups — centred, no scroll */
-  .brk-filters { gap: 5px; margin-bottom: 8px; flex-direction: column; align-items: center; }
-  .brk-filter-group { gap: 3px; align-items: center; flex-wrap: nowrap; justify-content: center; width: 100%; overflow-x: unset; }
-  .brk-filter-label { font-size: 7px; letter-spacing: 0.5px; flex-shrink: 0; min-width: 52px; text-align: right; }
+  /* Filter groups — one line each, no scroll */
+  .brk-filters { gap: 5px; margin-bottom: 8px; flex-direction: column; }
+  .brk-filter-group { gap: 3px; align-items: center; flex-wrap: nowrap; overflow-x: unset; }
+  .brk-filter-label { font-size: 7px; letter-spacing: 0.5px; flex-shrink: 0; min-width: 52px; }
   .brk-filter-btn { font-size: 9px; padding: 3px 7px; border-radius: 4px; flex-shrink: 1; white-space: nowrap; }
 
   /* Rankings table */
