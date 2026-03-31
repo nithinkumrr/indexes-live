@@ -53,7 +53,7 @@ function FearGreedMeter() {
       .then(r => r.json())
       .then(d => {
         const vixScore = d.vix != null ? Math.max(0, Math.min(100, Math.round(100 - (d.vix - 10) * 4))) : null;
-        const fiiScore = d.fiiNet != null ? Math.max(0, Math.min(100, Math.round(50 + (d.fiiNet / 100)))) : null;
+        const fiiScore = (d.fiiNet != null && d.fiiNet !== 0) ? Math.max(0, Math.min(100, Math.round(50 + (d.fiiNet / 100)))) : null;
         const momScore = (d.ema30 && d.ema90) ? Math.max(0, Math.min(100, Math.round(50 + ((d.ema30 - d.ema90) / d.ema90) * 1000))) : null;
         const adScore  = (d.advancers && d.decliners) ? Math.max(0, Math.min(100, Math.round((d.advancers / (d.advancers + d.decliners)) * 100))) : null;
         const psScore  = ((d.highs52w != null) && (d.lows52w != null) && (d.highs52w + d.lows52w > 0)) ? Math.max(0, Math.min(100, Math.round((d.highs52w / (d.highs52w + d.lows52w)) * 100))) : null;

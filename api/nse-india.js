@@ -184,22 +184,36 @@ export default async function handler(req, res) {
   } catch(_) {}
 
   // Fill missing fields from previous trading day KV data
-  // This covers: FII (not published until 5 PM), 52W highs/lows, breadth, price change
+  // This covers: FII (not published until 5 PM), holidays, 52W highs/lows, breadth, price change
   const needsFallback = result.fiiNet == null || result.fiiNet === 0 
     || result.niftyChange == null || result.highs52w == null;
   
   if (needsFallback) {
     try {
       const { kv: kvInst } = await import('@vercel/kv');
-      // Try last 5 trading days
-      for (let i = 1; i <= 5; i++) {
-        const d = new Date(Date.now() - i * 86400000);
-        const iso = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-        const dow = new Date(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getDay();
-        if (dow === 0 || dow === 6) continue;
 
-        // Get FII data from fiidii KV store
-        if (result.fiiNet == null || result.fiiNet === 0) {
+      // Pull MMI cache once — covers vix, niftyChange, ema, breadth, 52w from last saved state
+      const cachedMmi = await kvInst.get('mmi_data_v1').catch(()=>null);
+      if (cachedMmi) {
+        const prev = typeof cachedMmi === 'string' ? JSON.parse(cachedMmi) : cachedMmi;
+        if (result.vix == null && prev.vix) result.vix = prev.vix;
+        if (result.niftyChange == null && prev.niftyChange) result.niftyChange = prev.niftyChange;
+        if (result.ema30 == null && prev.ema30) result.ema30 = prev.ema30;
+        if (result.ema90 == null && prev.ema90) result.ema90 = prev.ema90;
+        if (result.advancers == null && prev.advancers) result.advancers = prev.advancers;
+        if (result.decliners == null && prev.decliners) result.decliners = prev.decliners;
+        if (result.highs52w == null && prev.highs52w != null) result.highs52w = prev.highs52w;
+        if (result.lows52w == null && prev.lows52w != null) result.lows52w = prev.lows52w;
+      }
+
+      // Search up to 10 calendar days back for FII data (handles holidays + weekends)
+      if (result.fiiNet == null || result.fiiNet === 0) {
+        for (let i = 1; i <= 10; i++) {
+          const d = new Date(Date.now() - i * 86400000);
+          const iso = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+          const dow = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getDay();
+          if (dow === 0 || dow === 6) continue; // skip weekends
+
           try {
             const raw = await kvInst.get(`fiidii:${iso}`);
             if (raw) {
@@ -208,26 +222,12 @@ export default async function handler(req, res) {
                 result.fiiNet  = rec.fiiNet;
                 result.fiiBuy  = rec.fiiBuy;
                 result.fiiSell = rec.fiiSell;
-                result.fiiDate = rec.date;
+                result.fiiDate = rec.date || iso;
+                break; // found valid FII data, stop searching
               }
             }
           } catch(_) {}
         }
-
-        // Get MMI data (vix, niftyChange, highs52w etc) from cached MMI
-        const cachedMmi = await kvInst.get('mmi_data_v1').catch(()=>null);
-        if (cachedMmi) {
-          const prev = typeof cachedMmi === 'string' ? JSON.parse(cachedMmi) : cachedMmi;
-          if (result.vix == null && prev.vix) result.vix = prev.vix;
-          if (result.niftyChange == null && prev.niftyChange) result.niftyChange = prev.niftyChange;
-          if (result.ema30 == null && prev.ema30) result.ema30 = prev.ema30;
-          if (result.ema90 == null && prev.ema90) result.ema90 = prev.ema90;
-          if (result.advancers == null && prev.advancers) result.advancers = prev.advancers;
-          if (result.decliners == null && prev.decliners) result.decliners = prev.decliners;
-          if (result.highs52w == null && prev.highs52w != null) result.highs52w = prev.highs52w;
-          if (result.lows52w == null && prev.lows52w != null) result.lows52w = prev.lows52w;
-        }
-        break; // only need one day
       }
     } catch(_) {}
   }
