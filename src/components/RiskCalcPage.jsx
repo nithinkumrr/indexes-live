@@ -1737,12 +1737,28 @@ export default function RiskCalcPage({ initialTab = null, navigateSub = null }) 
   }, []);
 
   const scrollTo = (id) => {
-    if (id === 'calculators') {
-      calcRef.current?.scrollIntoView({ behavior:'smooth', block:'start' });
-    } else {
-      document.getElementById(id)?.scrollIntoView({ behavior:'smooth', block:'start' });
-    }
+    setActiveSection(id);
+    setTimeout(() => {
+      if (id === 'calculators') {
+        calcRef.current?.scrollIntoView({ behavior:'smooth', block:'start' });
+      } else {
+        document.getElementById(id)?.scrollIntoView({ behavior:'smooth', block:'start' });
+      }
+    }, 50);
   };
+
+  // On direct URL visit, scroll to the right section after mount
+  useEffect(() => {
+    if (initialTab && initialTab !== 'start') {
+      setTimeout(() => {
+        if (initialTab === 'calculators') {
+          calcRef.current?.scrollIntoView({ behavior:'smooth', block:'start' });
+        } else {
+          document.getElementById(initialTab)?.scrollIntoView({ behavior:'smooth', block:'start' });
+        }
+      }, 300);
+    }
+  }, []);
 
   const handleStartHereSelect = (calcId) => {
     setActiveTab(calcId);
