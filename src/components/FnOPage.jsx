@@ -1437,6 +1437,7 @@ function VixSeasonality() {
 // ─────────────────────────────────────────────────────────────────────────────
 function PivotPointsV2({ data }) {
   const [breadth, setBreadth] = useState(null);
+  const [mobileIdx, setMobileIdx] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -1485,15 +1486,23 @@ function PivotPointsV2({ data }) {
       <div className="fno-pv2-header">
         <span className="fno-widget-title" style={{padding:0}}>PIVOT POINTS <span className="fno-widget-formula">Classic · (H+L+C)÷3</span></span>
         <span className="fno-widget-sub" style={{margin:0}}>Today's support & resistance · ★ = price near level</span>
+        {/* Mobile index switcher */}
+        <div className="fno-pv2-mobile-tabs">
+          {[...INDICES.map(({id,label,color})=>({id,label,color})), {id:'pulse',label:'Market Pulse',color:'#64748B'}].map(({ id, label, color }, i) => (
+            <button key={id} className={`fno-pv2-mtab ${mobileIdx===i?'fno-pv2-mtab-active':''}`}
+              style={mobileIdx===i?{borderBottomColor:color,color}:{}}
+              onClick={() => setMobileIdx(i)}>{label}</button>
+          ))}
+        </div>
       </div>
 
-      {/* 3 pivot columns */}
+      {/* columns — on mobile only show selected index */}
       <div className="fno-pv2-cols">
-        {INDICES.map(({ id, label, color }) => {
+        {INDICES.map(({ id, label, color }, idx) => {
           const d = data?.[id];
           const p = computePivots(d);
           if (!p) return (
-            <div key={id} className="fno-pv2-col">
+            <div key={id} className="fno-pv2-col" data-mobile-idx={idx} style={{}}>
               <div className="fno-pv2-col-hdr" style={{ borderTopColor: color }}>
                 <span className="fno-pv2-col-name">{label}</span>
               </div>
@@ -1515,7 +1524,7 @@ function PivotPointsV2({ data }) {
           const gain = chg >= 0;
 
           return (
-            <div key={id} className="fno-pv2-col">
+            <div key={id} className={`fno-pv2-col${mobileIdx===idx?'':' fno-pv2-col-hidden'}`}>
               <div className="fno-pv2-col-hdr" style={{ borderTopColor: color }}>
                 <span className="fno-pv2-col-name" style={{ color }}>{label}</span>
                 <span className="fno-pv2-col-price">{fmt(p.C)}</span>
@@ -1563,7 +1572,7 @@ function PivotPointsV2({ data }) {
         })}
 
         {/* 4th column: Breadth + summary */}
-        <div className="fno-pv2-col fno-pv2-extra">
+        <div className={`fno-pv2-col fno-pv2-extra${mobileIdx===3?'':' fno-pv2-col-hidden'}`}>
           <div className="fno-pv2-col-hdr" style={{ borderTopColor: '#64748B' }}>
             <span className="fno-pv2-col-name" style={{ color: 'var(--text)' }}>Market Pulse</span>
           </div>
