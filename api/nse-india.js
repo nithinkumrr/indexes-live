@@ -42,6 +42,8 @@ export default async function handler(req, res) {
             } catch(_) {}
           }
         }
+        // If fiiDate still missing, use savedDate from snapshot
+        if (!data.fiiDate && data.savedDate) data.fiiDate = data.savedDate;
         return res.json({ ...data, cached: true });
       }
     } catch(_) {}
@@ -327,7 +329,8 @@ export default async function handler(req, res) {
   if (hasUsefulData) {
     try {
       const { kv } = await import('@vercel/kv');
-      await kv.set('mmi_data_v1', JSON.stringify(result), { ex: 7 * 24 * 3600 });
+      const todayForCache = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      await kv.set('mmi_data_v1', JSON.stringify({ ...result, savedDate: todayForCache }), { ex: 7 * 24 * 3600 });
     } catch(_) {}
   }
 
