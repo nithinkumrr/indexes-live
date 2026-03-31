@@ -123,10 +123,39 @@ export default function App() {
     document.title = PAGE_TITLES[v] || 'indexes.live';
   };
 
+  // Meta descriptions per sub-page
+  const META_DESCS = {
+    '/markets':             'Live global market indexes. 30+ markets across Asia, Europe and Americas. Real-time prices for Indian traders.',
+    '/sentiment':           'India market sentiment — FII/DII flows, Nifty heatmap, Fear & Greed index. Live institutional data.',
+    '/fno':                 'F&O live data — VIX, expiry countdown, pivot points, option strategy cheat codes for Nifty and Bank Nifty.',
+    '/fno/overview':        'F&O Overview — India VIX, expiry countdown, pivot points and rollover meter for Nifty and Bank Nifty.',
+    '/fno/strategy':        '30+ option strategies with payoff charts, Greeks and live VIX context. Long Straddle, Iron Condor, Credit Spreads and more.',
+    '/fno/learn':           'Learn every option strategy — how it works, when to use it, max profit/loss and real Nifty examples.',
+    '/fno/reference':       'F&O reference — expiry calendar, lot sizes, margin requirements and theta decay tables.',
+    '/brokers':             'Indian broker charges compared — every fee calculated. Zerodha vs Dhan vs Groww vs Angel One.',
+    '/brokers/rankings':    'Indian broker rankings by total cost on ₹50K delivery trade. All charges included — brokerage, DP, AMC, govt.',
+    '/brokers/compare':     'Compare any two Indian brokers head to head — per-trade cost, annual cost by profile, all charges.',
+    '/brokers/charges':     'Complete Indian broker charge guide — delivery, intraday, F&O, DP, AMC, MTF, settlement charges explained.',
+    '/brokers/calculator':  'Brokerage calculator — calculate exact charges for any trade size across 15+ Indian brokers.',
+    '/calc':                'Risk calculator for Indian traders — position sizing, stop loss, risk/reward, drawdown recovery.',
+    '/calc/calculators':    'Trading risk calculators — position size, max loss per trade, stop loss distance, risk reward ratio.',
+    '/calc/recovery':       'The recovery trap — why a 50% loss needs 100% gain to recover. Visual drawdown calculator.',
+    '/calc/principles':     '5 laws of risk management every Indian trader must know. Patterns from thousands of trading outcomes.',
+    '/gold':                'Live gold and silver prices — spot price, USD/oz, INR/10g. MCX gold live.',
+    '/ipo':                 'IPO tracker — upcoming IPOs, GMP, subscription status and allotment dates.',
+    '/insights':            'Daily market insights — AI-powered write-up, FII/DII flows, intraday bias and key levels for Nifty.',
+  };
+
   // Called by sub-pages when switching tabs
   const navigateSub = (path, title) => {
     window.history.pushState({}, '', path);
     document.title = title || 'indexes.live';
+    // Update meta description
+    const desc = META_DESCS[path];
+    if (desc) {
+      let tag = document.querySelector('meta[name="description"]');
+      if (tag) tag.setAttribute('content', desc);
+    }
   };
 
   const selectedMarket = selectedId ? MARKETS.find(m => m.id === selectedId) : null;

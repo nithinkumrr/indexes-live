@@ -302,13 +302,13 @@
 
 
 html { font-size: 14px; }
-html { overflow-x: hidden; }
-body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100vh; overflow-x: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100vh; }
 
-.app { width: 100%; min-height: 100vh; }
+/* overflow-x on html/body breaks position:sticky on iOS — use app instead */
+.app { width: 100%; min-height: 100vh; overflow-x: hidden; }
 
 /* HEADER */
-.header { display: flex; align-items: stretch; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; z-index: 100; gap: 10px; flex-wrap: nowrap; min-height: 46px; }
+.header { display: flex; align-items: stretch; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--bg2); position: -webkit-sticky; position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: nowrap; min-height: 46px; }
 .header-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; padding: 10px 0; }
 .header-controls { display: flex; align-items: center; gap: 8px; }
 .logo { display: flex; align-items: baseline; }
