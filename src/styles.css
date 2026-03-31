@@ -5842,8 +5842,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 
 /* ── Broker Hero v2 ───────────────────────────────────────────────── */
 .brk-hero2        { padding: 20px 24px; border-bottom: 1px solid var(--border); background: var(--bg0); }
-.brk-hero2-top    { display: flex; align-items: stretch; gap: 32px; }
-.brk-hero2-left   { flex: 0 0 68%; display: flex; flex-direction: column; gap: 16px; justify-content: space-between; }
+.brk-hero2-top    { display: flex; align-items: stretch; gap: 20px; }
+.brk-hero2-left   { flex: 0 0 64%; display: flex; flex-direction: column; gap: 16px; justify-content: space-between; }
 .brk-hero2-title  { font-family: var(--mono); font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; line-height: 1.2; }
 .brk-hero2-stats  { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 .brk-hero2-trade-note { font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.7; padding-top: 12px; border-top: 1px solid var(--border); margin-top: auto; }
@@ -5852,7 +5852,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-hs2-l        { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 .brk-hs2-l strong { font-weight: 800; }
 .brk-hs2-sep      { font-family: var(--mono); font-size: 20px; color: var(--border2); line-height: 1; }
-.brk-hero2-note   { flex: 1; font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.8; padding: 14px 16px; background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r); box-sizing: border-box; word-break: break-word; }
+.brk-hero2-note   { flex: 1; font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.8; padding: 14px 16px; background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r); box-sizing: border-box; word-break: break-word; align-self: stretch; display: flex; align-items: flex-start; }
 .brk-hero2-note a { color: var(--accent); }
 
 /* ── Trade size toggle ────────────────────────────────────────────── */
@@ -6350,3 +6350,308 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .cg-vb-highlight .cg-verdict-name { color: var(--accent); }
 .cg-vb-highlight .cg-vb-note      { color: rgba(74,158,255,.7); }
 .cg-verdict-delta { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-bottom: 4px; font-style: italic; }
+
+/* ============================================================
+   MOBILE RESPONSIVE — indexes.live
+   Breakpoints: 480px (small mobile), 640px (large mobile), 768px (tablet)
+   Rule: ONLY override at breakpoints. Desktop untouched.
+   ============================================================ */
+
+/* ── GLOBAL MOBILE BASE ──────────────────────────────────── */
+@media (max-width: 768px) {
+  * { -webkit-tap-highlight-color: transparent; }
+  
+  /* No horizontal scroll ever */
+  body, .app { overflow-x: hidden; max-width: 100vw; }
+
+  /* Better tap targets */
+  button { min-height: 36px; }
+}
+
+/* ── HEADER ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .header { padding: 6px 10px; gap: 8px; }
+  .header-right { gap: 6px; }
+  .live-badge { padding: 3px 7px; font-size: 9px; }
+  .inline-countdown { padding: 4px 8px; gap: 5px; }
+  .ic-time { font-size: 14px; }
+  .ic-label { font-size: 8px; }
+}
+
+/* ── TICKER STRIP ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ticker-row { padding: 5px 0; }
+}
+
+/* ── WORLD CLOCKS ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .clocks-strip { overflow-x: auto; scrollbar-width: none; }
+  .clocks-strip::-webkit-scrollbar { display: none; }
+  .clock-cell { min-width: 90px; padding: 6px 10px; }
+  .clock-city { font-size: 9px; }
+  .clock-time { font-size: 14px; }
+}
+
+/* ── HERO SECTION ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero-wrapper { padding: 0; }
+  .hero-section { padding: 10px; }
+  .hero-header { margin-bottom: 10px; }
+  .hero-badge { font-size: 13px; gap: 6px; }
+  .hero-exch-note { font-size: 9px; }
+  .hero-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hero-card { padding: 10px; }
+  .hero-name { font-size: 12px; }
+  .hero-price { font-size: 20px; }
+  .hero-abs { font-size: 12px; }
+  .hero-pct-badge { font-size: 11px; padding: 2px 6px; }
+  .hero-spark { height: 40px; }
+  .hero-ohlc { gap: 8px; }
+  .hero-ohlc-item { font-size: 10px; }
+  .hero-footer { font-size: 9px; flex-wrap: wrap; gap: 4px; }
+  .hero-prev { display: none; }
+}
+
+@media (max-width: 480px) {
+  .hero-cards { grid-template-columns: 1fr; gap: 8px; }
+  .hero-price { font-size: 24px; }
+  .hero-card-gift { display: none; } /* hide GIFT Nifty on tiny screens */
+}
+
+/* ── COMMODITY STRIP ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .commodity-strip { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .commodity-strip::-webkit-scrollbar { display: none; }
+  .commodity-strip-item { flex-shrink: 0; padding: 6px 12px; }
+}
+
+/* ── FX / CRYPTO STRIP ───────────────────────────────────── */
+@media (max-width: 768px) {
+  .fxrow-strip { overflow-x: auto; scrollbar-width: none; }
+  .fxrow-strip::-webkit-scrollbar { display: none; }
+}
+
+/* ── DAILY INSIGHTS PAGE ─────────────────────────────────── */
+@media (max-width: 768px) {
+  .ip-wrap { padding-bottom: 80px; }
+  .ip-section { padding: 10px; }
+
+  /* Ticker items - scrollable */
+  .ip-ticker-strip { overflow-x: auto; scrollbar-width: none; }
+  .ip-ticker-strip::-webkit-scrollbar { display: none; }
+
+  /* Market signals - full width */
+  .ip-signal { grid-template-columns: auto 1fr; gap: 6px; padding: 8px 10px; }
+  .ip-signal-tag { font-size: 8px; padding: 2px 5px; }
+  .ip-signal-text { font-size: 11px; line-height: 1.5; }
+
+  /* AI writeup */
+  .ip-writeup-block { padding: 12px; }
+  .ip-writeup-para { font-size: 12px; line-height: 1.7; }
+  .ip-ana-title { font-size: 9px; }
+
+  /* Intraday bias - horizontal on mobile */
+  .ip-bias-grid { grid-template-columns: repeat(3,1fr); gap: 6px; }
+  .ip-bias-item { padding: 8px; }
+  .ip-bias-phase { font-size: 9px; }
+  .ip-bias-time { font-size: 8px; }
+  .ip-bias-ctrl { font-size: 11px; }
+
+  /* FII/DII flows */
+  .ip-flow-today { grid-template-columns: 1fr 1fr; }
+  .ip-flow-net { font-size: 20px; }
+  .ip-flow-7d { grid-template-columns: 1fr 1fr 1fr; }
+  .ip-flow-7d-val { font-size: 13px; }
+
+  /* What to watch */
+  .ip-tomorrow-box { padding: 12px; }
+  .ip-tomorrow-text { font-size: 12px; line-height: 1.6; }
+
+  /* Key levels */
+  .ip-zone { padding: 6px 10px; }
+  .ip-zone-level { font-size: 16px; }
+
+  /* Risk meter */
+  .ip-risk-meter { padding: 10px; }
+  .ip-risk-level { font-size: 14px; }
+
+  /* Economic calendar */
+  .ip-econ-2col { grid-template-columns: 1fr; }
+  .ip-econ-row { padding: 10px; }
+  .ip-econ-event { font-size: 12px; }
+  .ip-econ-note { font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+  .ip-flow-7d { grid-template-columns: 1fr 1fr; }
+  .ip-bias-grid { grid-template-columns: 1fr; }
+  .ip-bias-item { flex-direction: row; justify-content: space-between; align-items: center; }
+}
+
+/* ── BROKERS PAGE ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Hero */
+  .brk-hero2 { padding: 14px; }
+  .brk-hero2-top { flex-direction: column; gap: 14px; }
+  .brk-hero2-left { flex: none; width: 100%; }
+  .brk-hero2-note { flex: none; width: 100%; box-sizing: border-box; }
+  .brk-hero2-title { font-size: 15px; }
+  .brk-hero2-stats { gap: 10px; }
+
+  /* Tab bar - scrollable */
+  .brk-tabs-bar { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
+  .brk-tabs-bar::-webkit-scrollbar { display: none; }
+  .brk-tab-btn { flex-shrink: 0; padding: 8px 14px; }
+  .brk-tab-label { font-size: 11px; }
+
+  /* Rankings table */
+  .brk-rank-table { font-size: 11px; }
+  .brk-rank-name { font-size: 12px; }
+
+  /* Direct comparison */
+  .h2h-wrap { padding: 12px; }
+  .h2h-hero { padding: 12px; }
+  .h2h-winner-name { font-size: 18px; }
+  .h2h-bars-wrap { gap: 8px; }
+  .h2h-bar-amount { font-size: 13px; }
+  .h2h-annual-grid { grid-template-columns: 1fr; gap: 10px; }
+  .h2h-ac-bname { font-size: 13px; }
+  .h2h-ac-amount { font-size: 18px; }
+  .h2h-section-title { font-size: 12px; }
+  .h2h-tr { font-size: 11px; }
+  .h2h-td-num { font-size: 13px; }
+
+  /* Charges guide */
+  .cg-tabs { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; top: 44px; }
+  .cg-tabs::-webkit-scrollbar { display: none; }
+  .cg-tab { font-size: 11px; padding: 8px 12px; flex-shrink: 0; }
+  .cg-verdict-grid { grid-template-columns: 1fr; }
+  .cg-verdict-name { font-size: 18px; }
+  .cg-verdict-amt { font-size: 15px; }
+  .cg-table th, .cg-table td { font-size: 11px; padding: 8px 10px; }
+  .cg-section-title { font-size: 15px; }
+
+  /* Brokerage calculator */
+  .brk-calc-layout { flex-direction: column; }
+  .brk-calc-left { width: 100%; }
+  .brk-calc-right { width: 100%; }
+
+  /* Market data */
+  .mkt-two-col { grid-template-columns: 1fr; }
+  .mkt-stat-cards { grid-template-columns: 1fr 1fr; }
+  .mkt-stat-num { font-size: 22px; }
+}
+
+@media (max-width: 480px) {
+  .h2h-ac-costs { flex-direction: column; gap: 0; }
+  .h2h-ac-divider { display: none; }
+  .h2h-ac-broker { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; }
+  .h2h-ac-broker:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .cg-verdict-grid { grid-template-columns: 1fr; }
+  .mkt-stat-cards { grid-template-columns: 1fr; }
+}
+
+/* ── F&O PAGE ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .fno-section { padding: 12px; }
+  .fno-hero-grid { grid-template-columns: 1fr 1fr; }
+  .fno-stat-val { font-size: 18px; }
+  .fno-stat-label { font-size: 9px; }
+  .fno-tabs { overflow-x: auto; scrollbar-width: none; }
+  .fno-tabs::-webkit-scrollbar { display: none; }
+  .fno-btn { flex-shrink: 0; font-size: 11px; padding: 5px 10px; }
+}
+
+/* ── IPO PAGE ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ipo2-header { grid-template-columns: 1fr; gap: 10px; }
+  .ipo2-header-right { justify-content: flex-start; }
+  .ipo2-link-section { flex-wrap: wrap; }
+}
+
+/* ── GOLD PAGE ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .gold-hero-stats { grid-template-columns: 1fr 1fr; }
+  .gold-stat-val { font-size: 20px; }
+}
+
+/* ── RISK CALCULATOR ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .calc-layout { grid-template-columns: 1fr; gap: 0; }
+  .calc-sidebar { flex-direction: row; flex-wrap: wrap; gap: 8px; padding: 12px; }
+  .calc-preset { flex: 0 0 calc(50% - 4px); }
+  .calc-result-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── SENTIMENT / BUBBLE VIEW ─────────────────────────────── */
+@media (max-width: 768px) {
+  .bubble-wrap { padding: 12px; }
+  .bubble-header { flex-direction: column; gap: 8px; }
+  .bubble-regions { gap: 4px; }
+  .bubble-region-btn { font-size: 10px; padding: 4px 10px; }
+  .sentiment-bubble-row { flex-direction: column; }
+  .sentiment-bubble-main { width: 100%; }
+  .sentiment-fiidii-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+}
+
+/* ── HEATMAP ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hm-wrap { padding: 10px; }
+  .hm-header { flex-wrap: wrap; gap: 8px; }
+  .hm-filter-bar { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
+  .hm-filter-bar::-webkit-scrollbar { display: none; }
+  .hm-filter-btn { flex-shrink: 0; font-size: 10px; padding: 4px 10px; }
+  .hm-canvas-wrap { min-height: 300px; }
+  .hm-cell-name { font-size: 9px; }
+  .hm-cell-pct { font-size: 9px; }
+}
+
+/* ── FII/DII WIDGET ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .fiidii-wrap { padding: 10px; }
+  .fiidii-cards-v2 { flex-direction: column; gap: 0; }
+  .fiidii-card-v2 { border-right: none; border-bottom: 1px solid var(--border); padding: 12px 10px; }
+  .fiidii-card-v2:last-child { border-bottom: none; }
+  .fiidii-cv2-net { font-size: 22px; }
+  .fiidii-cv2-label { font-size: 9px; }
+}
+
+/* ── REFERENCE PAGE ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ref-page { padding: 10px; }
+  .ref-today-bar { flex-direction: column; gap: 6px; }
+  .ref-lot-grid { grid-template-columns: repeat(3,1fr); }
+}
+
+/* ── WORLD BENCHMARKS ────────────────────────────────────── */
+@media (max-width: 768px) {
+  .wb-section { padding: 8px 10px 12px; }
+  .wb-grid { gap: 6px; }
+}
+
+/* ── BOTTOM NAV — ensure content clears it ───────────────── */
+@media (max-width: 768px) {
+  .app { padding-bottom: 64px; }
+  .fno-section:last-child,
+  .ip-wrap,
+  .brk-wrap { padding-bottom: 80px; }
+}
+
+/* ── SCROLLABLE TABLES ON MOBILE ─────────────────────────── */
+@media (max-width: 768px) {
+  .h2h-table-wrap,
+  .cg-table-wrap,
+  .brk-rank-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .h2h-table-wrap table,
+  .cg-table-wrap table { min-width: 500px; }
+}
+
+/* ── TYPOGRAPHY SCALING ──────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Slightly smaller base text on tiny phones */
+  .ip-writeup-para { font-size: 11px; }
+  .ip-signal-text { font-size: 10px; }
+  .cg-summary-line { font-size: 11px; }
+  .h2h-winner-name { font-size: 16px; }
+}
+

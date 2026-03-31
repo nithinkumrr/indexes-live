@@ -4,7 +4,7 @@
 
 import { kv } from '@vercel/kv';
 
-// NSE holidays 2026 — for slot and next-trading-day logic
+// NSE holidays 2026  -  for slot and next-trading-day logic
 const NSE_HOL = new Set(['2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
   '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14',
   '2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25']);
@@ -49,17 +49,17 @@ function getSlotInfo() {
   const pad  = n => String(n).padStart(2, '0');
   const dateStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
-  // 8 precise slots — matches what user described
+  // 8 precise slots  -  matches what user described
   const slots = [
     { name: 'premarket',  label: 'Pre-Market',          window: 'Before 9:15 AM',
-      context: 'NSE has not opened. GIFT Nifty is the only live indicator — reference it for the implied opening gap. Cover: GIFT Nifty level and what gap it implies for Nifty open, overnight US markets (S&P 500, Nasdaq), Asian markets open (Nikkei, Hang Seng, SGX Nifty), crude oil, gold, USD/INR. Do NOT mention Nifty cash market price changes as the market is not yet open. No pre-market session exists for NSE equities.',
+      context: 'NSE has not opened. GIFT Nifty is the only live indicator  -  reference it for the implied opening gap. Cover: GIFT Nifty level and what gap it implies for Nifty open, overnight US markets (S&P 500, Nasdaq), Asian markets open (Nikkei, Hang Seng, SGX Nifty), crude oil, gold, USD/INR. Do NOT mention Nifty cash market price changes as the market is not yet open. No pre-market session exists for NSE equities.',
       minStart: 0,   minEnd: 554,  ttl: 3600 },
 
-    { name: 'open15',     label: '9:15 AM — First 15 Minutes', window: '9:15 AM to 9:30 AM',
-      context: 'NSE just opened. Report exactly what happened in the first 15 minutes: the opening level, whether the gap vs previous close was up or down, how much, whether the opening move is holding or reversing, and early volume character. This is too early to call the day direction — just describe what has actually happened.',
+    { name: 'open15',     label: '9:15 AM  -  First 15 Minutes', window: '9:15 AM to 9:30 AM',
+      context: 'NSE just opened. Report exactly what happened in the first 15 minutes: the opening level, whether the gap vs previous close was up or down, how much, whether the opening move is holding or reversing, and early volume character. This is too early to call the day direction  -  just describe what has actually happened.',
       minStart: 555, minEnd: 569,  ttl: 900 },
 
-    { name: 'opening',    label: '9:30 AM — Opening Hour Update', window: '9:30 AM to 10:30 AM',
+    { name: 'opening',    label: '9:30 AM  -  Opening Hour Update', window: '9:30 AM to 10:30 AM',
       context: 'First 15-75 minutes of trade completed. Describe what Nifty and Bank Nifty have done since open: the range formed, whether the opening gap held or filled, which direction the early trend is, what sectors are leading or lagging, and any news driving the move. Be specific with levels.',
       minStart: 570, minEnd: 629,  ttl: 3600 },
 
@@ -68,7 +68,7 @@ function getSlotInfo() {
       minStart: 630, minEnd: 719,  ttl: 3600 },
 
     { name: 'midday',     label: '12:00 PM Update', window: '12:00 PM to 1:00 PM',
-      context: 'Noon update. Describe the full morning session: what Nifty and Bank Nifty have done from open to now, the high and low of the session so far, the dominant trend, and what is happening in the current hour. Mid-day often sees reduced volume — note if trading is quiet or if there is continued momentum.',
+      context: 'Noon update. Describe the full morning session: what Nifty and Bank Nifty have done from open to now, the high and low of the session so far, the dominant trend, and what is happening in the current hour. Mid-day often sees reduced volume  -  note if trading is quiet or if there is continued momentum.',
       minStart: 720, minEnd: 779,  ttl: 3600 },
 
     { name: 'afternoon',  label: '1:00 PM Update', window: '1:00 PM to 2:00 PM',
@@ -79,12 +79,12 @@ function getSlotInfo() {
       context: 'Final 90 minutes of trade. Describe the current state of Nifty and Bank Nifty: where they are relative to the day high and low, whether the trend from earlier is holding, and what the last hour of trade has looked like. Describe what participants are watching into the close.',
       minStart: 840, minEnd: 899,  ttl: 3600 },
 
-    { name: 'closing',    label: '3:00 PM — Into Close', window: '3:00 PM to 3:30 PM',
-      context: 'Final 30 minutes. NSE closes at exactly 3:30 PM — there is NO post-market trading session in India. Describe where Nifty is heading into close, whether there is buying or selling pressure in the last 30 minutes, and what the closing level is likely to be based on current price action.',
+    { name: 'closing',    label: '3:00 PM  -  Into Close', window: '3:00 PM to 3:30 PM',
+      context: 'Final 30 minutes. NSE closes at exactly 3:30 PM  -  there is NO post-market trading session in India. Describe where Nifty is heading into close, whether there is buying or selling pressure in the last 30 minutes, and what the closing level is likely to be based on current price action.',
       minStart: 900, minEnd: 929,  ttl: 1800 },
 
-    { name: 'close',      label: '3:30 PM — End of Day Summary', window: '3:30 PM to 5:00 PM',
-      context: 'Market is closed. NSE closes at 3:30 PM sharp and there is NO post-market session. Write a comprehensive day summary covering: (1) how Nifty opened and the opening gap vs previous close, (2) the key turning points through the session, (3) the closing level and where it closed within the day range, (4) Bank Nifty performance vs Nifty, (5) what drove the move today. Do NOT say post-market session — it does not exist.',
+    { name: 'close',      label: '3:30 PM  -  End of Day Summary', window: '3:30 PM to 5:00 PM',
+      context: 'Market is closed. NSE closes at 3:30 PM sharp and there is NO post-market session. Write a comprehensive day summary covering: (1) how Nifty opened and the opening gap vs previous close, (2) the key turning points through the session, (3) the closing level and where it closed within the day range, (4) Bank Nifty performance vs Nifty, (5) what drove the move today. Do NOT say post-market session  -  it does not exist.',
       minStart: 930, minEnd: 1019, ttl: 5400 },
 
     { name: 'evening',    label: 'Evening Wrap', window: 'After 5:00 PM',
@@ -92,7 +92,7 @@ function getSlotInfo() {
       minStart: 1020, minEnd: 9999, ttl: 43200 },
   ];
 
-  // Holiday — serve previous trading day evening brief
+  // Holiday  -  serve previous trading day evening brief
   if (NSE_HOL.has(dateStr)) {
     const prevTrading = nextTradingDay(dateStr) ? null : dateStr; // find prev
     let prevIso = dateStr;
@@ -102,7 +102,7 @@ function getSlotInfo() {
       if (isTradingDay(iso)) { prevIso = iso; break; }
     }
     const holName = NSE_HOL_NAMES[dateStr] || 'Market Holiday';
-    return { name:'evening', label:`${holName} — Market Closed`, window:'Holiday', context:`Today is ${holName} — NSE is closed. Serve the previous session summary from ${formatDateLabel(prevIso)} and what to watch when markets reopen.`, key:`${prevIso}-evening`, ttl:86400, isHoliday:true };
+    return { name:'evening', label:`${holName}  -  Market Closed`, window:'Holiday', context:`Today is ${holName}  -  NSE is closed. Serve the previous session summary from ${formatDateLabel(prevIso)} and what to watch when markets reopen.`, key:`${prevIso}-evening`, ttl:86400, isHoliday:true };
   }
 
   // Weekend
@@ -124,37 +124,46 @@ function getSlotInfo() {
 
 // ── Rule-based fallback ──────────────────────────────────────────────────────
 function buildFallback(d, slot) {
-  const { niftyPct, bnPct, vix, stance, structure, volLabel, sessionChar, niftyPrice, bnPrice, crudePct, goldPct } = d;
+  const { niftyPct, bnPct, vix, structure, niftyPrice, bnPrice, crudePct, goldPct } = d;
   const np = niftyPct ?? 0;
-  const tone    = np < -1 ? 'Broad weakness across indices' : np < 0 ? 'Mild selling pressure' : np > 1 ? 'Broad strength across indices' : 'Flat to mixed session';
-  const ctrl    = np < -0.5 ? 'Sellers active on rallies' : np > 0.5 ? 'Buyers stepping in on dips' : 'Neither side in clear control';
-  const beh     = np < -1 ? 'Expect continuation or choppy downside' : np < 0 ? 'Watch for attempted bounces' : np > 1 ? 'Expect continuation or pullback to buy' : 'Range-bound action likely';
-  const risk    = vix > 18 ? 'High volatility. Reduce position size' : vix > 14 ? 'Moderate volatility. Standard sizing' : 'Low volatility. Watch for breakout';
-  const ctx     = np < -0.5 ? 'Market under selling pressure' : np > 0.5 ? 'Market holding positive bias' : 'Market in consolidation';
-  const struc   = structure === 'Downtrend' ? 'Weakening. Lower highs forming' : structure === 'Uptrend' ? 'Constructive. Higher lows holding' : 'Range bound. No clear trend';
-  const watch   = np < 0 ? 'Whether support zones hold into the close' : 'Whether resistance zones are cleared on volume';
-  const prisk   = np < -1 ? 'Sustained breakdown can extend correction' : np > 1 ? 'Overextension risk if buying is not broad-based' : 'Wait for structure clarity before building positions';
+  const bp = bnPct ?? null;
 
-  const pStr  = niftyPrice ? niftyPrice.toLocaleString('en-IN') : 'current levels';
-  const bnStr = bnPrice ? bnPrice.toLocaleString('en-IN') : '';
-  const dirWord  = np > 0.5 ? 'positive' : np < -0.5 ? 'negative' : 'mixed';
-  const presWord = np > 0 ? 'buying interest' : 'selling pressure';
-  const structWord = structure === 'Downtrend' ? 'lower highs and lower lows, indicating a weakening structure' : structure === 'Uptrend' ? 'higher highs and higher lows, indicating a constructive structure' : 'a sideways range without a clear directional sequence';
+  const tone  = np < -1.5 ? 'Broad selling across indices' : np < -0.5 ? 'Selling pressure visible' : np > 1.5 ? 'Broad buying across indices' : np > 0.5 ? 'Positive bias' : 'Flat session';
+  const ctrl  = np < -0.5 ? 'Sellers in control' : np > 0.5 ? 'Buyers in control' : 'Neither side dominant';
+  const beh   = np < -1 ? 'Downside momentum sustained' : np < 0 ? 'Brief bounces possible but trend negative' : np > 1 ? 'Upside momentum sustained' : 'Range-bound';
+  const risk  = vix > 18 ? 'VIX elevated  -  volatility high' : vix > 14 ? 'Moderate volatility' : 'Low volatility';
+  const ctx   = np < -0.5 ? 'Market under selling pressure' : np > 0.5 ? 'Market with positive bias' : 'Market in consolidation';
+  const struc = structure === 'Downtrend' ? 'Weakening  -  lower highs forming' : structure === 'Uptrend' ? 'Constructive  -  higher lows holding' : 'Range bound';
+  const watch = np < 0 ? 'Whether support zones hold' : 'Whether resistance zones are cleared on volume';
+  const prisk = np < -1 ? 'Sustained breakdown can extend correction' : np > 1 ? 'Overextension risk if rally not broad-based' : 'Wait for directional clarity';
 
-  const commodLine = crudePct !== null && crudePct !== undefined
-    ? crudePct < -1 ? ' Crude oil is declining sharply, providing some relief on the inflation front.'
-    : crudePct > 1 ? ' Crude oil is rising, which adds to cost pressures across the economy.'
-    : ' Crude oil is relatively stable in this session.' : '';
+  const pStr  = niftyPrice ? niftyPrice.toLocaleString('en-IN') : ' - ';
+  const bnStr = bnPrice    ? bnPrice.toLocaleString('en-IN')    : '';
+  const npStr = np >= 0 ? `+${np.toFixed(2)}%` : `${np.toFixed(2)}%`;
+  const bpStr = bp != null ? (bp >= 0 ? `+${bp.toFixed(2)}%` : `${bp.toFixed(2)}%`) : null;
 
-  const goldLine = goldPct !== null && goldPct !== undefined
-    ? goldPct > 0.5 ? ' Gold is moving higher, signalling a risk-off tone in global markets.'
-    : goldPct < -0.5 ? ' Gold is easing, suggesting improving risk appetite globally.' : '' : '';
+  const commodLine = crudePct != null
+    ? crudePct < -1 ? ' Crude oil fell sharply.' : crudePct > 1 ? ' Crude oil rising.' : '' : '';
+  const goldLine = goldPct != null
+    ? goldPct > 0.5 ? ' Gold moving higher  -  risk-off tone globally.' : goldPct < -0.5 ? ' Gold easing.' : '' : '';
 
-  const writeup = `Nifty is trading at ${pStr}${bnStr ? ', with Bank Nifty at ' + bnStr : ''}, reflecting a ${dirWord} bias in the ${slot.label.toLowerCase()} session. The overall tone is ${tone.toLowerCase()}, with ${volLabel.toLowerCase()} volatility conditions.${commodLine}${goldLine}
+  const isPreMarket = slot.name === 'premarket';
+  const isEOD = ['close','evening'].includes(slot.name);
 
-Price structure shows ${structWord}. ${sessionChar ? sessionChar + ', reflecting the character of participation during this session.' : 'The session has not yet produced a clear close relative to its range.'} ${np < 0 && vix > 16 ? 'Elevated VIX at ' + vix.toFixed(1) + ' indicates market uncertainty is elevated.' : vix ? 'India VIX at ' + vix.toFixed(1) + ' reflects ' + (vix < 14 ? 'calm conditions.' : 'normal market activity.') : ''}
+  let writeup;
+  if (isPreMarket) {
+    writeup = 'NSE has not yet opened. GIFT Nifty futures are the pre-open indicator for where Nifty may gap at open. Global cues, crude oil, gold, and USD/INR are the key inputs to watch before 9:15 AM IST.' + commodLine + goldLine;
+  } else if (isEOD) {
+    const direction = np < -1.5 ? 'a sharp decline' : np < -0.5 ? 'a weak session' : np > 1.5 ? 'a strong rally' : np > 0.5 ? 'a positive session' : 'a flat session';
+    writeup = `Nifty closed at ${pStr} (${npStr})${bnStr ? `, Bank Nifty at ${bnStr}${bpStr ? ' (' + bpStr + ')' : ''}` : ''}  -  ${direction} through the day. ${tone}.${commodLine}${goldLine}
 
-${presWord.charAt(0).toUpperCase() + presWord.slice(1)} is the dominant theme. Participants are watching whether key levels hold or give way as the session progresses. Global markets are providing the broader backdrop, and any sharp moves in US futures or Asian indices could amplify domestic moves.`;
+${np < -0.5 ? 'Selling was the dominant theme through the session.' : np > 0.5 ? 'Buying was the dominant theme through the session.' : 'Neither side established clear control through the session.'} Structure: ${struc.toLowerCase()}. ${vix ? 'India VIX at ' + vix.toFixed(1) + '.' : ''}`;
+  } else {
+    const direction = np < -1.5 ? 'under sharp selling pressure' : np < -0.5 ? 'under selling pressure' : np > 1.5 ? 'in a strong rally' : np > 0.5 ? 'with a positive bias' : 'in a flat session';
+    writeup = `Nifty is at ${pStr} (${npStr})${bnStr ? `, Bank Nifty at ${bnStr}${bpStr ? ' (' + bpStr + ')' : ''}` : ''}  -  ${direction}. ${tone}.${commodLine}${goldLine}
+
+${np < -0.5 ? 'Selling pressure is the dominant theme.' : np > 0.5 ? 'Buying interest is the dominant theme.' : 'Neither side in clear control.'} Structure: ${struc.toLowerCase()}. ${vix ? 'India VIX at ' + vix.toFixed(1) + '.' : ''}`;
+  }
 
   return { trader: { tone, control: ctrl, behavior: beh, risk }, investor: { context: ctx, structure: struc, watch, risk: prisk }, writeup, fallback: true };
 }
@@ -226,7 +235,7 @@ WRITEUP_END`;
     throw new Error(`AI API ${res.status}: ${errText.slice(0, 200)}`);
   }
   const json = await res.json();
-  // Gemini with search grounding can return multiple parts — concatenate all text parts
+  // Gemini with search grounding can return multiple parts  -  concatenate all text parts
   const parts = json?.candidates?.[0]?.content?.parts || [];
   const text = parts.map(p => p.text || '').join('');
 
@@ -234,11 +243,11 @@ WRITEUP_END`;
 
   const get = key => {
     const match = text.match(new RegExp(`${key}:\\s*(.+)`));
-    return match ? match[1].trim().replace(/^["']|["']$/g, '').replace(/—/g, ' ') : null;
+    return match ? match[1].trim().replace(/^["']|["']$/g, '').replace(/ - /g, ' ') : null;
   };
 
   const writeupMatch = text.match(/WRITEUP_START\s*([\s\S]*?)\s*WRITEUP_END/);
-  const writeup = writeupMatch ? writeupMatch[1].trim().replace(/—/g, ' ') : null;
+  const writeup = writeupMatch ? writeupMatch[1].trim().replace(/ - /g, ' ') : null;
 
   const trader   = { tone: get('TRADER_TONE'), control: get('TRADER_CONTROL'), behavior: get('TRADER_BEHAVIOR'), risk: get('TRADER_RISK') };
   const investor = { context: get('INVESTOR_CONTEXT'), structure: get('INVESTOR_STRUCTURE'), watch: get('INVESTOR_WATCH'), risk: get('INVESTOR_RISK') };

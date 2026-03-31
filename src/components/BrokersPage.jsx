@@ -26,7 +26,7 @@ const BROKERS = [
     marginShortfallIntraday: 'Additional ₹20 brokerage',
     marginShortfallOvernight: '0.035%/day (12.78% p.a.)',
     delayedPayment: '0.05% per day',
-    strengths: ['Kite — robust, with terminal mode for advanced trading setups','Zero delivery brokerage','Lowest margin shortfall (0.035%/day)','Access to govt securities (T-Bills, G-Secs)','Coin for direct mutual funds','Highest networth (₹13,500 Cr)'],
+    strengths: ['Kite  -  robust, with terminal mode for advanced trading setups','Zero delivery brokerage','Lowest margin shortfall (0.035%/day)','Access to govt securities (T-Bills, G-Secs)','Coin for direct mutual funds','Highest networth (₹13,500 Cr)'],
     watch: ['AMC ₹75+GST/quarter'],
     best: ['equity','options','algo','longterm'], url: 'https://zerodha.com',
   },
@@ -45,7 +45,7 @@ const BROKERS = [
     callTrade: 59, squareOff: 23.60, paymentGw: 0, instantWithdrawal: 'Free',
     api: 'Free', apiNote: 'Trading API free · Data API ₹499+GST/mo',
     ddpi: 118, reactivation: 0,
-    networth: null, networthLabel: '—',
+    networth: null, networthLabel: ' - ',
     activeClients: 1.0, activeClientsLabel: '1.0M',
     total50k: 125.99, brokerCharges50k: 14.75,
     pledgeUnpledge: '₹17.70/ISIN each',
@@ -56,7 +56,7 @@ const BROKERS = [
     delayedPayment: '0.0438% per day',
     cuspaCharge: '₹15/instruction/ISIN + GST',
     strengths: ['Zero AMC','Lowest DP charge (₹14.75 = ₹12.50 + 18% GST)','Dext trading terminal','Online SLB'],
-    watch: ['UI not as refined as top brokers','MTF rates vary by slab','MTF interest charged both days on BTST','Newer broker — less track record vs Zerodha'],
+    watch: ['UI not as refined as top brokers','MTF rates vary by slab','MTF interest charged both days on BTST','Newer broker  -  less track record vs Zerodha'],
     best: ['equity','longterm','beginner'], url: 'https://dhan.co',
   },
   {
@@ -74,14 +74,14 @@ const BROKERS = [
     callTrade: 0, squareOff: 118, paymentGw: 10, instantWithdrawal: 'Free',
     api: 'N/A', apiNote: 'No trading API offered',
     ddpi: 99, reactivation: 0,
-    networth: null, networthLabel: '—', activeClients: 0.27, activeClientsLabel: '0.27M',
+    networth: null, networthLabel: ' - ', activeClients: 0.27, activeClientsLabel: '0.27M',
     total50k: 132.48, brokerCharges50k: 21.24,
     pledgeUnpledge: '₹32/unpledge only',
     dematerialisation: '₹236/cert',
     marginShortfall: '0.0274%/day (10% p.a.)',
     marginShortfallIntraday: '0.0274%/day (10% p.a.)',
     marginShortfallOvernight: '0.0274%/day (10% p.a.)',
-    delayedPayment: '—',
+    delayedPayment: ' - ',
     strengths: ['Lowest intraday brokerage (₹5/order)','Zero delivery','Free call & trade','Low margin shortfall (0.0274%/day)'],
     watch: ['AMC ₹219+GST/quarter','Auto square-off ₹118 (highest discount)','No API','DP charge on every sell transaction (not per stock)'],
     best: ['intraday'], url: 'https://mstock.co.in',
@@ -99,13 +99,13 @@ const BROKERS = [
     callTrade: 0, squareOff: 59, paymentGw: 0, instantWithdrawal: 'Free',
     api: 'N/A', apiNote: 'No API offered',
     ddpi: null, reactivation: 0,
-    networth: null, networthLabel: '—', activeClients: null, activeClientsLabel: '—',
+    networth: null, networthLabel: ' - ', activeClients: null, activeClientsLabel: ' - ',
     total50k: 148.34, brokerCharges50k: 37.10,
     pledgeUnpledge: '₹23.60 pledge / ₹5.90 repledge',
     dematerialisation: '₹177/cert',
     marginShortfall: 'N/A',
-    strengths: ['Good UI — lacks platform maturity (still very new)','Zero AMC','Flat ₹10 pricing'],
-    watch: ['No MTF','No API','Smaller broker — verify reliability'],
+    strengths: ['Good UI  -  lacks platform maturity (still very new)','Zero AMC','Flat ₹10 pricing'],
+    watch: ['No MTF','No API','Smaller broker  -  verify reliability'],
     best: ['equity'], url: 'https://sahi.co.in',
   },
   {
@@ -123,7 +123,7 @@ const BROKERS = [
     callTrade: 59, squareOff: 59, paymentGw: 0, instantWithdrawal: 'Free',
     api: '₹500/mo', apiNote: 'Fyers API ₹500/mo',
     ddpi: 150, reactivation: 0,
-    networth: null, networthLabel: '—', activeClients: null, activeClientsLabel: '—',
+    networth: null, networthLabel: ' - ', activeClients: null, activeClientsLabel: ' - ',
     total50k: 173.19, brokerCharges50k: 61.95,
     pledgeUnpledge: '₹5/ISIN',
     dematerialisation: '₹177/cert',
@@ -146,7 +146,7 @@ const BROKERS = [
     callTrade: 50, squareOff: 50, paymentGw: 10.62, instantWithdrawal: 'N/A',
     api: 'N/A', apiNote: 'No API offered',
     ddpi: 0, reactivation: 0,
-    networth: null, networthLabel: '—', activeClients: null, activeClientsLabel: '—',
+    networth: null, networthLabel: ' - ', activeClients: null, activeClientsLabel: ' - ',
     total50k: 176.94, brokerCharges50k: 65.70,
     pledgeUnpledge: '₹23.60 each',
     dematerialisation: '₹236/cert',
@@ -171,7 +171,7 @@ const BROKERS = [
     callTrade: 0, squareOff: 50, paymentGw: 0, instantWithdrawal: 'Free',
     api: '₹499+GST/mo', apiNote: 'Data API ₹499+GST/mo',
     ddpi: 118, reactivation: 0,
-    networth: null, networthLabel: '—', activeClients: 12.5, activeClientsLabel: '12.5M',
+    networth: null, networthLabel: ' - ', activeClients: 12.5, activeClientsLabel: '12.5M',
     total50k: 178.44, brokerCharges50k: 67.20,
     pledgeUnpledge: '₹23.60 each request',
     dematerialisation: '₹177/cert',
@@ -194,16 +194,16 @@ const BROKERS = [
     mtfSlabs: null,
     mtfBrokerage: '₹20/order',
     callTrade: 88.50, squareOff: 88.50, paymentGw: 8.26, instantWithdrawal: 'Free',
-    api: 'Free', apiNote: 'Upstox API — free',
+    api: 'Free', apiNote: 'Upstox API  -  free',
     ddpi: 150, reactivation: 0,
-    networth: null, networthLabel: '—', activeClients: 2.0, activeClientsLabel: '2.0M',
+    networth: null, networthLabel: ' - ', activeClients: 2.0, activeClientsLabel: '2.0M',
     total50k: 178.44, brokerCharges50k: 67.20,
     pledgeUnpledge: '₹23.60 each',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.05%/day',
     delayedPayment: '0.05% per day',
     strengths: ['Free API'],
-    watch: ['AMC ₹300/yr after yr 1','Call & trade ₹88.50 — highest of discount','MTF interest can go up to 18% p.a.','Multiple brokerage plans for more features','DP charge per sell transaction (not per stock)'],
+    watch: ['AMC ₹300/yr after yr 1','Call & trade ₹88.50  -  highest of discount','MTF interest can go up to 18% p.a.','Multiple brokerage plans for more features','DP charge per sell transaction (not per stock)'],
     best: ['algo','equity'], url: 'https://upstox.com',
   },
   {
@@ -219,7 +219,7 @@ const BROKERS = [
     mtfSlabs: [['All amounts','14.99% p.a. (0.0342%/day)']],
     mtfBrokerage: '0.1% or ₹20 (min ₹2)',
     callTrade: 20, squareOff: 20, paymentGw: 0, instantWithdrawal: 'Free',
-    api: 'Free', apiNote: 'SmartAPI — free',
+    api: 'Free', apiNote: 'SmartAPI  -  free',
     ddpi: 118, reactivation: 0,
     networth: 4400, networthLabel: '₹4,400 Cr', activeClients: 6.7, activeClientsLabel: '6.7M',
     total50k: 178.44, brokerCharges50k: 67.20,
@@ -246,19 +246,19 @@ const BROKERS = [
     callTrade: 100, squareOff: 59, paymentGw: 0, instantWithdrawal: 'Free',
     api: 'Free', apiNote: 'API access free',
     ddpi: 0, reactivation: 0,
-    networth: null, networthLabel: '—', activeClients: 0.86, activeClientsLabel: '0.86M',
+    networth: null, networthLabel: ' - ', activeClients: 0.86, activeClientsLabel: '0.86M',
     total50k: 178.44, brokerCharges50k: 67.20,
     pledgeUnpledge: '₹20/transaction',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.05%/day (18% p.a.)',
     delayedPayment: '0.05% per day',
     strengths: ['Cheapest MTF (7.99% for ≤₹1L)','Zero AMC'],
-    watch: ['Call & trade ₹100/order — 2nd highest','Margin shortfall 18%/yr — expensive'],
+    watch: ['Call & trade ₹100/order  -  2nd highest','Margin shortfall 18%/yr  -  expensive'],
     best: ['beginner'], url: 'https://paytmmoney.com',
   },
   {
     id: 'indmoney', name: 'INDmoney', type: 'discount', rank: 11,
-    tagline: 'SuperApp — Indian + US equities + MF. Zero AMC.',
+    tagline: 'SuperApp  -  Indian + US equities + MF. Zero AMC.',
     delivery: null, deliveryLabel: '₹2–₹20', deliveryHighlight: 'red',
     intraday: '0.05% or ₹20', intradayB: 20,
     futures: '₹20/order', futuresB: 20,
@@ -271,14 +271,14 @@ const BROKERS = [
     callTrade: 500, squareOff: 59, paymentGw: 10, instantWithdrawal: 'Free',
     api: 'Free', apiNote: 'Trading API free · Data API free',
     ddpi: 118, reactivation: 0,
-    networth: null, networthLabel: '—', activeClients: 0.68, activeClientsLabel: '0.68M',
+    networth: null, networthLabel: ' - ', activeClients: 0.68, activeClientsLabel: '0.68M',
     total50k: 180.27, brokerCharges50k: 69.03,
     pledgeUnpledge: '₹20+GST each',
     dematerialisation: '₹177/cert',
     marginShortfall: '0.05%/day',
     delayedPayment: '0.05% per day',
     strengths: ['US stocks access','Zero AMC','All investments in one app'],
-    watch: ['Call & trade ₹500 — highest of all brokers','Poor customer support'],
+    watch: ['Call & trade ₹500  -  highest of all brokers','Poor customer support'],
     best: ['global'], url: 'https://indmoney.com',
   },
   {
@@ -296,13 +296,13 @@ const BROKERS = [
     callTrade: 23.60, squareOff: 23.60, paymentGw: 11.80, instantWithdrawal: 'N/A',
     api: 'Free', apiNote: 'API free',
     ddpi: 118, reactivation: 0,
-    networth: null, networthLabel: '—', activeClients: 0.34, activeClientsLabel: '0.34M',
+    networth: null, networthLabel: ' - ', activeClients: 0.34, activeClientsLabel: '0.34M',
     total50k: 182.04, brokerCharges50k: 70.80,
     pledgeUnpledge: '₹23.60 each',
     dematerialisation: '₹236/cert',
     marginShortfall: '0.034%/day (billed weekly)',
     delayedPayment: '0.05% per day',
-    strengths: ['IIFL Group backing','MTF 9.5% for ≤₹1L — competitive'],
+    strengths: ['IIFL Group backing','MTF 9.5% for ≤₹1L  -  competitive'],
     watch: ['Highest DP of discount brokers (₹23.60)','AMC ₹354/yr','Less transparency on charges'],
     best: ['simple'], url: 'https://5paisa.com',
   },
@@ -319,7 +319,7 @@ const BROKERS = [
     mtfSlabs: [['Trade Free plan','14.97% p.a.'],['Trade Free Pro','9.69% p.a.']],
     mtfBrokerage: '0–0.30% by plan', mtfBrokerageHighlight: 'red',
     callTrade: 57.82, squareOff: 59, paymentGw: 8.26, instantWithdrawal: 'N/A',
-    api: 'Free', apiNote: 'Kotak Neo API — free',
+    api: 'Free', apiNote: 'Kotak Neo API  -  free',
     ddpi: 118, reactivation: 0,
     networth: 7900, networthLabel: '₹7,900 Cr', activeClients: 1.4, activeClientsLabel: '1.4M',
     total50k: 367.24, brokerCharges50k: 256,
@@ -333,7 +333,7 @@ const BROKERS = [
   },
   {
     id: 'icici', name: 'ICICI Direct', type: 'full', rank: 14,
-    tagline: 'ICICI Bank 3-in-1. Multiple plans — lowest plan: 0.07% delivery, ₹9/lot options.',
+    tagline: 'ICICI Bank 3-in-1. Multiple plans  -  lowest plan: 0.07% delivery, ₹9/lot options.',
     delivery: null, deliveryLabel: '0.07% (lowest plan)',
     intraday: 'Plan-based', intradayB: null,
     futures: '0.007% (lowest plan)', futuresB: null,
@@ -344,7 +344,7 @@ const BROKERS = [
     mtfSlabs: [['₹299/₹999 plan','17.99% p.a.'],['₹2,999 plan','16.49% p.a.'],['₹4,999/₹9,999 plan','9.69% p.a.']],
     mtfBrokerage: '0.07–0.25% by plan',
     callTrade: 50, squareOff: 59, paymentGw: 0, instantWithdrawal: 'N/A',
-    api: 'Free', apiNote: 'Breeze API — free',
+    api: 'Free', apiNote: 'Breeze API  -  free',
     ddpi: 0, reactivation: 0,
     networth: 4500, networthLabel: '₹4,500 Cr', activeClients: 2.0, activeClientsLabel: '2.0M',
     total50k: 429.84, brokerCharges50k: 318.60,
@@ -363,7 +363,7 @@ const BROKERS = [
     intraday: '0.05% or ₹25', intradayB: null,
     futures: '0.05% of traded value', futuresB: null,
     options: '₹20/lot', optionsB: 20,
-    dp: 0, dpLabel: 'Zero — unique among full-service',
+    dp: 0, dpLabel: 'Zero  -  unique among full-service',
     amc: 885, amcLabel: '₹885/yr (yr 2+)',
     mtfRate: 17.99, mtfLabel: '17.99% p.a.',
     mtfSlabs: [['All amounts','17.99% p.a. (0.05%/day)']],
@@ -377,8 +377,8 @@ const BROKERS = [
     dematerialisation: '₹295/cert',
     marginShortfall: '0.032%/day (11.7% p.a.)',
     delayedPayment: '0.049% per day',
-    strengths: ['Zero DP charge — unique among full-service','Free call & trade','Axis Bank integration'],
-    watch: ['₹575 more than cheapest on delivery','0.5% delivery brokerage','AMC ₹885/yr','MTF 17.99% — very expensive','No standard plan and very high charges'],
+    strengths: ['Zero DP charge  -  unique among full-service','Free call & trade','Axis Bank integration'],
+    watch: ['₹575 more than cheapest on delivery','0.5% delivery brokerage','AMC ₹885/yr','MTF 17.99%  -  very expensive','No standard plan and very high charges'],
     best: ['bank_customer'], url: 'https://axisdirect.in',
   },
   {
@@ -394,7 +394,7 @@ const BROKERS = [
     mtfSlabs: [['All amounts','12% p.a. (~0.032%/day)']],
     mtfBrokerage: '0.32% min ₹25',
     callTrade: 0, squareOff: 0, paymentGw: 0, instantWithdrawal: 'N/A',
-    api: 'Free', apiNote: 'HDFC Securities API — free',
+    api: 'Free', apiNote: 'HDFC Securities API  -  free',
     ddpi: 500, reactivation: 0,
     networth: 2700, networthLabel: '₹2,700 Cr', activeClients: 1.4, activeClientsLabel: '1.4M',
     total50k: 721.24, brokerCharges50k: 610,
@@ -403,7 +403,7 @@ const BROKERS = [
     marginShortfall: '0.05%/day',
     delayedPayment: '0.05% per day',
     strengths: ['HDFC Bank 3-in-1','Research & advisory'],
-    watch: ['Most expensive broker in India','Options 1% or ₹100/lot — very expensive','DDPI ₹500','AMC ₹885/yr','MTF brokerage 0.32% min ₹25'],
+    watch: ['Most expensive broker in India','Options 1% or ₹100/lot  -  very expensive','DDPI ₹500','AMC ₹885/yr','MTF brokerage 0.32% min ₹25'],
     best: ['bank_customer'], url: 'https://hdfcsec.com',
   },
 ]
@@ -459,8 +459,8 @@ const SCENARIOS = {
   },
 };
 
-const fmt  = (v, d=0) => v != null ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: d }) : '—';
-const fmtR = (v) => v != null ? `₹${fmt(v)}` : '—';
+const fmt  = (v, d=0) => v != null ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: d }) : ' - ';
+const fmtR = (v) => v != null ? `₹${fmt(v)}` : ' - ';
 
 const TABS = ['Rankings', 'Direct Comparison', 'Charges Guide', 'Brokerage Calc', 'Market Data'];
 
@@ -720,7 +720,7 @@ function UniversalCalc() {
       {/* Header */}
       <div className="ucalc-header">
         <div className="ucalc-title">Brokerage Calculator</div>
-        <div className="ucalc-sub">Enter trade details — see exact charges at every broker, instantly. Click any broker for full breakdown.</div>
+        <div className="ucalc-sub">Enter trade details  -  see exact charges at every broker, instantly. Click any broker for full breakdown.</div>
       </div>
 
       {/* Segment */}
@@ -811,7 +811,7 @@ function UniversalCalc() {
 
         return(
           <div className="ucalc-mtf-panel">
-            <div className="ucalc-results-title">MTF Cost — ₹{fmt(amt,0)} for {days} days</div>
+            <div className="ucalc-results-title">MTF Cost  -  ₹{fmt(amt,0)} for {days} days</div>
             <div className="ucalc-rank-table">
               <div className="ucalc-rank-th" style={{gridTemplateColumns:'28px 1fr 100px 120px 130px 110px'}}>
                 <span>#</span><span>BROKER</span><span>RATE P.A.</span><span>INTEREST ({days}d)</span><span>MTF BROKERAGE</span><span>TOTAL COST</span>
@@ -831,7 +831,7 @@ function UniversalCalc() {
               ))}
             </div>
             <div className="ucalc-dp-note">
-              <span className="ucalc-warn-tag">NO CAP</span> Groww MTF brokerage has no cap — 0.1% of full position per trade. On large positions this is significantly more than flat-₹20 brokers.
+              <span className="ucalc-warn-tag">NO CAP</span> Groww MTF brokerage has no cap  -  0.1% of full position per trade. On large positions this is significantly more than flat-₹20 brokers.
             </div>
           </div>
         );
@@ -870,7 +870,7 @@ function UniversalCalc() {
               );
             })}
             <div className="ucalc-list-note">
-              <span className="ucalc-dp-warn">DP/sell</span> = DP charged on <strong>every sell transaction</strong> (not per stock held). Bad practice — highlighted in red.
+              <span className="ucalc-dp-warn">DP/sell</span> = DP charged on <strong>every sell transaction</strong> (not per stock held). Bad practice  -  highlighted in red.
             </div>
           </div>
 
@@ -1056,7 +1056,7 @@ const CG_DATA = {
     ],
   },
   mtf:{
-    summary:'Dhan cheapest MTF overall. Groww has no brokerage cap — costs jump on large positions.',
+    summary:'Dhan cheapest MTF overall. Groww has no brokerage cap  -  costs jump on large positions.',
     rows:[
       {name:'Dhan',            rate:12.49, interest:1026.58, brokerage:47.20,  total:1073.78, best:true},
       {name:'Zerodha',         rate:14.6,  interest:1200.00, brokerage:47.20,  total:1247.20},
@@ -1113,7 +1113,7 @@ function Cheatsheet(){
   return(
     <div className="cg-wrap">
 
-      {/* Tab bar — 4 visible + overflow dropdown */}
+      {/* Tab bar  -  4 visible + overflow dropdown */}
       <div className="cg-tabs">
         {visibleSecs.map(s=>(
           <button key={s.id}
@@ -1141,7 +1141,7 @@ function Cheatsheet(){
         </div>
       </div>
 
-      {/* 00 — Quick Verdict */}
+      {/* 00  -  Quick Verdict */}
       <div id="cg-verdict" className="cg-section">
         <div className="cg-section-hdr">
           <span className="cg-section-num">00</span>
@@ -1151,17 +1151,17 @@ function Cheatsheet(){
           {[
             {tag:'Long-term investor',
              brokers:[
-               {name:'Zerodha', amt:'₹7,148/yr', note:'★ Editor pick — platform + trust', hlZerodha:true},
+               {name:'Zerodha', amt:'₹7,148/yr', note:'★ Editor pick  -  platform + trust', hlZerodha:true},
                {name:'Dhan',    amt:'₹7,045/yr', note:'₹103/yr cheaper', hlDhan:true},
              ],
-             delta:'₹103/yr apart — effectively a tie',
+             delta:'₹103/yr apart  -  effectively a tie',
              sub:'5 delivery trades/mo, ₹50K avg'},
             {tag:'Active trader',
              brokers:[
-               {name:'Zerodha', amt:'₹14,638/yr', note:'★ Editor pick — platform + trust', hlZerodha:true},
+               {name:'Zerodha', amt:'₹14,638/yr', note:'★ Editor pick  -  platform + trust', hlZerodha:true},
                {name:'Dhan',    amt:'₹14,514/yr', note:'₹124/yr cheaper', hlDhan:true},
              ],
-             delta:'₹124/yr apart — effectively a tie',
+             delta:'₹124/yr apart  -  effectively a tie',
              sub:'3 delivery + 30 intraday/mo'},
           ].map((c,i)=>(
             <div key={i} className="cg-verdict-card">
@@ -1187,12 +1187,12 @@ function Cheatsheet(){
         </div>
       </div>
 
-      {/* 01 — Annual cost */}
+      {/* 01  -  Annual cost */}
       <div id="cg-annual" className="cg-section">
         <div className="cg-section-hdr">
           <span className="cg-section-num">01</span>
           <span className="cg-section-title">Total Annual Cost</span>
-          <span className="cg-section-sub">Every charge combined — brokerage + DP + AMC + govt</span>
+          <span className="cg-section-sub">Every charge combined  -  brokerage + DP + AMC + govt</span>
         </div>
         {['longterm','active'].map(key=>{
           const d = CG_DATA.annual[key];
@@ -1231,7 +1231,7 @@ function Cheatsheet(){
         })}
       </div>
 
-      {/* 02 — Delivery */}
+      {/* 02  -  Delivery */}
       <div id="cg-delivery" className="cg-section">
         <div className="cg-section-hdr">
           <span className="cg-section-num">02</span>
@@ -1255,7 +1255,7 @@ function Cheatsheet(){
         <div className="cg-insight">{CG_DATA.delivery.insight}</div>
       </div>
 
-      {/* 03 — Intraday */}
+      {/* 03  -  Intraday */}
       <div id="cg-intraday" className="cg-section">
         <div className="cg-section-hdr">
           <span className="cg-section-num">03</span>
@@ -1279,7 +1279,7 @@ function Cheatsheet(){
         <div className="cg-insight">{CG_DATA.intraday.insight}</div>
       </div>
 
-      {/* 04 — F&O */}
+      {/* 04  -  F&O */}
       <div id="cg-fno" className="cg-section">
         <div className="cg-section-hdr">
           <span className="cg-section-num">04</span>
@@ -1321,7 +1321,7 @@ function Cheatsheet(){
         )}
       </div>
 
-      {/* 05 — DP */}
+      {/* 05  -  DP */}
       <div id="cg-dp" className="cg-section">
         <div className="cg-section-hdr">
           <span className="cg-section-num">05</span>
@@ -1344,7 +1344,7 @@ function Cheatsheet(){
         </div>
       </div>
 
-      {/* 06 — AMC */}
+      {/* 06  -  AMC */}
       <div id="cg-amc" className="cg-section">
         <div className="cg-section-hdr">
           <span className="cg-section-num">06</span>
@@ -1360,13 +1360,13 @@ function Cheatsheet(){
             <div key={i} className={`cg-tbl-row${r.best?' cg-row-best':''}`} style={{gridTemplateColumns:'1.8fr 1.2fr 1fr'}}>
               <span className="cg-cell-name"><CgBrokerBadge name={r.name} best={r.best}/></span>
               <span className={`cg-cell${r.free?' cg-cell-free':''}`}>{r.free?<span className="cg-free-badge">FREE</span>:'₹'+fmt(r.annual,2)}</span>
-              <span className="cg-cell cg-muted">{r.monthly?'₹'+fmt(r.monthly,2):'—'}</span>
+              <span className="cg-cell cg-muted">{r.monthly?'₹'+fmt(r.monthly,2):' - '}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 07 — MTF */}
+      {/* 07  -  MTF */}
       <div id="cg-mtf" className="cg-section">
         <div className="cg-section-hdr">
           <span className="cg-section-num">07</span>
@@ -1400,14 +1400,14 @@ function Cheatsheet(){
         </button>
       </div>
 
-      {/* 08 — Regulatory */}
+      {/* 08  -  Regulatory */}
       <div id="cg-regulatory" className="cg-section">
         <div className="cg-section-hdr">
           <span className="cg-section-num">08</span>
           <span className="cg-section-title">Regulatory Charges</span>
         </div>
         <div className="cg-info-box cg-info-box-accent">
-          <div className="cg-reg-title">Fixed by law — identical at every broker</div>
+          <div className="cg-reg-title">Fixed by law  -  identical at every broker</div>
           <div className="cg-reg-sub">On a ₹50,000 delivery trade, you pay exactly <strong>₹111.24</strong> in govt charges regardless of which broker you use. Switching brokers cannot reduce this.</div>
           <div className="cg-reg-breakdown">
             {[
@@ -1511,7 +1511,7 @@ const H2H_DATA = {
       ['Contract Note (Physical)','₹20 + GST per contract note','Not available'],
     ],
     instruments:[
-      ['G-Sec / T-Bills','Available on Coin — no additional charge','Not offered',true],
+      ['G-Sec / T-Bills','Available on Coin  -  no additional charge','Not offered',true],
       ['SLB','Not offered directly','Not offered'],
       ['LAS','Not offered','Not offered'],
     ],
@@ -1594,7 +1594,7 @@ const H2H_DATA = {
       ['P&L / Ledger (Physical)','Not available','Not available'],
     ],
     instruments:[
-      ['G-Sec / T-Bills','Available on Coin — no additional charge','Not offered',true],
+      ['G-Sec / T-Bills','Available on Coin  -  no additional charge','Not offered',true],
       ['SLB','Not offered directly','Not offered'],
       ['LAS','Not offered','Not offered'],
     ],
@@ -1673,7 +1673,7 @@ const H2H_DATA = {
       ['P&L / Ledger (Digital)','Free (downloadable from Console)','Free (downloadable)',true,true],
     ],
     instruments:[
-      ['G-Sec / T-Bills','Available on Coin — no additional charge','Not offered',true],
+      ['G-Sec / T-Bills','Available on Coin  -  no additional charge','Not offered',true],
       ['SLB','Not offered directly','Not offered'],
       ['LAS','Not offered','Not offered'],
     ],
@@ -1748,7 +1748,7 @@ const H2H_DATA = {
       ['Contract Note (Physical)','₹20 + GST per contract note','Available at branch'],
     ],
     instruments:[
-      ['G-Sec / T-Bills','Available on Coin — no additional charge','Available at branch office',true],
+      ['G-Sec / T-Bills','Available on Coin  -  no additional charge','Available at branch office',true],
       ['SLB','Not offered directly','Available at branch'],
       ['LAS','Not offered','Available at branch'],
     ],
@@ -2097,11 +2097,11 @@ function H2HTable({title,rows,aName,bName,collapsed=true}){
               <span className={bg?'h2h-green':'h2h-prev-val'}>{bv}</span>
             </div>
           ))}
-          {diffs.length>2&&<div className="h2h-acc-more" onClick={()=>setOpen(true)}>+{diffs.length-2} more differences — tap to expand</div>}
+          {diffs.length>2&&<div className="h2h-acc-more" onClick={()=>setOpen(true)}>+{diffs.length-2} more differences  -  tap to expand</div>}
         </div>
       )}
       {!open&&diffs.length===0&&(
-        <div className="h2h-acc-same">No differences — identical at both brokers</div>
+        <div className="h2h-acc-same">No differences  -  identical at both brokers</div>
       )}
     </div>
   );
@@ -2158,7 +2158,7 @@ function HeadToHead(){
               <div className="h2h-winner-banner h2h-tie-banner">
                 <span className="h2h-winner-badge h2h-tie-badge-pill">TIE</span>
                 <span className="h2h-winner-name">{d.a} <span style={{color:'var(--text3)',fontWeight:400,fontSize:14}}>vs</span> {d.b}</span>
-                <span className="h2h-winner-saves">₹{saves} difference on ₹50K delivery — essentially identical</span>
+                <span className="h2h-winner-saves">₹{saves} difference on ₹50K delivery  -  essentially identical</span>
               </div>
             ) : (
               <div className="h2h-winner-banner">
@@ -2248,7 +2248,7 @@ function HeadToHead(){
                 <span className={`h2h-td-num${(!aW&&gap>0.01)?' h2h-green':''}`}>₹{fmt(r.bv,2)}</span>
                 <span className="h2h-td-gap-v">
                   {gap<0.01
-                    ?<span className="h2h-gap-tie">—</span>
+                    ?<span className="h2h-gap-tie"> - </span>
                     :<><span className="h2h-gap-amt">₹{fmt(gap,2)}</span><span className="h2h-gap-who"> cheaper for {aW?d.a:d.b}</span></>
                   }
                 </span>
@@ -2269,7 +2269,7 @@ function HeadToHead(){
       {d.instruments&&<H2HTable title={SEC.instruments} rows={d.instruments} aName={d.a} bName={d.b} collapsed={false}/>}
       <H2HTable title={SEC.modifications} rows={d.modifications} aName={d.a} bName={d.b} collapsed={false}/>
 
-      <div className="h2h-footnote">Govt charges (STT, exchange, SEBI, stamp duty) are fixed by law — identical at every broker. Always verify current charges before trading.</div>
+      <div className="h2h-footnote">Govt charges (STT, exchange, SEBI, stamp duty) are fixed by law  -  identical at every broker. Always verify current charges before trading.</div>
     </div>
   );
 }
@@ -2337,21 +2337,21 @@ export default function BrokersPage() {
       <div className="brk-hero2">
         <div className="brk-hero2-top">
           <div className="brk-hero2-left">
-            <div className="brk-hero2-title">Indian Broker Charges — Every Fee, Calculated</div>
+            <div className="brk-hero2-title">Indian Broker Charges  -  Every Fee, Calculated</div>
             <div className="brk-hero2-stats">
               <div className="brk-hs2">
                 <div className="brk-hs2-n" style={{color:'var(--gain)'}}>₹125.99</div>
-                <div className="brk-hs2-l">Cheapest — <strong style={{color:'var(--text)',fontSize:15}}>Dhan</strong> &amp; <strong style={{color:'var(--accent)',fontSize:15}}>Zerodha ★</strong></div>
+                <div className="brk-hs2-l">Cheapest  -  <strong style={{color:'var(--text)',fontSize:15}}>Dhan</strong> &amp; <strong style={{color:'var(--accent)',fontSize:15}}>Zerodha ★</strong></div>
               </div>
               <div className="brk-hs2-sep">vs</div>
               <div className="brk-hs2">
                 <div className="brk-hs2-n" style={{color:'var(--loss)'}}>₹721.24</div>
-                <div className="brk-hs2-l">Most expensive — <strong style={{color:'var(--text)'}}>HDFC Securities</strong></div>
+                <div className="brk-hs2-l">Most expensive  -  <strong style={{color:'var(--text)'}}>HDFC Securities</strong></div>
               </div>
               <div className="brk-hs2-sep">·</div>
               <div className="brk-hs2">
                 <div className="brk-hs2-n">₹111.51</div>
-                <div className="brk-hs2-l">Fixed govt charges — same at every broker</div>
+                <div className="brk-hs2-l">Fixed govt charges  -  same at every broker</div>
               </div>
               <div className="brk-hs2-sep">·</div>
               <div className="brk-hs2">
@@ -2362,12 +2362,12 @@ export default function BrokersPage() {
             <div className="brk-hero2-trade-note">Sample trade: ₹50,000 delivery (buy + sell), including brokerage, STT, exchange fees, SEBI charges, stamp duty, and DP charges. Statutory charges are identical across all brokers, while brokerage may vary. Adjust the trade size using the calculator.</div>
           </div>
           <div className="brk-hero2-note">
-            <span style={{color:'var(--accent)',fontWeight:900,fontSize:13}}>★ Zerodha</span> — Widely considered for combination of low cost, robust trading experience, reliability and trust. ₹13,500 Cr networth (highest of any broker in India), 15+ year track record, Kite platform, <a href="https://zerodha.com/varsity/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)',textDecoration:'underline'}}>Varsity</a> education. Costs just ₹0.59 more than Dhan on a ₹50,000 delivery trade.
+            <span style={{color:'var(--accent)',fontWeight:900,fontSize:13}}>★ Zerodha</span>  -  Widely considered for combination of low cost, robust trading experience, reliability and trust. ₹13,500 Cr networth (highest of any broker in India), 15+ year track record, Kite platform, <a href="https://zerodha.com/varsity/" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)',textDecoration:'underline'}}>Varsity</a> education. Costs just ₹0.59 more than Dhan on a ₹50,000 delivery trade.
           </div>
         </div>
       </div>
 
-      {/* HORIZONTAL TAB BAR — like FnO */}
+      {/* HORIZONTAL TAB BAR  -  like FnO */}
       <div className="brk-tabs-bar">
         {TABS.map(t=>(
           <button key={t} className={`brk-tab-btn${tab===t?' brk-tab-active':''}`} onClick={()=>setTab(t)}>
@@ -2416,7 +2416,7 @@ export default function BrokersPage() {
             {sorted.map((b,i)=>(
               <div key={b.id} className={`brk-card${b.featured?' brk-card-featured':''}${expanded===b.id?' brk-card-open':''}`}>
 
-                {/* Card — full redesign: name top, all columns, totals bottom */}
+                {/* Card  -  full redesign: name top, all columns, totals bottom */}
                 <div className="brk-card-header" onClick={()=>setExpanded(expanded===b.id?null:b.id)}>
 
                   {/* TOP ROW: rank + name + type + expand hint */}
@@ -2456,10 +2456,10 @@ export default function BrokersPage() {
                     {/* Col: MTF Brokerage */}
                     <div className="brk-col">
                       <div className="brk-col-label">MTF BROKERAGE</div>
-                      <div className={`brk-col-val ${b.mtfBrokerageHighlight==='red'?'brk-col-red':''}`}>{b.mtfBrokerage||'—'}</div>
+                      <div className={`brk-col-val ${b.mtfBrokerageHighlight==='red'?'brk-col-red':''}`}>{b.mtfBrokerage||' - '}</div>
                     </div>
 
-                    {/* Col: MTF Interest — compact slabs */}
+                    {/* Col: MTF Interest  -  compact slabs */}
                     <div className="brk-col brk-col-wide">
                       <div className="brk-col-label">MTF INTEREST</div>
                       {b.mtfSlabs ? (
@@ -2493,7 +2493,7 @@ export default function BrokersPage() {
 
                     <div className="brk-col-divider"/>
 
-                    {/* Col: Totals — Delivery + Intraday + MTF (all-in) */}
+                    {/* Col: Totals  -  Delivery + Intraday + MTF (all-in) */}
                     {(()=>{
                       const tv = parseFloat(tradeVal)||50000;
                       const scale = tv/50000;
@@ -2533,7 +2533,7 @@ export default function BrokersPage() {
                       const lbl = {'50000':'₹50K','100000':'₹1L','1000000':'₹10L'}[tradeVal]||'custom';
                       return (
                         <div className="brk-col brk-col-total">
-                          <div className="brk-col-label">ALL-IN — {lbl}</div>
+                          <div className="brk-col-label">ALL-IN  -  {lbl}</div>
                           <div className="brk-total-3">
                             <div className="brk-t3-row">
                               <span className="brk-t3-seg">Delivery</span>
@@ -2583,7 +2583,7 @@ export default function BrokersPage() {
                         <div className="brk-ccs-row"><span>Intraday equity</span><span>{b.intraday}</span></div>
                         <div className="brk-ccs-row"><span>F&O Futures</span><span>{b.futures}</span></div>
                         <div className="brk-ccs-row"><span>F&O Options</span><span>{b.options}</span></div>
-                        <div className="brk-ccs-row"><span>MTF brokerage</span><span>{b.mtfBrokerage||'—'}</span></div>
+                        <div className="brk-ccs-row"><span>MTF brokerage</span><span>{b.mtfBrokerage||' - '}</span></div>
                       </div>
                       <div className="brk-card-charge-section">
                         <div className="brk-ccs-title">DEMAT CHARGES</div>
@@ -2604,7 +2604,7 @@ export default function BrokersPage() {
                         <div className="brk-ccs-row"><span>API access</span><span>{b.apiNote||b.api}</span></div>
                         <div className="brk-ccs-row"><span>Intraday margin shortfall</span><span className={b.id==='zerodha'?'brk-green':'brk-card-red'}>{b.marginShortfallIntraday||b.marginShortfall}</span></div>
                         <div className="brk-ccs-row"><span>Overnight margin shortfall</span><span className={b.id==='zerodha'?'brk-green':''}>{b.marginShortfallOvernight||b.marginShortfall}</span></div>
-                        <div className="brk-ccs-row"><span>Delayed payment</span><span>{b.delayedPayment||'—'}</span></div>
+                        <div className="brk-ccs-row"><span>Delayed payment</span><span>{b.delayedPayment||' - '}</span></div>
                         {b.cuspaCharge&&<div className="brk-ccs-row"><span>CUSPA charges</span><span className="brk-card-red">{b.cuspaCharge}</span></div>}
                       </div>
                       <div className="brk-card-charge-section">
@@ -2655,13 +2655,13 @@ export default function BrokersPage() {
       {tab==='MTF Comparison' && (
         <div className="brk-content">
           <div className="brk-reg-note">
-            <span className="brk-reg-num">MTF = Margin Trading Facility</span> — buy stocks with borrowed money. Two costs hit you: interest on borrowed amount (daily, compounded) + brokerage per order. Rates below are indicative; verify with broker before using MTF.
+            <span className="brk-reg-num">MTF = Margin Trading Facility</span>  -  buy stocks with borrowed money. Two costs hit you: interest on borrowed amount (daily, compounded) + brokerage per order. Rates below are indicative; verify with broker before using MTF.
           </div>
 
           <div className="brk-mtf-grid">
             {/* Interest rates ranked */}
             <div>
-              <div className="brk-ccs-title" style={{fontSize:13,marginBottom:14}}>MTF INTEREST RATE — RANKED LOW TO HIGH</div>
+              <div className="brk-ccs-title" style={{fontSize:13,marginBottom:14}}>MTF INTEREST RATE  -  RANKED LOW TO HIGH</div>
               <div className="brk-cards-list">
                 {[
                   {name:'Paytm Money', rate:'7.99%', note:'Up to ₹1L · 9.99% above ₹1L', color:'var(--gain)'},
@@ -2785,7 +2785,7 @@ export default function BrokersPage() {
                   <span className={b.mtfRate<=13?'brk-green':b.mtfRate>=17?'brk-red':''}>₹{fmt(b.mtfRate!=null ? Math.round(100000*b.mtfRate/100/12) : 0)}</span>
                 </div>
               ))}
-              <div className="brk-table-note">MTF interest rates change frequently. Verify with broker before using MTF. MTF is leverage — losses compound.</div>
+              <div className="brk-table-note">MTF interest rates change frequently. Verify with broker before using MTF. MTF is leverage  -  losses compound.</div>
             </div>
           )}
 
@@ -2842,11 +2842,11 @@ export default function BrokersPage() {
               {BROKERS.map(b=>(
                 <div key={b.id} className={`brk-ct-row${b.id==='zerodha'?' brk-ct-featured':''}`}>
                   <span className="brk-broker-name">{b.id==='zerodha'&&<span className="brk-star">★ </span>}{b.name}</span>
-                  <span>{['dhan','angelone','5paisa','mstock','indmoney','kotak','axis'].includes(b.id)?'Free':b.id==='zerodha'?'₹29.50':b.id==='fyers'||b.id==='groww'||b.id==='upstox'?'₹59':b.id==='paytm'?'₹25':'—'}</span>
+                  <span>{['dhan','angelone','5paisa','mstock','indmoney','kotak','axis'].includes(b.id)?'Free':b.id==='zerodha'?'₹29.50':b.id==='fyers'||b.id==='groww'||b.id==='upstox'?'₹59':b.id==='paytm'?'₹25':' - '}</span>
                   <span>{['zerodha','dhan','angelone','5paisa','mstock','indmoney','kotak','icici','axis'].includes(b.id)?<span className="brk-green">Free</span>:b.id==='fyers'||b.id==='groww'||b.id==='upstox'?'₹59':'₹25'}</span>
                   <span>{['dhan','angelone','5paisa','mstock','indmoney','kotak','icici','axis'].includes(b.id)?<span className="brk-green">Free</span>:b.id==='fyers'||b.id==='groww'||b.id==='upstox'?'₹59':b.id==='zerodha'?'₹29.50':'₹25'}</span>
-                  <span>{['5paisa','mstock','indmoney','kotak','axis'].includes(b.id)?<span className="brk-green">Free</span>:b.id==='fyers'||b.id==='groww'||b.id==='upstox'?'₹59':b.id==='zerodha'||b.id==='dhan'||b.id==='angelone'?'₹29.50':b.id==='paytm'?'₹25':'—'}</span>
-                  <span>{['groww','angelone','5paisa','mstock','sahi','indmoney','kotak','axis'].includes(b.id)?<span className="brk-green">Free</span>:b.id==='upstox'||b.id==='fyers'?'₹59':b.id==='zerodha'||b.id==='dhan'?'₹29.50':b.id==='paytm'?'₹25':'—'}</span>
+                  <span>{['5paisa','mstock','indmoney','kotak','axis'].includes(b.id)?<span className="brk-green">Free</span>:b.id==='fyers'||b.id==='groww'||b.id==='upstox'?'₹59':b.id==='zerodha'||b.id==='dhan'||b.id==='angelone'?'₹29.50':b.id==='paytm'?'₹25':' - '}</span>
+                  <span>{['groww','angelone','5paisa','mstock','sahi','indmoney','kotak','axis'].includes(b.id)?<span className="brk-green">Free</span>:b.id==='upstox'||b.id==='fyers'?'₹59':b.id==='zerodha'||b.id==='dhan'?'₹29.50':b.id==='paytm'?'₹25':' - '}</span>
                 </div>
               ))}
             </div>
@@ -2872,13 +2872,13 @@ export default function BrokersPage() {
 
           {/* Top insight line */}
           <div className="mkt-insight-bar">
-            Groww leads in users (12.5M). Zerodha leads in profitability (₹13,500 Cr networth — 1.7× the next broker).
+            Groww leads in users (12.5M). Zerodha leads in profitability (₹13,500 Cr networth  -  1.7× the next broker).
           </div>
 
-          {/* Two charts side by side — clients primary, networth secondary */}
+          {/* Two charts side by side  -  clients primary, networth secondary */}
           <div className="mkt-charts-grid">
 
-            {/* LEFT — primary: clients */}
+            {/* LEFT  -  primary: clients */}
             <div className="mkt-chart-panel mkt-chart-primary">
               <div className="mkt-chart-title">Market share by clients</div>
               <div className="mkt-chart-sub">NSE active clients · January 2026 · Total 44.4M</div>
@@ -2914,7 +2914,7 @@ export default function BrokersPage() {
               </div>
             </div>
 
-            {/* RIGHT — secondary: networth */}
+            {/* RIGHT  -  secondary: networth */}
             <div className="mkt-chart-panel mkt-chart-secondary">
               <div className="mkt-chart-title">Financial strength by networth</div>
               <div className="mkt-chart-sub">NSE filing · July 2025 · Zerodha is 1.7× #2</div>

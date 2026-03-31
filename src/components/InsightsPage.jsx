@@ -118,19 +118,19 @@ function getIntradayBias(price, high, low, np) {
 
   const posInRange = (price - low) / (high - low);
 
-  // Opening phase: 9:15–10:30 (555–630 mins) — show after 9:30 (570)
+  // Opening phase: 9:15–10:30 (555–630 mins)  -  show after 9:30 (570)
   const showOpening = mins >= 570;
   const openingCtrl  = showOpening ? (np > 0.3 ? 'Buyers' : np < -0.3 ? 'Sellers' : 'Neutral') : null;
   const openingColor = np > 0.3 ? 'var(--gain)' : np < -0.3 ? 'var(--loss)' : 'var(--text3)';
 
-  // Mid session: 10:30–1:30 (630–810 mins) — only show after 10:30
+  // Mid session: 10:30–1:30 (630–810 mins)  -  only show after 10:30
   const showMid = mins >= 630;
   const midCtrl  = showMid
     ? (posInRange > 0.6 && np < 0 ? 'Buyers' : posInRange < 0.4 && np > 0 ? 'Sellers' : np > 0 ? 'Buyers' : np < 0 ? 'Sellers' : 'Neutral')
     : null;
   const midColor = midCtrl === 'Buyers' ? 'var(--gain)' : midCtrl === 'Sellers' ? 'var(--loss)' : 'var(--text3)';
 
-  // Closing phase: 1:30–3:30 (810–930 mins) — only show after 1:30 PM
+  // Closing phase: 1:30–3:30 (810–930 mins)  -  only show after 1:30 PM
   const showClosing = mins >= 810;
   let closing = null, closingColor = 'var(--text3)', closingNote = '';
   if (showClosing) {
@@ -206,9 +206,9 @@ function getChanges(nifty, banknifty, fiiNet, diiNet, fii7d, data) {
 
   if (fiiNet !== null) {
     if (fiiNet < -3000 && fii7d < -10000)
-      items.push({ text: `FII net outflow: Rs.${Math.abs(fiiNet).toLocaleString('en-IN')} Cr — part of a sustained 7-session selling trend.`, type: 'bear' });
+      items.push({ text: `FII net outflow: Rs.${Math.abs(fiiNet).toLocaleString('en-IN')} Cr  -  part of a sustained 7-session selling trend.`, type: 'bear' });
     else if (fiiNet > 3000 && fii7d > 10000)
-      items.push({ text: `FII net inflow: Rs.${fiiNet.toLocaleString('en-IN')} Cr — consistent buying across 7 sessions.`, type: 'bull' });
+      items.push({ text: `FII net inflow: Rs.${fiiNet.toLocaleString('en-IN')} Cr  -  consistent buying across 7 sessions.`, type: 'bull' });
     else if (fiiNet < 0 && (diiNet ?? 0) > 0)
       items.push({ text: `FII selling offset by DII buying. Market absorbed institutional selling through the session.`, type: 'neutral' });
   }
@@ -299,7 +299,7 @@ function getTrapZones(price, high, low) {
 function getTomorrow(np, vix, fiiNet, diiNet, posInRange, dayType, events) {
   const items = [];
 
-  // 1 — Direction cue from today's session
+  // 1  -  Direction cue from today's session
   if (dayType?.type === 'trend-down' || (np !== null && np < -1)) {
     items.push('Gap down opens are common after strong down sessions. Watch whether the gap fills in the first 30 minutes or extends further.');
     items.push(`The first 30 minutes tomorrow will show whether ${np !== null && np < 0 ? "today's closing level" : "prior support"} acts as resistance or gets reclaimed.`);
@@ -314,23 +314,23 @@ function getTomorrow(np, vix, fiiNet, diiNet, posInRange, dayType, events) {
     items.push('Gap and hold above prior resistance = sustained buying interest. Gap and fade = likely another rotation or range day.');
   }
 
-  // 2 — Volatility context
+  // 2  -  Volatility context
   if (vix !== null && vix !== undefined) {
     if (vix > 18)
-      items.push(`VIX closed at ${vix.toFixed(1)} — elevated. Wider intraday ranges and faster moves are likely tomorrow. Positions sized for normal days will feel oversized.`);
+      items.push(`VIX closed at ${vix.toFixed(1)}  -  elevated. Wider intraday ranges and faster moves are likely tomorrow. Positions sized for normal days will feel oversized.`);
     else if (vix < 13)
-      items.push(`VIX at ${vix.toFixed(1)} — subdued. Low volatility often keeps intraday ranges tight. A breakout of note will stand out clearly.`);
+      items.push(`VIX at ${vix.toFixed(1)}  -  subdued. Low volatility often keeps intraday ranges tight. A breakout of note will stand out clearly.`);
   }
 
-  // 3 — FII/DII
+  // 3  -  FII/DII
   if (fiiNet !== null && fiiNet < -3000)
     items.push(`FII outflow was Rs.${Math.abs(fiiNet).toLocaleString('en-IN')} Cr today. Tomorrow morning\'s DII data will show whether domestic institutions step up absorption again.`);
   else if (fiiNet !== null && fiiNet > 3000)
     items.push(`FII inflow of Rs.${fiiNet.toLocaleString('en-IN')} Cr today. Sustained foreign buying over multiple sessions is typically supportive for index levels.`);
   else if (fiiNet !== null && fiiNet < 0 && diiNet !== null && diiNet > 0)
-    items.push('FIIs selling, DIIs absorbing — this two-sided flow pattern often creates choppy intraday conditions. Range-bound behaviour is common in such setups.');
+    items.push('FIIs selling, DIIs absorbing  -  this two-sided flow pattern often creates choppy intraday conditions. Range-bound behaviour is common in such setups.');
 
-  // 4 — Position in range
+  // 4  -  Position in range
   if (posInRange !== null) {
     if (posInRange < 0.25)
       items.push('Today\'s close near session low suggests sellers were in control into the close. A bounce attempt tomorrow is possible but needs volume confirmation.');
@@ -338,13 +338,13 @@ function getTomorrow(np, vix, fiiNet, diiNet, posInRange, dayType, events) {
       items.push('Closing near session high shows buyers held momentum into the close. This is generally constructive for the next session open.');
   }
 
-  // 5 — Tomorrow's event
+  // 5  -  Tomorrow's event
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   const tStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
   const tmEvent = events.find(e => e.date === tStr);
   if (tmEvent) items.push(`${tmEvent.event} is scheduled tomorrow. High-impact events typically increase pre-event caution and post-event volatility.`);
 
-  // 6 — Upcoming events in next 3 days
+  // 6  -  Upcoming events in next 3 days
   const in3 = new Date(); in3.setDate(in3.getDate() + 3);
   const in3Str = `${in3.getFullYear()}-${String(in3.getMonth()+1).padStart(2,'0')}-${String(in3.getDate()).padStart(2,'0')}`;
   const soon = events.filter(e => e.date > tStr && e.date <= in3Str && e.impact === 'high');
@@ -389,10 +389,10 @@ function buildSignals({ np, bp, vix, niftyPrice, fiiNet, diiNet, fii7d, data, hi
   }
 
   if (vix != null) {
-    if      (vix > 20) signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)} — elevated. Intraday ranges wider than usual. Options premiums inflated. Reduce position size.`, type:'bear' });
-    else if (vix > 16) signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)} — moderately high. Expect choppy intraday swings. Participants pricing in near-term uncertainty.`, type:'warn' });
-    else if (vix < 12) signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)} — low. Options premiums compressed. Low VIX can precede sudden spikes from global events.`, type:'neutral' });
-    else               signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)} — normal range. Volatility not a constraint on regular positioning today.`, type:'neutral' });
+    if      (vix > 20) signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)}  -  elevated. Intraday ranges wider than usual. Options premiums inflated. Reduce position size.`, type:'bear' });
+    else if (vix > 16) signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)}  -  moderately high. Expect choppy intraday swings. Participants pricing in near-term uncertainty.`, type:'warn' });
+    else if (vix < 12) signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)}  -  low. Options premiums compressed. Low VIX can precede sudden spikes from global events.`, type:'neutral' });
+    else               signals.push({ tag:'VOLATILITY', text:`India VIX ${vix.toFixed(1)}  -  normal range. Volatility not a constraint on regular positioning today.`, type:'neutral' });
   }
 
   const globIdxs = [{id:'sp500',label:'S&P 500'},{id:'nasdaq',label:'Nasdaq'},{id:'nikkei',label:'Nikkei'},{id:'hangseng',label:'Hang Seng'},{id:'dax',label:'DAX'}];
@@ -702,7 +702,7 @@ export default function InsightsPage({data={}, nseData={}}) {
             </div>
           )}
 
-          {/* Intraday Bias — only during market hours, only show completed phases */}
+          {/* Intraday Bias  -  only during market hours, only show completed phases */}
           {intraday&&(
             <div className="ip-ana-block">
               <div className="ip-ana-title" style={{display:'flex',alignItems:'center',gap:8}}>
@@ -731,7 +731,7 @@ export default function InsightsPage({data={}, nseData={}}) {
             </div>
           )}
 
-          {/* What Changed Today — only after 4:30 PM IST when session is fully settled */}
+          {/* What Changed Today  -  only after 4:30 PM IST when session is fully settled */}
           {changes.length>0 && getMins()>=990 &&(
             <div className="ip-ana-block">
               <div className="ip-ana-title">WHAT CHANGED TODAY</div>
@@ -857,7 +857,7 @@ export default function InsightsPage({data={}, nseData={}}) {
             </div>
           )}
 
-          {/* What to Watch — next trading session */}
+          {/* What to Watch  -  next trading session */}
           {tmrw.items.length>0&&(()=>{
             const nextDay = getNextTradingDay();
             const ist = getIST();
@@ -869,7 +869,7 @@ export default function InsightsPage({data={}, nseData={}}) {
             return (
               <div className="ip-levels-box ip-tomorrow-box ip-tomorrow-full">
                 <div className="ip-box-title" style={{display:'flex',flexDirection:'column',gap:3}}>
-                  <span>WHAT TO WATCH — <span style={{color:'var(--accent)'}}>{nextDay.label}</span></span>
+                  <span>WHAT TO WATCH  -  <span style={{color:'var(--accent)'}}>{nextDay.label}</span></span>
                   <span style={{fontSize:9,color:'var(--text3)',fontWeight:400,letterSpacing:0}}>
                     {updatedAt} · Valid for {nextDay.label} session only
                   </span>
@@ -931,7 +931,7 @@ export default function InsightsPage({data={}, nseData={}}) {
           ):<div className="ip-note">Loading FII/DII data...</div>}
         </div>
 
-        {/* ECONOMIC CALENDAR — 2-column list */}
+        {/* ECONOMIC CALENDAR  -  2-column list */}
         <div className="ip-fiifull-cal">
           <div className="ip-block-label">ECONOMIC CALENDAR <span style={{opacity:.5,fontSize:9,fontWeight:400,letterSpacing:0}}>NEXT 7 DAYS</span></div>
           {events.length>0?(

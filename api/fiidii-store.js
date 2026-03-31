@@ -83,7 +83,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ stored: Object.keys(results).length, data: results });
   }
 
-  // Guard: don't run the store on weekends or holidays — the cron runs Mon-Fri
+  // Guard: don't run the store on weekends or holidays  -  the cron runs Mon-Fri
   // but some holidays fall on weekdays. Exit cleanly without fetching.
   const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const todayISO = nowIST.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });

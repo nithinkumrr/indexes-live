@@ -158,7 +158,9 @@ export default function FiiDii() {
 
   const doFetch = (manual = false) => {
     if (manual) setR(true); else setL(true);
-    fetch('/api/fiidii')
+    // Add cache-busting timestamp for manual refreshes
+    const url = manual ? `/api/fiidii?t=${Date.now()}` : '/api/fiidii';
+    fetch(url, { headers: { 'Cache-Control': 'no-cache' } })
       .then(r => r.json())
       .then(data => {
         if (data.error) setE(true);
@@ -170,10 +172,10 @@ export default function FiiDii() {
 
   const manualRefresh = async () => {
     setR(true);
-    // First trigger the store to fetch fresh data
+    // Trigger store to fetch fresh data from NSE
     try { await fetch('/api/fiidii-store', { method: 'GET' }); } catch(_) {}
-    // Then fetch the updated data
-    setTimeout(() => doFetch(true), 2000);
+    // Wait 3 seconds for NSE fetch + KV write to complete, then reload
+    setTimeout(() => doFetch(true), 3000);
   };
 
   useEffect(() => {

@@ -1412,7 +1412,7 @@ function VixSeasonality() {
         {MONTHS[curMo] && (
           <div className="fno-season-curnote">
             <span style={{ color: '#4A9EFF', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700 }}>
-              {MONTHS[curMo].m} historically avg {MONTHS[curMo].avg} —
+              {MONTHS[curMo].m} historically avg {MONTHS[curMo].avg}  - 
             </span>
             <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text2)', marginLeft: 6 }}>
               {MONTHS[curMo].note}

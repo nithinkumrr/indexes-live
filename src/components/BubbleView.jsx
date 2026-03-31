@@ -84,16 +84,16 @@ function Bubble({ market, d, weight, index }) {
         }}
       >
         <div className="bubble-flag">{market.flag}</div>
-        <div className="bubble-name" style={{ color: hasData ? 'rgba(0,0,0,0.75)' : '#52504D' }}>
+        <div className="bubble-name" style={{ color: hasData ? 'rgba(255,255,255,0.90)' : '#52504D' }}>
           {r < 44 ? market.exchange : shortName}
         </div>
         {r >= 44 && (
-          <div className="bubble-pct" style={{ color: 'rgba(0,0,0,0.85)', fontSize: r < 52 ? 11 : 13 }}>
+          <div className="bubble-pct" style={{ color: 'rgba(255,255,255,0.88)', fontSize: r < 52 ? 11 : 13 }}>
             {pctStr}
           </div>
         )}
         {r < 44 && hasData && (
-          <div className="bubble-pct" style={{ color: 'rgba(0,0,0,0.85)', fontSize: 10 }}>
+          <div className="bubble-pct" style={{ color: 'rgba(255,255,255,0.88)', fontSize: 10 }}>
             {pctStr}
           </div>
         )}

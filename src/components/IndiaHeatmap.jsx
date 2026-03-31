@@ -143,8 +143,8 @@ function HeatmapCanvas({ stocks, sectorOrder, title, indexKey }) {
                 setHovered({stock:rect,x:e.clientX-box.left,y:e.clientY-box.top});
               }}>
               {showSector&&<span className="hm-cell-sector" style={{color:SECTOR_COLORS[rect._sectorLabel]}}>{rect._sectorLabel}</span>}
-              {showName&&<span className="hm-cell-name" style={{color:"rgba(0,0,0,0.75)"}}>{rect.name}</span>}
-              {showPct&&<span className="hm-cell-pct" style={{color:"rgba(0,0,0,0.85)"}}>{rect.changePct>=0?'+':''}{formatPct(rect.changePct)}</span>}
+              {showName&&<span className="hm-cell-name" style={{color:"rgba(255,255,255,0.90)"}}>{rect.name}</span>}
+              {showPct&&<span className="hm-cell-pct" style={{color:"rgba(255,255,255,0.85)"}}>{rect.changePct>=0?'+':''}{formatPct(rect.changePct)}</span>}
             </div>
           );
         })}

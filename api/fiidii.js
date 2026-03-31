@@ -8,7 +8,7 @@ import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
 
   const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
   const pn = v => { const n = parseFloat(String(v||'').replace(/,/g,'')); return isNaN(n) ? 0 : n; };
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
   }
 
   // Step 2: Fetch live today ONLY after 5 PM IST (NSE publishes FII/DII at ~5 PM)
-  // Before 5 PM, today's data doesn't exist yet — don't attempt and don't show today's date
+  // Before 5 PM, today's data doesn't exist yet  -  don't attempt and don't show today's date
   let liveToday = null;
   const istHour = ist.getHours();
   const isPast5pm = istHour >= 17;
@@ -82,8 +82,8 @@ export default async function handler(req, res) {
     }
   } // end isPast5pm
 
-  // Step 3: Merge today's live data — only if confirmed trading day AND non-zero values
-  // NSE sometimes returns all zeros before data is published — ignore those
+  // Step 3: Merge today's live data  -  only if confirmed trading day AND non-zero values
+  // NSE sometimes returns all zeros before data is published  -  ignore those
   const todayIsTradingDay = tradingDays.includes(today);
   const todayHasRealData = liveToday && (
     Math.abs(liveToday.fiiNet) > 0 || Math.abs(liveToday.diiNet) > 0 ||
@@ -110,7 +110,7 @@ export default async function handler(req, res) {
 
   filteredHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  // Latest is the most recent trading day — could be yesterday if today is weekend/holiday
+  // Latest is the most recent trading day  -  could be yesterday if today is weekend/holiday
   const latest = filteredHistory[filteredHistory.length - 1] || {};
 
   return res.status(200).json({

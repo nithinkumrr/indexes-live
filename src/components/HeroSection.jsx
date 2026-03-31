@@ -1,5 +1,5 @@
 // src/components/HeroSection.jsx
-// NSE countdown is inline with the INDIA header — saves vertical space
+// NSE countdown is inline with the INDIA header  -  saves vertical space
 import { useState, useEffect, useRef } from 'react';
 import { MARKETS, HERO_BY_REGION, COMMODITY_STRIP_IDS } from '../data/markets';
 import { formatPrice, formatChange, formatPct } from '../utils/format';
@@ -43,7 +43,7 @@ function useKiteHero() {
       if (!isNSEOpen()) return;
       try {
         const r    = await fetch('/api/kite-data?type=hero');
-        if (r.status === 401) { clearInterval(id); return; } // no token — stop polling
+        if (r.status === 401) { clearInterval(id); return; } // no token  -  stop polling
         if (!r.ok) return;
         const json = await r.json();
         if (!json.data) return;
@@ -76,7 +76,7 @@ function useKiteHero() {
   return kiteData;
 }
 
-// Inline countdown — just the number + status, no full row
+// Inline countdown  -  just the number + status, no full row
 function InlineCountdown() {
   const [s, setS] = useState(() => getIndiaMarketStatus());
   useEffect(() => {
@@ -150,19 +150,19 @@ export default function HeroSection({ data, region, nseData = {} }) {
                   <StatusPill status={status} />
                 </div>
                 <div className="hero-price">
-                  {d ? formatPrice(d.price, market.category === 'commodity') : '—'}
+                  {d ? formatPrice(d.price, market.category === 'commodity') : ' - '}
                   {market.unit && <span className="hero-unit">{market.unit}</span>}
                 </div>
                 <div className="hero-changes">
-                  <span className={`hero-abs ${gain ? 'gain' : 'loss'}`}>{d ? formatChange(d.change) : '—'}</span>
+                  <span className={`hero-abs ${gain ? 'gain' : 'loss'}`}>{d ? formatChange(d.change) : ' - '}</span>
                   <span className={`hero-pct-badge ${gain ? 'gain-bg' : 'loss-bg'}`}>
-                    {d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : '—'}
+                    {d ? `${gain ? '▲' : '▼'} ${formatPct(d.changePct)}` : ' - '}
                   </span>
                 </div>
                 <div className="hero-spark">
                   {d && <Sparkline points={d.spark} gain={gain} height={60} />}
                 </div>
-                {/* OHLC row — shown for Indian hero markets when data available */}
+                {/* OHLC row  -  shown for Indian hero markets when data available */}
                 {INDIA_HERO_IDS.has(market.id) && d?.open != null && (
                   <div className="hero-ohlc">
                     <span className="hero-ohlc-item"><span className="hero-ohlc-label">O</span>{formatPrice(d.open)}</span>
@@ -176,7 +176,7 @@ export default function HeroSection({ data, region, nseData = {} }) {
                       ? `Updated ${new Date(d.fetchedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })} IST · every 15 min`
                       : getLocalTime(market.tz)}
                   </span>
-                  <span className="hero-prev">Prev. close: {d ? formatPrice(d.prevClose, market.category === 'commodity') : '—'}</span>
+                  <span className="hero-prev">Prev. close: {d ? formatPrice(d.prevClose, market.category === 'commodity') : ' - '}</span>
                   {nseData[market.id]?.pe > 0 && <span className="hero-pe">P/E <strong>{nseData[market.id].pe.toFixed(1)}x</strong></span>}
                 </div>
               </HoursTooltip>
@@ -194,7 +194,7 @@ export default function HeroSection({ data, region, nseData = {} }) {
             <div key={market.id} className="commodity-strip-item">
               <span className="cs-flag">{market.flag}</span>
               <span className="cs-name">{market.name}</span>
-              <span className="cs-price">{d ? formatPrice(d.price, true) : '—'}</span>
+              <span className="cs-price">{d ? formatPrice(d.price, true) : ' - '}</span>
               <span className="cs-unit">{market.unit}</span>
               {d && <span className={`cs-pct ${gain ? 'gain' : 'loss'}`}>{gain ? '▲' : '▼'} {formatPct(d.changePct)}</span>}
             </div>
