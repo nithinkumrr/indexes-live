@@ -6703,6 +6703,45 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .cg-section-title { font-size: 14px; }
   .cg-table-wrap { overflow-x: auto; }
 
+  /* All cg-tbl tables — horizontal scroll with min-width */
+  .cg-tbl { overflow-x: auto; -webkit-overflow-scrolling: touch; min-width: 0; }
+  .cg-tbl-hdr, .cg-tbl-row { min-width: 480px; }
+  .cg-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .cg-tbl-hdr span { font-size: 8px !important; padding: 7px 8px !important; letter-spacing: 0.5px; }
+  .cg-tbl-row { min-height: 38px; }
+  .cg-cell { font-size: 11px !important; padding: 8px !important; }
+  .cg-cell-name { font-size: 11px !important; padding: 8px !important; }
+  .cg-cell-total { font-size: 12px !important; }
+  .cg-annual-label { font-size: 12px; }
+  .cg-annual-sub { font-size: 10px; }
+  .cg-section-num { font-size: 14px; }
+  .cg-section-sub { font-size: 10px; display: block; margin-top: 2px; }
+  .cg-annual-footer { flex-direction: column; gap: 6px; align-items: flex-start; }
+  .cg-gap-note { font-size: 10px; }
+  .cg-expand-btn { font-size: 10px; }
+  .cg-insight { font-size: 10px; }
+  .cg-summary-line { font-size: 10px; padding: 8px 10px; }
+  .cg-wrap { padding: 0 !important; }
+  .cg-section { padding: 14px; }
+  .cg-section-hdr { margin-bottom: 10px; }
+
+  /* Direct comparison — scroll tables */
+  .h2h-wrap { padding: 0 !important; }
+  .h2h-table { overflow-x: auto; }
+  .h2h-th, .h2h-tr { min-width: 400px; }
+  .h2h-td-label { font-size: 11px !important; padding: 10px 10px !important; }
+  .h2h-td-val { font-size: 11px !important; padding: 10px 10px !important; }
+  .h2h-td-num { font-size: 13px !important; padding: 10px 10px !important; }
+  .h2h-td-gap-v { font-size: 10px !important; padding: 10px 10px !important; }
+  .h2h-section { padding: 14px; }
+  .h2h-section-title { font-size: 11px !important; }
+
+  /* Broker card expanded detail — fix DP/AMC overlap */
+  .brk-card-charge-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .brk-card-totals-row { gap: 12px; }
+  .brk-card-detail { padding: 14px; }
+  .brk-card-tagline { font-size: 11px; }
+
   /* Brokerage calculator */
   .brk-calc-layout { flex-direction: column; }
   .brk-calc-left { width: 100%; }
