@@ -94,7 +94,21 @@ export default async function handler(req, res) {
       if (fiiRow || diiRow) {
         const f = parseRow(fiiRow);
         const d = parseRow(diiRow);
-        liveToday = { date: today, fiiNet: f.net, fiiBuy: f.buy, fiiSell: f.sell, diiNet: d.net, diiBuy: d.buy, diiSell: d.sell };
+        // Use the actual trade date from NSE response, not server clock
+        // NSE returns date in fields like tradeDate, date, or TD_DATE
+        const nseRawDate = fiiRow?.tradeDate || fiiRow?.date || fiiRow?.TD_DATE ||
+                           diiRow?.tradeDate || diiRow?.date || diiRow?.TD_DATE || null;
+        let tradeDate = today;
+        if (nseRawDate) {
+          // NSE dates come as DD-Mon-YYYY or YYYY-MM-DD — normalise to YYYY-MM-DD
+          const parsed = new Date(nseRawDate);
+          if (!isNaN(parsed)) {
+            tradeDate = parsed.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+          }
+        }
+        // Safety: never stamp a future date — cap at last known trading day
+        if (tradeDate > today) tradeDate = tradingDays[tradingDays.length - 1] || today;
+        liveToday = { date: tradeDate, fiiNet: f.net, fiiBuy: f.buy, fiiSell: f.sell, diiNet: d.net, diiBuy: d.buy, diiSell: d.sell };
       }
     }
   } // end isPast5pm
