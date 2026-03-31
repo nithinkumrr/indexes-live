@@ -122,12 +122,12 @@ function FearGreedMeter() {
   };
 
   const comps = [
-    { label: 'India VIX',    val: mmi.scores.vixScore, display: mmi.vix ? mmi.vix.toFixed(1) : null, detail: mmi.vix ? 'VIX ' + mmi.vix.toFixed(2) + ' → sentiment score ' + mmi.scores.vixScore : '' },
-    { label: 'FII Activity', val: mmi.scores.fiiScore, detail: mmi.fiiNet ? ('Net ' + (mmi.fiiNet > 0 ? '+' : '') + Math.round(mmi.fiiNet) + 'Cr') : '' },
-    { label: 'Momentum',     val: mmi.scores.momScore, detail: 'EMA30 vs EMA90' },
-    { label: 'Breadth',      val: mmi.scores.adScore,  detail: (mmi.advancers && mmi.decliners) ? (mmi.advancers + 'A / ' + mmi.decliners + 'D') : '' },
-    { label: '52W Strength', val: mmi.scores.psScore,  detail: (mmi.highs52w != null) ? (mmi.highs52w + 'H / ' + mmi.lows52w + 'L') : '' },
-    { label: 'Price Change', val: mmi.scores.chgScore, detail: '' },
+    { label: 'India VIX',    val: mmi.scores.vixScore, display: mmi.vix ? mmi.vix.toFixed(1) : null, detail: mmi.vix ? 'VIX ' + mmi.vix.toFixed(2) : 'NSE data unavailable' },
+    { label: 'FII Activity', val: mmi.scores.fiiScore, detail: mmi.fiiNet ? ('Net ' + (mmi.fiiNet > 0 ? '+' : '') + Math.round(mmi.fiiNet) + ' Cr') : 'NSE data unavailable' },
+    { label: 'Momentum',     val: mmi.scores.momScore, detail: (mmi.ema30 && mmi.ema90) ? 'EMA30 vs EMA90' : 'NSE data unavailable' },
+    { label: 'Breadth',      val: mmi.scores.adScore,  detail: (mmi.advancers && mmi.decliners) ? (mmi.advancers + 'A / ' + mmi.decliners + 'D') : 'NSE data unavailable' },
+    { label: '52W Strength', val: mmi.scores.psScore,  detail: (mmi.highs52w != null) ? (mmi.highs52w + 'H / ' + mmi.lows52w + 'L') : 'NSE data unavailable' },
+    { label: 'Price Change', val: mmi.scores.chgScore, detail: 'Nifty daily change' },
   ];
 
   return (
@@ -168,15 +168,18 @@ function FearGreedMeter() {
       <div className="fg-st-zone" style={{ color: zoneColor }}>{zone}</div>
       <div className="fg-st-desc">{zoneDesc}</div>
       <div className="fg-components">
-        {comps.filter(function(c){ return c.val != null; }).map(function(c, i) {
-          var barColor = c.val <= 25 ? '#FF4444' : c.val <= 45 ? '#FF8C42' : c.val <= 55 ? '#F5C842' : c.val <= 75 ? '#7DC67E' : '#2ECC71';
+        {comps.map(function(c, i) {
+          var barColor = c.val == null ? 'var(--border)' : c.val <= 25 ? '#FF4444' : c.val <= 45 ? '#FF8C42' : c.val <= 55 ? '#F5C842' : c.val <= 75 ? '#7DC67E' : '#2ECC71';
           return (
             <div key={i} className="fg-comp-row" title={c.detail || c.label}>
               <span className="fg-comp-label">{c.label}</span>
               <div className="fg-comp-bar-wrap">
-                <div className="fg-comp-bar" style={{ width: c.val + '%', background: barColor }}/>
+                {c.val != null
+                  ? <div className="fg-comp-bar" style={{ width: c.val + '%', background: barColor }}/>
+                  : <span style={{fontSize:9,color:'var(--text3)',fontFamily:'var(--mono)'}}>NSE feed unavailable</span>
+                }
               </div>
-              <span className="fg-comp-val">{c.display != null ? c.display : c.val}</span>
+              <span className="fg-comp-val" style={{color: c.val == null ? 'var(--text3)' : 'inherit'}}>{c.val == null ? ' - ' : c.display != null ? c.display : c.val}</span>
             </div>
           );
         })}

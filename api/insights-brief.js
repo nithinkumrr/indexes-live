@@ -262,7 +262,7 @@ export default async function handler(req, res) {
   const slot = getSlotInfo();
 
   try {
-    const cached = await kv.get(`insights_v6_${slot.key}`);
+    const cached = await kv.get(`insights_v7_${slot.key}`);
     if (cached) return res.json({ ...cached, cached: true, slot });
   } catch (_) {}
 
@@ -284,6 +284,6 @@ export default async function handler(req, res) {
   }
 
   result.generatedAt = new Date().toISOString();
-  try { await kv.set(`insights_v6_${slot.key}`, result, { ex: slot.ttl }); } catch (_) {}
+  try { await kv.set(`insights_v7_${slot.key}`, result, { ex: slot.ttl }); } catch (_) {}
   return res.json({ ...result, cached: false, slot });
 }

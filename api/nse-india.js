@@ -42,18 +42,20 @@ export default async function handler(req, res) {
     408065: 'niftysmallcap250', 266249: 'nifty100', 270857: 'nifty200',
     272905: 'nifty500',  268033: 'niftymidcapselect', 263945: 'niftymnc',
     259337: 'niftyinfra', 271881: 'niftytotalmkt', 270601: 'bankex',
+    264169: 'indiavix',  // India VIX — key for MMI calculation
   };
 
   if (kiteToken && kiteKey) {
     try {
-      const tokens = Object.keys(KITE_INSTRUMENTS).map(t => `i=NSE:${t}`).join('&');
-      const kr = await fetch(`https://api.kite.trade/quote?${Object.keys(KITE_INSTRUMENTS).map(t=>`i=${t}`).join('&')}`, {
+      // Kite quote API: NSE:{instrument_token} format for indices
+      const instruments = Object.keys(KITE_INSTRUMENTS).map(t => `NSE:${t}`);
+      const kr = await fetch(`https://api.kite.trade/quote?${instruments.map(i=>`i=${i}`).join('&')}`, {
         headers: { 'X-Kite-Version': '3', 'Authorization': `token ${kiteKey}:${kiteToken}` }
       });
       if (kr.ok) {
         const kd = await kr.json();
         for (const [token, key] of Object.entries(KITE_INSTRUMENTS)) {
-          const q = kd?.data?.[token];
+          const q = kd?.data?.[`NSE:${token}`];
           if (q) {
             const price = q.last_price, prev = q.ohlc?.close || price;
             result[key] = {
@@ -64,6 +66,10 @@ export default async function handler(req, res) {
             };
           }
         }
+        // Extract VIX from Kite data immediately
+        if (result.indiavix?.price) result.vix = result.indiavix.price;
+        // Set niftyChange for price change score
+        if (result.nifty50?.changePct != null) result.niftyChange = result.nifty50.changePct;
       }
     } catch(_) {}
   }

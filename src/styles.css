@@ -5852,7 +5852,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 .brk-hs2-l        { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 .brk-hs2-l strong { font-weight: 800; }
 .brk-hs2-sep      { font-family: var(--mono); font-size: 20px; color: var(--border2); line-height: 1; }
-.brk-hero2-note   { flex: 1; font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.8; padding: 14px 16px; background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r); box-sizing: border-box; word-break: break-word; align-self: stretch; display: flex; align-items: flex-start; }
+.brk-hero2-note   { flex: 1; font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.9; padding: 14px 16px; background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r); box-sizing: border-box; word-break: break-word; align-self: stretch; display: block; }
 .brk-hero2-note a { color: var(--accent); }
 
 /* ── Trade size toggle ────────────────────────────────────────────── */

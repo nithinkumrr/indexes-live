@@ -1,5 +1,5 @@
 // src/components/IndiaHeatmap.jsx
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { formatPct } from '../utils/format';
 
 const NIFTY_SECTORS   = ['Financials','IT','Energy','Consumer','Auto','Industrials','Pharma','Discretionary','Metals','Others'];
@@ -89,20 +89,25 @@ function HeatmapCanvas({ stocks, sectorOrder, title, indexKey }) {
     .map(sector => ({ sector, items: visible.filter(s => s.sector === sector) }))
     .filter(g => g.items.length > 0);
 
-  const sectorBlocks = squarify(grouped.map(g=>({ sector:g.sector, weight:g.items.reduce((s,i)=>s+i.weight,0) })), 0, 0, containerW, CANVAS_H);
-
-  const allRects = [];
-  for (const block of sectorBlocks) {
-    const g = grouped.find(g=>g.sector===block.sector); if(!g) continue;
-    const inner = squarify(g.items, block.x+GAP, block.y+GAP, Math.max(0,block.w-GAP*2), Math.max(0,block.h-GAP*2));
-    if (inner.length > 0) inner[0]._sectorLabel = block.sector;
-    allRects.push(...inner);
-  }
-
-  const sectors = sectorOrder.filter(s => stocks.some(st=>st.sector===s));
-  const gainers = stocks.filter(s=>s.changePct>0).length;
-  const losers  = stocks.filter(s=>s.changePct<0).length;
-  const avgChg  = stocks.length ? (stocks.reduce((s,i)=>s+(i.changePct||0),0)/stocks.length).toFixed(2) : null;
+  // Memoize expensive squarify calculation — only recompute when stocks/size/filter change
+  const { allRects, sectors, gainers, losers, avgChg } = useMemo(() => {
+    const sectorBlocks = squarify(grouped.map(g=>({ sector:g.sector, weight:g.items.reduce((s,i)=>s+i.weight,0) })), 0, 0, containerW, CANVAS_H);
+    const rects = [];
+    for (const block of sectorBlocks) {
+      const g = grouped.find(g=>g.sector===block.sector); if(!g) continue;
+      const inner = squarify(g.items, block.x+GAP, block.y+GAP, Math.max(0,block.w-GAP*2), Math.max(0,block.h-GAP*2));
+      if (inner.length > 0) inner[0]._sectorLabel = block.sector;
+      rects.push(...inner);
+    }
+    return {
+      allRects: rects,
+      sectors: sectorOrder.filter(s => stocks.some(st=>st.sector===s)),
+      gainers: stocks.filter(s=>s.changePct>0).length,
+      losers:  stocks.filter(s=>s.changePct<0).length,
+      avgChg:  stocks.length ? (stocks.reduce((s,i)=>s+(i.changePct||0),0)/stocks.length).toFixed(2) : null,
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stocks, containerW, filter]);
 
   return (
     <div className="hm-wrap">
