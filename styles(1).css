@@ -4060,6 +4060,24 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   background:linear-gradient(180deg,#0F0F14 0%,#0A0A0F 100%);
   flex-shrink:0; overflow-x:auto;
 }
+[data-theme="light"] .spc-topbar {
+  background: linear-gradient(180deg, var(--bg2) 0%, var(--bg3) 100%);
+  border-bottom: 1px solid var(--border);
+}
+[data-theme="light"] .spc-tb-lbl { color: var(--text3); }
+[data-theme="light"] .spc-tb-val { color: var(--text); }
+[data-theme="light"] .spc-tb-select { color: var(--text); }
+[data-theme="light"] .spc-tb-select option { background: var(--bg3); color: var(--text); }
+[data-theme="light"] .spc-tb-divider { background: var(--border2); }
+[data-theme="light"] .spc-tb-pill { border-right-color: var(--border); }
+[data-theme="light"] .spc-tb-lots-wrap { background: var(--bg3); border-color: var(--border2); }
+[data-theme="light"] .spc-tb-lots-btn { background: var(--bg4); color: var(--text2); }
+[data-theme="light"] .spc-tb-lots-input { color: var(--text); }
+[data-theme="light"] .spc-tb-setups-lbl { color: var(--text3); }
+[data-theme="light"] .spc-tb-setup-btn { border-color: rgba(27,175,142,0.3); background: rgba(27,175,142,0.06); }
+[data-theme="light"] .spc-tb-setup-name { color: var(--text); }
+[data-theme="light"] .spc-tb-setup-btn:hover,
+[data-theme="light"] .spc-tb-setup-btn.active { background: rgba(27,175,142,0.15); border-color: rgba(27,175,142,0.6); }
 .spc-topbar::-webkit-scrollbar { display:none; }
 
 .spc-tb-left  { display:flex; align-items:center; gap:0; flex-shrink:0; height:100%; }
