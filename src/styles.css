@@ -38,7 +38,7 @@
   --border:   rgba(0,0,0,0.09);
   --border2:  rgba(0,0,0,0.16);
   --text:     #1A1410;
-  --text2:    #5C4F3D;
+  --text2:    #3A2E20;
   --text3:    #9C8B75;
   --gain:     #1BAF8E;
   --gain-bg:  rgba(27,175,142,0.12);
@@ -69,7 +69,7 @@
 [data-theme="light"] .live-badge { background: rgba(27,175,142,0.12); color: #1BAF8E; border: 1px solid rgba(27,175,142,0.3); border-radius: 4px; padding: 2px 7px; }
 [data-theme="light"] .live-pulse { background: #1BAF8E; }
 [data-theme="light"] .update-dot { background: #1BAF8E; }
-[data-theme="light"] .theme-toggle { background: #EDE8DF; border-color: rgba(0,0,0,0.12); color: #5C4F3D; }
+[data-theme="light"] .theme-toggle { background: #EDE8DF; border-color: rgba(0,0,0,0.12); color: #3A2E20; }
 [data-theme="light"] .hero-card { background: #fff; border-color: rgba(0,0,0,0.08); }
 [data-theme="light"] .hero-card-live { border-top-color: #1BAF8E !important; }
 [data-theme="light"] .gain { color: #1BAF8E !important; }
