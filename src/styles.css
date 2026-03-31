@@ -277,6 +277,16 @@
 [data-theme="light"] .spc-right { background: #FAF8F4 !important; }
 [data-theme="light"] .spc-detail { background: #FAF8F4 !important; }
 
+/* Filter chips */
+[data-theme="light"] .spc-filters { background: var(--bg2) !important; }
+[data-theme="light"] .spc-fb { border-color: rgba(0,0,0,0.12) !important; background: rgba(0,0,0,0.03) !important; }
+[data-theme="light"] .spc-fb:hover { color: var(--text) !important; background: rgba(74,158,255,0.08) !important; }
+
+/* Strategy list item hover/active — white text fix */
+[data-theme="light"] .spc-item:hover .spc-item-name { color: var(--text) !important; }
+[data-theme="light"] .spc-item-on .spc-item-name { color: var(--text) !important; }
+[data-theme="light"] .spc-item:hover { background: var(--bg3) !important; }
+
 /* rc-page-nav hardcoded bg */
 [data-theme="light"] .rc-page-nav { background: #F0EBE2 !important; }
 
@@ -3839,6 +3849,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   font-size: 9px; letter-spacing: 2.5px;
   color: rgba(74,158,255,.7); line-height: 1;
 }
+[data-theme="light"] .fno-esv2-label-top { color: var(--text); }
+[data-theme="light"] .fno-expiry-strip-v2 .fno-esv2-sep { background: rgba(0,0,0,.1); }
 .fno-esv2-sep   { width: 1px; height: 36px; background: rgba(255,255,255,.07); flex-shrink: 0; }
 .fno-esv2-item  {
   display: flex; flex-direction: column; justify-content: center;
@@ -4095,6 +4107,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 }
 .spc-tb-select option { background:#1A1A22; color:var(--text); }
 .spc-tb-select:hover { color:#fff; }
+[data-theme="light"] .spc-tb-select option { background:var(--bg2); color:var(--text); }
+[data-theme="light"] .spc-tb-select:hover { color:var(--text); }
 
 /* Lots pill */
 .spc-tb-pill-lots { gap:8px; }
