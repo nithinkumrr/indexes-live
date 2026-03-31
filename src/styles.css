@@ -6713,20 +6713,16 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .brk-tab-label { font-size: 10px; letter-spacing: 0; text-align: center; font-weight: 700; }
 
   /* ── BROKER RANKING CARDS — mobile compact redesign ── */
-  /* Card container */
-  .brk-card { margin-bottom: 8px; border-radius: 10px; }
+  .brk-card { margin-bottom: 6px; border-radius: 8px; }
 
-  /* Card header — rank + name + type in one clean row */
-  .brk-card-top {
-    padding: 10px 12px;
-    gap: 8px;
-  }
-  .brk-card-rank-badge { font-size: 11px; padding: 2px 6px; }
-  .brk-card-name { font-size: 16px; letter-spacing: -0.3px; }
-  .brk-card-typetag { font-size: 9px; padding: 2px 7px; }
-  .brk-card-expand-hint { font-size: 10px; }
+  /* Header: #1 Dhan [Discount] [▼ full details] — single tight row */
+  .brk-card-top { padding: 9px 12px; gap: 8px; align-items: center; }
+  .brk-card-rank-badge { font-size: 10px; padding: 2px 5px; }
+  .brk-card-name { font-size: 15px; letter-spacing: -0.3px; }
+  .brk-card-typetag { font-size: 8px; padding: 2px 6px; letter-spacing: 0.5px; }
+  .brk-card-expand-hint { font-size: 9px; white-space: nowrap; }
 
-  /* Brokerage columns — 2×2 compact grid */
+  /* Core brokerage — 2x2 grid, NO wide column */
   .brk-card-cols {
     display: grid !important;
     grid-template-columns: 1fr 1fr;
@@ -6735,45 +6731,61 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
     gap: 0;
   }
   .brk-col {
-    flex: unset !important;
-    min-width: 0 !important;
-    width: auto !important;
-    align-items: flex-start;
-    text-align: left;
-    padding: 8px 12px;
-    border-bottom: 1px solid rgba(255,255,255,.05);
-    border-right: 1px solid rgba(255,255,255,.05);
+    flex: unset !important; min-width: 0 !important; width: auto !important;
+    align-items: flex-start; text-align: left;
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    border-right: 1px solid rgba(255,255,255,.04);
   }
   .brk-col:nth-child(2n) { border-right: none !important; }
-  .brk-col-wide {
-    grid-column: 1 / -1;
-    border-right: none !important;
-  }
+  /* MTF interest wide col — collapse to 2-col on mobile */
+  .brk-col-wide { grid-column: unset !important; border-right: 1px solid rgba(255,255,255,.04) !important; }
+  .brk-col-wide:nth-child(2n) { border-right: none !important; }
+  /* MTF total col — full width */
+  .brk-col-total { grid-column: 1 / -1; border-right: none !important; border-bottom: none !important; background: rgba(255,255,255,.02); }
   .brk-col-divider { display: none; }
-  .brk-col-label { font-size: 8px; letter-spacing: 0.8px; margin-bottom: 2px; }
-  .brk-col-val { font-size: 13px; }
-  .brk-col-sub { font-size: 10px; }
-  .brk-col-slabs { gap: 1px; }
-  .brk-col-slab { font-size: 10px; }
 
-  /* All-in totals row — compact */
-  .brk-card-totals { padding: 8px 12px; }
-  .brk-card-totals-label { font-size: 8px; margin-bottom: 5px; }
-  .brk-card-totals-row { gap: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; }
-  .brk-total-seg { font-size: 8px; }
-  .brk-total-num { font-size: 16px; }
-  .brk-total-vs { display: none; }
+  /* Typography — tight and clear */
+  .brk-col-label { font-size: 8px; letter-spacing: 0.5px; margin-bottom: 1px; }
+  .brk-col-val   { font-size: 12px; line-height: 1.3; }
+  .brk-col-sub   { font-size: 9px; line-height: 1.3; }
+
+  /* MTF slabs — show compact, inline */
+  .brk-col-slabs-compact { align-items: flex-start; gap: 0; }
+  .brk-slab-compact { gap: 4px; }
+  .brk-slab-r { font-size: 9px; min-width: 50px; }
+  .brk-slab-v { font-size: 11px; }
+
+  /* All-in total section — key focus on delivery cost */
+  .brk-col-total { padding: 8px 12px; }
+  .brk-total-3 { gap: 0; }
+  .brk-t3-row { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .brk-t3-row:last-child { border-bottom: none; }
+  .brk-t3-seg { font-size: 10px; }
+  .brk-t3-num { font-size: 15px; }
+  .brk-t3-brk { font-size: 9px; }
 
   /* Expanded detail */
   .brk-card-detail { padding: 12px; }
-  .brk-card-tagline { font-size: 10px; margin-bottom: 10px; padding-bottom: 10px; }
+  .brk-card-tagline { font-size: 10px; margin-bottom: 10px; padding-bottom: 10px; line-height: 1.5; }
   .brk-card-charge-grid { grid-template-columns: 1fr 1fr !important; }
   .brk-card-charge-section { padding: 8px 10px; }
-  .brk-ccs-title { font-size: 8px; margin-bottom: 5px; }
-  .brk-ccs-row { font-size: 11px; padding: 3px 0; }
+  .brk-ccs-title { font-size: 8px; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .brk-ccs-row { font-size: 10px; padding: 3px 0; }
+  .brk-ccs-row span:last-child { font-size: 11px; }
   .brk-card-sw { grid-template-columns: 1fr !important; }
-  .brk-sw-item { font-size: 11px; }
-  .brk-expand-footer { flex-direction: column; gap: 8px; }
+  .brk-sw-item { font-size: 10px; }
+  .brk-expand-footer { flex-direction: column; gap: 8px; margin-top: 10px; }
+  .brk-disclaimer { font-size: 9px; }
+
+  /* Filter controls — compact */
+  .brk-filters { gap: 8px; margin-bottom: 10px; padding: 10px 12px; }
+  .brk-filter-group { gap: 4px; }
+  .brk-filter-label { font-size: 9px; letter-spacing: 0.8px; }
+  .brk-filter-btn { font-size: 11px; padding: 5px 11px; border-radius: 6px; }
+  .brk-seg { gap: 4px; }
+  .brk-seg-btn { font-size: 11px; padding: 6px 12px; border-radius: 6px; }
+  .brk-main-content { padding: 8px 10px; }
 
   /* Rankings table */
   .brk-rank-table { font-size: 11px; }
