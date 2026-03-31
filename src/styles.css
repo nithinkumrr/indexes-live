@@ -205,6 +205,66 @@
 [data-theme="light"] .h2h-table { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
 [data-theme="light"] .h2h-th { background: #F0EBE2 !important; }
 
+/* ── STRATEGY PAGE: payoff chart + example ── */
+[data-theme="light"] .spc-chart-wrap { background: #F5F0E8 !important; }
+[data-theme="light"] .spc-chart-header { background: #EDE8DF !important; border-bottom-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .spc-chart-svg-wrap { background: #F5F0E8 !important; }
+[data-theme="light"] .spc-sliders-v2 { background: #EDE8DF !important; border-top-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .spc-pnl-v2 { background: #EDE8DF !important; border-top-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .spc-pnl-v2-price { color: #4A3828 !important; }
+[data-theme="light"] .spc-pnl-v2-sep   { color: rgba(0,0,0,0.2) !important; }
+[data-theme="light"] .spc-pnl-v2-dte   { color: #6B5A45 !important; }
+[data-theme="light"] .spc-pnl-v2-arrow { color: rgba(0,0,0,0.2) !important; }
+[data-theme="light"] .spc-slv2-val { color: #1A1410 !important; }
+[data-theme="light"] .spc-slv2-step { border-color: rgba(0,0,0,0.15) !important; background: rgba(0,0,0,0.04) !important; color: #4A3828 !important; }
+[data-theme="light"] .spc-legend-btn { border-color: rgba(0,0,0,0.15) !important; color: #6B5A45 !important; }
+[data-theme="light"] .spc-legend-btn.on { color: #1A1410 !important; background: rgba(0,0,0,0.04) !important; }
+[data-theme="light"] .spc-no-prem { background: #F5F0E8 !important; }
+
+/* Intel cards (WHEN TO USE, HOW IT WORKS, PRO TIPS) */
+[data-theme="light"] .spc-intel-card { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .spc-intel-hdr { color: #4A3828 !important; border-bottom-color: rgba(0,0,0,0.08) !important; }
+[data-theme="light"] .spc-intel-body { color: #2A1F12 !important; }
+[data-theme="light"] .spc-intel-green { border-color: rgba(27,175,142,0.3) !important; background: rgba(27,175,142,0.04) !important; }
+[data-theme="light"] .spc-intel-green .spc-intel-hdr { color: #0D8C6E !important; }
+[data-theme="light"] .spc-intel-red { border-color: rgba(201,54,10,0.25) !important; background: rgba(201,54,10,0.04) !important; }
+[data-theme="light"] .spc-intel-red .spc-intel-hdr { color: #C9360A !important; }
+[data-theme="light"] .spc-col-intel { background: #FAF8F4 !important; }
+[data-theme="light"] .spc-col-chart { background: #F5F0E8 !important; }
+
+/* NIFTY EXAMPLE section */
+[data-theme="light"] .spc-example { background: #fff !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .spc-example-hdr { color: #4A3828 !important; border-bottom-color: rgba(0,0,0,0.08) !important; }
+[data-theme="light"] .spc-result-row { border-bottom-color: rgba(0,0,0,0.06) !important; color: #2A1F12 !important; }
+[data-theme="light"] .spc-result-lbl { color: #4A3828 !important; }
+[data-theme="light"] .spc-leg-row { background: #F8F5F0 !important; border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] .spc-leg-ticker { color: #1A1410 !important; }
+[data-theme="light"] .spc-leg-price { color: #1A1410 !important; }
+
+/* SELL/BUY badge */
+[data-theme="light"] .spc-leg-buy  { border-left-color: #1BAF8E !important; background: rgba(27,175,142,0.06) !important; }
+[data-theme="light"] .spc-leg-sell { border-left-color: #C9360A !important; background: rgba(201,54,10,0.06) !important; }
+[data-theme="light"] .edu-leg-action.buy  { background: rgba(27,175,142,0.15) !important; color: #0D8C6E !important; }
+[data-theme="light"] .edu-leg-action.sell { background: rgba(201,54,10,0.12) !important; color: #C9360A !important; }
+
+/* Edu section text (WHEN TO USE etc left panel) */
+[data-theme="light"] .edu-section-title { color: #4A3828 !important; }
+[data-theme="light"] .edu-section-text  { color: #2A1F12 !important; }
+[data-theme="light"] .edu-body { background: #fff !important; }
+
+/* Section labels like "WHEN TO USE" */
+[data-theme="light"] .spc-section-lbl { color: #6B5A45 !important; }
+[data-theme="light"] .spc-col-title { color: #1A1410 !important; }
+[data-theme="light"] .spc-col-title-sub { color: #6B5A45 !important; }
+
+/* Strategy sidebar */
+[data-theme="light"] .spc-left { background: #F5F0E8 !important; border-right-color: rgba(0,0,0,0.10) !important; }
+[data-theme="light"] .spc-right { background: #FAF8F4 !important; }
+[data-theme="light"] .spc-detail { background: #FAF8F4 !important; }
+
+/* rc-page-nav hardcoded bg */
+[data-theme="light"] .rc-page-nav { background: #F0EBE2 !important; }
+
 
 
 
