@@ -194,9 +194,11 @@ function HeatmapCanvas({ stocks, sectorOrder, title, indexKey }) {
 export default function IndiaHeatmap() {
   const [niftyStocks,  setNiftyStocks]  = useState([]);
   const [bniftyStocks, setBniftyStocks] = useState([]);
+  const [dataNote,     setDataNote]     = useState('');
 
   const load = useCallback(async (initial=false) => {
-    if (!initial && !isNSEOpen()) return;
+    // Always load on initial — also load on interval regardless of market hours
+    // (to serve cached data on holidays/weekends)
     try {
       const [r1, r2] = await Promise.all([
         fetch('/api/nifty-heatmap?index=nifty50'),
@@ -205,17 +207,30 @@ export default function IndiaHeatmap() {
       const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
       if (d1.data?.length) setNiftyStocks(d1.data);
       if (d2.data?.length) setBniftyStocks(d2.data);
+      // Show note if serving cached previous session data
+      if (d1.cached || d2.cached) {
+        const date = d1.date || d2.date || '';
+        const label = date ? new Date(date+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}) : 'previous session';
+        setDataNote(`Previous session data · ${label}`);
+      } else {
+        setDataNote('');
+      }
     } catch (_) {}
   }, []);
 
   useEffect(() => {
     load(true);
-    const id = setInterval(() => load(false), 30000);
+    const id = setInterval(() => load(false), 60000);
     return () => clearInterval(id);
   }, [load]);
 
   return (
     <div>
+      {dataNote && (
+        <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--pre)',background:'rgba(245,158,11,0.08)',border:'1px solid rgba(245,158,11,0.2)',padding:'4px 14px',display:'flex',alignItems:'center',gap:6}}>
+          <span>⏸</span> {dataNote} · Market closed
+        </div>
+      )}
       <HeatmapCanvas stocks={niftyStocks}  sectorOrder={NIFTY_SECTORS}  title="Nifty 50 Heatmap"    indexKey="nifty50"   />
       <HeatmapCanvas stocks={bniftyStocks} sectorOrder={BNIFTY_SECTORS} title="Bank Nifty Heatmap"  indexKey="banknifty" />
     </div>
