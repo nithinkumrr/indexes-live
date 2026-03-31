@@ -3,7 +3,27 @@
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+  res.setHeader('Cache-Control', 'no-store');
+
+  // On holidays/weekends, try to serve cached previous session data
+  const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const dow = ist.getDay();
+  const todayIso = ist.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const NSE_HOL_FAST = new Set(['2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
+    '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26','2026-09-14',
+    '2026-10-02','2026-10-20','2026-11-10','2026-11-24','2026-12-25']);
+  const isClosedDay = dow === 0 || dow === 6 || NSE_HOL_FAST.has(todayIso);
+
+  if (isClosedDay) {
+    try {
+      const { kv } = await import('@vercel/kv');
+      const cached = await kv.get('mmi_data_v1');
+      if (cached) {
+        const data = typeof cached === 'string' ? JSON.parse(cached) : cached;
+        return res.json({ ...data, cached: true });
+      }
+    } catch(_) {}
+  }
 
   const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
   const H  = (cookie='') => ({
@@ -32,30 +52,37 @@ export default async function handler(req, res) {
     }
   } catch(_) {}
 
-  // Kite instrument tokens for Indian indices
-  const KITE_INSTRUMENTS = {
-    256265: 'nifty50',    260105: 'banknifty',    274441: 'niftymidcap150',
-    288009: 'niftynext50',264969: 'niftyit',      258313: 'niftyauto',
-    261897: 'niftyfmcg', 261641: 'niftypharma',  290825: 'niftyrealty',
-    258825: 'niftymetal', 262409: 'niftyenergy',  257801: 'niftyfinservice',
-    288265: 'niftymedia', 261385: 'niftypsubank', 261129: 'niftypvtbank',
-    408065: 'niftysmallcap250', 266249: 'nifty100', 270857: 'nifty200',
-    272905: 'nifty500',  268033: 'niftymidcapselect', 263945: 'niftymnc',
-    259337: 'niftyinfra', 271881: 'niftytotalmkt', 270601: 'bankex',
-    264169: 'indiavix',  // India VIX — key for MMI calculation
+  // Use trading symbol names for Kite — more reliable than integer tokens
+  // NSE:INDIA VIX is the correct symbol for India VIX on Kite
+  // Kite instruments — integer token 264969 = India VIX (confirmed)
+  const KITE_SYMBOLS = {
+    'NIFTY 50':     'nifty50',
+    'NIFTY BANK':   'banknifty',
+    'NIFTY IT':     'niftyit',
+    'NIFTY AUTO':   'niftyauto',
+    'NIFTY FMCG':   'niftyfmcg',
+    'NIFTY PHARMA': 'niftypharma',
+    'NIFTY METAL':  'niftymetal',
+    'NIFTY ENERGY': 'niftyenergy',
+    'NIFTY REALTY': 'niftyrealty',
+    'NIFTY 100':    'nifty100',
+    'NIFTY 500':    'nifty500',
   };
 
   if (kiteToken && kiteKey) {
     try {
-      // Kite quote API: NSE:{instrument_token} format for indices
-      const instruments = Object.keys(KITE_INSTRUMENTS).map(t => `NSE:${t}`);
-      const kr = await fetch(`https://api.kite.trade/quote?${instruments.map(i=>`i=${i}`).join('&')}`, {
+      // Fetch indices by symbol + India VIX by its confirmed token 264969
+      const symInstruments = Object.keys(KITE_SYMBOLS).map(s => `NSE:${s}`);
+      const allInstruments = [...symInstruments, '264969']; // 264969 = India VIX token
+      const qs = allInstruments.map(i => `i=${encodeURIComponent(i)}`).join('&');
+      const kr = await fetch(`https://api.kite.trade/quote?${qs}`, {
         headers: { 'X-Kite-Version': '3', 'Authorization': `token ${kiteKey}:${kiteToken}` }
       });
       if (kr.ok) {
         const kd = await kr.json();
-        for (const [token, key] of Object.entries(KITE_INSTRUMENTS)) {
-          const q = kd?.data?.[`NSE:${token}`];
+        // Parse symbol-based results
+        for (const [sym, key] of Object.entries(KITE_SYMBOLS)) {
+          const q = kd?.data?.[`NSE:${sym}`];
           if (q) {
             const price = q.last_price, prev = q.ohlc?.close || price;
             result[key] = {
@@ -66,12 +93,15 @@ export default async function handler(req, res) {
             };
           }
         }
-        // Extract VIX from Kite data immediately
-        if (result.indiavix?.price) result.vix = result.indiavix.price;
-        // Set niftyChange for price change score
+        // India VIX by token 264969
+        const vixQ = kd?.data?.['264969'];
+        if (vixQ?.last_price) {
+          result.vix = vixQ.last_price;
+          result.indiavix = { price: vixQ.last_price, source: 'kite' };
+        }
         if (result.nifty50?.changePct != null) result.niftyChange = result.nifty50.changePct;
       }
-    } catch(_) {}
+    } catch(e) { console.error('Kite nse-india error:', e.message); }
   }
 
 
@@ -153,6 +183,55 @@ export default async function handler(req, res) {
     }
   } catch(_) {}
 
+  // Fill missing fields from previous trading day KV data
+  // This covers: FII (not published until 5 PM), 52W highs/lows, breadth, price change
+  const needsFallback = result.fiiNet == null || result.fiiNet === 0 
+    || result.niftyChange == null || result.highs52w == null;
+  
+  if (needsFallback) {
+    try {
+      const { kv: kvInst } = await import('@vercel/kv');
+      // Try last 5 trading days
+      for (let i = 1; i <= 5; i++) {
+        const d = new Date(Date.now() - i * 86400000);
+        const iso = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+        const dow = new Date(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getDay();
+        if (dow === 0 || dow === 6) continue;
+
+        // Get FII data from fiidii KV store
+        if (result.fiiNet == null || result.fiiNet === 0) {
+          try {
+            const raw = await kvInst.get(`fiidii:${iso}`);
+            if (raw) {
+              const rec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+              if (rec?.fiiNet != null && rec.fiiNet !== 0) {
+                result.fiiNet  = rec.fiiNet;
+                result.fiiBuy  = rec.fiiBuy;
+                result.fiiSell = rec.fiiSell;
+                result.fiiDate = rec.date;
+              }
+            }
+          } catch(_) {}
+        }
+
+        // Get MMI data (vix, niftyChange, highs52w etc) from cached MMI
+        const cachedMmi = await kvInst.get('mmi_data_v1').catch(()=>null);
+        if (cachedMmi) {
+          const prev = typeof cachedMmi === 'string' ? JSON.parse(cachedMmi) : cachedMmi;
+          if (result.vix == null && prev.vix) result.vix = prev.vix;
+          if (result.niftyChange == null && prev.niftyChange) result.niftyChange = prev.niftyChange;
+          if (result.ema30 == null && prev.ema30) result.ema30 = prev.ema30;
+          if (result.ema90 == null && prev.ema90) result.ema90 = prev.ema90;
+          if (result.advancers == null && prev.advancers) result.advancers = prev.advancers;
+          if (result.decliners == null && prev.decliners) result.decliners = prev.decliners;
+          if (result.highs52w == null && prev.highs52w != null) result.highs52w = prev.highs52w;
+          if (result.lows52w == null && prev.lows52w != null) result.lows52w = prev.lows52w;
+        }
+        break; // only need one day
+      }
+    } catch(_) {}
+  }
+
   // 3. Advance / Decline for Nifty 500 (broader market breadth)
   try {
     const r = await fetch('https://www.nseindia.com/api/live-analysis-variations?index=gainers', { headers: H(cookie) });
@@ -220,6 +299,15 @@ export default async function handler(req, res) {
       };
     }
   } catch(_) {}
+
+  // Save to KV as fallback for holidays/weekends
+  const hasUsefulData = (result.vix != null || result.niftyChange != null || result.fiiNet != null);
+  if (hasUsefulData) {
+    try {
+      const { kv } = await import('@vercel/kv');
+      await kv.set('mmi_data_v1', JSON.stringify(result), { ex: 7 * 24 * 3600 });
+    } catch(_) {}
+  }
 
   return res.json(result);
 }

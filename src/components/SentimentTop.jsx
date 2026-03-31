@@ -62,7 +62,8 @@ function FearGreedMeter() {
         const vals = [vixScore, fiiScore, momScore, adScore, psScore, chgScore].filter(v => v != null);
         const score = vals.length > 0 ? Math.round(vals.reduce((a,b) => a+b, 0) / vals.length) : null;
 
-        setMmi({ score, vix: d.vix, fiiNet: d.fiiNet, ema30: d.ema30, ema90: d.ema90,
+        setMmi({ score, vix: d.vix, fiiNet: d.fiiNet, fiiDate: d.fiiDate || null,
+          ema30: d.ema30, ema90: d.ema90,
           advancers: d.advancers, decliners: d.decliners, highs52w: d.highs52w, lows52w: d.lows52w,
           scores: { vixScore, fiiScore, momScore, adScore, psScore, chgScore } });
         setLoading(false);
@@ -123,7 +124,9 @@ function FearGreedMeter() {
 
   const comps = [
     { label: 'India VIX',    val: mmi.scores.vixScore, display: mmi.vix ? mmi.vix.toFixed(1) : null, detail: mmi.vix ? 'VIX ' + mmi.vix.toFixed(2) : 'NSE data unavailable' },
-    { label: 'FII Activity', val: mmi.scores.fiiScore, detail: mmi.fiiNet ? ('Net ' + (mmi.fiiNet > 0 ? '+' : '') + Math.round(mmi.fiiNet) + ' Cr') : 'NSE data unavailable' },
+    { label: mmi.fiiDate ? 'FII (' + new Date(mmi.fiiDate+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}) + ')' : 'FII Activity',
+      val: mmi.scores.fiiScore,
+      detail: mmi.fiiNet ? ('Net ' + (mmi.fiiNet > 0 ? '+' : '') + Math.round(mmi.fiiNet) + ' Cr') : 'Not published yet' },
     { label: 'Momentum',     val: mmi.scores.momScore, detail: (mmi.ema30 && mmi.ema90) ? 'EMA30 vs EMA90' : 'NSE data unavailable' },
     { label: 'Breadth',      val: mmi.scores.adScore,  detail: (mmi.advancers && mmi.decliners) ? (mmi.advancers + 'A / ' + mmi.decliners + 'D') : 'NSE data unavailable' },
     { label: '52W Strength', val: mmi.scores.psScore,  detail: (mmi.highs52w != null) ? (mmi.highs52w + 'H / ' + mmi.lows52w + 'L') : 'NSE data unavailable' },

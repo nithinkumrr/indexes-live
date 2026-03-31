@@ -53,31 +53,22 @@ const BN_SECTOR_MAP = {
   'BAJFINANCE':'NBFCs','BAJAJFINSV':'NBFCs','SHRIRAMFIN':'NBFCs',
 };
 
-// Nifty 50 & Bank Nifty constituents with Kite instrument tokens
-const NIFTY50_TOKENS = {
-  738561:'RELIANCE',341249:'HDFCBANK',1270529:'ICICIBANK',492033:'INFY',
-  2953217:'TCS',2714625:'BHARTIARTL',1484417:'KOTAKBANK',1510401:'AXISBANK',
-  3861249:'LT',1850625:'HCLTECH',779521:'SBIN',3787777:'WIPRO',
-  81153:'BAJFINANCE',356865:'HINDUNILVR',2815745:'MARUTI',897537:'TITAN',
-  424961:'ADANIENT',60417:'ASIANPAINT',2952193:'ULTRACEMCO',857857:'SUNPHARMA',
-  2977281:'NTPC',633601:'ONGC',900609:'TATAMOTORS',519937:'M&M',
-  877057:'TATASTEEL',2930177:'POWERGRID',119553:'BAJAJFINSV',3001089:'JSWSTEEL',
-  3465729:'TECHM',1346049:'INDUSINDBK',177665:'COALINDIA',225537:'DRREDDY',
-  177921:'CIPLA',3432705:'TATACONSUM',424457:'ITC',1895937:'NESTLEIND',
-  348929:'HINDALCO',2513921:'HDFCLIFE',3830849:'SBILIFE',4268801:'BAJAJ-AUTO',
-  2920705:'EICHERMOT',2983425:'DIVISLAB',140033:'BRITANNIA',1023489:'APOLLOHOSP',
-  4140033:'LTIM',2390529:'ADANIPORTS',1790529:'BPCL',2875137:'TRENT',
-  2867073:'SHRIRAMFIN',3456769:'BEL',
-};
+// Nifty 50 & Bank Nifty constituents — using trading symbols for Kite API
+const NIFTY50_SYMBOLS = [
+  'RELIANCE','HDFCBANK','ICICIBANK','INFY','TCS','BHARTIARTL','KOTAKBANK','AXISBANK',
+  'LT','HCLTECH','SBIN','WIPRO','BAJFINANCE','HINDUNILVR','MARUTI','TITAN',
+  'ADANIENT','ASIANPAINT','ULTRACEMCO','SUNPHARMA','NTPC','ONGC','TATAMOTORS','M&M',
+  'TATASTEEL','POWERGRID','BAJAJFINSV','JSWSTEEL','TECHM','INDUSINDBK','COALINDIA',
+  'DRREDDY','CIPLA','TATACONSUM','ITC','NESTLEIND','HINDALCO','HDFCLIFE','SBILIFE',
+  'BAJAJ-AUTO','EICHERMOT','DIVISLAB','BRITANNIA','APOLLOHOSP','LTIM','ADANIPORTS',
+  'BPCL','TRENT','SHRIRAMFIN','BEL',
+];
 
-const BANKNIFTY_TOKENS = {
-  738561:'RELIANCE',341249:'HDFCBANK',1270529:'ICICIBANK',
-  1484417:'KOTAKBANK',1510401:'AXISBANK',1346049:'INDUSINDBK',
-  779521:'SBIN',81153:'BAJFINANCE',119553:'BAJAJFINSV',
-  2867073:'SHRIRAMFIN',1214721:'BANDHANBNK',3915265:'FEDERALBNK',
-  4488961:'IDFCFIRSTB',4501505:'RBLBANK',
-  1214721:'BANKBARODA',5215745:'PNB',
-};
+const BANKNIFTY_SYMBOLS = [
+  'HDFCBANK','ICICIBANK','KOTAKBANK','AXISBANK','INDUSINDBK','SBIN',
+  'BAJFINANCE','BAJAJFINSV','SHRIRAMFIN','BANDHANBNK','FEDERALBNK',
+  'IDFCFIRSTB','RBLBANK','BANKBARODA','PNB',
+];
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -87,7 +78,7 @@ export default async function handler(req, res) {
   const KV_KEY    = `heatmap_v2_${indexKey}`;
   const isBN      = indexKey === 'banknifty';
   const smap      = isBN ? BN_SECTOR_MAP : SECTOR_MAP;
-  const tokenMap  = isBN ? BANKNIFTY_TOKENS : NIFTY50_TOKENS;
+  const symbolList = isBN ? BANKNIFTY_SYMBOLS : NIFTY50_SYMBOLS;
   const indexName = isBN ? 'NIFTY BANK' : 'NIFTY 50';
   const UA        = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36';
 
@@ -110,21 +101,24 @@ export default async function handler(req, res) {
 
   if (kiteToken && kiteKey) {
     try {
-      const instruments = Object.keys(tokenMap).map(t => `NSE:${t}`);
+      const instruments = symbolList.map(s => `NSE:${s}`);
+      // Build URL manually - don't encode the colon in NSE:SYMBOL, and M&M needs special handling
+      const qs = instruments.map(i => `i=${i.replace('&','%26')}`).join('&');
       const kr = await fetch(
-        `https://api.kite.trade/quote?${instruments.map(i=>`i=${i}`).join('&')}`,
+        `https://api.kite.trade/quote?${qs}`,
         { headers: { 'X-Kite-Version': '3', 'Authorization': `token ${kiteKey}:${kiteToken}` } }
       );
       if (kr.ok) {
         const kd = await kr.json();
         const stocks = [];
-        for (const [token, symbol] of Object.entries(tokenMap)) {
-          const q = kd?.data?.[`NSE:${token}`];
+        for (const symbol of symbolList) {
+          const q = kd?.data?.[`NSE:${symbol}`];
           if (!q) continue;
           const price = q.last_price;
           const prev  = q.ohlc?.close || price;
           const change = price - prev;
           const changePct = prev > 0 ? (change / prev) * 100 : 0;
+          const shortName = symbol.replace('&','').replace('-','');
           stocks.push({
             id: symbol, name: symbol, symbol,
             price, change: +change.toFixed(2), changePct: +changePct.toFixed(2),
@@ -133,17 +127,20 @@ export default async function handler(req, res) {
             weight: WEIGHT_MAP[symbol] || 0.5,
           });
         }
-        if (stocks.length >= 10) {
+        if (stocks.length >= 5) {
           // Save to KV as latest good data
-          try { await kv.set(KV_KEY, JSON.stringify({ data: stocks, source: 'kite', date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) }), { ex: 7 * 24 * 3600 }); } catch(_) {}
+          const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+          try { await kv.set(KV_KEY, JSON.stringify({ data: stocks, source: 'kite', date: dateStr }), { ex: 7 * 24 * 3600 }); } catch(_) {}
           return res.json({ data: stocks, index: indexName, source: 'kite', count: stocks.length });
         }
       }
-    } catch(_) {}
+    } catch(e) {
+      console.error('Kite heatmap error:', e.message);
+    }
   }
 
-  // ── Step 2: Try NSE scrape (trading days only) ────────────────────────────
-  if (trading) {
+  // ── Step 2: Try NSE scrape (works on holidays too - returns prev close) ────
+  {
     try {
       let cookies = '';
       const home = await fetch('https://www.nseindia.com', {
