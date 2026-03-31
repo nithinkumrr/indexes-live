@@ -4980,17 +4980,50 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 }
 @media (max-width: 768px) {
   .rc-grid { grid-template-columns: 1fr !important; }
-  .rc-start-grid { grid-template-columns: 1fr; }
-  .rc-hero-title { font-size: 28px; }
-  .rc-hero-stats { flex-wrap: wrap; }
-  .rc-stat-card { flex: 0 0 50%; }
+
+  /* ── TOP ROW: stack, no min-height ── */
+  .rc-top-row { grid-template-columns: 1fr !important; min-height: 0 !important; }
+  .rc-top-left { border-right: none !important; border-bottom: 1px solid var(--border); padding: 16px 14px !important; }
+  .rc-top-right { padding: 14px !important; background: none !important; }
+
+  /* ── HERO: ultra compact ── */
+  .rc-hero { padding: 0 !important; }
+  .rc-hero-eyebrow { font-size: 8px; letter-spacing: 1.5px; margin-bottom: 6px; }
+  .rc-hero-title { font-size: 22px !important; line-height: 1.15; margin-bottom: 8px; }
+  .rc-hero-body { font-size: 12px; line-height: 1.6; margin-bottom: 14px; }
+  .rc-hero-content { margin-bottom: 14px; }
+
+  /* Stats: 2×2 grid, tight */
+  .rc-hero-stats { display: grid !important; grid-template-columns: 1fr 1fr; }
+  .rc-stat-card { padding: 10px 12px; }
+  .rc-stat-val { font-size: 20px; margin-bottom: 2px; }
+  .rc-stat-label { font-size: 10px; line-height: 1.4; }
+
+  /* ── START HERE: horizontal scroll cards instead of vertical list ── */
+  .rc-start-header { margin-bottom: 10px; }
+  .rc-start-eyebrow { font-size: 8px; letter-spacing: 1.5px; margin-bottom: 4px; }
+  .rc-start-title { font-size: 16px; margin-bottom: 2px; }
+  .rc-start-sub { font-size: 11px; line-height: 1.4; }
+  .rc-start-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 6px !important;
+  }
+  .rc-start-card { padding: 10px 10px !important; gap: 4px !important; text-align: left !important; }
+  .rc-start-icon { font-size: 20px !important; margin-bottom: 4px; }
+  .rc-start-type { font-size: 13px !important; font-weight: 700; }
+  .rc-start-desc { font-size: 10px !important; line-height: 1.4; color: var(--text3); }
+  .rc-start-cta  { font-size: 9px !important; margin-top: 4px; }
+
+  /* ── CALCULATORS: tighter sections ── */
+  .rc-section { padding: 16px 14px; }
+  .rc-section-title { font-size: 18px; }
+  .rc-section-sub { font-size: 11px; }
+  .rc-fields-grid { grid-template-columns: 1fr; gap: 10px; }
 }
+
 @media (max-width: 480px) {
-  .rc-fields-grid { grid-template-columns: 1fr; }
   .rc-tab-btn { padding: 7px 10px; font-size: 11px; }
   .rc-tab-count { display: none; }
-  .rc-section { padding: 28px 16px; }
-  .rc-hero { padding: 24px 16px 20px; }
 }
 
 
@@ -6775,7 +6808,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .brk-slab-v { font-size: 11px; }
 
   /* All-in total section — centered 3-col layout */
-  .brk-col-total { padding: 8px 12px; }
+  .brk-col-total { padding: 8px 12px; text-align: center; }
   .brk-total-3 {
     display: grid !important;
     grid-template-columns: 1fr 1fr 1fr;
@@ -6815,19 +6848,19 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
   .brk-expand-footer { flex-direction: column; gap: 8px; margin-top: 10px; }
   .brk-disclaimer { font-size: 9px; }
 
-  /* Filter controls — mobile, no scroll, everything fits */
+  /* Filter controls — mobile, centred, no scroll */
   .brk-content { padding: 10px; }
   .brk-main-content { padding: 0; }
 
-  /* Trade size */
-  .brk-size-bar { padding: 6px 0 4px; gap: 5px; flex-wrap: nowrap; }
+  /* Trade size — centred row */
+  .brk-size-bar { padding: 6px 0 4px; gap: 5px; flex-wrap: nowrap; justify-content: center; }
   .brk-size-label { font-size: 8px; letter-spacing: 0.8px; margin-right: 2px; }
   .brk-size-btn { font-size: 10px; padding: 4px 12px; border-radius: 20px; border-width: 1px; }
 
-  /* Filter groups — no scroll, all fit on one line */
-  .brk-filters { gap: 5px; margin-bottom: 8px; flex-direction: column; }
-  .brk-filter-group { gap: 3px; align-items: center; flex-wrap: nowrap; overflow-x: unset; }
-  .brk-filter-label { font-size: 7px; letter-spacing: 0.5px; flex-shrink: 0; min-width: 52px; }
+  /* Filter groups — centred, no scroll */
+  .brk-filters { gap: 5px; margin-bottom: 8px; flex-direction: column; align-items: center; }
+  .brk-filter-group { gap: 3px; align-items: center; flex-wrap: nowrap; justify-content: center; width: 100%; overflow-x: unset; }
+  .brk-filter-label { font-size: 7px; letter-spacing: 0.5px; flex-shrink: 0; min-width: 52px; text-align: right; }
   .brk-filter-btn { font-size: 9px; padding: 3px 7px; border-radius: 4px; flex-shrink: 1; white-space: nowrap; }
 
   /* Rankings table */
