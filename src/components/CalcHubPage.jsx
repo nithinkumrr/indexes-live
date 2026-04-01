@@ -1784,8 +1784,8 @@ function MobNav({ activeId, nav }) {
       borderBottom:'1px solid var(--border)', marginBottom:0 }}>
       {/* Trigger row */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
-        padding:'12px 0', cursor:'pointer' }} onClick={() => setOpen(o => !o)}>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+        width:'100%', padding:'12px 0', cursor:'pointer' }} onClick={() => setOpen(o => !o)}>
+        <div style={{ display:'flex', alignItems:'center', gap:0 }}>
           {/* Hamburger icon */}
           <div style={{ display:'flex', flexDirection:'column', gap:4, cursor:'pointer', flexShrink:0 }}>
             <div style={{ width:18, height:2, background: open ? D_RETURNS : 'var(--text2)', borderRadius:1,
@@ -1795,7 +1795,7 @@ function MobNav({ activeId, nav }) {
             <div style={{ width:18, height:2, background: open ? D_RETURNS : 'var(--text2)', borderRadius:1,
               transition:'background 0.15s' }}/>
           </div>
-          <span style={{ fontSize:13, fontWeight:700, color:'var(--text)', fontFamily:'var(--mono)' }}>
+          <span style={{ fontSize:13, fontWeight:700, color:'var(--text)', fontFamily:'var(--mono)', flex:1, marginLeft:10 }}>
             {active?.label || 'Calculators'}
           </span>
         </div>
