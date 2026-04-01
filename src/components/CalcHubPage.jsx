@@ -61,120 +61,315 @@ const CSS = `
 // SHARED COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PALETTE — distinct from standard fintech blue/purple
+// ─────────────────────────────────────────────────────────────────────────────
+const D_INVESTED = '#6B7F95'; // steel slate — committed capital
+const D_RETURNS  = '#E8A020'; // warm amber — earned growth
+const D_C        = '#22B89A'; // teal — for 3-segment charts
+const GAP_DEG    = 3.5;       // degrees of gap between arcs
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CSS
+// ─────────────────────────────────────────────────────────────────────────────
+const CSS = `
+/* ── custom slider track/thumb — data-first style ── */
+.ch-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 2px;
+  border-radius: 1px; outline: none; cursor: pointer;
+  background: transparent; margin: 8px 0;
+}
+.ch-slider::-webkit-slider-runnable-track {
+  height: 2px; border-radius: 1px; background: var(--border2);
+}
+.ch-slider::-moz-range-track {
+  height: 2px; border-radius: 1px; background: var(--border2);
+}
+.ch-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 2px;
+  background: var(--bg2);
+  border: 2px solid #E8A020;
+  box-shadow: 0 0 0 3px rgba(232,160,32,0.15);
+  cursor: pointer; margin-top: -6px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.ch-slider::-webkit-slider-thumb:hover {
+  border-color: #F5B840;
+  box-shadow: 0 0 0 4px rgba(232,160,32,0.25);
+}
+.ch-slider::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 2px;
+  background: var(--bg2); border: 2px solid #E8A020;
+  box-shadow: 0 0 0 3px rgba(232,160,32,0.15);
+  cursor: pointer;
+}
+.ch-tab-active { background: var(--bg3) !important; color: var(--text) !important; border-color: var(--text2) !important; }
+.ch-preset-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 5px; padding: 4px 11px; font-size: 11px; font-family: var(--mono); color: var(--text3); cursor: pointer; transition: all 0.12s; letter-spacing: 0.03em; }
+.ch-preset-btn:hover { border-color: #E8A020; color: var(--text); }
+.ch-preset-active { border-color: #E8A020 !important; color: #E8A020 !important; background: rgba(232,160,32,0.08) !important; }
+.ch-faq-open .ch-faq-icon { transform: rotate(45deg); }
+.ch-section h3 { font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 10px; letter-spacing: -0.01em; }
+.ch-section p { font-size: 13.5px; color: var(--text2); line-height: 1.8; margin: 0 0 12px; }
+.ch-section ul { padding-left: 16px; }
+.ch-section ul li { font-size: 13.5px; color: var(--text2); line-height: 1.8; margin-bottom: 4px; }
+.ch-formula-box { background: var(--bg3); border: 1px solid var(--border); border-left: 3px solid #6B7F95; border-radius: 0 6px 6px 0; padding: 12px 16px; font-family: var(--mono); font-size: 12.5px; color: var(--text); margin: 10px 0 18px; line-height: 1.7; }
+.ch-insight-box { background: rgba(232,160,32,0.06); border-left: 3px solid #E8A020; border-radius: 0 8px 8px 0; padding: 11px 15px; font-size: 13px; color: var(--text2); line-height: 1.75; margin: 14px 0; }
+.ch-related a { display: inline-flex; align-items: center; gap: 5px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 12px; color: var(--text2); text-decoration: none; font-weight: 600; cursor: pointer; font-family: var(--mono); transition: border-color 0.12s, color 0.12s; }
+.ch-related a:hover { border-color: #E8A020; color: #E8A020; }
+.ch-val-input { background: none; border: none; outline: none; font-size: 14px; font-weight: 700; color: var(--text); font-family: var(--mono); text-align: right; width: 100%; }
+.ch-track-fill { transition: width 0.2s; }
+.ch-donut-seg { transition: stroke-width 0.12s; cursor: pointer; }
+@media (max-width: 700px) {
+  .ch-shell-grid { grid-template-columns: 1fr !important; }
+  .ch-donut-col { display: none !important; }
+  .ch-res-grid { grid-template-columns: 1fr !important; }
+}
+`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DONUT — redesigned: thick arcs, gaps, amber/slate palette, center insight
+// ─────────────────────────────────────────────────────────────────────────────
+
+function fmt(n) {
+  if (!n && n !== 0) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1e7)  return `₹${(abs/1e7).toFixed(2)} Cr`;
+  if (abs >= 1e5)  return `₹${(abs/1e5).toFixed(2)} L`;
+  return `₹${Math.round(abs).toLocaleString('en-IN')}`;
+}
+
 function Donut({ a, b, la = 'Invested', lb = 'Returns' }) {
+  const [hov, setHov] = useState(null);
   const total = (a || 0) + (b || 0);
   if (!total) return null;
-  const pA = a / total;
-  const r = 60, cx = 80, cy = 80, sw = 20;
-  const circ = 2 * Math.PI * r;
-  const dA = pA * circ;
-  const dB = circ - dA;
+
+  const r = 52, cx = 80, cy = 80, sw = 24, circ = 2 * Math.PI * r;
+  const pA = a / total, pB = b / total;
+  const gapLen = (GAP_DEG / 360) * circ;
+  const lenA = Math.max(0, pA * circ - gapLen);
+  const lenB = Math.max(0, pB * circ - gapLen);
+  const rotB = -90 + pA * 360 + GAP_DEG;
+
+  const mult = (total / (a || 1)).toFixed(2);
+  const retPct = Math.round((b / total) * 100);
+
+  const center = hov === 0
+    ? { top: fmt(a), bot: la.toLowerCase() }
+    : hov === 1
+    ? { top: fmt(b), bot: lb.toLowerCase() }
+    : retPct >= 50
+    ? { top: `${mult}x`, bot: 'your money' }
+    : { top: `${retPct}%`, bot: 'in returns' };
+
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
-      <div style={{ display:'flex', gap:14, flexWrap:'wrap', justifyContent:'center' }}>
-        {[{c:'#E8EAFF',l:la},{c:'#5B63F5',l:lb}].map((s,i) => (
-          <span key={i} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'var(--text3)' }}>
-            <span style={{ width:9, height:9, borderRadius:'50%', background:s.c, flexShrink:0 }}/>
-            {s.l}
-          </span>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap: 14 }}>
+      <div style={{ position:'relative' }}>
+        <svg width={160} height={160} viewBox="0 0 160 160">
+          {/* Background track */}
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--bg4)" strokeWidth={sw + 2}/>
+          {/* Invested arc */}
+          <circle className="ch-donut-seg" cx={cx} cy={cy} r={r} fill="none"
+            stroke={D_INVESTED}
+            strokeWidth={hov === 0 ? sw + 4 : sw}
+            strokeDasharray={`${lenA} ${circ - lenA}`}
+            strokeLinecap="butt"
+            transform={`rotate(-90 ${cx} ${cy})`}
+            onMouseEnter={() => setHov(0)} onMouseLeave={() => setHov(null)}
+          />
+          {/* Returns arc */}
+          <circle className="ch-donut-seg" cx={cx} cy={cy} r={r} fill="none"
+            stroke={hov === 1 ? '#F5B840' : D_RETURNS}
+            strokeWidth={hov === 1 ? sw + 4 : sw}
+            strokeDasharray={`${lenB} ${circ - lenB}`}
+            strokeLinecap="butt"
+            transform={`rotate(${rotB} ${cx} ${cy})`}
+            onMouseEnter={() => setHov(1)} onMouseLeave={() => setHov(null)}
+          />
+          {/* Center top value */}
+          <text x={cx} y={cy - 6} textAnchor="middle"
+            fontSize="17" fontWeight="800" fill="var(--text)"
+            fontFamily="var(--mono)" style={{ letterSpacing:'-0.5px' }}>
+            {center.top}
+          </text>
+          {/* Center label */}
+          <text x={cx} y={cy + 11} textAnchor="middle"
+            fontSize="10" fontWeight="500" fill="var(--text3)"
+            fontFamily="var(--mono)" style={{ letterSpacing:'0.04em', textTransform:'uppercase' }}>
+            {center.bot}
+          </text>
+        </svg>
+      </div>
+      {/* Integrated legend — line markers, not circles */}
+      <div style={{ display:'flex', gap:20, justifyContent:'center' }}>
+        {[
+          { color: D_INVESTED, label: la, val: a, idx: 0 },
+          { color: D_RETURNS,  label: lb, val: b, idx: 1 },
+        ].map(s => (
+          <div key={s.idx}
+            onMouseEnter={() => setHov(s.idx)}
+            onMouseLeave={() => setHov(null)}
+            style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', cursor:'pointer',
+              opacity: hov === null || hov === s.idx ? 1 : 0.45, transition:'opacity 0.12s' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
+              <div style={{ width:18, height:3, background:s.color, borderRadius:1 }}/>
+              <span style={{ fontSize:10, color:'var(--text3)', fontFamily:'var(--mono)',
+                textTransform:'uppercase', letterSpacing:'0.06em' }}>{s.label}</span>
+            </div>
+            <span style={{ fontSize:13, fontWeight:700, color:'var(--text)', fontFamily:'var(--mono)',
+              paddingLeft:24 }}>{fmt(s.val)}</span>
+          </div>
         ))}
       </div>
-      <svg width={160} height={160} viewBox="0 0 160 160">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--bg4)" strokeWidth={sw}/>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E8EAFF" strokeWidth={sw}
-          strokeDasharray={`${dA} ${dB}`} strokeLinecap="butt"
-          transform={`rotate(-90 ${cx} ${cy})`}/>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#5B63F5" strokeWidth={sw}
-          strokeDasharray={`${dB} ${dA}`} strokeLinecap="butt"
-          transform={`rotate(${-90 + pA*360} ${cx} ${cy})`}/>
-      </svg>
     </div>
   );
 }
 
-function Donut3({ a, b, c, la, lb, lc, ca='#E8EAFF', cb='#5B63F5', cc='#00C896' }) {
+function Donut3({ a, b, c, la='Invested', lb='Returns', lc='Bonus',
+  ca=D_INVESTED, cb=D_RETURNS, cc=D_C }) {
+  const [hov, setHov] = useState(null);
   const total = (a||0)+(b||0)+(c||0);
   if (!total) return null;
   const segs = [{v:a,c:ca,l:la},{v:b,c:cb,l:lb},{v:c,c:cc,l:lc}];
-  const r=60,cx=80,cy=80,sw=20,circ=2*Math.PI*r;
+  const r=52,cx=80,cy=80,sw=24,circ=2*Math.PI*r;
+  const gapLen = (GAP_DEG/360)*circ;
   let cum = -90;
+  const pcts = segs.map(s => (s.v/total*100).toFixed(0));
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
-      <div style={{ display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center' }}>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
+      <svg width={160} height={160} viewBox="0 0 160 160">
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--bg4)" strokeWidth={sw+2}/>
+        {segs.map((seg,i) => {
+          const p=seg.v/total, len=Math.max(0,p*circ-gapLen), rot=cum;
+          cum += p*360 + GAP_DEG/3;
+          return <circle key={i} className="ch-donut-seg" cx={cx} cy={cy} r={r} fill="none"
+            stroke={seg.c} strokeWidth={hov===i ? sw+4 : sw}
+            strokeDasharray={`${len} ${circ-len}`} strokeLinecap="butt"
+            transform={`rotate(${rot} ${cx} ${cy})`}
+            onMouseEnter={()=>setHov(i)} onMouseLeave={()=>setHov(null)}/>;
+        })}
+        <text x={cx} y={cy-6} textAnchor="middle" fontSize="16" fontWeight="800"
+          fill="var(--text)" fontFamily="var(--mono)">
+          {hov !== null ? fmt(segs[hov].v) : fmt(total)}
+        </text>
+        <text x={cx} y={cy+11} textAnchor="middle" fontSize="10" fontWeight="500"
+          fill="var(--text3)" fontFamily="var(--mono)" style={{ textTransform:'uppercase', letterSpacing:'0.04em' }}>
+          {hov !== null ? segs[hov].l.toLowerCase() : 'total'}
+        </text>
+      </svg>
+      <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
         {segs.map((s,i) => (
-          <span key={i} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'var(--text3)' }}>
-            <span style={{ width:9, height:9, borderRadius:'50%', background:s.c, flexShrink:0 }}/>{s.l}
-          </span>
+          <div key={i} onMouseEnter={()=>setHov(i)} onMouseLeave={()=>setHov(null)}
+            style={{ display:'flex', alignItems:'center', gap:6, cursor:'pointer',
+              opacity: hov===null||hov===i ? 1 : 0.4, transition:'opacity 0.12s' }}>
+            <div style={{ width:14, height:3, background:s.c, borderRadius:1 }}/>
+            <span style={{ fontSize:10, color:'var(--text3)', fontFamily:'var(--mono)',
+              textTransform:'uppercase', letterSpacing:'0.05em' }}>{s.l} {pcts[i]}%</span>
+          </div>
         ))}
       </div>
-      <svg width={160} height={160} viewBox="0 0 160 160">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--bg4)" strokeWidth={sw}/>
-        {segs.map((seg,i) => {
-          const p = seg.v/total, d = p*circ, gap = circ-d, rot = cum;
-          cum += p*360;
-          return <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={seg.c} strokeWidth={sw}
-            strokeDasharray={`${d} ${gap}`} strokeLinecap="butt"
-            transform={`rotate(${rot} ${cx} ${cy})`}/>;
-        })}
-      </svg>
     </div>
   );
 }
 
-function SliderRow({ label, value, set, min, max, step=1, pre='', suf='', fmt }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// SLIDER ROW — data-first: sharp, minimal, direct edit
+// ─────────────────────────────────────────────────────────────────────────────
+function SliderRow({ label, value, set, min, max, step=1, pre='', suf='', fmt: fmtFn, hint }) {
   const pct = Math.max(0, Math.min(100, ((value-min)/(max-min))*100));
-  const display = fmt ? fmt(value) : value;
+  const display = fmtFn ? fmtFn(value) : value;
   return (
-    <div style={{ marginBottom:22 }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
-        <span style={{ fontSize:14, color:'var(--text2)' }}>{label}</span>
-        <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-          {pre && <span style={{ fontSize:14, color:'var(--accent)', fontFamily:'var(--mono)' }}>{pre}</span>}
-          <div style={{ background:'var(--gain-bg)', border:'1px solid var(--accent)22', borderRadius:6, padding:'3px 10px',
-            fontSize:14, fontWeight:700, color:'var(--accent)', fontFamily:'var(--mono)', minWidth:90, display:'flex', alignItems:'center' }}>
-            <input type="number" value={value}
-              onChange={e => { const v=Number(e.target.value); if(!isNaN(v)) set(Math.max(min,Math.min(max,v))); }}
-              style={{ background:'none', border:'none', outline:'none', width:'100%', fontSize:14, fontWeight:700,
-                color:'var(--accent)', fontFamily:'var(--mono)', textAlign:'right' }}/>
-          </div>
-          {suf && <span style={{ fontSize:14, color:'var(--accent)', fontWeight:600 }}>{suf}</span>}
+    <div style={{ marginBottom:20 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+        <div>
+          <span style={{ fontSize:13, color:'var(--text2)', fontFamily:'var(--mono)' }}>{label}</span>
+          {hint && <span style={{ fontSize:10, color:'var(--text3)', marginLeft:8, fontFamily:'var(--mono)' }}>{hint}</span>}
+        </div>
+        {/* Direct editable value */}
+        <div style={{ display:'flex', alignItems:'center', gap:3,
+          borderBottom:'1px solid var(--border2)', paddingBottom:1 }}>
+          {pre && <span style={{ fontSize:13, color:'var(--text3)', fontFamily:'var(--mono)' }}>{pre}</span>}
+          <input className="ch-val-input"
+            type="number" value={value}
+            onChange={e => { const v=Number(e.target.value); if(!isNaN(v)) set(Math.max(min,Math.min(max,v))); }}
+            style={{ width: String(value).length > 6 ? 90 : 60 }}
+          />
+          {suf && <span style={{ fontSize:13, color:'var(--text3)', fontFamily:'var(--mono)' }}>{suf}</span>}
         </div>
       </div>
-      <div style={{ position:'relative', height:18, display:'flex', alignItems:'center' }}>
-        <div style={{ position:'absolute', left:0, top:'50%', transform:'translateY(-50%)', width:'100%',
-          height:4, background:'var(--bg4)', borderRadius:2 }}/>
-        <div style={{ position:'absolute', left:0, top:'50%', transform:'translateY(-50%)',
-          width:`${pct}%`, height:4, background:'var(--accent)', borderRadius:2 }}/>
+      {/* Custom track */}
+      <div style={{ position:'relative', height:14, display:'flex', alignItems:'center' }}>
+        <div style={{ position:'absolute', width:'100%', height:2, background:'var(--border2)', borderRadius:1 }}/>
+        <div className="ch-track-fill" style={{ position:'absolute', height:2, background:D_RETURNS,
+          borderRadius:1, width:`${pct}%`, opacity:0.7 }}/>
         <input type="range" min={min} max={max} step={step} value={value}
           onChange={e => set(Number(e.target.value))} className="ch-slider"
-          style={{ position:'relative', zIndex:2, width:'100%' }}/>
+          style={{ position:'relative', zIndex:2, width:'100%', background:'transparent' }}/>
+      </div>
+      <div style={{ display:'flex', justifyContent:'space-between', marginTop:2 }}>
+        <span style={{ fontSize:9, color:'var(--text3)', fontFamily:'var(--mono)' }}>{pre}{min}{suf}</span>
+        <span style={{ fontSize:9, color:'var(--text3)', fontFamily:'var(--mono)' }}>{pre}{max}{suf}</span>
       </div>
     </div>
   );
 }
 
-function RRow({ label, value, bold, accent, sub }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// PRESET STRIP
+// ─────────────────────────────────────────────────────────────────────────────
+function Presets({ presets, onApply, activeIdx }) {
+  return (
+    <div style={{ display:'flex', gap:6, marginBottom:18, flexWrap:'wrap', alignItems:'center' }}>
+      <span style={{ fontSize:10, color:'var(--text3)', fontFamily:'var(--mono)',
+        textTransform:'uppercase', letterSpacing:'0.08em', marginRight:2 }}>Quick:</span>
+      {presets.map((p,i) => (
+        <button key={i}
+          className={`ch-preset-btn${activeIdx === i ? ' ch-preset-active' : ''}`}
+          onClick={() => onApply(p, i)}>
+          {p.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESULT ROW
+// ─────────────────────────────────────────────────────────────────────────────
+function RRow({ label, value, bold, accent, sub, highlight }) {
   return (
     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start',
-      padding:'9px 0', borderBottom:'1px solid var(--border)' }}>
-      <span style={{ fontSize:13, color:'var(--text3)', lineHeight:1.4 }}>{label}</span>
+      padding:'8px 0', borderBottom:'1px solid var(--border)',
+      background: highlight ? 'rgba(232,160,32,0.04)' : 'none' }}>
+      <span style={{ fontSize:12.5, color:'var(--text3)', lineHeight:1.4, fontFamily:'var(--mono)' }}>{label}</span>
       <div style={{ textAlign:'right' }}>
-        <span style={{ fontSize: bold?16:14, fontWeight: bold?800:600,
-          color: accent?'var(--accent)':'var(--text)', fontFamily:'var(--mono)' }}>{value}</span>
-        {sub && <div style={{ fontSize:11, color:'var(--text3)', marginTop:2 }}>{sub}</div>}
+        <span style={{ fontSize: bold?16:13.5, fontWeight: bold?800:600,
+          color: highlight ? D_RETURNS : accent ? 'var(--accent)' : 'var(--text)',
+          fontFamily:'var(--mono)' }}>{value}</span>
+        {sub && <div style={{ fontSize:10.5, color:'var(--text3)', marginTop:1, fontFamily:'var(--mono)' }}>{sub}</div>}
       </div>
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODE TABS
+// ─────────────────────────────────────────────────────────────────────────────
 function ModeTab({ options, active, set }) {
   return (
-    <div style={{ display:'inline-flex', background:'var(--bg3)', borderRadius:10, padding:3, marginBottom:20, gap:2 }}>
+    <div style={{ display:'inline-flex', background:'var(--bg3)', borderRadius:6,
+      padding:3, marginBottom:18, gap:2, border:'1px solid var(--border)' }}>
       {options.map(o => (
         <button key={o.id} onClick={() => set(o.id)}
-          style={{ padding:'6px 18px', borderRadius:8, border:'none', cursor:'pointer', fontSize:13, fontWeight:600,
-            background: active===o.id ? 'var(--accent)' : 'transparent',
-            color: active===o.id ? '#fff' : 'var(--text3)', transition:'all 0.15s' }}>
+          style={{ padding:'5px 16px', borderRadius:4, border:'none', cursor:'pointer',
+            fontSize:12, fontWeight:700, fontFamily:'var(--mono)',
+            background: active===o.id ? 'var(--bg2)' : 'transparent',
+            color: active===o.id ? 'var(--text)' : 'var(--text3)',
+            borderBottom: active===o.id ? `2px solid ${D_RETURNS}` : '2px solid transparent',
+            transition:'all 0.12s', letterSpacing:'0.02em' }}>
           {o.label}
         </button>
       ))}
@@ -182,31 +377,68 @@ function ModeTab({ options, active, set }) {
   );
 }
 
-function Shell({ inputs, donut, results, cta, ctaLabel='INVEST NOW', donuts }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// INSIGHT CHIP — contextual guidance below results
+// ─────────────────────────────────────────────────────────────────────────────
+function Insight({ text }) {
+  if (!text) return null;
   return (
-    <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:14, overflow:'hidden', marginBottom:32 }}>
-      <div className="ch-shell-grid" style={{ display:'grid', gridTemplateColumns:'1fr 220px', gap:0 }}>
-        <div style={{ padding:'26px 28px' }}>{inputs}</div>
+    <div style={{ display:'flex', alignItems:'flex-start', gap:8,
+      background:'rgba(107,127,149,0.08)', border:'1px solid rgba(107,127,149,0.2)',
+      borderLeft:`3px solid ${D_INVESTED}`, borderRadius:'0 6px 6px 0',
+      padding:'9px 12px', marginTop:8, fontSize:12.5, color:'var(--text2)',
+      lineHeight:1.65, fontFamily:'var(--mono)' }}>
+      <span style={{ color:D_RETURNS, flexShrink:0, fontSize:14 }}>◆</span>
+      <span>{text}</span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHELL — 2-col layout: inputs | donut, then results strip
+// ─────────────────────────────────────────────────────────────────────────────
+function Shell({ inputs, donut, results, cta, ctaLabel='INVEST NOW', donuts, insight }) {
+  return (
+    <div style={{ background:'var(--bg2)', border:'1px solid var(--border)',
+      borderRadius:10, overflow:'hidden', marginBottom:28 }}>
+      <div className="ch-shell-grid" style={{ display:'grid', gridTemplateColumns:'1fr 210px', gap:0 }}>
+        <div style={{ padding:'24px 26px 20px' }}>{inputs}</div>
         {(donut||donuts) && (
-          <div className="ch-donut-col" style={{ padding:'26px 20px', borderLeft:'1px solid var(--border)',
-            display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center', gap:16 }}>
+          <div className="ch-donut-col" style={{ padding:'24px 18px',
+            borderLeft:'1px solid var(--border)',
+            display:'flex', flexDirection:'column', justifyContent:'center',
+            alignItems:'center', gap:12, background:'var(--bg3)' }}>
             {donut||donuts}
           </div>
         )}
       </div>
-      <div className="ch-res-grid" style={{ padding:'20px 28px 24px', borderTop:'1px solid var(--border)',
-        display:'grid', gridTemplateColumns:'1fr auto', gap:32, alignItems:'end' }}>
-        <div>{results}</div>
+      <div className="ch-res-grid" style={{ padding:'16px 26px 20px',
+        borderTop:'1px solid var(--border)',
+        display:'grid', gridTemplateColumns:'1fr auto', gap:28, alignItems:'end',
+        background:'var(--bg3)' }}>
+        <div>
+          {results}
+          {insight && <Insight text={insight}/>}
+        </div>
         {cta && (
-          <button style={{ background:'var(--accent)', color:'#fff', border:'none', borderRadius:8,
-            padding:'12px 22px', fontSize:13, fontWeight:700, cursor:'pointer', letterSpacing:'0.05em',
-            whiteSpace:'nowrap', alignSelf:'flex-end' }}>{ctaLabel}</button>
+          <button style={{ background:D_RETURNS, color:'#000', border:'none',
+            borderRadius:6, padding:'11px 20px', fontSize:12, fontWeight:800,
+            cursor:'pointer', letterSpacing:'0.06em', whiteSpace:'nowrap',
+            fontFamily:'var(--mono)', alignSelf:'flex-end',
+            transition:'background 0.12s' }}
+            onMouseEnter={e=>e.target.style.background='#F5B840'}
+            onMouseLeave={e=>e.target.style.background=D_RETURNS}>
+            {ctaLabel}
+          </button>
         )}
       </div>
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FAQ
+// ─────────────────────────────────────────────────────────────────────────────
 function FAQ({ faqs }) {
   const [open, setOpen] = useState(null);
   return (
@@ -215,12 +447,13 @@ function FAQ({ faqs }) {
         <div key={i} className={open===i?'ch-faq-open':''} style={{ borderBottom:'1px solid var(--border)' }}>
           <button onClick={() => setOpen(open===i?null:i)}
             style={{ display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%',
-              padding:'14px 0', background:'none', border:'none', cursor:'pointer', textAlign:'left', gap:12 }}>
-            <span style={{ fontSize:14, fontWeight:600, color:'var(--text)', lineHeight:1.4 }}>{f.q}</span>
-            <span className="ch-faq-icon" style={{ fontSize:20, color:'var(--text3)', flexShrink:0, display:'inline-block',
-              transition:'transform 0.2s' }}>+</span>
+              padding:'13px 0', background:'none', border:'none', cursor:'pointer',
+              textAlign:'left', gap:12 }}>
+            <span style={{ fontSize:13.5, fontWeight:600, color:'var(--text)', lineHeight:1.4 }}>{f.q}</span>
+            <span className="ch-faq-icon" style={{ fontSize:18, color:'var(--text3)', flexShrink:0,
+              display:'inline-block', transition:'transform 0.2s' }}>+</span>
           </button>
-          {open===i && <div style={{ fontSize:13.5, color:'var(--text2)', lineHeight:1.75, paddingBottom:16 }}>{f.a}</div>}
+          {open===i && <div style={{ fontSize:13, color:'var(--text2)', lineHeight:1.8, paddingBottom:14 }}>{f.a}</div>}
         </div>
       ))}
     </div>
@@ -229,7 +462,7 @@ function FAQ({ faqs }) {
 
 function Section({ title, children }) {
   return (
-    <div className="ch-section" style={{ marginBottom:28 }}>
+    <div className="ch-section" style={{ marginBottom:24 }}>
       <h3>{title}</h3>
       {children}
     </div>
@@ -239,7 +472,7 @@ function Section({ title, children }) {
 function RelatedCalcs({ ids, nav }) {
   const items = CALC_REGISTRY.filter(c => ids.includes(c.id));
   return (
-    <div className="ch-related" style={{ display:'flex', flexWrap:'wrap', gap:10, marginTop:8 }}>
+    <div className="ch-related" style={{ display:'flex', flexWrap:'wrap', gap:8, marginTop:8 }}>
       {items.map(c => (
         <a key={c.id} onClick={() => nav(c.id)}>{c.label} →</a>
       ))}
@@ -251,11 +484,18 @@ function RelatedCalcs({ ids, nav }) {
 // CALCULATORS
 // ─────────────────────────────────────────────────────────────────────────────
 
+const SIP_PRESETS = [
+  { label: 'Starter',   amount:5000,  rate:11, years:10 },
+  { label: 'Builder',   amount:25000, rate:12, years:15 },
+  { label: 'Aggressive',amount:50000, rate:13, years:20 },
+];
+
 function SipCalc({ nav }) {
   const [mode, setMode] = useState('sip');
   const [amount, setAmount] = useState(25000);
   const [rate, setRate] = useState(12);
   const [years, setYears] = useState(10);
+  const [presetIdx, setPresetIdx] = useState(null);
   const { invested, returns, total } = useMemo(() => {
     if (mode === 'sip') {
       const t = sipFV(amount, rate, years);
@@ -266,20 +506,36 @@ function SipCalc({ nav }) {
       return { invested: amount, returns: t - amount, total: t };
     }
   }, [mode, amount, rate, years]);
+
+  const mult = total > 0 ? (total / (invested || 1)).toFixed(2) : null;
+  const retPct = total > 0 ? ((returns / total) * 100).toFixed(0) : 0;
+  const insight = (() => {
+    if (mode === 'sip') {
+      if (returns > invested * 2) return `Your returns (${INRF(returns)}) are ${Math.round(returns/invested*100)}% of what you put in. Compounding is doing most of the heavy lifting after year ${Math.round(years * 0.6)}.`;
+      if (years < 7) return `Short tenures limit compounding. Extending to ${years + 5} years would roughly double your gains.`;
+      return `You invest ${INRF(amount)}/mo for ${years} years. Your money grows ${mult}x. Each extra year at this rate adds ~${INRF(sipFV(amount, rate, years+1) - sipFV(amount, rate, years))}.`;
+    }
+    return mult >= 3 ? `${mult}x growth over ${years} years. At ${rate}% CAGR, money doubles every ${(72/rate).toFixed(1)} years (Rule of 72).`
+      : `Consider a longer horizon. At ${rate}%, extending to ${years+5} years would grow this to ${INRF(lsFV(amount, rate, years+5))}.`;
+  })();
+
   return (<>
     <Shell
       inputs={<>
         <ModeTab options={[{id:'sip',label:'SIP'},{id:'lumpsum',label:'Lumpsum'}]} active={mode} set={setMode}/>
-        <SliderRow label={mode==='sip'?'Monthly investment':'Total investment'} value={amount} set={setAmount} min={500} max={500000} step={500} pre="₹"/>
-        <SliderRow label="Expected return rate (p.a)" value={rate} set={setRate} min={1} max={30} step={0.5} suf="%"/>
-        <SliderRow label="Time period" value={years} set={setYears} min={1} max={40} suf="Yr"/>
+        {mode === 'sip' && <Presets presets={SIP_PRESETS} activeIdx={presetIdx}
+          onApply={(p,i) => { setAmount(p.amount); setRate(p.rate); setYears(p.years); setPresetIdx(i); }}/>}
+        <SliderRow label={mode==='sip'?'Monthly investment':'Total investment'} value={amount} set={v=>{setAmount(v);setPresetIdx(null);}} min={500} max={500000} step={500} pre="₹"/>
+        <SliderRow label="Expected return (p.a.)" value={rate} set={v=>{setRate(v);setPresetIdx(null);}} min={1} max={30} step={0.5} suf="%" hint="Nifty 50 avg: ~12%"/>
+        <SliderRow label="Time period" value={years} set={v=>{setYears(v);setPresetIdx(null);}} min={1} max={40} suf="Yr"/>
       </>}
       donut={<Donut a={invested} b={returns}/>}
       results={<>
         <RRow label="Invested amount" value={INRF(invested)}/>
         <RRow label="Est. returns" value={INRF(returns)}/>
-        <RRow label="Total value" value={INRF(total)} bold/>
+        <RRow label="Total value" value={INRF(total)} bold highlight/>
       </>}
+      insight={insight}
       cta ctaLabel="INVEST NOW"
     />
     <SipSEO nav={nav}/>
@@ -793,21 +1049,37 @@ function EmiCalc({ type = 'general', nav }) {
   }, [loan, rate, tenure, emi]);
 
   const title = type === 'car' ? 'Car Loan' : type === 'home' ? 'Home Loan' : 'Loan';
+  const interestRatio = totalInterest / (loan || 1);
+  const emiInsight = (() => {
+    if (interestRatio > 1) return `You pay more interest (${INRF(totalInterest)}) than principal. Increasing your EMI by ₹5,000/mo would save ${INRF(totalInterest * 0.15)} in interest.`;
+    if (interestRatio > 0.5) return `Total interest is ${Math.round(interestRatio * 100)}% of your loan. Every prepayment made in the first 3 years saves 3-4x that amount in interest.`;
+    return `Interest load is moderate. Consider a balance transfer if rates fall below ${(rate - 0.5).toFixed(2)}%.`;
+  })();
+
+  const EMI_PRESETS = type === 'home'
+    ? [{label:'20L · 15yr',loan:2000000,rate:8.75,tenure:15},{label:'50L · 20yr',loan:5000000,rate:8.5,tenure:20},{label:'1Cr · 25yr',loan:10000000,rate:9,tenure:25}]
+    : type === 'car'
+    ? [{label:'5L · 3yr',loan:500000,rate:9,tenure:3},{label:'10L · 5yr',loan:1000000,rate:8.5,tenure:5},{label:'20L · 7yr',loan:2000000,rate:9.5,tenure:7}]
+    : [{label:'5L · 3yr',loan:500000,rate:12,tenure:3},{label:'10L · 5yr',loan:1000000,rate:10,tenure:5},{label:'25L · 7yr',loan:2500000,rate:9.5,tenure:7}];
+  const [emiPresetIdx, setEmiPresetIdx] = useState(null);
 
   return (<>
     <Shell
       inputs={<>
-        <SliderRow label="Loan amount" value={loan} set={setLoan} min={10000} max={50000000} step={10000} pre="₹"/>
-        <SliderRow label="Rate of interest (p.a)" value={rate} set={setRate} min={5} max={24} step={0.1} suf="%"/>
-        <SliderRow label={`${title} tenure`} value={tenure} set={setTenure} min={1} max={type==='home'?30:10} suf="Yr"/>
+        <Presets presets={EMI_PRESETS} activeIdx={emiPresetIdx}
+          onApply={(p,i)=>{setLoan(p.loan);setRate(p.rate);setTenure(p.tenure);setEmiPresetIdx(i);}}/>
+        <SliderRow label="Loan amount" value={loan} set={v=>{setLoan(v);setEmiPresetIdx(null);}} min={10000} max={50000000} step={10000} pre="₹"/>
+        <SliderRow label="Rate of interest (p.a.)" value={rate} set={v=>{setRate(v);setEmiPresetIdx(null);}} min={5} max={24} step={0.1} suf="%"/>
+        <SliderRow label={`${title} tenure`} value={tenure} set={v=>{setTenure(v);setEmiPresetIdx(null);}} min={1} max={type==='home'?30:10} suf="Yr"/>
       </>}
-      donut={<Donut a={loan} b={totalInterest} la="Principal amount" lb="Interest amount"/>}
+      donut={<Donut a={loan} b={totalInterest} la="Principal" lb="Interest"/>}
       results={<>
-        <RRow label="Monthly EMI" value={INRF(emi)} bold accent/>
+        <RRow label="Monthly EMI" value={INRF(emi)} bold highlight/>
         <RRow label="Principal amount" value={INRF(loan)}/>
         <RRow label="Total interest" value={INRF(totalInterest)}/>
         <RRow label="Total amount" value={INRF(totalAmount)} bold/>
       </>}
+      insight={emiInsight}
     />
     <div>
       <div style={{ textAlign:'center', marginBottom:8, cursor:'pointer', color:'var(--text3)', fontSize:13 }}
