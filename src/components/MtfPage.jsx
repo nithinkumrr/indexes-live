@@ -7,7 +7,6 @@ const fmtCr  = v => v != null ? `₹${Number(v).toLocaleString('en-IN', { minimu
 const fmtAmt = v => v != null ? Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '--';
 
 const PAGE_STEP = 30;
-const MAX_ROWS  = 80;
 
 function symbolColor(sym) {
   const palette = ['#4A9EFF','#00C896','#A78BFA','#F59E0B','#FF4455','#FB923C','#34D399','#F472B6','#60A5FA'];
@@ -170,10 +169,9 @@ export default function MtfPage() {
     return 0;
   });
 
-  const capped  = sorted.slice(0, MAX_ROWS);
+  const capped  = sorted;
   const paged   = capped.slice(0, visibleRows);
   const canLoad = visibleRows < capped.length;
-  const atMax   = visibleRows >= MAX_ROWS && capped.length >= MAX_ROWS;
 
   const loadMore = () => {
     const prev = visibleRows;
@@ -192,10 +190,8 @@ export default function MtfPage() {
   const netPositive = (summary.netChange ?? 0) >= 0;
   const top5 = stocks.slice(0, 5);
   const showingLabel = canLoad
-    ? `Showing ${paged.length} of top ${capped.length}`
-    : atMax
-      ? `Showing top ${MAX_ROWS} stocks`
-      : `${capped.length} stocks`;
+    ? `Showing ${paged.length} of ${capped.length}`
+    : `${capped.length} stocks`;
 
   return (
     <div className="mtf-wrap">
@@ -329,12 +325,10 @@ export default function MtfPage() {
         </div>
 
         <div className="mtf-more-wrap">
-          {canLoad && !atMax ? (
+          {canLoad ? (
             <button className="mtf-more-btn" onClick={loadMore}>
               Load next {Math.min(PAGE_STEP, capped.length - visibleRows)}
             </button>
-          ) : atMax ? (
-            <span className="mtf-more-status">Showing top {MAX_ROWS} stocks</span>
           ) : null}
         </div>
 
@@ -347,7 +341,7 @@ export default function MtfPage() {
       </div>
 
       <div className="mtf-footer-note">
-        Data sourced from NSE MTF disclosure. LTP fetched post market close. Not investment advice.
+        Data sourced from NSE and processed for informational purposes only. This is not investment advice. Users should verify data independently.
       </div>
     </div>
   );
