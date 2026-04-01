@@ -576,25 +576,27 @@ export default function MtfMobilePage({ setView }) {
           { id: 'overall',    label: 'Overall' },
           { id: 'added',      label: 'Added' },
           { id: 'liquidated', label: 'Liquidated' },
-        ].map(t => (
+        ].map(t => {
+          const isActive = tab === t.id;
+          const activeBorder = t.id === 'added' ? '1px solid rgba(27,175,142,0.3)' : t.id === 'liquidated' ? '1px solid rgba(232,98,26,0.3)' : '1px solid rgba(74,158,255,0.25)';
+          return (
           <button key={t.id}
             onClick={() => { setTab(t.id); setVisibleRows(PAGE_STEP); }}
             style={{
-              padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
               fontSize: 12, fontWeight: 700, letterSpacing: '0.02em',
-              background: tab === t.id
+              border: isActive ? activeBorder : '1px solid var(--border)',
+              background: isActive
                 ? (t.id === 'added' ? 'var(--gain-bg)' : t.id === 'liquidated' ? 'var(--loss-bg)' : 'var(--accent-bg, rgba(74,158,255,0.12))')
                 : 'var(--bg2)',
-              color: tab === t.id
+              color: isActive
                 ? (t.id === 'added' ? 'var(--gain)' : t.id === 'liquidated' ? 'var(--loss)' : 'var(--accent)')
                 : 'var(--text3)',
-              border: tab === t.id
-                ? (t.id === 'added' ? '1px solid rgba(27,175,142,0.3)' : t.id === 'liquidated' ? '1px solid rgba(232,98,26,0.3)' : '1px solid rgba(74,158,255,0.25)')
-                : '1px solid var(--border)',
             }}>
             {t.label}
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {/* ── List section ───────────────────────────────────────────────────── */}

@@ -309,7 +309,7 @@ function LumpsumCalc({ nav }) {
     />
     <div className="ch-section">
       <Section title="What is a Lumpsum Investment?">
-        <p>A lumpsum investment is when you put a single large amount into a mutual fund all at once, instead of spreading it out monthly. It works best when you have a windfall — a bonus, inheritance, or sale proceeds — and want to put it to work immediately.</p>
+        <p>A lumpsum investment is when you put a single large amount into a mutual fund all at once, instead of spreading it out monthly. It works best when you have a windfall, a bonus, inheritance, or sale proceeds, and want to put it to work immediately.</p>
         <p>Unlike SIP, which benefits from rupee cost averaging, a lumpsum investment is entirely exposed to market timing. Invest at a market peak and returns suffer; invest at a dip and they can be spectacular.</p>
       </Section>
       <Section title="How the Calculator Works">
@@ -317,14 +317,14 @@ function LumpsumCalc({ nav }) {
         <div className="ch-formula-box">FV = P × (1 + r)ⁿ<br/>Where P = invested amount, r = annual return rate, n = number of years</div>
       </Section>
       <Section title="Example">
-        <p>You invest ₹5 Lakhs in an equity mutual fund at an expected 12% return. After 15 years: FV = 5,00,000 × (1.12)¹⁵ = ₹27.37 Lakhs. Your ₹5L became ₹27L — the power of compounding over time.</p>
+        <p>You invest ₹5 Lakhs in an equity mutual fund at an expected 12% return. After 15 years: FV = 5,00,000 × (1.12)¹⁵ = ₹27.37 Lakhs. Your ₹5L became ₹27L, the power of compounding over time.</p>
       </Section>
       <div className="ch-insight-box">💡 A lumpsum in an index fund during a market correction historically outperforms SIP over the same period. If you have conviction and timing, lumpsum can deliver better results.</div>
       <Section title="FAQs">
         <FAQ faqs={[
           {q:'Is lumpsum better than SIP?',a:'Neither is universally better. SIP reduces timing risk through averaging. Lumpsum is better if you invest during market corrections. For most retail investors, SIP is safer.'},
           {q:'What is the minimum lumpsum investment?',a:'Most mutual funds have a minimum lumpsum of ₹1,000 to ₹5,000. Direct plans via AMC websites often have lower minimums.'},
-          {q:'Can I do lumpsum in any mutual fund?',a:'Yes — equity, debt, hybrid, index funds. The expected return rate will differ. Equity: 10-14%, Debt: 6-8%.'},
+          {q:'Can I do lumpsum in any mutual fund?',a:'Yes, equity, debt, hybrid, index funds. The expected return rate will differ. Equity: 10-14%, Debt: 6-8%.'},
           {q:'Is lumpsum investment taxable?',a:'Yes. Short-term capital gains (< 1 year for equity) are taxed at 20%. Long-term gains above ₹1.25L are taxed at 12.5% for equity funds.'},
         ]}/>
       </Section>
@@ -337,7 +337,7 @@ function SipSEO({ nav }) {
   return (
     <div>
       <Section title="What is a SIP Calculator?">
-        <p>A SIP (Systematic Investment Plan) calculator helps you estimate the corpus you'll build by investing a fixed amount every month in a mutual fund. Type in your monthly amount, expected return, and tenure — and it instantly shows you the wealth you're headed towards.</p>
+        <p>A SIP (Systematic Investment Plan) calculator helps you estimate the corpus you'll build by investing a fixed amount every month in a mutual fund. Type in your monthly amount, expected return, and tenure, and it instantly shows you the wealth you're headed towards.</p>
         <p>It doesn't predict the future, but it gives you a directional number that's surprisingly accurate over long periods, thanks to the mathematical consistency of compounding.</p>
       </Section>
       <Section title="How SIP Returns Are Calculated">
@@ -347,13 +347,13 @@ function SipSEO({ nav }) {
       <Section title="Real Example">
         <p>₹10,000/month for 20 years at 12% p.a. → Total invested: ₹24L. Estimated corpus: ₹98.9L. Your money nearly quadrupled in real terms. Now try ₹15,000/month: corpus jumps to ₹1.48 Cr. Small increases in SIP amount have outsized impact.</p>
       </Section>
-      <div className="ch-insight-box">💡 Increasing your SIP by 10% every year (Step-up SIP) can grow your corpus by 50–70% more than a flat SIP over 20 years. Always use the Step-up SIP calculator alongside this one.</div>
+      <div className="ch-insight-box">💡 Increasing your SIP by 10% every year (Step-up SIP) can grow your corpus by 50-70% more than a flat SIP over 20 years. Always use the Step-up SIP calculator alongside this one.</div>
       <Section title="When to Use This">
         <ul>
           <li>Starting a new SIP and want to know how much you'll accumulate</li>
           <li>Reverse-calculating: what SIP do I need to reach ₹1 Cr?</li>
           <li>Comparing different fund return assumptions (10% vs 12% vs 14%)</li>
-          <li>Planning for a goal — children's education, retirement, property</li>
+          <li>Planning for a goal, children's education, retirement, property</li>
         </ul>
       </Section>
       <Section title="FAQs">
@@ -409,9 +409,9 @@ function SwpCalc({ nav }) {
         <div className="ch-formula-box">Corpus(t+1) = Corpus(t) × (1 + r/12) − Monthly Withdrawal</div>
       </Section>
       <Section title="Example">
-        <p>₹50L corpus, withdrawing ₹25,000/month at 8% return for 20 years. Monthly return: 0.67%. After simulating 240 months — corpus survives and still has ~₹8L remaining. Increase withdrawal to ₹35,000/month and the corpus depletes before 20 years.</p>
+        <p>₹50L corpus, withdrawing ₹25,000/month at 8% return for 20 years. Monthly return: 0.67%. After simulating 240 months, corpus survives and still has ~₹8L remaining. Increase withdrawal to ₹35,000/month and the corpus depletes before 20 years.</p>
       </Section>
-      <div className="ch-insight-box">💡 A safe withdrawal rate for a corpus invested in equity-debt hybrid is typically 3–4% annually. For ₹1 Cr corpus at 4% SWR, you can withdraw ₹4L/year (₹33,333/month) indefinitely.</div>
+      <div className="ch-insight-box">💡 A safe withdrawal rate for a corpus invested in equity-debt hybrid is typically 3-4% annually. For ₹1 Cr corpus at 4% SWR, you can withdraw ₹4L/year (₹33,333/month) indefinitely.</div>
       <Section title="FAQs">
         <FAQ faqs={[
           {q:'How is SWP different from dividend payout?',a:'SWP gives you a fixed, predictable monthly amount regardless of market conditions. Dividends depend on fund performance and the AMC decision. SWP is more reliable for income planning.'},
@@ -448,8 +448,8 @@ function MfCalc({ nav }) {
     />
     <div>
       <Section title="What is a Mutual Fund Returns Calculator?">
-        <p>This calculator estimates how a lumpsum mutual fund investment grows over time at an expected annual return rate. Think of it as a compounding machine — your money earns returns, and those returns earn more returns.</p>
-        <p>Different fund categories have different expected return ranges. Large-cap equity: 10–13%. Mid-cap: 12–16%. Debt funds: 6–8%. Hybrid: 9–11%. This calculator lets you test any assumption.</p>
+        <p>This calculator estimates how a lumpsum mutual fund investment grows over time at an expected annual return rate. Think of it as a compounding machine, your money earns returns, and those returns earn more returns.</p>
+        <p>Different fund categories have different expected return ranges. Large-cap equity: 10-13%. Mid-cap: 12-16%. Debt funds: 6-8%. Hybrid: 9-11%. This calculator lets you test any assumption.</p>
       </Section>
       <Section title="Formula">
         <div className="ch-formula-box">Future Value = P × (1 + r)ⁿ<br/>Where P = invested amount, r = annual return rate, n = years</div>
@@ -500,7 +500,7 @@ function FdCalc({ nav }) {
         <FAQ faqs={[
           {q:'Is FD interest taxable?',a:'Yes. FD interest is added to your income and taxed at your slab rate. If total FD interest exceeds ₹40,000/year (₹50,000 for seniors), the bank deducts TDS at 10%.'},
           {q:'What is the safest FD?',a:'FDs in scheduled commercial banks are insured up to ₹5 Lakhs per bank per depositor by DICGC. Split large amounts across multiple banks if needed.'},
-          {q:'FD vs debt mutual fund — which is better?',a:'For tenures under 3 years, FD is simpler and predictable. For 3+ years, debt mutual funds (especially gilt or dynamic bond funds) can be more tax-efficient for high-bracket taxpayers since LTCG benefits apply.'},
+          {q:'FD vs debt mutual fund, which is better?',a:'For tenures under 3 years, FD is simpler and predictable. For 3+ years, debt mutual funds (especially gilt or dynamic bond funds) can be more tax-efficient for high-bracket taxpayers since LTCG benefits apply.'},
           {q:'Can I break an FD early?',a:'Yes, but banks charge a premature withdrawal penalty of 0.5-1%, and you get the lower applicable rate for the period held, not the full tenure rate.'},
         ]}/>
       </Section>
@@ -544,12 +544,12 @@ function RdCalc({ nav }) {
     />
     <div>
       <Section title="What is an RD Calculator?">
-        <p>A Recurring Deposit (RD) calculator estimates the maturity amount when you deposit a fixed amount every month into a bank RD. It's similar to SIP but with guaranteed returns — no market risk. RDs use quarterly compounding.</p>
+        <p>A Recurring Deposit (RD) calculator estimates the maturity amount when you deposit a fixed amount every month into a bank RD. It's similar to SIP but with guaranteed returns, no market risk. RDs use quarterly compounding.</p>
       </Section>
       <Section title="FAQs">
         <FAQ faqs={[
           {q:'Is RD interest taxable?',a:'Yes. RD interest is taxed at your income slab rate. TDS is deducted if total bank interest exceeds ₹40,000/year.'},
-          {q:'RD vs SIP — which should I choose?',a:'RD guarantees the return but it will be 6-8%. SIP in equity mutual funds is not guaranteed but has historically delivered 10-14% over long periods. RD for short-term goals, SIP for long-term wealth.'},
+          {q:'RD vs SIP, which should I choose?',a:'RD guarantees the return but it will be 6-8%. SIP in equity mutual funds is not guaranteed but has historically delivered 10-14% over long periods. RD for short-term goals, SIP for long-term wealth.'},
           {q:'Can I break an RD early?',a:'Yes, with a penalty (typically 1% lower rate for the actual period). Post offices allow partial withdrawals after 1 year.'},
         ]}/>
       </Section>
@@ -670,7 +670,7 @@ function HraCalc({ nav }) {
     </div>
     <div>
       <Section title="What is HRA Exemption?">
-        <p>HRA (House Rent Allowance) is a component of your salary that can be partially or fully exempted from income tax if you live in a rented house. The exemption is the minimum of three amounts — actual HRA received, a percentage of basic salary, and rent paid minus 10% of basic salary.</p>
+        <p>HRA (House Rent Allowance) is a component of your salary that can be partially or fully exempted from income tax if you live in a rented house. The exemption is the minimum of three amounts, actual HRA received, a percentage of basic salary, and rent paid minus 10% of basic salary.</p>
       </Section>
       <Section title="Formula">
         <div className="ch-formula-box">
@@ -750,12 +750,12 @@ function RetirementCalc({ nav }) {
     <div>
       <Section title="What is a Retirement Calculator?">
         <p>This calculator estimates how much corpus you need to retire comfortably, and how much you need to save every month from today to get there. It factors in inflation (the silent destroyer of retirement plans) and adjusts your future monthly expenses accordingly.</p>
-        <p>Retiring at 60 with today's ₹50,000/month lifestyle is not the same as needing ₹50,000/month at 60 — if inflation runs at 6%, you'll need ₹1,60,000+/month by then.</p>
+        <p>Retiring at 60 with today's ₹50,000/month lifestyle is not the same as needing ₹50,000/month at 60, if inflation runs at 6%, you'll need ₹1,60,000+/month by then.</p>
       </Section>
       <Section title="FAQs">
         <FAQ faqs={[
           {q:'What is a safe withdrawal rate?',a:'The 4% rule: you can withdraw 4% of your corpus annually without depleting it over 30 years (assuming balanced portfolio returns). For a 3% rate, the corpus lasts much longer. This calculator uses 4% for safe/conservative and 5% for aggressive portfolios.'},
-          {q:'Should I account for pension and other income?',a:"Yes. If you'll have a pension, rental income, or interest income in retirement, reduce your required corpus accordingly. This calculator gives you the gross number — subtract guaranteed income streams."},
+          {q:'Should I account for pension and other income?',a:"Yes. If you'll have a pension, rental income, or interest income in retirement, reduce your required corpus accordingly. This calculator gives you the gross number, subtract guaranteed income streams."},
           {q:'Does this account for healthcare costs?',a:"Healthcare costs tend to rise faster than general inflation in India (10-12% annually). Add a 15-20% buffer to your corpus if you don't have a comprehensive health cover in retirement."},
         ]}/>
       </Section>
@@ -839,7 +839,7 @@ function EmiCalc({ type = 'general', nav }) {
       )}
       <Section title={`What is a ${type==='home'?'Home Loan':type==='car'?'Car Loan':'Loan'} EMI Calculator?`}>
         <p>EMI (Equated Monthly Instalment) is the fixed monthly payment you make towards your loan. It includes both principal repayment and interest. Early in the loan tenure, most of your EMI goes toward interest. As the loan matures, the principal portion grows (this is called amortisation).</p>
-        <p>The calculator also shows you an amortisation schedule — a year-by-year breakdown of how much you're paying in principal vs interest, and how your outstanding balance reduces.</p>
+        <p>The calculator also shows you an amortisation schedule, a year-by-year breakdown of how much you're paying in principal vs interest, and how your outstanding balance reduces.</p>
       </Section>
       <Section title="EMI Formula">
         <div className="ch-formula-box">EMI = P × r × (1+r)ⁿ / [(1+r)ⁿ − 1]<br/>P = loan amount, r = monthly rate (annual ÷ 12), n = tenure in months</div>
@@ -895,7 +895,7 @@ function StepUpSipCalc({ nav }) {
     />
     <div>
       <Section title="What is a Step-up SIP Calculator?">
-        <p>A Step-up SIP (also called Top-up SIP or Escalation SIP) is a SIP where you automatically increase your monthly investment by a fixed percentage every year. It aligns perfectly with how salaries grow — as you earn more, you invest more.</p>
+        <p>A Step-up SIP (also called Top-up SIP or Escalation SIP) is a SIP where you automatically increase your monthly investment by a fixed percentage every year. It aligns perfectly with how salaries grow, as you earn more, you invest more.</p>
         <p>The extra wealth created by this simple habit is substantial. This calculator even shows you exactly how much more you accumulate vs a flat SIP at the same starting amount.</p>
       </Section>
       <Section title="FAQs">
@@ -932,7 +932,7 @@ function SimpleInterestCalc({ nav }) {
     />
     <div>
       <Section title="What is Simple Interest?">
-        <p>Simple interest is calculated only on the original principal amount. Unlike compound interest, there's no "interest on interest" — the interest earned each year is always the same fixed amount. Most short-term loans and some government schemes use simple interest.</p>
+        <p>Simple interest is calculated only on the original principal amount. Unlike compound interest, there's no "interest on interest", the interest earned each year is always the same fixed amount. Most short-term loans and some government schemes use simple interest.</p>
       </Section>
       <Section title="Formula">
         <div className="ch-formula-box">SI = (P × R × T) / 100<br/>Total = P + SI<br/>Where P = Principal, R = Rate per annum, T = Time in years</div>
@@ -984,7 +984,7 @@ function CompoundInterestCalc({ nav }) {
     />
     <div>
       <Section title="What is Compound Interest?">
-        <p>Compound interest earns interest on previously earned interest, not just the principal. This is the fundamental reason why long-term investing is so powerful — your wealth grows exponentially, not linearly. Einstein reportedly called it the eighth wonder of the world.</p>
+        <p>Compound interest earns interest on previously earned interest, not just the principal. This is the fundamental reason why long-term investing is so powerful, your wealth grows exponentially, not linearly. Einstein reportedly called it the eighth wonder of the world.</p>
         <p>The compounding frequency matters: monthly compounding produces slightly more than quarterly, which is more than half-yearly, which beats annual. For most investments in India, quarterly compounding is standard.</p>
       </Section>
       <Section title="Formula">
@@ -1025,14 +1025,14 @@ function NscCalc({ nav }) {
     />
     <div>
       <Section title="What is an NSC Calculator?">
-        <p>NSC (National Savings Certificate) is a government-backed savings scheme available at post offices across India. It offers a fixed return for a 5-year tenure with half-yearly compounding. The current rate (FY 2024-25) is 7.7% p.a. — one of the better guaranteed return options for conservative investors.</p>
+        <p>NSC (National Savings Certificate) is a government-backed savings scheme available at post offices across India. It offers a fixed return for a 5-year tenure with half-yearly compounding. The current rate (FY 2024-25) is 7.7% p.a., one of the better guaranteed return options for conservative investors.</p>
         <p>NSC qualifies for Section 80C deduction (up to ₹1.5L), and the interest reinvested (not actually paid out) also qualifies for 80C in years 1-4. Only the year 5 interest is fully taxable.</p>
       </Section>
       <Section title="FAQs">
         <FAQ faqs={[
           {q:'Is NSC interest taxable?',a:'Yes, but with a twist. The interest is deemed reinvested for years 1-4 and qualifies for 80C deduction, effectively making it tax-free. Only the interest in year 5 is taxable as income from other sources.'},
-          {q:'Can I break NSC early?',a:'NSC cannot be prematurely encashed, except in case of death of holder, court order, or forfeiture by pledged bank. Plan accordingly — keep emergency funds separately.'},
-          {q:'NSC vs PPF vs FD — which is best?',a:'PPF gives 7.1% (tax-free maturity), NSC gives 7.7% (partially taxable), FD gives 7-7.5% (fully taxable). For those in the 30% tax bracket, PPF wins. For 10-20% bracket, NSC or FD are comparable. NSC is better than FD for 80C planning.'},
+          {q:'Can I break NSC early?',a:'NSC cannot be prematurely encashed, except in case of death of holder, court order, or forfeiture by pledged bank. Plan accordingly, keep emergency funds separately.'},
+          {q:'NSC vs PPF vs FD, which is best?',a:'PPF gives 7.1% (tax-free maturity), NSC gives 7.7% (partially taxable), FD gives 7-7.5% (fully taxable). For those in the 30% tax bracket, PPF wins. For 10-20% bracket, NSC or FD are comparable. NSC is better than FD for 80C planning.'},
         ]}/>
       </Section>
       <Section title="Related Calculators"><RelatedCalcs ids={['fd','rd','compound-interest']} nav={nav}/></Section>
@@ -1066,7 +1066,7 @@ function CagrCalc({ nav }) {
     <div>
       <Section title="What is CAGR?">
         <p>CAGR (Compound Annual Growth Rate) tells you the year-on-year growth rate that would take your investment from the initial value to the final value over the given period. It smooths out year-to-year volatility and gives you a single clean number to compare investments.</p>
-        <p>If a mutual fund shows 18% CAGR over 5 years, it doesn't mean it returned 18% every year — some years could be 35%, others −10%. CAGR is the theoretical constant rate that would produce the same result.</p>
+        <p>If a mutual fund shows 18% CAGR over 5 years, it doesn't mean it returned 18% every year, some years could be 35%, others −10%. CAGR is the theoretical constant rate that would produce the same result.</p>
       </Section>
       <Section title="Formula">
         <div className="ch-formula-box">CAGR = (Final Value / Initial Value)^(1/n) − 1<br/>n = number of years</div>
@@ -1074,8 +1074,8 @@ function CagrCalc({ nav }) {
       <Section title="FAQs">
         <FAQ faqs={[
           {q:'What is a good CAGR for mutual funds?',a:'For large-cap equity funds in India, 10-13% CAGR over 10+ years is considered good. Mid-cap funds: 13-18%. Small-cap: 15-22% (with higher volatility). Compare CAGR of the fund vs its benchmark index.'},
-          {q:'CAGR vs Absolute Returns — which to use?',a:'Absolute returns are misleading for multi-year investments. A 100% absolute return sounds great, but if it took 10 years, the CAGR is just 7.2%. Always use CAGR for returns over 1 year.'},
-          {q:'How do I find the CAGR of a mutual fund?',a:"Use the fund's NAV on the start date and current NAV in this calculator. Or check the fund factsheet — it usually shows 1Y/3Y/5Y CAGR directly."},
+          {q:'CAGR vs Absolute Returns, which to use?',a:'Absolute returns are misleading for multi-year investments. A 100% absolute return sounds great, but if it took 10 years, the CAGR is just 7.2%. Always use CAGR for returns over 1 year.'},
+          {q:'How do I find the CAGR of a mutual fund?',a:"Use the fund's NAV on the start date and current NAV in this calculator. Or check the fund factsheet, it usually shows 1Y/3Y/5Y CAGR directly."},
         ]}/>
       </Section>
       <Section title="Related Calculators"><RelatedCalcs ids={['sip','lumpsum','mf-returns']} nav={nav}/></Section>
@@ -1120,7 +1120,7 @@ function TdsCalc({ nav }) {
             style={{ width:'100%', background:'var(--bg3)', border:'1px solid var(--border)', borderRadius:8,
               padding:'10px 14px', fontSize:14, color:'var(--text)', cursor:'pointer' }}>
             {TDS_RULES.map(r => (
-              <option key={r.code} value={r.code}>{r.code} — {r.desc}</option>
+              <option key={r.code} value={r.code}>{r.code}, {r.desc}</option>
             ))}
           </select>
         </div>
@@ -1144,7 +1144,7 @@ function TdsCalc({ nav }) {
     <div>
       <Section title="What is a TDS Calculator?">
         <p>TDS (Tax Deducted at Source) is tax deducted by the payer before making a payment. If you receive professional fees, rent, interest, or commission above certain thresholds, the payer deducts TDS and deposits it to the government on your behalf. This calculator helps you check how much TDS will be deducted for different payment types.</p>
-        <p>If no PAN is provided, TDS is deducted at 20% (double rate) regardless of the applicable rate — making PAN submission important.</p>
+        <p>If no PAN is provided, TDS is deducted at 20% (double rate) regardless of the applicable rate, making PAN submission important.</p>
       </Section>
       <Section title="FAQs">
         <FAQ faqs={[
@@ -1218,7 +1218,7 @@ function SalaryCalc({ nav }) {
     </div>
     <div>
       <Section title="What is a Salary Calculator?">
-        <p>A salary calculator helps you convert CTC (Cost to Company) to your actual in-hand salary. CTC includes components that don't reach your bank account — employer PF contribution, gratuity provisions, insurance premiums, etc. This calculator breaks down the deductions to show your real take-home.</p>
+        <p>A salary calculator helps you convert CTC (Cost to Company) to your actual in-hand salary. CTC includes components that don't reach your bank account, employer PF contribution, gratuity provisions, insurance premiums, etc. This calculator breaks down the deductions to show your real take-home.</p>
       </Section>
       <Section title="FAQs">
         <FAQ faqs={[
@@ -1312,8 +1312,8 @@ function FlatReducingCalc({ nav }) {
       </div>
     </div>
     <div>
-      <Section title="Flat Rate vs Reducing Balance — What's the Difference?">
-        <p>With a flat rate loan, interest is always calculated on the original principal. If you borrowed ₹5L, you pay interest on ₹5L for the entire tenure — even after repaying half. Flat rates are common in personal loans from NBFCs and dealer financing.</p>
+      <Section title="Flat Rate vs Reducing Balance, What's the Difference?">
+        <p>With a flat rate loan, interest is always calculated on the original principal. If you borrowed ₹5L, you pay interest on ₹5L for the entire tenure, even after repaying half. Flat rates are common in personal loans from NBFCs and dealer financing.</p>
         <p>With a reducing balance (diminishing balance) loan, interest is charged only on the remaining outstanding principal. Since the principal reduces each month, the interest also reduces. This is used by all banks for home loans and most consumer loans.</p>
         <p>The result: a 12% flat rate is roughly equivalent to a 21-22% effective reducing balance rate. Always compare on a reducing balance basis.</p>
       </Section>
@@ -1444,7 +1444,7 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
           {active.label}
         </h1>
         <p style={{ fontSize:14, color:'var(--text3)', marginBottom:22, lineHeight:1.5 }}>
-          Free online {active.label.toLowerCase()} — instant results, no sign-up required.
+          Free online {active.label.toLowerCase()}, instant results, no sign-up required.
         </p>
         {active.comp({ nav })}
       </div>

@@ -31,7 +31,7 @@ export default function Header({ lastUpdate, view, setView }) {
     { id: 'fno',      label: 'F&O',        icon: '◬' },
     { id: 'mtf',      label: 'MTF',          icon: '◫' },
     { id: 'delivery', label: 'Top Delivery', icon: '◈' },
-    { id: 'calc',     label: 'Risk',         icon: '⊕' },
+    { id: 'calculators', label: 'Calculators', icon: '⊞' },
     { id: 'ipo',      label: 'IPO',        icon: '◎', cls: 'tab-teal' },
     { id: 'gold',     label: 'Gold',       icon: '◆', cls: 'tab-gold' },
   ];
