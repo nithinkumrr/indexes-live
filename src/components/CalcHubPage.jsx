@@ -1752,8 +1752,8 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
   };
 
   return (
-    <div style={{ maxWidth:1200, margin:'0 auto', padding:'0 0 40px', display:'grid',
-      gridTemplateColumns:'220px 1fr', gap:32, alignItems:'start', minHeight:'80vh' }}>
+    <div style={{ padding:'0 0 40px', display:'grid',
+      gridTemplateColumns:'200px 1fr', gap:24, alignItems:'start', minHeight:'80vh' }}>
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <div style={{ position:'sticky', top:60, paddingTop:24 }}>
