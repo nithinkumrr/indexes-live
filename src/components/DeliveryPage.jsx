@@ -316,18 +316,6 @@ export default function DeliveryPage() {
             </div>
           )}
         </div>
-        <div className="del-summary-inline">
-          <span className="del-sum-pill">{indexFiltered.length} stocks</span>
-          <span className="del-sum-pill">
-            Avg delivery: <strong>{(indexFiltered.reduce((s, r) => s + r.pct, 0) / (indexFiltered.length || 1)).toFixed(1)}%</strong>
-          </span>
-          <span className="del-sum-pill del-sum-green">
-            High (&gt;75%): <strong>{indexFiltered.filter(s => s.pct >= 75).length}</strong>
-          </span>
-          <span className="del-sum-pill del-sum-red">
-            Low (&lt;25%): <strong>{indexFiltered.filter(s => s.pct < 25).length}</strong>
-          </span>
-        </div>
       </div>
 
       {/* TOP 5 CARDS */}
@@ -354,8 +342,8 @@ export default function DeliveryPage() {
           <table className="del-table">
             <thead>
               <tr>
-                <th className="del-th del-th-left del-th-rank">#</th>
-                <th className="del-th del-th-left">Stock</th>
+                <th className="del-th del-th-left del-th-rank del-th-sticky">#</th>
+                <th className="del-th del-th-left del-th-sticky del-th-sticky-stock">Stock</th>
                 <SortBtn col="ltp"       label="LTP" />
                 <SortBtn col="changePct" label="Change %" />
                 <SortBtn col="traded"    label="Traded Qty" />
@@ -371,8 +359,8 @@ export default function DeliveryPage() {
                 const barColor = s.pct >= 75 ? 'var(--gain)' : s.pct >= 50 ? 'var(--accent)' : s.pct >= 25 ? '#F59E0B' : 'var(--loss)';
                 return (
                   <tr key={`${s.symbol}-${i}`} className={`del-tr${i % 2 === 1 ? ' del-tr-alt' : ''}${isNew ? ' del-tr-new' : ''}`}>
-                    <td className="del-td del-td-rank" style={{ opacity: isTop10 ? 1 : 0.6 }}>{i + 1}</td>
-                    <td className="del-td del-td-company">
+                    <td className="del-td del-td-rank del-td-sticky" style={{ opacity: isTop10 ? 1 : 0.6 }}>{i + 1}</td>
+                    <td className="del-td del-td-company del-td-sticky del-td-sticky-stock">
                       <div className="del-company-cell">
                         <StockAvatar symbol={s.symbol} />
                         <div>
