@@ -22,7 +22,8 @@ const IndiaHeatmap = lazy(() => import('./components/IndiaHeatmap'));
 const FiiDii       = lazy(() => import('./components/FiiDii'));
 const InsightsPage = lazy(() => import('./components/InsightsPage'));
 const BrokersPage  = lazy(() => import('./components/BrokersPage'));
-const MtfPage      = lazy(() => import('./components/MtfPage'));
+const MtfPage       = lazy(() => import('./components/MtfPage'));
+const MtfMobilePage = lazy(() => import('./components/MtfMobilePage'));
 const DeliveryPage = lazy(() => import('./components/DeliveryPage'));
 
 // Sub-tab path maps per page
@@ -198,7 +199,7 @@ export default function App() {
           view === 'calc'      ? <RiskCalcPage initialTab={initialTab} navigateSub={navigateSub} /> :
           view === 'insights'  ? <InsightsPage data={data} nseData={nseData} /> :
           view === 'brokers'   ? <BrokersPage initialTab={initialTab} navigateSub={navigateSub} /> :
-          view === 'mtf'       ? <MtfPage /> :
+          view === 'mtf'       ? (window.innerWidth < 768 ? <MtfMobilePage setView={navigate} /> : <MtfPage />) :
           view === 'delivery'  ? <DeliveryPage /> :
           null
         ) : (
