@@ -22,6 +22,7 @@ const IndiaHeatmap = lazy(() => import('./components/IndiaHeatmap'));
 const FiiDii       = lazy(() => import('./components/FiiDii'));
 const InsightsPage = lazy(() => import('./components/InsightsPage'));
 const BrokersPage  = lazy(() => import('./components/BrokersPage'));
+const MtfPage      = lazy(() => import('./components/MtfPage'));
 
 // Sub-tab path maps per page
 const SUB_PATH = {
@@ -57,6 +58,7 @@ const PATH_MAP = {
   '/insights':   'insights',
   '/brokers':    'brokers',
   '/blog':       'insights',
+  '/mtf':        'mtf',
 };
 
 const VIEW_PATH = {
@@ -68,9 +70,10 @@ const VIEW_PATH = {
   'calc':      '/calc',
   'insights':  '/insights',
   'brokers':   '/brokers',
+  'mtf':       '/mtf',
 };
 
-const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc', 'insights', 'brokers']);
+const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc', 'insights', 'brokers', 'mtf']);
 
 function getStateFromPath() {
   const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
@@ -117,6 +120,7 @@ export default function App() {
     calc:     'Risk Calculator | indexes.live',
     insights: 'News & Market Insights | indexes.live',
     brokers:  'Indian Broker Charges | indexes.live',
+    mtf:      'MTF Book | Margin Trading Facility | indexes.live',
   };
 
   // Fire GA pageview
@@ -190,6 +194,7 @@ export default function App() {
           view === 'calc'      ? <RiskCalcPage initialTab={initialTab} navigateSub={navigateSub} /> :
           view === 'insights'  ? <InsightsPage data={data} nseData={nseData} /> :
           view === 'brokers'   ? <BrokersPage initialTab={initialTab} navigateSub={navigateSub} /> :
+          view === 'mtf'       ? <MtfPage /> :
           null
         ) : (
           <>

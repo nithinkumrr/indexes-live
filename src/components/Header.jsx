@@ -29,6 +29,7 @@ export default function Header({ lastUpdate, view, setView }) {
     { id: 'grid',     label: 'Markets',    icon: '◈' },
     { id: 'bubble',   label: 'Sentiment',  icon: '◉' },
     { id: 'fno',      label: 'F&O',        icon: '◬' },
+    { id: 'mtf',      label: 'MTF',        icon: '◫' },
     { id: 'calc',     label: 'Risk',       icon: '⊕' },
     { id: 'ipo',      label: 'IPO',        icon: '◎', cls: 'tab-teal' },
     { id: 'gold',     label: 'Gold',       icon: '◆', cls: 'tab-gold' },
