@@ -7855,6 +7855,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); line
 /* Table */
 .del-table-wrap { overflow-x: auto; }
 .del-table      { width: 100%; border-collapse: collapse; font-size: 14px; }
+.del-th-sticky        { position: sticky; z-index: 3; background: var(--bg3); }
+.del-th-sticky.del-th-rank { left: 0; }
+.del-th-sticky.del-th-sticky-stock { left: 36px; }
+.del-td-sticky        { position: sticky; z-index: 2; background: var(--bg2); }
+.del-td-sticky.del-td-rank { left: 0; }
+.del-td-sticky.del-td-sticky-stock { left: 36px; box-shadow: 2px 0 6px rgba(0,0,0,0.18); }
+.del-tr-alt .del-td-sticky { background: var(--bg3); }
 .del-th         { padding: 10px 14px; font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); text-align: right; border-bottom: 1px solid var(--border2); white-space: nowrap; background: var(--bg3); }
 .del-th-left    { text-align: left; }
 .del-th-rank    { width: 36px; padding-right: 8px; }
