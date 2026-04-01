@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 // ─────────────────────────────────────────────────────────────────────────────
 // UTILITIES
 // ─────────────────────────────────────────────────────────────────────────────
+// Full Indian format: ₹1,10,00,000 (1.1 Cr)
 const INR = v => {
   const n = Math.round(Math.abs(v));
   if (n >= 10000000) return `₹${(n/10000000).toFixed(2)} Cr`;
@@ -10,6 +11,14 @@ const INR = v => {
   return `₹${n.toLocaleString('en-IN')}`;
 };
 const INRF = v => `₹${Math.round(Math.abs(v)).toLocaleString('en-IN')}`;
+// Full number + optional short bracket: ₹58,07,906 (58.08 L)
+const INRFull = v => {
+  const n = Math.round(Math.abs(v));
+  const full = `₹${n.toLocaleString('en-IN')}`;
+  if (n >= 10000000) return { full, short: `${(n/10000000).toFixed(2)} Cr` };
+  if (n >= 100000)   return { full, short: `${(n/100000).toFixed(2)} L`   };
+  return { full, short: null };
+};
 const PCT  = (v, d = 2) => `${Number(v).toFixed(d)}%`;
 
 // SIP FV
@@ -102,6 +111,28 @@ input[type=number] { -moz-appearance: textfield; }
   .ch-donut-col { display: none !important; }
   .ch-res-grid { grid-template-columns: 1fr !important; }
 }
+
+/* SIP 60/40 layout */
+.ch-sip-layout { display: grid; grid-template-columns: 60% 40%; gap: 28px; margin-bottom: 28px; align-items: start; }
+.ch-sip-card { background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px; padding: 20px 20px 18px; position: sticky; top: 80px; }
+.ch-sip-card-label { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; }
+.ch-sip-card-total { font-family: var(--mono); font-size: 30px; font-weight: 900; color: var(--text); letter-spacing: -1px; line-height: 1.1; margin-bottom: 2px; }
+.ch-sip-card-short { font-family: var(--mono); font-size: 13px; color: var(--text3); margin-bottom: 14px; }
+.ch-sip-card-sub { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-bottom: 16px; }
+.ch-sip-card-donut { display: flex; justify-content: center; margin-bottom: 16px; padding: 8px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.ch-sip-card-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.ch-sip-card-row:last-child { border-bottom: none; }
+.ch-sip-card-row-label { font-family: var(--mono); font-size: 11.5px; color: var(--text3); }
+.ch-sip-card-row-val { text-align: right; }
+.ch-sip-card-row-full { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); }
+.ch-sip-card-row-short { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 1px; }
+.ch-sip-card-row-bold .ch-sip-card-row-full { font-size: 15px; font-weight: 800; color: var(--text); }
+.ch-sip-card-row-accent .ch-sip-card-row-full { color: var(--gain); }
+@media (max-width: 768px) {
+  .ch-sip-layout { grid-template-columns: 1fr !important; gap: 0 !important; }
+  .ch-sip-card { position: static !important; border-radius: 0; border-left: none; border-right: none; margin: 0 -16px; padding: 16px; }
+  .ch-sip-card-total { font-size: 24px !important; }
+}
 /* ═══ MOBILE RESPONSIVE ═══════════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
@@ -109,7 +140,7 @@ input[type=number] { -moz-appearance: textfield; }
   .ch-outer-grid {
     grid-template-columns: 1fr !important;
     gap: 0 !important;
-    padding: 0 0 80px !important;
+    padding: 0 16px 80px !important;
   }
   .ch-sidebar { display: none !important; }
 
@@ -339,7 +370,14 @@ function Donut3({ a, b, c, la='Invested', lb='Returns', lc='Bonus',
 // ─────────────────────────────────────────────────────────────────────────────
 function SliderRow({ label, value, set, min, max, step=1, pre='', suf='', fmt: fmtFn, hint }) {
   const pct = Math.max(0, Math.min(100, ((value-min)/(max-min))*100));
-  const display = fmtFn ? fmtFn(value) : value;
+  const [editing, setEditing] = useState(false);
+  const [rawVal, setRawVal] = useState('');
+  // Indian formatted display
+  const dispVal = pre === '₹'
+    ? value.toLocaleString('en-IN')
+    : (fmtFn ? fmtFn(value) : String(value));
+  const minDisp = pre === '₹' ? min.toLocaleString('en-IN') : min;
+  const maxDisp = pre === '₹' ? max.toLocaleString('en-IN') : max;
   return (
     <div style={{ marginBottom:20 }}>
       <div className="ch-slider-top" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
@@ -347,14 +385,21 @@ function SliderRow({ label, value, set, min, max, step=1, pre='', suf='', fmt: f
           <span style={{ fontSize:13, color:'var(--text2)', fontFamily:'var(--mono)' }}>{label}</span>
           {hint && <span className="ch-slider-hint" style={{ fontSize:10, color:'var(--text3)', marginLeft:8, fontFamily:'var(--mono)' }}>{hint}</span>}
         </div>
-        {/* Direct editable value */}
+        {/* Formatted editable value */}
         <div style={{ display:'flex', alignItems:'center', gap:3,
           borderBottom:'1px solid var(--border2)', paddingBottom:1 }}>
           {pre && <span style={{ fontSize:13, color:'var(--text3)', fontFamily:'var(--mono)' }}>{pre}</span>}
           <input className="ch-val-input"
-            type="number" value={value}
-            onChange={e => { const v=Number(e.target.value); if(!isNaN(v)) set(Math.max(min,Math.min(max,v))); }}
-            style={{ width: String(value).length > 6 ? 90 : 60 }}
+            type="text"
+            value={editing ? rawVal : dispVal}
+            onFocus={() => { setEditing(true); setRawVal(String(value)); }}
+            onBlur={() => {
+              setEditing(false);
+              const v = Number(rawVal.replace(/,/g, ''));
+              if (!isNaN(v) && v > 0) set(Math.max(min, Math.min(max, v)));
+            }}
+            onChange={e => setRawVal(e.target.value)}
+            style={{ width: dispVal.length > 6 ? 90 : 60 }}
           />
           {suf && <span style={{ fontSize:13, color:'var(--text3)', fontFamily:'var(--mono)' }}>{suf}</span>}
         </div>
@@ -369,8 +414,8 @@ function SliderRow({ label, value, set, min, max, step=1, pre='', suf='', fmt: f
           style={{ position:'relative', zIndex:2, width:'100%', background:'transparent' }}/>
       </div>
       <div style={{ display:'flex', justifyContent:'space-between', marginTop:2 }}>
-        <span style={{ fontSize:9, color:'var(--text3)', fontFamily:'var(--mono)' }}>{pre}{min}{suf}</span>
-        <span style={{ fontSize:9, color:'var(--text3)', fontFamily:'var(--mono)' }}>{pre}{max}{suf}</span>
+        <span style={{ fontSize:9, color:'var(--text3)', fontFamily:'var(--mono)' }}>{pre}{minDisp}{suf}</span>
+        <span style={{ fontSize:9, color:'var(--text3)', fontFamily:'var(--mono)' }}>{pre}{maxDisp}{suf}</span>
       </div>
     </div>
   );
@@ -557,91 +602,57 @@ function SipCalc({ nav }) {
     }
   }, [mode, amount, rate, years]);
 
-  const mult   = total > 0 ? (total / (invested || 1)) : 1;
-  const multStr = mult.toFixed(mult >= 10 ? 1 : 2);
+  const mult      = total > 0 ? (total / (invested || 1)) : 1;
+  const multStr   = mult.toFixed(mult >= 10 ? 1 : 2);
   const doublingYrs = rate > 0 ? (72 / rate).toFixed(1) : null;
 
   const insight = (() => {
     if (mode === 'sip') {
       if (years >= 15 && rate >= 12) return `At ${rate}%, compounding kicks in hard after year ${Math.round(years * 0.55)}. Your last 3 years contribute more than your first 10.`;
-      if (returns > invested) return `Returns (${INR(returns)}) now exceed what you put in. This is compounding working as intended.`;
+      if (returns > invested) return `Returns (${INR(returns)}) now exceed what you put in. Compounding is working as intended.`;
       if (years < 7) return `Extend to ${years + 5}yr and corpus grows to ${INR(sipFV(amount, rate, years + 5))}. Time is your biggest lever here.`;
-      return `${INRF(amount)}/mo for ${years}yr at ${rate}%. Each extra year at this rate adds ${INR(sipFV(amount, rate, years+1) - sipFV(amount, rate, years))}.`;
+      return `₹${amount.toLocaleString('en-IN')}/mo for ${years}yr at ${rate}%. Each extra year adds ${INR(sipFV(amount, rate, years+1) - sipFV(amount, rate, years))}.`;
     }
     return doublingYrs
-      ? `At ${rate}% CAGR, money doubles every ${doublingYrs} years (Rule of 72). In ${years} years that is ${multStr}x growth.`
+      ? `At ${rate}% CAGR, money doubles every ${doublingYrs} years. In ${years} years that is ${multStr}x growth.`
       : 'Adjust the rate to see growth projections.';
   })();
 
-  const S = { // style shortcuts
-    wrap:     { marginBottom: 32 },
-    heroWrap: { padding: '28px 0 24px', borderBottom: '1px solid var(--border)' },
-    heroLabel:{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--text3)',
-                letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 },
-    heroNum:  { fontFamily: 'var(--mono)', fontSize: 52, fontWeight: 900, color: 'var(--text)',
-                letterSpacing: '-2px', lineHeight: 1, marginBottom: 6 },
-    heroSub:  { fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text3)', marginBottom: 20 },
-    statRow:  { display: 'flex', gap: 0, borderTop: '1px solid var(--border)', marginTop: 4 },
-    statBox:  (accent) => ({
-                flex: 1, padding: '14px 0 0', paddingRight: 24,
-                borderRight: '1px solid var(--border)',
-              }),
-    statNum:  (accent) => ({
-                fontFamily: 'var(--mono)', fontSize: 22, fontWeight: 800, lineHeight: 1.1,
-                color: accent ? D_RETURNS : 'var(--text)', marginBottom: 4
-              }),
-    statLbl:  { fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600, color: 'var(--text3)',
-                textTransform: 'uppercase', letterSpacing: '0.08em' },
-    insightLine: { display: 'flex', alignItems: 'flex-start', gap: 8,
-                   fontSize: 12.5, color: 'var(--text2)', lineHeight: 1.6,
-                   fontFamily: 'var(--mono)', padding: '10px 0 0' },
-    inputsWrap: { padding: '22px 0', borderBottom: '1px solid var(--border)' },
-    modeRow:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                marginBottom: 20, flexWrap: 'wrap', gap: 10 },
-    vizWrap:  { display: 'grid', gridTemplateColumns: '210px 1fr', gap: 32,
-                padding: '24px 0', alignItems: 'start' },
+  // Helper: renders full Indian number + short bracket
+  const CardVal = ({ v, bold, accent, text }) => {
+    if (text) return (
+      <div className="ch-sip-card-row-val">
+        <div className={`ch-sip-card-row-full${bold?' ch-sip-card-row-bold':accent?' ch-sip-card-row-accent':''}`}
+          style={{ color: accent ? 'var(--gain)' : bold ? 'var(--text)' : 'var(--text2)' }}>
+          {text}
+        </div>
+      </div>
+    );
+    const { full, short } = INRFull(v);
+    return (
+      <div className="ch-sip-card-row-val">
+        <div className="ch-sip-card-row-full" style={{
+          fontSize: bold ? 15 : 13, fontWeight: bold ? 800 : 600,
+          color: accent ? 'var(--gain)' : bold ? 'var(--text)' : 'var(--text2)',
+          fontFamily: 'var(--mono)',
+        }}>{full}</div>
+        {short && <div className="ch-sip-card-row-short">{short}</div>}
+      </div>
+    );
   };
 
-  return (<>
-    <div style={S.wrap}>
-      {/* HERO RESULT */}
-      <div style={S.heroWrap}>
-        <div className="ch-sip-hero-label" style={S.heroLabel}>
-          {mode === 'sip'
-            ? `₹${amount.toLocaleString('en-IN')}/mo · ${years}yr · ${rate}% p.a.`
-            : `₹${amount.toLocaleString('en-IN')} invested · ${years}yr · ${rate}% p.a.`}
-        </div>
-        <div className="ch-sip-hero-num" style={S.heroNum}>{INR(total)}</div>
-        <div className="ch-sip-hero-sub" style={S.heroSub}>
-          estimated corpus after {years} year{years !== 1 ? 's' : ''}
-        </div>
-        {/* 3-stat row */}
-        <div className="ch-sip-stat-row" style={S.statRow}>
-          <div className="ch-sip-stat-box ch-sip-stat-box-first" style={{ ...S.statBox(false), paddingLeft: 0 }}>
-            <div className="ch-sip-stat-num" style={S.statNum(false)}>{INR(invested)}</div>
-            <div className="ch-sip-stat-lbl" style={S.statLbl}>Invested</div>
-          </div>
-          <div className="ch-sip-stat-box" style={{ ...S.statBox(true), paddingLeft: 24 }}>
-            <div className="ch-sip-stat-num" style={S.statNum(true)}>{INR(returns)}</div>
-            <div style={S.statLbl}>Returns</div>
-          </div>
-          <div className="ch-sip-stat-box" style={{ ...S.statBox(true), paddingLeft: 24, borderRight: 'none' }}>
-            <div className="ch-sip-stat-num" style={S.statNum(true)}>{multStr}x</div>
-            <div className="ch-sip-stat-lbl" style={S.statLbl}>Growth</div>
-          </div>
-        </div>
-        {/* Inline insight */}
-        {insight && (
-          <div style={S.insightLine}>
-            <span style={{ color: D_RETURNS, flexShrink: 0 }}>◆</span>
-            <span>{insight}</span>
-          </div>
-        )}
-      </div>
+  const totalFmt = INRFull(total);
+  const paramLabel = mode === 'sip'
+    ? `₹${amount.toLocaleString('en-IN')}/mo · ${years}yr · ${rate}%`
+    : `₹${amount.toLocaleString('en-IN')} · ${years}yr · ${rate}%`;
 
-      {/* INPUTS */}
-      <div style={S.inputsWrap}>
-        <div className="ch-sip-controls-row" style={S.modeRow}>
+  return (<>
+    <div className="ch-sip-layout">
+
+      {/* ── LEFT 60%: Inputs ───────────────────────────────────────────── */}
+      <div>
+        <div className="ch-sip-controls-row" style={{ display:'flex', justifyContent:'space-between',
+          alignItems:'center', marginBottom:20, flexWrap:'wrap', gap:10 }}>
           <ModeTab
             options={[{id:'sip',label:'SIP'},{id:'lumpsum',label:'Lumpsum'}]}
             active={mode} set={m => { setMode(m); setPresetIdx(null); }}
@@ -668,95 +679,49 @@ function SipCalc({ nav }) {
         />
       </div>
 
-      {/* VISUAL: Donut + contextual breakdown */}
-      <div className="ch-sip-vizwrap" style={S.vizWrap}>
-<div className="ch-sip-vizwrap-donut"><Donut a={invested} b={returns} la="Invested" lb="Returns"/></div>
-        <div>
-          <div style={{ marginBottom: 16 }}>
-            {[
-              { label: 'Total Corpus',     val: INR(total),    bold: true  },
-              { label: 'Invested Amount',  val: INR(invested), bold: false },
-              { label: 'Estimated Returns',val: INR(returns),  bold: false, accent: true },
-              { label: 'Growth Multiple',  val: `${multStr}x`, bold: false, accent: true },
-              ...(doublingYrs ? [{ label: `Doubles every`, val: `${doublingYrs} yrs at ${rate}%`, bold: false }] : []),
-            ].map((r, i) => (
-              <div key={i} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-                padding: '8px 0', borderBottom: '1px solid var(--border)',
-              }}>
-                <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{r.label}</span>
-                <span style={{
-                  fontSize: r.bold ? 17 : 14, fontWeight: r.bold ? 800 : 600,
-                  color: r.bold ? 'var(--text)' : r.accent ? D_RETURNS : 'var(--text2)',
-                  fontFamily: 'var(--mono)',
-                }}>{r.val}</span>
-              </div>
-            ))}
-          </div>
-          {doublingYrs && years >= 7 && (
-            <div style={{
-              fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--mono)',
-              lineHeight: 1.65, padding: '10px 12px',
-              background: 'rgba(0,200,150,0.05)', borderLeft: `2px solid ${D_RETURNS}`,
-            }}>
-              At {rate}%, every rupee doubles in {doublingYrs} years. Over {years} years, you
-              get {Math.floor(years / parseFloat(doublingYrs))} doubling{Math.floor(years / parseFloat(doublingYrs)) !== 1 ? 's' : ''}.
-            </div>
-          )}
+      {/* ── RIGHT 40%: Result card ─────────────────────────────────────── */}
+      <div className="ch-sip-card">
+        <div className="ch-sip-card-label">Estimated Corpus</div>
+        <div className="ch-sip-card-total">{totalFmt.full}</div>
+        {totalFmt.short && <div className="ch-sip-card-short">{totalFmt.short}</div>}
+        <div className="ch-sip-card-sub">{paramLabel}</div>
+
+        {/* Donut */}
+        <div className="ch-sip-card-donut">
+          <Donut a={invested} b={returns} la="Invested" lb="Returns"/>
         </div>
+
+        {/* Breakdown rows */}
+        <div style={{ marginBottom: 12 }}>
+          {[
+            { label: 'Total Corpus',     v: total,    bold: true  },
+            { label: 'Invested Amount',  v: invested, bold: false },
+            { label: 'Est. Returns',     v: returns,  bold: false, accent: true },
+            { label: 'Growth Multiple',  text: `${multStr}x`, accent: true },
+            ...(doublingYrs ? [{ label: 'Doubles every', text: `${doublingYrs} yrs at ${rate}%` }] : []),
+          ].map((r, i) => (
+            <div key={i} className="ch-sip-card-row">
+              <span className="ch-sip-card-row-label">{r.label}</span>
+              <CardVal v={r.v} bold={r.bold} accent={r.accent} text={r.text}/>
+            </div>
+          ))}
+        </div>
+
+        {/* Insight */}
+        {insight && (
+          <div style={{ display:'flex', gap:7, fontSize:12, color:'var(--text2)',
+            lineHeight:1.65, fontFamily:'var(--mono)',
+            background:'rgba(0,200,150,0.05)', borderLeft:`2px solid ${D_RETURNS}`,
+            padding:'9px 10px', borderRadius:'0 6px 6px 0' }}>
+            <span style={{ color:D_RETURNS, flexShrink:0 }}>◆</span>
+            <span>{insight}</span>
+          </div>
+        )}
       </div>
     </div>
     <SipSEO nav={nav}/>
   </>);
 }
-
-function LumpsumCalc({ nav }) {
-  const [amount, setAmount] = useState(100000);
-  const [rate, setRate] = useState(12);
-  const [years, setYears] = useState(10);
-  const total = useMemo(() => lsFV(amount, rate, years), [amount, rate, years]);
-  const returns = total - amount;
-  return (<>
-    <Shell
-      inputs={<>
-        <SliderRow label="Total investment" value={amount} set={setAmount} min={1000} max={10000000} step={1000} pre="₹"/>
-        <SliderRow label="Expected return rate (p.a.)" value={rate} set={setRate} min={1} max={30} step={0.5} suf="%"/>
-        <SliderRow label="Time period" value={years} set={setYears} min={1} max={40} suf="Yr"/>
-      </>}
-      donut={<Donut a={amount} b={returns}/>}
-      results={<>
-        <RRow label="Invested amount" value={INRF(amount)}/>
-        <RRow label="Est. returns" value={INRF(returns)}/>
-        <RRow label="Total value" value={INRF(total)} bold highlight/>
-      </>}
-      insight={`${(total/amount).toFixed(2)}x growth over ${years} years. At ${rate}% CAGR, money doubles every ${(72/rate).toFixed(1)} years.`}
-    />
-    <div className="ch-section">
-      <Section title="What is a Lumpsum Investment?">
-        <p>A lumpsum investment is when you put a single large amount into a mutual fund all at once, instead of spreading it out monthly. It works best when you have a windfall, a bonus, inheritance, or sale proceeds, and want to put it to work immediately.</p>
-        <p>Unlike SIP, which benefits from rupee cost averaging, a lumpsum investment is entirely exposed to market timing. Invest at a market peak and returns suffer; invest at a dip and they can be spectacular.</p>
-      </Section>
-      <Section title="How the Calculator Works">
-        <p>The lumpsum calculator applies compound interest annually to your investment. It uses the standard future value formula assuming a constant rate of return, which is a reasonable approximation for long-term equity mutual fund returns.</p>
-        <div className="ch-formula-box">FV = P × (1 + r)ⁿ<br/>Where P = invested amount, r = annual return rate, n = number of years</div>
-      </Section>
-      <Section title="Example">
-        <p>You invest ₹5 Lakhs in an equity mutual fund at an expected 12% return. After 15 years: FV = 5,00,000 × (1.12)¹⁵ = ₹27.37 Lakhs. Your ₹5L became ₹27L, the power of compounding over time.</p>
-      </Section>
-      <div className="ch-insight-box">💡 A lumpsum in an index fund during a market correction historically outperforms SIP over the same period. If you have conviction and timing, lumpsum can deliver better results.</div>
-      <Section title="FAQs">
-        <FAQ faqs={[
-          {q:'Is lumpsum better than SIP?',a:'Neither is universally better. SIP reduces timing risk through averaging. Lumpsum is better if you invest during market corrections. For most retail investors, SIP is safer.'},
-          {q:'What is the minimum lumpsum investment?',a:'Most mutual funds have a minimum lumpsum of ₹1,000 to ₹5,000. Direct plans via AMC websites often have lower minimums.'},
-          {q:'Can I do lumpsum in any mutual fund?',a:'Yes, equity, debt, hybrid, index funds. The expected return rate will differ. Equity: 10-14%, Debt: 6-8%.'},
-          {q:'Is lumpsum investment taxable?',a:'Yes. Short-term capital gains (< 1 year for equity) are taxed at 20%. Long-term gains above ₹1.25L are taxed at 12.5% for equity funds.'},
-        ]}/>
-      </Section>
-      <Section title="Related Calculators"><RelatedCalcs ids={['sip','step-up-sip','cagr']} nav={nav}/></Section>
-    </div>
-  </>);
-}
-
 function SipSEO({ nav }) {
   return (
     <div>
@@ -1795,6 +1760,76 @@ const CATS = ['Mutual Funds','Fixed Income','Loans','Retirement','Tax & Salary',
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOBILE HAMBURGER NAV
+// ─────────────────────────────────────────────────────────────────────────────
+function MobNav({ activeId, nav }) {
+  const [open, setOpen] = useState(false);
+  const active = CALC_REGISTRY.find(c => c.id === activeId);
+  return (
+    <div className="ch-mob-nav" style={{ display:'none', position:'relative',
+      borderBottom:'1px solid var(--border)', marginBottom:0 }}>
+      {/* Trigger row */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
+        padding:'12px 0', cursor:'pointer' }} onClick={() => setOpen(o => !o)}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          {/* Hamburger icon */}
+          <div style={{ display:'flex', flexDirection:'column', gap:4, cursor:'pointer', flexShrink:0 }}>
+            <div style={{ width:18, height:2, background: open ? D_RETURNS : 'var(--text2)', borderRadius:1,
+              transition:'background 0.15s' }}/>
+            <div style={{ width:14, height:2, background: open ? D_RETURNS : 'var(--text2)', borderRadius:1,
+              transition:'background 0.15s' }}/>
+            <div style={{ width:18, height:2, background: open ? D_RETURNS : 'var(--text2)', borderRadius:1,
+              transition:'background 0.15s' }}/>
+          </div>
+          <span style={{ fontSize:13, fontWeight:700, color:'var(--text)', fontFamily:'var(--mono)' }}>
+            {active?.label || 'Calculators'}
+          </span>
+        </div>
+        <span style={{ fontSize:11, color: D_RETURNS, fontFamily:'var(--mono)', fontWeight:600 }}>
+          {open ? 'close ▲' : 'change ▼'}
+        </span>
+      </div>
+      {/* Dropdown panel */}
+      {open && (
+        <div style={{ position:'absolute', top:'100%', left:-16, right:-16, zIndex:200,
+          background:'var(--bg2)', border:'1px solid var(--border2)',
+          borderTop:'none', boxShadow:'0 8px 24px rgba(0,0,0,0.18)',
+          maxHeight:'60vh', overflowY:'auto', paddingBottom:8 }}>
+          {CATS.map(cat => (
+            <div key={cat}>
+              <div style={{ fontSize:9, fontWeight:800, letterSpacing:'0.12em', color:'var(--text3)',
+                textTransform:'uppercase', padding:'12px 16px 4px' }}>{cat}</div>
+              {CALC_REGISTRY.filter(c => c.cat === cat).map(c => (
+                <button key={c.id} onClick={() => { nav(c.id); setOpen(false); }}
+                  style={{ display:'block', width:'100%', textAlign:'left',
+                    padding:'10px 16px', background: c.id === activeId ? 'rgba(0,200,150,0.06)' : 'none',
+                    border:'none', borderLeft: c.id === activeId ? `3px solid ${D_RETURNS}` : '3px solid transparent',
+                    color: c.id === activeId ? D_RETURNS : 'var(--text2)',
+                    fontSize:13, fontWeight: c.id === activeId ? 700 : 500,
+                    cursor:'pointer', fontFamily:'var(--mono)' }}>
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          ))}
+          <div>
+            <div style={{ fontSize:9, fontWeight:800, letterSpacing:'0.12em', color:'var(--text3)',
+              textTransform:'uppercase', padding:'12px 16px 4px' }}>Risk Tools</div>
+            <button style={{ display:'block', width:'100%', textAlign:'left',
+              padding:'10px 16px', background:'none', border:'none',
+              borderLeft:'3px solid transparent', color:'var(--text2)',
+              fontSize:13, fontWeight:500, cursor:'pointer', fontFamily:'var(--mono)' }}>
+              Position Sizing & Risk →
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CalcHubPage({ initialTab, navigateSub }) {
   const defaultId = CALC_REGISTRY.find(c => c.id === initialTab)?.id || 'sip';
   const [activeId, setActiveId] = useState(defaultId);
@@ -1840,7 +1875,7 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
   };
 
   return (
-    <div className="ch-outer-grid" style={{ padding:'0 0 40px', display:'grid',
+    <div className="ch-outer-grid" style={{ padding:'0 20px 40px', display:'grid',
       gridTemplateColumns:'200px 1fr', gap:24, alignItems:'start', minHeight:'80vh' }}>
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
@@ -1873,25 +1908,8 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
         </div>
       </div>
 
-      {/* ── Mobile nav strip ─────────────────────────────────────────────── */}
-      <div className="ch-mob-nav" style={{ display:'none', padding:'12px 0 8px',
-        borderBottom:'1px solid var(--border)', gap:8, flexWrap:'wrap', marginBottom:0 }}>
-        {CATS.map(cat => (
-          <div key={cat} style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
-            {CALC_REGISTRY.filter(c => c.cat === cat).map(c => (
-              <button key={c.id} onClick={() => nav(c.id)}
-                style={{ padding:'5px 11px', borderRadius:20, border:'1px solid var(--border)',
-                  background: c.id === activeId ? 'var(--bg3)' : 'transparent',
-                  borderColor: c.id === activeId ? D_RETURNS : 'var(--border)',
-                  color: c.id === activeId ? D_RETURNS : 'var(--text3)',
-                  fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--mono)',
-                  whiteSpace:'nowrap' }}>
-                {c.label.replace(' Calculator','').replace(' EMI','').replace(' Interest','')}
-              </button>
-            ))}
-          </div>
-        ))}
-      </div>
+      {/* ── Mobile hamburger nav ─────────────────────────────────────────── */}
+      <MobNav activeId={activeId} nav={nav} />
 
       {/* ── Content ─────────────────────────────────────────────────────────── */}
       <div className="ch-content" style={{ paddingTop:24 }}>
