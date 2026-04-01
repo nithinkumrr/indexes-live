@@ -23,6 +23,7 @@ const FiiDii       = lazy(() => import('./components/FiiDii'));
 const InsightsPage = lazy(() => import('./components/InsightsPage'));
 const BrokersPage  = lazy(() => import('./components/BrokersPage'));
 const MtfPage      = lazy(() => import('./components/MtfPage'));
+const DeliveryPage = lazy(() => import('./components/DeliveryPage'));
 
 // Sub-tab path maps per page
 const SUB_PATH = {
@@ -59,6 +60,7 @@ const PATH_MAP = {
   '/brokers':    'brokers',
   '/blog':       'insights',
   '/mtf':        'mtf',
+  '/delivery':   'delivery',
 };
 
 const VIEW_PATH = {
@@ -71,9 +73,10 @@ const VIEW_PATH = {
   'insights':  '/insights',
   'brokers':   '/brokers',
   'mtf':       '/mtf',
+  'delivery':  '/delivery',
 };
 
-const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc', 'insights', 'brokers', 'mtf']);
+const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc', 'insights', 'brokers', 'mtf', 'delivery']);
 
 function getStateFromPath() {
   const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
@@ -121,6 +124,7 @@ export default function App() {
     insights: 'News & Market Insights | indexes.live',
     brokers:  'Indian Broker Charges | indexes.live',
     mtf:      'MTF Book | Margin Trading Facility | indexes.live',
+    delivery: 'Top Delivery | NSE Delivery Data | indexes.live',
   };
 
   // Fire GA pageview
@@ -195,6 +199,7 @@ export default function App() {
           view === 'insights'  ? <InsightsPage data={data} nseData={nseData} /> :
           view === 'brokers'   ? <BrokersPage initialTab={initialTab} navigateSub={navigateSub} /> :
           view === 'mtf'       ? <MtfPage /> :
+          view === 'delivery'  ? <DeliveryPage /> :
           null
         ) : (
           <>
