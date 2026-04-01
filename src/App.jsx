@@ -24,6 +24,7 @@ const InsightsPage = lazy(() => import('./components/InsightsPage'));
 const BrokersPage  = lazy(() => import('./components/BrokersPage'));
 const MtfPage       = lazy(() => import('./components/MtfPage'));
 const MtfMobilePage = lazy(() => import('./components/MtfMobilePage'));
+const CalcHubPage   = lazy(() => import('./components/CalcHubPage'));
 const DeliveryPage = lazy(() => import('./components/DeliveryPage'));
 
 // Sub-tab path maps per page
@@ -47,6 +48,28 @@ const SUB_PATH = {
   '/calc/recovery':     { view: 'calc', tab: 'recovery'    },
   '/calc/principles':   { view: 'calc', tab: 'principles'  },
   '/calc/glossary':     { view: 'calc', tab: 'glossary'    },
+  '/calculators':             { view: 'calculators', tab: 'sip'               },
+  '/calculators/sip':         { view: 'calculators', tab: 'sip'               },
+  '/calculators/lumpsum':     { view: 'calculators', tab: 'lumpsum'           },
+  '/calculators/step-up-sip': { view: 'calculators', tab: 'step-up-sip'      },
+  '/calculators/swp':         { view: 'calculators', tab: 'swp'               },
+  '/calculators/mf-returns':  { view: 'calculators', tab: 'mf-returns'        },
+  '/calculators/fd':          { view: 'calculators', tab: 'fd'                },
+  '/calculators/rd':          { view: 'calculators', tab: 'rd'                },
+  '/calculators/nsc':         { view: 'calculators', tab: 'nsc'               },
+  '/calculators/simple-interest':   { view: 'calculators', tab: 'simple-interest'   },
+  '/calculators/compound-interest': { view: 'calculators', tab: 'compound-interest' },
+  '/calculators/emi':         { view: 'calculators', tab: 'emi'               },
+  '/calculators/car-loan-emi':      { view: 'calculators', tab: 'car-loan-emi'      },
+  '/calculators/home-loan-emi':     { view: 'calculators', tab: 'home-loan-emi'     },
+  '/calculators/flat-reducing':     { view: 'calculators', tab: 'flat-reducing'     },
+  '/calculators/nps':         { view: 'calculators', tab: 'nps'               },
+  '/calculators/retirement':  { view: 'calculators', tab: 'retirement'        },
+  '/calculators/inflation':   { view: 'calculators', tab: 'inflation'         },
+  '/calculators/hra':         { view: 'calculators', tab: 'hra'               },
+  '/calculators/tds':         { view: 'calculators', tab: 'tds'               },
+  '/calculators/salary':      { view: 'calculators', tab: 'salary'            },
+  '/calculators/cagr':        { view: 'calculators', tab: 'cagr'              },
 };
 
 const PATH_MAP = {
@@ -57,6 +80,7 @@ const PATH_MAP = {
   '/gold':       'gold',
   '/ipo':        'ipo',
   '/calc':       'calc',
+  '/calculators':'calculators',
   '/insights':   'insights',
   '/brokers':    'brokers',
   '/blog':       'insights',
@@ -65,19 +89,20 @@ const PATH_MAP = {
 };
 
 const VIEW_PATH = {
-  'grid':      '/markets',
-  'bubble':    '/sentiment',
-  'fno':       '/fno',
-  'gold':      '/gold',
-  'ipo':       '/ipo',
-  'calc':      '/calc',
-  'insights':  '/insights',
-  'brokers':   '/brokers',
-  'mtf':       '/mtf',
-  'delivery':  '/delivery',
+  'grid':         '/markets',
+  'bubble':       '/sentiment',
+  'fno':          '/fno',
+  'gold':         '/gold',
+  'ipo':          '/ipo',
+  'calc':         '/calc',
+  'calculators':  '/calculators',
+  'insights':     '/insights',
+  'brokers':      '/brokers',
+  'mtf':          '/mtf',
+  'delivery':     '/delivery',
 };
 
-const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc', 'insights', 'brokers', 'mtf', 'delivery']);
+const FULL_PAGES = new Set(['fno', 'gold', 'ipo', 'calc', 'calculators', 'insights', 'brokers', 'mtf', 'delivery']);
 
 function getStateFromPath() {
   const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
@@ -122,6 +147,7 @@ export default function App() {
     gold:     'Gold Prices Live | indexes.live',
     ipo:      'IPO Tracker | indexes.live',
     calc:     'Risk Calculator | indexes.live',
+    calculators: 'Financial Calculators | SIP, FD, EMI & More | indexes.live',
     insights: 'News & Market Insights | indexes.live',
     brokers:  'Indian Broker Charges | indexes.live',
     mtf:      'MTF Book | Margin Trading Facility | indexes.live',
@@ -197,6 +223,7 @@ export default function App() {
           view === 'gold'      ? <GoldPage /> :
           view === 'ipo'       ? <IpoPage /> :
           view === 'calc'      ? <RiskCalcPage initialTab={initialTab} navigateSub={navigateSub} /> :
+          view === 'calculators' ? <CalcHubPage initialTab={initialTab} navigateSub={navigateSub} /> :
           view === 'insights'  ? <InsightsPage data={data} nseData={nseData} /> :
           view === 'brokers'   ? <BrokersPage initialTab={initialTab} navigateSub={navigateSub} /> :
           view === 'mtf'       ? (window.innerWidth < 768 ? <MtfMobilePage setView={navigate} /> : <MtfPage />) :
