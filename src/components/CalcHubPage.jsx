@@ -32,42 +32,13 @@ const emiAmt = (principal, rateAnnual, tenureYears) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CSS INJECTION (slider + global calc styles)
-// ─────────────────────────────────────────────────────────────────────────────
-const CSS = `
-.ch-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; outline: none; cursor: pointer; background: transparent; margin: 6px 0; }
-.ch-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; }
-.ch-slider::-moz-range-track { height: 4px; border-radius: 2px; background: var(--bg4); }
-.ch-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,0.18); cursor: pointer; margin-top: -7px; }
-.ch-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,0.18); cursor: pointer; }
-.ch-tab-active { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; }
-.ch-faq-open .ch-faq-icon { transform: rotate(45deg); }
-.ch-section h3 { font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 10px; }
-.ch-section p { font-size: 14px; color: var(--text2); line-height: 1.8; margin: 0 0 14px; }
-.ch-section ul { padding-left: 18px; }
-.ch-section ul li { font-size: 14px; color: var(--text2); line-height: 1.8; margin-bottom: 4px; }
-.ch-formula-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: var(--mono); font-size: 13px; color: var(--text); margin: 12px 0 20px; line-height: 1.7; }
-.ch-insight-box { background: var(--accent)10; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 12px 16px; font-size: 13px; color: var(--text2); line-height: 1.7; margin: 16px 0; }
-.ch-related a { display: inline-flex; align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; color: var(--accent); text-decoration: none; font-weight: 600; cursor: pointer; }
-.ch-related a:hover { background: var(--accent)18; }
-@media (max-width: 700px) {
-  .ch-shell-grid { grid-template-columns: 1fr !important; }
-  .ch-donut-col { display: none !important; }
-  .ch-res-grid { grid-template-columns: 1fr !important; }
-}
-`;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SHARED COMPONENTS
+// PALETTE - distinct from standard fintech blue/purple
 // ─────────────────────────────────────────────────────────────────────────────
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PALETTE — distinct from standard fintech blue/purple
-// ─────────────────────────────────────────────────────────────────────────────
-const D_INVESTED = '#6B7F95'; // steel slate — committed capital
-const D_RETURNS  = '#E8A020'; // warm amber — earned growth
-const D_C        = '#22B89A'; // teal — for 3-segment charts
+const D_INVESTED = '#6B7F95'; // steel slate - committed capital
+const D_RETURNS  = '#E8A020'; // warm amber - earned growth
+const D_C        = '#22B89A'; // teal - for 3-segment charts
 const GAP_DEG    = 3.5;       // degrees of gap between arcs
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -131,7 +102,7 @@ const CSS = `
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DONUT — redesigned: thick arcs, gaps, amber/slate palette, center insight
+// DONUT - redesigned: thick arcs, gaps, amber/slate palette, center insight
 // ─────────────────────────────────────────────────────────────────────────────
 
 function fmt(n) {
@@ -276,7 +247,7 @@ function Donut3({ a, b, c, la='Invested', lb='Returns', lc='Bonus',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SLIDER ROW — data-first: sharp, minimal, direct edit
+// SLIDER ROW - data-first: sharp, minimal, direct edit
 // ─────────────────────────────────────────────────────────────────────────────
 function SliderRow({ label, value, set, min, max, step=1, pre='', suf='', fmt: fmtFn, hint }) {
   const pct = Math.max(0, Math.min(100, ((value-min)/(max-min))*100));
@@ -378,7 +349,7 @@ function ModeTab({ options, active, set }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INSIGHT CHIP — contextual guidance below results
+// INSIGHT CHIP - contextual guidance below results
 // ─────────────────────────────────────────────────────────────────────────────
 function Insight({ text }) {
   if (!text) return null;
@@ -395,7 +366,7 @@ function Insight({ text }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SHELL — 2-col layout: inputs | donut, then results strip
+// SHELL - 2-col layout: inputs | donut, then results strip
 // ─────────────────────────────────────────────────────────────────────────────
 function Shell({ inputs, donut, results, cta, ctaLabel='INVEST NOW', donuts, insight }) {
   return (
