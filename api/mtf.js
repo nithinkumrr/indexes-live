@@ -162,33 +162,74 @@ function normalizeDate(raw) {
   return raw;
 }
 
-// ── LTP fetcher via Yahoo Finance batch quote ─────────────────────────────────
-async function fetchLTPs(symbols) {
-  const yf = symbols.map(s => encodeURIComponent(s + '.NS')).join(',');
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${yf}&fields=regularMarketPrice,regularMarketChangePercent,regularMarketChange`;
-  try {
-    const r = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-      },
-    });
-    if (!r.ok) return {};
-    const json = await r.json();
-    const result = {};
-    for (const q of (json?.quoteResponse?.result || [])) {
-      const sym = (q.symbol || '').replace('.NS', '');
-      result[sym] = {
-        price:     +(q.regularMarketPrice || 0).toFixed(2),
-        change:    +(q.regularMarketChange || 0).toFixed(2),
-        changePct: +(q.regularMarketChangePercent || 0).toFixed(2),
-        longName:  q.longName || q.shortName || null,
-      };
+// ── IST date string ───────────────────────────────────────────────────────────
+function getISTDate() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+}
+
+const DAILY_LIMIT   = 5;
+const LTP_MIN_CR    = 5; // only fetch LTP for stocks with funded >= 5 Cr
+
+// ── LTP fetcher via Kite API ──────────────────────────────────────────────────
+async function fetchLTPsKite(symbols, apiKey, token) {
+  const result = {};
+  // Kite supports up to 500 instruments per call
+  for (let i = 0; i < symbols.length; i += 500) {
+    const batch = symbols.slice(i, i + 500);
+    const qs    = batch.map(s => `i=NSE:${encodeURIComponent(s)}`).join('&');
+    try {
+      const r = await fetch(`https://api.kite.trade/quote?${qs}`, {
+        headers: {
+          'X-Kite-Version':  '3',
+          'Authorization':   `token ${apiKey}:${token}`,
+        },
+      });
+      if (!r.ok) {
+        console.error('Kite quote error', r.status);
+        continue;
+      }
+      const json = await r.json();
+      for (const [key, q] of Object.entries(json?.data || {})) {
+        const sym = key.replace(/^NSE:/, '');
+        const price = q.last_price;
+        const prev  = q.ohlc?.close || q.ohlc?.open || price;
+        result[sym] = {
+          price:     price     != null ? +price.toFixed(2)                                   : null,
+          change:    price && prev ? +(price - prev).toFixed(2)                              : null,
+          changePct: price && prev && prev > 0 ? +((price - prev) / prev * 100).toFixed(2)  : null,
+        };
+      }
+    } catch (err) {
+      console.error('Kite batch error:', err.message);
     }
-    return result;
-  } catch (_) {
-    return {};
   }
+  return result;
+}
+
+// ── Fallback LTP via Yahoo Finance ────────────────────────────────────────────
+async function fetchLTPsYahoo(symbols) {
+  const result = {};
+  for (let i = 0; i < symbols.length; i += 20) {
+    const batch = symbols.slice(i, i + 20);
+    const syms  = batch.map(s => encodeURIComponent(s + '.NS')).join('%2C');
+    try {
+      const r = await fetch(`https://query2.finance.yahoo.com/v8/finance/quote?symbols=${syms}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+      });
+      if (!r.ok) continue;
+      const json = await r.json();
+      for (const q of (json?.quoteResponse?.result || [])) {
+        const sym = (q.symbol || '').replace(/\.NS$/i, '');
+        result[sym] = {
+          price:     q.regularMarketPrice            != null ? +q.regularMarketPrice.toFixed(2)            : null,
+          change:    q.regularMarketChange           != null ? +q.regularMarketChange.toFixed(2)           : null,
+          changePct: q.regularMarketChangePercent    != null ? +q.regularMarketChangePercent.toFixed(2)    : null,
+        };
+      }
+    } catch (_) {}
+    if (i + 20 < symbols.length) await new Promise(r => setTimeout(r, 250));
+  }
+  return result;
 }
 
 // ── Compute summary ───────────────────────────────────────────────────────────
@@ -232,45 +273,78 @@ export default async function handler(req, res) {
 
 
   if (req.method === 'GET' && action === 'ltp') {
-    const isCron = req.headers['x-vercel-cron'] === '1' ||
-      req.headers['authorization'] === `Bearer ${process.env.CRON_SECRET || ''}`;
-    const manualSecret = (req.headers['x-mtf-secret'] || urlObj.searchParams.get('secret') || '').trim();
-    const envSecret = (process.env.MTF_SECRET || '').trim();
-    if (!isCron && manualSecret !== envSecret) {
-      return res.status(403).json({ error: 'Forbidden' });
+    const isCron  = req.headers['x-vercel-cron'] === '1';
+    const isAdmin = (req.headers['x-mtf-secret'] || urlObj.searchParams.get('secret') || '').trim()
+                    === (process.env.MTF_SECRET || '').trim() && !!process.env.MTF_SECRET;
+
+    // Rate limit: 5 fetches per day (IST), bypassed by cron or admin secret
+    const dateKey   = `mtf_ltp_daily_${getISTDate()}`;
+    let fetchesUsed = 0;
+    try { fetchesUsed = (await kv.get(dateKey)) || 0; } catch (_) {}
+
+    if (!isCron && !isAdmin && fetchesUsed >= DAILY_LIMIT) {
+      return res.json({ ok: false, reason: 'daily_limit', fetchesUsed, fetchesRemaining: 0, limit: DAILY_LIMIT });
     }
+
     try {
       const stored = await kv.get(KEY_LATEST);
       if (!stored?.stocks?.length) return res.json({ ok: false, reason: 'no data' });
-      const symbols = stored.stocks.map(s => s.symbol);
-      // Batch in chunks of 50 (Yahoo Finance limit)
-      const allLTP = {};
-      for (let i = 0; i < symbols.length; i += 50) {
-        const batch = symbols.slice(i, i + 50);
-        const result = await fetchLTPs(batch);
-        Object.assign(allLTP, result);
+
+      const ltpStocks = stored.stocks.filter(s => s.fundedAmt >= LTP_MIN_CR);
+      const symbols   = ltpStocks.map(s => s.symbol);
+
+      // Try Kite first, fallback to Yahoo
+      const apiKey = process.env.KITE_API_KEY;
+      const kToken = await kv.get('kite_token').catch(() => null);
+      let allLTP = {};
+      let source = 'none';
+
+      if (apiKey && kToken) {
+        allLTP = await fetchLTPsKite(symbols, apiKey, kToken);
+        source = 'kite';
       }
+      const kiteHits = Object.values(allLTP).filter(v => v?.price != null).length;
+      if (kiteHits === 0) {
+        allLTP = await fetchLTPsYahoo(symbols);
+        source = 'yahoo';
+      }
+
       const stocks = stored.stocks.map(s => ({
         ...s,
         ltp:       allLTP[s.symbol]?.price     ?? s.ltp     ?? null,
         ltpChange: allLTP[s.symbol]?.change    ?? s.ltpChange ?? null,
         ltpPct:    allLTP[s.symbol]?.changePct ?? s.ltpPct   ?? null,
-        company:   allLTP[s.symbol]?.longName  ?? s.company,
       }));
-      const updated = { ...stored, stocks, ltpUpdatedAt: new Date().toISOString() };
+
+      const newCount = (isCron || isAdmin) ? fetchesUsed : fetchesUsed + 1;
+      if (!isCron) {
+        try { await kv.set(dateKey, newCount, { ex: 60 * 60 * 30 }); } catch (_) {}
+      }
+
+      const updated = { ...stored, stocks, ltpUpdatedAt: new Date().toISOString(), ltpSource: source };
       await kv.set(KEY_LATEST, updated, { ex: 60 * 60 * 24 * 7 });
-      return res.json({ ok: true, count: symbols.length, ltpUpdatedAt: updated.ltpUpdatedAt });
+
+      const ltpHits = stocks.filter(s => s.ltp != null).length;
+      return res.json({
+        ok: true, count: ltpHits, ltpUpdatedAt: updated.ltpUpdatedAt,
+        source, fetchesUsed: newCount,
+        fetchesRemaining: Math.max(0, DAILY_LIMIT - newCount),
+        limit: DAILY_LIMIT,
+      });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
   }
 
-  // ── GET data ────────────────────────────────────────────────────────────────
+  // ── GET data ─────────────────────────────────────────────────────────────────
   if (req.method === 'GET') {
     try {
-      const data = await kv.get(KEY_LATEST);
+      const [data, fetchesUsed] = await Promise.all([
+        kv.get(KEY_LATEST),
+        kv.get(`mtf_ltp_daily_${getISTDate()}`).catch(() => 0),
+      ]);
       if (!data) return res.json({ empty: true });
-      return res.json(data);
+      return res.json({ ...data, fetchesUsed: fetchesUsed || 0, fetchesRemaining: Math.max(0, DAILY_LIMIT - (fetchesUsed || 0)), limit: DAILY_LIMIT });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -323,11 +397,18 @@ export default async function handler(req, res) {
       };
       await kv.set(KEY_LATEST, result, { ex: 60 * 60 * 24 * 7 });
 
-      // Also fetch LTP immediately if market is closed (after 3:40 PM IST)
-      const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-      const mins = ist.getHours() * 60 + ist.getMinutes();
+        // Auto-fetch LTP if uploaded after 3:40 PM IST
+      const ist2 = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+      const mins = ist2.getHours() * 60 + ist2.getMinutes();
       if (mins >= 940) {
-        const symbols = stocks.map(s => s.symbol);
+        const ltpStocks = stocks.filter(s => s.fundedAmt >= LTP_MIN_CR);
+        const symbols   = ltpStocks.map(s => s.symbol);
+        const apiKey    = process.env.KITE_API_KEY;
+        const kToken    = await kv.get('kite_token').catch(() => null);
+        let allLTP = {};
+        if (apiKey && kToken) allLTP = await fetchLTPsKite(symbols, apiKey, kToken);
+        const kHits = Object.values(allLTP).filter(v => v?.price != null).length;
+        if (kHits === 0) allLTP = await fetchLTPsYahoo(symbols);
         const allLTP = {};
         for (let i = 0; i < symbols.length; i += 50) {
           const batch = symbols.slice(i, i + 50);
