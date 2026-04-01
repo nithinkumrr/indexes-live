@@ -25,20 +25,34 @@ export default function Header({ lastUpdate, view, setView }) {
     ? lastUpdate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
     : null;
 
+  // Desktop order: Markets · Sentiment · F&O · MTF · Top Delivery · IPO · Calculators · Gold · Brokers · Insights
   const mainTabs = [
-    { id: 'grid',     label: 'Markets',    icon: '◈' },
-    { id: 'bubble',   label: 'Sentiment',  icon: '◉' },
-    { id: 'fno',      label: 'F&O',        icon: '◬' },
-    { id: 'mtf',      label: 'MTF',          icon: '◫' },
-    { id: 'delivery', label: 'Top Delivery', icon: '◈' },
-    { id: 'calculators', label: 'Calculators', icon: '⊞' },
-    { id: 'ipo',      label: 'IPO',        icon: '◎', cls: 'tab-teal' },
-    { id: 'gold',     label: 'Gold',       icon: '◆', cls: 'tab-gold' },
+    { id: 'grid',        label: 'Markets',      icon: '◈' },
+    { id: 'bubble',      label: 'Sentiment',    icon: '◉' },
+    { id: 'fno',         label: 'F&O',          icon: '◬' },
+    { id: 'mtf',         label: 'MTF',          icon: '◫' },
+    { id: 'delivery',    label: 'Top Delivery', icon: '◈' },
+    { id: 'ipo',         label: 'IPO',          icon: '◎', cls: 'tab-teal' },
+    { id: 'calculators', label: 'Calculators',  icon: '⊞' },
+    { id: 'gold',        label: 'Gold',         icon: '◆', cls: 'tab-gold' },
+    { id: 'brokers',     label: 'Brokers',      icon: '⊞' },
+    { id: 'insights',    label: 'Insights',     icon: '◐', cls: 'tab-purple' },
   ];
 
+  // Mobile "More" menu: Calculators · Gold · Brokers · Insights
+  const mobilePrimary = [
+    { id: 'grid',     label: 'Markets',   icon: '◈' },
+    { id: 'bubble',   label: 'Sentiment', icon: '◉' },
+    { id: 'fno',      label: 'F&O',       icon: '◬' },
+    { id: 'mtf',      label: 'MTF',       icon: '◫' },
+    { id: 'delivery', label: 'Delivery',  icon: '◈' },
+    { id: 'ipo',      label: 'IPO',       icon: '◎', cls: 'tab-teal' },
+  ];
   const moreTabs = [
-    { id: 'brokers',  label: 'Brokers',        icon: '⊞' },
-    { id: 'insights', label: 'News & Insights', icon: '◐', cls: 'tab-purple' },
+    { id: 'calculators', label: 'Calculators', icon: '⊞' },
+    { id: 'gold',        label: 'Gold',        icon: '◆', cls: 'tab-gold' },
+    { id: 'brokers',     label: 'Brokers',     icon: '⊞' },
+    { id: 'insights',    label: 'Insights',    icon: '◐', cls: 'tab-purple' },
   ];
 
   const allTabs = [...mainTabs, ...moreTabs];
@@ -83,7 +97,7 @@ export default function Header({ lastUpdate, view, setView }) {
 
       {/* Mobile bottom tab bar */}
       <nav className="mobile-nav">
-        {mainTabs.map(tab => (
+        {mobilePrimary.map(tab => (
           <button key={tab.id}
             className={`mnav-btn ${tab.cls||''} ${view === tab.id ? 'mnav-active' : ''}`}
             onClick={() => setView(tab.id)}>
