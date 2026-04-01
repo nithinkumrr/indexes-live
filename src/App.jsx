@@ -223,7 +223,7 @@ export default function App() {
           view === 'gold'      ? <GoldPage /> :
           view === 'ipo'       ? <IpoPage /> :
           view === 'calc'      ? <RiskCalcPage initialTab={initialTab} navigateSub={navigateSub} /> :
-          view === 'calculators' ? <CalcHubPage initialTab={initialTab} navigateSub={navigateSub} /> :
+          view === 'calculators' ? <CalcHubPage initialTab={initialTab} navigateSub={navigateSub} navigateTo={navigate} /> :
           view === 'insights'  ? <InsightsPage data={data} nseData={nseData} /> :
           view === 'brokers'   ? <BrokersPage initialTab={initialTab} navigateSub={navigateSub} /> :
           view === 'mtf'       ? (window.innerWidth < 768 ? <MtfMobilePage setView={navigate} /> : <MtfPage />) :
