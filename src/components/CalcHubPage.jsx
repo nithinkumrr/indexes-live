@@ -102,6 +102,94 @@ input[type=number] { -moz-appearance: textfield; }
   .ch-donut-col { display: none !important; }
   .ch-res-grid { grid-template-columns: 1fr !important; }
 }
+/* ═══ MOBILE RESPONSIVE ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Outer grid: hide sidebar, full width content */
+  .ch-outer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    padding: 0 0 80px !important;
+  }
+  .ch-sidebar { display: none !important; }
+
+  /* Mobile top nav pill */
+  .ch-mob-nav { display: flex !important; }
+
+  /* SIP hero: smaller number, prevent overflow */
+  .ch-sip-hero-num {
+    font-size: 38px !important;
+    letter-spacing: -1px !important;
+  }
+  .ch-sip-hero-label {
+    font-size: 10px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ch-sip-hero-sub { font-size: 11px !important; }
+
+  /* Stat row: 3 cols but compact */
+  .ch-sip-stat-row {
+    gap: 0 !important;
+  }
+  .ch-sip-stat-num {
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+  }
+  .ch-sip-stat-lbl { font-size: 9px !important; }
+  .ch-sip-stat-box {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  .ch-sip-stat-box-first {
+    padding-left: 0 !important;
+    padding-right: 10px !important;
+  }
+
+  /* Viz wrap: stack vertically */
+  .ch-sip-vizwrap {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .ch-sip-vizwrap-donut {
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  /* Slider top row: label wraps */
+  .ch-slider-top {
+    flex-wrap: wrap !important;
+    gap: 2px 8px !important;
+    align-items: flex-start !important;
+  }
+  .ch-slider-label-group {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+  .ch-val-input {
+    font-size: 13px !important;
+  }
+  .ch-slider-hint {
+    display: none !important;
+  }
+
+  /* Mode+presets row: stack */
+  .ch-sip-controls-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  /* Shell: single column */
+  .ch-shell-grid { grid-template-columns: 1fr !important; }
+  .ch-donut-col  { display: none !important; }
+  .ch-res-grid   { grid-template-columns: 1fr !important; }
+
+  /* Content padding */
+  .ch-content { padding-top: 16px !important; }
+}
+
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -254,10 +342,10 @@ function SliderRow({ label, value, set, min, max, step=1, pre='', suf='', fmt: f
   const display = fmtFn ? fmtFn(value) : value;
   return (
     <div style={{ marginBottom:20 }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
-        <div>
+      <div className="ch-slider-top" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+        <div className="ch-slider-label-group">
           <span style={{ fontSize:13, color:'var(--text2)', fontFamily:'var(--mono)' }}>{label}</span>
-          {hint && <span style={{ fontSize:10, color:'var(--text3)', marginLeft:8, fontFamily:'var(--mono)' }}>{hint}</span>}
+          {hint && <span className="ch-slider-hint" style={{ fontSize:10, color:'var(--text3)', marginLeft:8, fontFamily:'var(--mono)' }}>{hint}</span>}
         </div>
         {/* Direct editable value */}
         <div style={{ display:'flex', alignItems:'center', gap:3,
@@ -518,28 +606,28 @@ function SipCalc({ nav }) {
     <div style={S.wrap}>
       {/* HERO RESULT */}
       <div style={S.heroWrap}>
-        <div style={S.heroLabel}>
+        <div className="ch-sip-hero-label" style={S.heroLabel}>
           {mode === 'sip'
             ? `₹${amount.toLocaleString('en-IN')}/mo · ${years}yr · ${rate}% p.a.`
             : `₹${amount.toLocaleString('en-IN')} invested · ${years}yr · ${rate}% p.a.`}
         </div>
-        <div style={S.heroNum}>{INR(total)}</div>
-        <div style={S.heroSub}>
+        <div className="ch-sip-hero-num" style={S.heroNum}>{INR(total)}</div>
+        <div className="ch-sip-hero-sub" style={S.heroSub}>
           estimated corpus after {years} year{years !== 1 ? 's' : ''}
         </div>
         {/* 3-stat row */}
-        <div style={S.statRow}>
-          <div style={{ ...S.statBox(false), paddingLeft: 0 }}>
-            <div style={S.statNum(false)}>{INR(invested)}</div>
-            <div style={S.statLbl}>Invested</div>
+        <div className="ch-sip-stat-row" style={S.statRow}>
+          <div className="ch-sip-stat-box ch-sip-stat-box-first" style={{ ...S.statBox(false), paddingLeft: 0 }}>
+            <div className="ch-sip-stat-num" style={S.statNum(false)}>{INR(invested)}</div>
+            <div className="ch-sip-stat-lbl" style={S.statLbl}>Invested</div>
           </div>
-          <div style={{ ...S.statBox(true), paddingLeft: 24 }}>
-            <div style={S.statNum(true)}>{INR(returns)}</div>
+          <div className="ch-sip-stat-box" style={{ ...S.statBox(true), paddingLeft: 24 }}>
+            <div className="ch-sip-stat-num" style={S.statNum(true)}>{INR(returns)}</div>
             <div style={S.statLbl}>Returns</div>
           </div>
-          <div style={{ ...S.statBox(true), paddingLeft: 24, borderRight: 'none' }}>
-            <div style={S.statNum(true)}>{multStr}x</div>
-            <div style={S.statLbl}>Growth</div>
+          <div className="ch-sip-stat-box" style={{ ...S.statBox(true), paddingLeft: 24, borderRight: 'none' }}>
+            <div className="ch-sip-stat-num" style={S.statNum(true)}>{multStr}x</div>
+            <div className="ch-sip-stat-lbl" style={S.statLbl}>Growth</div>
           </div>
         </div>
         {/* Inline insight */}
@@ -553,7 +641,7 @@ function SipCalc({ nav }) {
 
       {/* INPUTS */}
       <div style={S.inputsWrap}>
-        <div style={S.modeRow}>
+        <div className="ch-sip-controls-row" style={S.modeRow}>
           <ModeTab
             options={[{id:'sip',label:'SIP'},{id:'lumpsum',label:'Lumpsum'}]}
             active={mode} set={m => { setMode(m); setPresetIdx(null); }}
@@ -581,8 +669,8 @@ function SipCalc({ nav }) {
       </div>
 
       {/* VISUAL: Donut + contextual breakdown */}
-      <div style={S.vizWrap}>
-        <Donut a={invested} b={returns} la="Invested" lb="Returns"/>
+      <div className="ch-sip-vizwrap" style={S.vizWrap}>
+<div className="ch-sip-vizwrap-donut"><Donut a={invested} b={returns} la="Invested" lb="Returns"/></div>
         <div>
           <div style={{ marginBottom: 16 }}>
             {[
@@ -1752,11 +1840,11 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
   };
 
   return (
-    <div style={{ padding:'0 0 40px', display:'grid',
+    <div className="ch-outer-grid" style={{ padding:'0 0 40px', display:'grid',
       gridTemplateColumns:'200px 1fr', gap:24, alignItems:'start', minHeight:'80vh' }}>
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
-      <div style={{ position:'sticky', top:60, paddingTop:24 }}>
+      <div className="ch-sidebar" style={{ position:'sticky', top:60, paddingTop:24 }}>
         <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:12, overflow:'hidden', paddingBottom:8 }}>
           {CATS.map(cat => {
             const calcs = CALC_REGISTRY.filter(c => c.cat === cat);
@@ -1785,8 +1873,28 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
         </div>
       </div>
 
+      {/* ── Mobile nav strip ─────────────────────────────────────────────── */}
+      <div className="ch-mob-nav" style={{ display:'none', padding:'12px 0 8px',
+        borderBottom:'1px solid var(--border)', gap:8, flexWrap:'wrap', marginBottom:0 }}>
+        {CATS.map(cat => (
+          <div key={cat} style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
+            {CALC_REGISTRY.filter(c => c.cat === cat).map(c => (
+              <button key={c.id} onClick={() => nav(c.id)}
+                style={{ padding:'5px 11px', borderRadius:20, border:'1px solid var(--border)',
+                  background: c.id === activeId ? 'var(--bg3)' : 'transparent',
+                  borderColor: c.id === activeId ? D_RETURNS : 'var(--border)',
+                  color: c.id === activeId ? D_RETURNS : 'var(--text3)',
+                  fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--mono)',
+                  whiteSpace:'nowrap' }}>
+                {c.label.replace(' Calculator','').replace(' EMI','').replace(' Interest','')}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+
       {/* ── Content ─────────────────────────────────────────────────────────── */}
-      <div style={{ paddingTop:24 }}>
+      <div className="ch-content" style={{ paddingTop:24 }}>
         <h1 style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginBottom:4, letterSpacing:'-0.02em' }}>
           {active.label}
         </h1>
