@@ -36,9 +36,9 @@ const emiAmt = (principal, rateAnnual, tenureYears) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE - distinct from standard fintech blue/purple
 // ─────────────────────────────────────────────────────────────────────────────
-const D_INVESTED = '#6B7F95'; // steel slate - committed capital
-const D_RETURNS  = '#E8A020'; // warm amber - earned growth
-const D_C        = '#22B89A'; // teal - for 3-segment charts
+const D_INVESTED = '#1E3A52'; // deep navy - committed capital
+const D_RETURNS  = '#00C896'; // site gain green - earned growth
+const D_C        = '#A78BFA'; // violet - for 3-segment charts
 const GAP_DEG    = 3.5;       // degrees of gap between arcs
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -63,36 +63,39 @@ const CSS = `
   width: 14px; height: 14px;
   border-radius: 2px;
   background: var(--bg2);
-  border: 2px solid #E8A020;
-  box-shadow: 0 0 0 3px rgba(232,160,32,0.15);
+  border: 2px solid #00C896;
+  box-shadow: 0 0 0 3px rgba(0,200,150,0.15);
   cursor: pointer; margin-top: -6px;
   transition: border-color 0.12s, box-shadow 0.12s;
 }
 .ch-slider::-webkit-slider-thumb:hover {
-  border-color: #F5B840;
-  box-shadow: 0 0 0 4px rgba(232,160,32,0.25);
+  border-color: #00E5AE;
+  box-shadow: 0 0 0 4px rgba(0,200,150,0.25);
 }
 .ch-slider::-moz-range-thumb {
   width: 14px; height: 14px; border-radius: 2px;
-  background: var(--bg2); border: 2px solid #E8A020;
-  box-shadow: 0 0 0 3px rgba(232,160,32,0.15);
+  background: var(--bg2); border: 2px solid #00C896;
+  box-shadow: 0 0 0 3px rgba(0,200,150,0.15);
   cursor: pointer;
 }
 .ch-tab-active { background: var(--bg3) !important; color: var(--text) !important; border-color: var(--text2) !important; }
 .ch-preset-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 5px; padding: 4px 11px; font-size: 11px; font-family: var(--mono); color: var(--text3); cursor: pointer; transition: all 0.12s; letter-spacing: 0.03em; }
-.ch-preset-btn:hover { border-color: #E8A020; color: var(--text); }
-.ch-preset-active { border-color: #E8A020 !important; color: #E8A020 !important; background: rgba(232,160,32,0.08) !important; }
+.ch-preset-btn:hover { border-color: #00C896; color: var(--text); }
+.ch-preset-active { border-color: #00C896 !important; color: #00C896 !important; background: rgba(0,200,150,0.08) !important; }
 .ch-faq-open .ch-faq-icon { transform: rotate(45deg); }
 .ch-section h3 { font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 10px; letter-spacing: -0.01em; }
 .ch-section p { font-size: 13.5px; color: var(--text2); line-height: 1.8; margin: 0 0 12px; }
 .ch-section ul { padding-left: 16px; }
 .ch-section ul li { font-size: 13.5px; color: var(--text2); line-height: 1.8; margin-bottom: 4px; }
-.ch-formula-box { background: var(--bg3); border: 1px solid var(--border); border-left: 3px solid #6B7F95; border-radius: 0 6px 6px 0; padding: 12px 16px; font-family: var(--mono); font-size: 12.5px; color: var(--text); margin: 10px 0 18px; line-height: 1.7; }
-.ch-insight-box { background: rgba(232,160,32,0.06); border-left: 3px solid #E8A020; border-radius: 0 8px 8px 0; padding: 11px 15px; font-size: 13px; color: var(--text2); line-height: 1.75; margin: 14px 0; }
+.ch-formula-box { background: var(--bg3); border: 1px solid var(--border); border-left: 3px solid #1E3A52; border-radius: 0 6px 6px 0; padding: 12px 16px; font-family: var(--mono); font-size: 12.5px; color: var(--text); margin: 10px 0 18px; line-height: 1.7; }
+.ch-insight-box { background: rgba(0,200,150,0.06); border-left: 3px solid #00C896; border-radius: 0 8px 8px 0; padding: 11px 15px; font-size: 13px; color: var(--text2); line-height: 1.75; margin: 14px 0; }
 .ch-related a { display: inline-flex; align-items: center; gap: 5px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 12px; color: var(--text2); text-decoration: none; font-weight: 600; cursor: pointer; font-family: var(--mono); transition: border-color 0.12s, color 0.12s; }
-.ch-related a:hover { border-color: #E8A020; color: #E8A020; }
+.ch-related a:hover { border-color: #00C896; color: #00C896; }
 .ch-val-input { background: none; border: none; outline: none; font-size: 14px; font-weight: 700; color: var(--text); font-family: var(--mono); text-align: right; width: 100%; }
 .ch-track-fill { transition: width 0.2s; }
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
 .ch-donut-seg { transition: stroke-width 0.12s; cursor: pointer; }
 @media (max-width: 700px) {
   .ch-shell-grid { grid-template-columns: 1fr !important; }
@@ -125,16 +128,14 @@ function Donut({ a, b, la = 'Invested', lb = 'Returns' }) {
   const lenB = Math.max(0, pB * circ - gapLen);
   const rotB = -90 + pA * 360 + GAP_DEG;
 
-  const mult = (total / (a || 1)).toFixed(2);
+  const mult = (total / (a || 1)).toFixed(1);
   const retPct = Math.round((b / total) * 100);
 
   const center = hov === 0
     ? { top: fmt(a), bot: la.toLowerCase() }
     : hov === 1
     ? { top: fmt(b), bot: lb.toLowerCase() }
-    : retPct >= 50
-    ? { top: `${mult}x`, bot: 'your money' }
-    : { top: `${retPct}%`, bot: 'in returns' };
+    : { top: fmt(total), bot: 'total corpus' };
 
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap: 14 }}>
@@ -153,7 +154,7 @@ function Donut({ a, b, la = 'Invested', lb = 'Returns' }) {
           />
           {/* Returns arc */}
           <circle className="ch-donut-seg" cx={cx} cy={cy} r={r} fill="none"
-            stroke={hov === 1 ? '#F5B840' : D_RETURNS}
+            stroke={hov === 1 ? '#00E5AE' : D_RETURNS}
             strokeWidth={hov === 1 ? sw + 4 : sw}
             strokeDasharray={`${lenB} ${circ - lenB}`}
             strokeLinecap="butt"
@@ -355,11 +356,11 @@ function Insight({ text }) {
   if (!text) return null;
   return (
     <div style={{ display:'flex', alignItems:'flex-start', gap:8,
-      background:'rgba(107,127,149,0.08)', border:'1px solid rgba(107,127,149,0.2)',
-      borderLeft:`3px solid ${D_INVESTED}`, borderRadius:'0 6px 6px 0',
+      background:'rgba(0,200,150,0.05)', border:'1px solid rgba(0,200,150,0.15)',
+      borderLeft:`3px solid ${D_RETURNS}`, borderRadius:'0 6px 6px 0',
       padding:'9px 12px', marginTop:8, fontSize:12.5, color:'var(--text2)',
       lineHeight:1.65, fontFamily:'var(--mono)' }}>
-      <span style={{ color:D_RETURNS, flexShrink:0, fontSize:14 }}>◆</span>
+      <span style={{ color:D_RETURNS, flexShrink:0, fontSize:12 }}>◆</span>
       <span>{text}</span>
     </div>
   );
@@ -368,7 +369,7 @@ function Insight({ text }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // SHELL - 2-col layout: inputs | donut, then results strip
 // ─────────────────────────────────────────────────────────────────────────────
-function Shell({ inputs, donut, results, cta, ctaLabel='INVEST NOW', donuts, insight }) {
+function Shell({ inputs, donut, results, donuts, insight }) {
   return (
     <div style={{ background:'var(--bg2)', border:'1px solid var(--border)',
       borderRadius:10, overflow:'hidden', marginBottom:28 }}>
@@ -385,23 +386,13 @@ function Shell({ inputs, donut, results, cta, ctaLabel='INVEST NOW', donuts, ins
       </div>
       <div className="ch-res-grid" style={{ padding:'16px 26px 20px',
         borderTop:'1px solid var(--border)',
-        display:'grid', gridTemplateColumns:'1fr auto', gap:28, alignItems:'end',
+        display:'grid', gridTemplateColumns:'1fr', gap:0, alignItems:'start',
         background:'var(--bg3)' }}>
         <div>
           {results}
           {insight && <Insight text={insight}/>}
         </div>
-        {cta && (
-          <button style={{ background:D_RETURNS, color:'#000', border:'none',
-            borderRadius:6, padding:'11px 20px', fontSize:12, fontWeight:800,
-            cursor:'pointer', letterSpacing:'0.06em', whiteSpace:'nowrap',
-            fontFamily:'var(--mono)', alignSelf:'flex-end',
-            transition:'background 0.12s' }}
-            onMouseEnter={e=>e.target.style.background='#F5B840'}
-            onMouseLeave={e=>e.target.style.background=D_RETURNS}>
-            {ctaLabel}
-          </button>
-        )}
+  
       </div>
     </div>
   );
@@ -467,6 +458,7 @@ function SipCalc({ nav }) {
   const [rate, setRate] = useState(12);
   const [years, setYears] = useState(10);
   const [presetIdx, setPresetIdx] = useState(null);
+
   const { invested, returns, total } = useMemo(() => {
     if (mode === 'sip') {
       const t = sipFV(amount, rate, years);
@@ -478,37 +470,155 @@ function SipCalc({ nav }) {
     }
   }, [mode, amount, rate, years]);
 
-  const mult = total > 0 ? (total / (invested || 1)).toFixed(2) : null;
-  const retPct = total > 0 ? ((returns / total) * 100).toFixed(0) : 0;
+  const mult   = total > 0 ? (total / (invested || 1)) : 1;
+  const multStr = mult.toFixed(mult >= 10 ? 1 : 2);
+  const doublingYrs = rate > 0 ? (72 / rate).toFixed(1) : null;
+
   const insight = (() => {
     if (mode === 'sip') {
-      if (returns > invested * 2) return `Your returns (${INRF(returns)}) are ${Math.round(returns/invested*100)}% of what you put in. Compounding is doing most of the heavy lifting after year ${Math.round(years * 0.6)}.`;
-      if (years < 7) return `Short tenures limit compounding. Extending to ${years + 5} years would roughly double your gains.`;
-      return `You invest ${INRF(amount)}/mo for ${years} years. Your money grows ${mult}x. Each extra year at this rate adds ~${INRF(sipFV(amount, rate, years+1) - sipFV(amount, rate, years))}.`;
+      if (years >= 15 && rate >= 12) return `At ${rate}%, compounding kicks in hard after year ${Math.round(years * 0.55)}. Your last 3 years contribute more than your first 10.`;
+      if (returns > invested) return `Returns (${INR(returns)}) now exceed what you put in. This is compounding working as intended.`;
+      if (years < 7) return `Extend to ${years + 5}yr and corpus grows to ${INR(sipFV(amount, rate, years + 5))}. Time is your biggest lever here.`;
+      return `${INRF(amount)}/mo for ${years}yr at ${rate}%. Each extra year at this rate adds ${INR(sipFV(amount, rate, years+1) - sipFV(amount, rate, years))}.`;
     }
-    return mult >= 3 ? `${mult}x growth over ${years} years. At ${rate}% CAGR, money doubles every ${(72/rate).toFixed(1)} years (Rule of 72).`
-      : `Consider a longer horizon. At ${rate}%, extending to ${years+5} years would grow this to ${INRF(lsFV(amount, rate, years+5))}.`;
+    return doublingYrs
+      ? `At ${rate}% CAGR, money doubles every ${doublingYrs} years (Rule of 72). In ${years} years that is ${multStr}x growth.`
+      : 'Adjust the rate to see growth projections.';
   })();
 
+  const S = { // style shortcuts
+    wrap:     { marginBottom: 32 },
+    heroWrap: { padding: '28px 0 24px', borderBottom: '1px solid var(--border)' },
+    heroLabel:{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--text3)',
+                letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 },
+    heroNum:  { fontFamily: 'var(--mono)', fontSize: 52, fontWeight: 900, color: 'var(--text)',
+                letterSpacing: '-2px', lineHeight: 1, marginBottom: 6 },
+    heroSub:  { fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text3)', marginBottom: 20 },
+    statRow:  { display: 'flex', gap: 0, borderTop: '1px solid var(--border)', marginTop: 4 },
+    statBox:  (accent) => ({
+                flex: 1, padding: '14px 0 0', paddingRight: 24,
+                borderRight: '1px solid var(--border)',
+              }),
+    statNum:  (accent) => ({
+                fontFamily: 'var(--mono)', fontSize: 22, fontWeight: 800, lineHeight: 1.1,
+                color: accent ? D_RETURNS : 'var(--text)', marginBottom: 4
+              }),
+    statLbl:  { fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600, color: 'var(--text3)',
+                textTransform: 'uppercase', letterSpacing: '0.08em' },
+    insightLine: { display: 'flex', alignItems: 'flex-start', gap: 8,
+                   fontSize: 12.5, color: 'var(--text2)', lineHeight: 1.6,
+                   fontFamily: 'var(--mono)', padding: '10px 0 0' },
+    inputsWrap: { padding: '22px 0', borderBottom: '1px solid var(--border)' },
+    modeRow:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                marginBottom: 20, flexWrap: 'wrap', gap: 10 },
+    vizWrap:  { display: 'grid', gridTemplateColumns: '180px 1fr', gap: 28,
+                padding: '24px 0', alignItems: 'start' },
+  };
+
   return (<>
-    <Shell
-      inputs={<>
-        <ModeTab options={[{id:'sip',label:'SIP'},{id:'lumpsum',label:'Lumpsum'}]} active={mode} set={setMode}/>
-        {mode === 'sip' && <Presets presets={SIP_PRESETS} activeIdx={presetIdx}
-          onApply={(p,i) => { setAmount(p.amount); setRate(p.rate); setYears(p.years); setPresetIdx(i); }}/>}
-        <SliderRow label={mode==='sip'?'Monthly investment':'Total investment'} value={amount} set={v=>{setAmount(v);setPresetIdx(null);}} min={500} max={500000} step={500} pre="₹"/>
-        <SliderRow label="Expected return (p.a.)" value={rate} set={v=>{setRate(v);setPresetIdx(null);}} min={1} max={30} step={0.5} suf="%" hint="Nifty 50 avg: ~12%"/>
-        <SliderRow label="Time period" value={years} set={v=>{setYears(v);setPresetIdx(null);}} min={1} max={40} suf="Yr"/>
-      </>}
-      donut={<Donut a={invested} b={returns}/>}
-      results={<>
-        <RRow label="Invested amount" value={INRF(invested)}/>
-        <RRow label="Est. returns" value={INRF(returns)}/>
-        <RRow label="Total value" value={INRF(total)} bold highlight/>
-      </>}
-      insight={insight}
-      cta ctaLabel="INVEST NOW"
-    />
+    <div style={S.wrap}>
+      {/* HERO RESULT */}
+      <div style={S.heroWrap}>
+        <div style={S.heroLabel}>
+          {mode === 'sip'
+            ? `₹${amount.toLocaleString('en-IN')}/mo · ${years}yr · ${rate}% p.a.`
+            : `₹${amount.toLocaleString('en-IN')} invested · ${years}yr · ${rate}% p.a.`}
+        </div>
+        <div style={S.heroNum}>{INR(total)}</div>
+        <div style={S.heroSub}>
+          estimated corpus after {years} year{years !== 1 ? 's' : ''}
+        </div>
+        {/* 3-stat row */}
+        <div style={S.statRow}>
+          <div style={{ ...S.statBox(false), paddingLeft: 0 }}>
+            <div style={S.statNum(false)}>{INR(invested)}</div>
+            <div style={S.statLbl}>Invested</div>
+          </div>
+          <div style={{ ...S.statBox(true), paddingLeft: 24 }}>
+            <div style={S.statNum(true)}>{INR(returns)}</div>
+            <div style={S.statLbl}>Returns</div>
+          </div>
+          <div style={{ ...S.statBox(true), paddingLeft: 24, borderRight: 'none' }}>
+            <div style={S.statNum(true)}>{multStr}x</div>
+            <div style={S.statLbl}>Growth</div>
+          </div>
+        </div>
+        {/* Inline insight */}
+        {insight && (
+          <div style={S.insightLine}>
+            <span style={{ color: D_RETURNS, flexShrink: 0 }}>◆</span>
+            <span>{insight}</span>
+          </div>
+        )}
+      </div>
+
+      {/* INPUTS */}
+      <div style={S.inputsWrap}>
+        <div style={S.modeRow}>
+          <ModeTab
+            options={[{id:'sip',label:'SIP'},{id:'lumpsum',label:'Lumpsum'}]}
+            active={mode} set={m => { setMode(m); setPresetIdx(null); }}
+          />
+          {mode === 'sip' && (
+            <Presets presets={SIP_PRESETS} activeIdx={presetIdx}
+              onApply={(p,i) => { setAmount(p.amount); setRate(p.rate); setYears(p.years); setPresetIdx(i); }}/>
+          )}
+        </div>
+        <SliderRow
+          label={mode === 'sip' ? 'Monthly investment' : 'Total investment'}
+          value={amount} set={v => { setAmount(v); setPresetIdx(null); }}
+          min={500} max={500000} step={500} pre="₹"
+        />
+        <SliderRow
+          label="Expected return (p.a.)"
+          value={rate} set={v => { setRate(v); setPresetIdx(null); }}
+          min={1} max={30} step={0.5} suf="%" hint="Nifty 50 avg ~12%"
+        />
+        <SliderRow
+          label="Time period"
+          value={years} set={v => { setYears(v); setPresetIdx(null); }}
+          min={1} max={40} suf="Yr"
+        />
+      </div>
+
+      {/* VISUAL: Donut + contextual breakdown */}
+      <div style={S.vizWrap}>
+        <Donut a={invested} b={returns} la="Invested" lb="Returns"/>
+        <div>
+          <div style={{ marginBottom: 16 }}>
+            {[
+              { label: 'Total Corpus',     val: INR(total),    bold: true  },
+              { label: 'Invested Amount',  val: INR(invested), bold: false },
+              { label: 'Estimated Returns',val: INR(returns),  bold: false, accent: true },
+              { label: 'Growth Multiple',  val: `${multStr}x`, bold: false, accent: true },
+              ...(doublingYrs ? [{ label: `Doubles every`, val: `${doublingYrs} yrs at ${rate}%`, bold: false }] : []),
+            ].map((r, i) => (
+              <div key={i} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                padding: '8px 0', borderBottom: '1px solid var(--border)',
+              }}>
+                <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{r.label}</span>
+                <span style={{
+                  fontSize: r.bold ? 17 : 14, fontWeight: r.bold ? 800 : 600,
+                  color: r.bold ? 'var(--text)' : r.accent ? D_RETURNS : 'var(--text2)',
+                  fontFamily: 'var(--mono)',
+                }}>{r.val}</span>
+              </div>
+            ))}
+          </div>
+          {doublingYrs && years >= 7 && (
+            <div style={{
+              fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--mono)',
+              lineHeight: 1.65, padding: '10px 12px',
+              background: 'rgba(0,200,150,0.05)', borderLeft: `2px solid ${D_RETURNS}`,
+            }}>
+              At {rate}%, every rupee doubles in {doublingYrs} years. Over {years} years, you
+              get {Math.floor(years / parseFloat(doublingYrs))} doubling{Math.floor(years / parseFloat(doublingYrs)) !== 1 ? 's' : ''}.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
     <SipSEO nav={nav}/>
   </>);
 }
@@ -523,16 +633,16 @@ function LumpsumCalc({ nav }) {
     <Shell
       inputs={<>
         <SliderRow label="Total investment" value={amount} set={setAmount} min={1000} max={10000000} step={1000} pre="₹"/>
-        <SliderRow label="Expected return rate (p.a)" value={rate} set={setRate} min={1} max={30} step={0.5} suf="%"/>
+        <SliderRow label="Expected return rate (p.a.)" value={rate} set={setRate} min={1} max={30} step={0.5} suf="%"/>
         <SliderRow label="Time period" value={years} set={setYears} min={1} max={40} suf="Yr"/>
       </>}
       donut={<Donut a={amount} b={returns}/>}
       results={<>
         <RRow label="Invested amount" value={INRF(amount)}/>
         <RRow label="Est. returns" value={INRF(returns)}/>
-        <RRow label="Total value" value={INRF(total)} bold/>
+        <RRow label="Total value" value={INRF(total)} bold highlight/>
       </>}
-      cta ctaLabel="INVEST NOW"
+      insight={`${(total/amount).toFixed(2)}x growth over ${years} years. At ${rate}% CAGR, money doubles every ${(72/rate).toFixed(1)} years.`}
     />
     <div className="ch-section">
       <Section title="What is a Lumpsum Investment?">
@@ -671,7 +781,6 @@ function MfCalc({ nav }) {
         <RRow label="Est. returns" value={INRF(returns)}/>
         <RRow label="Total value" value={INRF(total)} bold/>
       </>}
-      cta ctaLabel="INVEST NOW"
     />
     <div>
       <Section title="What is a Mutual Fund Returns Calculator?">
@@ -713,7 +822,6 @@ function FdCalc({ nav }) {
         <RRow label="Est. returns" value={INRF(returns)}/>
         <RRow label="Total value" value={INRF(total)} bold/>
       </>}
-      cta ctaLabel="INVEST NOW"
     />
     <div>
       <Section title="What is an FD Calculator?">
@@ -767,7 +875,6 @@ function RdCalc({ nav }) {
         <RRow label="Est. returns" value={INRF(returns)}/>
         <RRow label="Total value" value={INRF(total)} bold/>
       </>}
-      cta ctaLabel="RD ALTERNATIVE"
     />
     <div>
       <Section title="What is an RD Calculator?">
@@ -1134,7 +1241,6 @@ function StepUpSipCalc({ nav }) {
         <RRow label="Total value" value={INRF(total)} bold/>
         <RRow label="vs. flat SIP" value={`+${INR(total - flatTotal)} more`} accent/>
       </>}
-      cta ctaLabel="INVEST NOW"
     />
     <div>
       <Section title="What is a Step-up SIP Calculator?">
@@ -1264,7 +1370,6 @@ function NscCalc({ nav }) {
         <RRow label="Total interest" value={INRF(interest)}/>
         <RRow label="Total amount" value={INRF(total)} bold/>
       </>}
-      cta ctaLabel="SAVE TAX"
     />
     <div>
       <Section title="What is an NSC Calculator?">
