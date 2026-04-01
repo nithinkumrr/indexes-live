@@ -249,7 +249,7 @@
             `LTP fetched: ${json.ltpFetched ? 'Yes (market closed)' : 'No (will auto-refresh at 3:40 PM IST)'}`;
         } else {
           resultEl.className = 'result err';
-          resultEl.textContent = `Error: ${json.error || 'Upload failed'}`;
+          resultEl.textContent = `Error: ${json.error || 'Upload failed'}\n\nDebug: ${JSON.stringify(json, null, 2)}`;
         }
       } catch (err) {
         resultEl.className = 'result err';

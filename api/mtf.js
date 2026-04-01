@@ -216,9 +216,21 @@ function computeSummary(rows, officialSummary) {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
-  const action = req.query?.action;
+  const urlObj = new URL(req.url, 'https://indexes.live');
+  const action = urlObj.searchParams.get('action');
 
-  // ── LTP cron refresh (GET ?action=ltp, secured by Vercel cron header) ──────
+  // ── Debug endpoint (GET ?action=debug) ─────────────────────────────────────
+  if (req.method === 'GET' && action === 'debug') {
+    const envSecret = (process.env.MTF_SECRET || '').trim();
+    return res.json({
+      version: 'v4',
+      env_set: !!envSecret,
+      env_len: envSecret.length,
+      env_first3: envSecret.slice(0, 3) || 'not set',
+    });
+  }
+
+
   if (req.method === 'GET' && action === 'ltp') {
     const isCron = req.headers['x-vercel-cron'] === '1' ||
       req.headers['authorization'] === `Bearer ${process.env.CRON_SECRET || ''}`;
@@ -264,9 +276,11 @@ export default async function handler(req, res) {
 
   // ── POST: upload CSV ────────────────────────────────────────────────────────
   if (req.method === 'POST') {
-    const secret = req.headers['x-mtf-secret'] || req.query?.secret;
-    if (!process.env.MTF_SECRET || secret !== process.env.MTF_SECRET) {
-      return res.status(403).json({ error: 'Invalid secret' });
+    const secret    = (req.headers['x-mtf-secret'] || urlObj.searchParams.get('secret') || '').trim();
+    const envSecret = (process.env.MTF_SECRET || '').trim();
+    if (!envSecret || secret !== envSecret) {
+      // Debug: return what we see (remove after fixing)
+      return res.status(403).json({ error: 'Invalid secret', debug_env_set: !!envSecret, debug_env_len: envSecret.length, debug_sent_len: secret.length });
     }
 
     let body = req.body;
