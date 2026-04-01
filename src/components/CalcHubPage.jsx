@@ -121,7 +121,7 @@ function Donut({ a, b, la = 'Invested', lb = 'Returns' }) {
   const total = (a || 0) + (b || 0);
   if (!total) return null;
 
-  const r = 52, cx = 80, cy = 80, sw = 24, circ = 2 * Math.PI * r;
+  const r = 68, cx = 100, cy = 100, sw = 26, circ = 2 * Math.PI * r;
   const pA = a / total, pB = b / total;
   const gapLen = (GAP_DEG / 360) * circ;
   const lenA = Math.max(0, pA * circ - gapLen);
@@ -140,7 +140,7 @@ function Donut({ a, b, la = 'Invested', lb = 'Returns' }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap: 14 }}>
       <div style={{ position:'relative' }}>
-        <svg width={160} height={160} viewBox="0 0 160 160">
+        <svg width={200} height={200} viewBox="0 0 200 200">
           {/* Background track */}
           <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--bg4)" strokeWidth={sw + 2}/>
           {/* Invested arc */}
@@ -162,14 +162,13 @@ function Donut({ a, b, la = 'Invested', lb = 'Returns' }) {
             onMouseEnter={() => setHov(1)} onMouseLeave={() => setHov(null)}
           />
           {/* Center top value */}
-          <text x={cx} y={cy - 6} textAnchor="middle"
-            fontSize="17" fontWeight="800" fill="var(--text)"
+          <text x={cx} y={cy - 4} textAnchor="middle"
+            fontSize="19" fontWeight="800" fill="var(--text)"
             fontFamily="var(--mono)" style={{ letterSpacing:'-0.5px' }}>
             {center.top}
           </text>
-          {/* Center label */}
-          <text x={cx} y={cy + 11} textAnchor="middle"
-            fontSize="10" fontWeight="500" fill="var(--text3)"
+          <text x={cx} y={cy + 14} textAnchor="middle"
+            fontSize="11" fontWeight="500" fill="var(--text3)"
             fontFamily="var(--mono)" style={{ letterSpacing:'0.04em', textTransform:'uppercase' }}>
             {center.bot}
           </text>
@@ -511,7 +510,7 @@ function SipCalc({ nav }) {
     inputsWrap: { padding: '22px 0', borderBottom: '1px solid var(--border)' },
     modeRow:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 marginBottom: 20, flexWrap: 'wrap', gap: 10 },
-    vizWrap:  { display: 'grid', gridTemplateColumns: '180px 1fr', gap: 28,
+    vizWrap:  { display: 'grid', gridTemplateColumns: '210px 1fr', gap: 32,
                 padding: '24px 0', alignItems: 'start' },
   };
 
@@ -1753,7 +1752,7 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
   };
 
   return (
-    <div style={{ maxWidth:1200, margin:'0 auto', padding:'0 16px 40px', display:'grid',
+    <div style={{ maxWidth:1200, margin:'0 auto', padding:'0 0 40px', display:'grid',
       gridTemplateColumns:'220px 1fr', gap:32, alignItems:'start', minHeight:'80vh' }}>
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
