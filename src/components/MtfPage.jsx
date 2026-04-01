@@ -77,13 +77,37 @@ function TopCard({ stock }) {
 }
 
 export default function MtfPage() {
-  const [data,    setData]    = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
-  const [tab,     setTab]     = useState('overall');
-  const [sortBy,  setSortBy]  = useState('fundedAmt');
-  const [page,    setPage]    = useState(1);
+  const [data,       setData]       = useState(null);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState(null);
+  const [tab,        setTab]        = useState('overall');
+  const [sortBy,     setSortBy]     = useState('fundedAmt');
+  const [page,       setPage]       = useState(1);
+  const [ltpLoading, setLtpLoading] = useState(false);
+  const [ltpMsg,     setLtpMsg]     = useState(null);
   const PAGE_SIZE = 20;
+
+  const fetchLTP = async () => {
+    setLtpLoading(true);
+    setLtpMsg(null);
+    try {
+      const r    = await fetch('/api/mtf?action=ltp');
+      const json = await r.json();
+      if (json.ok) {
+        setLtpMsg({ ok: true, text: `LTP updated for ${json.count} stocks via ${json.source}. ${json.fetchesRemaining} fetch${json.fetchesRemaining !== 1 ? 'es' : ''} remaining today.` });
+        // Reload data
+        const d = await fetch('/api/mtf').then(r => r.json());
+        if (!d.empty) setData(d);
+      } else if (json.reason === 'daily_limit') {
+        setLtpMsg({ ok: false, text: 'Daily limit of 5 fetches reached. Resets at midnight IST.' });
+      } else {
+        setLtpMsg({ ok: false, text: json.error || 'LTP fetch failed.' });
+      }
+    } catch {
+      setLtpMsg({ ok: false, text: 'Network error. Try again.' });
+    }
+    setLtpLoading(false);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -119,7 +143,8 @@ export default function MtfPage() {
     </div>
   );
 
-  const { summary, stocks, date, ltpUpdatedAt } = data;
+  const { summary, stocks, date, ltpUpdatedAt, fetchesUsed, fetchesRemaining, limit } = data;
+  const remaining = fetchesRemaining ?? (limit - (fetchesUsed || 0));
   const fmtDate = d => {
     if (!d) return '';
     try {
@@ -172,13 +197,31 @@ export default function MtfPage() {
           <h1 className="mtf-title">MTF Insights</h1>
           {date && <span className="mtf-date">as on {fmtDate(date)}</span>}
         </div>
-        {ltpUpdatedAt && (
-          <div className="mtf-ltp-badge">
-            <span className="mtf-ltp-dot" />
-            LTP updated {fmtTime(ltpUpdatedAt)}
-          </div>
-        )}
+        <div className="mtf-header-right">
+          {ltpUpdatedAt && (
+            <div className="mtf-ltp-badge">
+              <span className="mtf-ltp-dot" />
+              LTP {fmtTime(ltpUpdatedAt)}
+            </div>
+          )}
+          <button
+            className="mtf-ltp-btn"
+            onClick={fetchLTP}
+            disabled={ltpLoading || remaining <= 0}
+            title={remaining <= 0 ? 'Daily limit reached. Resets at midnight IST.' : `Fetch latest LTP (${remaining} of ${limit ?? 5} remaining today)`}
+          >
+            {ltpLoading ? <><span className="mtf-btn-spin" /> Fetching...</> : 'Fetch LTP'}
+          </button>
+          <span className="mtf-fetch-count" style={{ color: remaining <= 0 ? 'var(--loss)' : remaining <= 2 ? '#F59E0B' : 'var(--text3)' }}>
+            {remaining ?? '--'} / {limit ?? 5} left today
+          </span>
+        </div>
       </div>
+      {ltpMsg && (
+        <div className="mtf-ltp-msg" style={{ background: ltpMsg.ok ? 'rgba(0,200,150,.08)' : 'rgba(255,68,85,.08)', borderColor: ltpMsg.ok ? 'rgba(0,200,150,.3)' : 'rgba(255,68,85,.3)', color: ltpMsg.ok ? 'var(--gain)' : 'var(--loss)' }}>
+          {ltpMsg.text}
+        </div>
+      )}
 
       {/* SUMMARY STRIP */}
       <div className="mtf-summary">
