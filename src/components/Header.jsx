@@ -55,7 +55,6 @@ export default function Header({ lastUpdate, view, setView }) {
     { id: 'insights',    label: 'Insights',    icon: '◐', cls: 'tab-purple' },
   ];
 
-  const allTabs = [...mainTabs, ...moreTabs];
   const isMoreActive = moreTabs.some(t => t.id === view);
 
   return (
@@ -85,7 +84,7 @@ export default function Header({ lastUpdate, view, setView }) {
         </div>
         {/* Desktop nav */}
         <nav className="desktop-nav">
-          {allTabs.map(tab => (
+          {mainTabs.map(tab => (
             <button key={tab.id}
               className={`view-btn ${tab.cls||''} ${view === tab.id ? 'view-active' : ''}`}
               onClick={() => setView(tab.id)}>
