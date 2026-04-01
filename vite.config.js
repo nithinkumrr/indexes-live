@@ -6,14 +6,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor':  ['react', 'react-dom'],
-          'chart':         ['chart.js'],
-          'brokers':       ['./src/components/BrokersPage.jsx'],
-          'calculators':   ['./src/components/CalcHubPage.jsx'],
-          'fno':           ['./src/components/FnOPage.jsx', './src/components/StrategyPage.jsx'],
-          'risk':          ['./src/components/RiskCalcPage.jsx'],
-          'insights':      ['./src/components/InsightsPage.jsx'],
+        manualChunks(id) {
+          if (id.includes('BrokersPage'))    return 'brokers';
+          if (id.includes('CalcHubPage'))    return 'calculators';
+          if (id.includes('FnOPage') || id.includes('StrategyPage')) return 'fno';
+          if (id.includes('RiskCalcPage'))   return 'risk';
+          if (id.includes('InsightsPage'))   return 'insights';
+          if (id.includes('node_modules/react')) return 'react-vendor';
+          if (id.includes('chart.js'))       return 'chart';
         },
       },
     },
