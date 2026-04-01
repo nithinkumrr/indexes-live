@@ -113,8 +113,28 @@ input[type=number] { -moz-appearance: textfield; }
 }
 
 /* SIP 60/40 layout */
-.ch-sip-layout { display: grid; grid-template-columns: 60% 40%; gap: 28px; margin-bottom: 28px; align-items: start; }
-.ch-sip-layout > div:first-child { display: flex; flex-direction: column; }
+.ch-sip-layout {
+  display: grid; grid-template-columns: 60% 1fr;
+  gap: 0; margin-bottom: 28px; align-items: stretch;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 12px; overflow: hidden;
+}
+.ch-sip-inputs-col {
+  padding: 24px 28px 28px;
+  display: flex; flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+.ch-sip-card {
+  padding: 24px 22px 22px;
+  background: var(--bg3);
+  position: sticky; top: 80px;
+  border: none !important; border-radius: 0 !important;
+}
+@media (max-width: 768px) {
+  .ch-sip-layout { grid-template-columns: 1fr !important; border-radius: 0 !important; margin: 0 -16px 20px !important; }
+  .ch-sip-inputs-col { border-right: none !important; border-bottom: 1px solid var(--border) !important; padding: 16px !important; }
+  .ch-sip-card { position: static !important; padding: 16px !important; }
+}
 .ch-sip-card { background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px; padding: 20px 20px 18px; position: sticky; top: 80px; }
 .ch-sip-card-label { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; }
 .ch-sip-card-total { font-family: var(--mono); font-size: 30px; font-weight: 900; color: var(--text); letter-spacing: -1px; line-height: 1.1; margin-bottom: 2px; }
@@ -588,8 +608,8 @@ const SIP_PRESETS = [
 function SipCalc({ nav }) {
   const [mode, setMode] = useState('sip');
   const [amount, setAmount] = useState(25000);
-  const [rate, setRate] = useState(12);
-  const [years, setYears] = useState(10);
+  const [rate, setRate]     = useState(12);
+  const [years, setYears]   = useState(10);
   const [presetIdx, setPresetIdx] = useState(null);
 
   const { invested, returns, total } = useMemo(() => {
@@ -609,9 +629,9 @@ function SipCalc({ nav }) {
 
   const insight = (() => {
     if (mode === 'sip') {
-      if (years >= 15 && rate >= 12) return `At ${rate}%, compounding kicks in hard after year ${Math.round(years * 0.55)}. Your last 3 years contribute more than your first 10.`;
+      if (years >= 15 && rate >= 12) return `At ${rate}%, compounding kicks in hard after year ${Math.round(years*0.55)}. Your last 3 years contribute more than your first 10.`;
       if (returns > invested) return `Returns (${INR(returns)}) now exceed what you put in. Compounding is working as intended.`;
-      if (years < 7) return `Extend to ${years + 5}yr and corpus grows to ${INR(sipFV(amount, rate, years + 5))}. Time is your biggest lever here.`;
+      if (years < 7) return `Extend to ${years+5}yr and corpus grows to ${INR(sipFV(amount, rate, years+5))}. Time is your biggest lever here.`;
       return `₹${amount.toLocaleString('en-IN')}/mo for ${years}yr at ${rate}%. Each extra year adds ${INR(sipFV(amount, rate, years+1) - sipFV(amount, rate, years))}.`;
     }
     return doublingYrs
@@ -619,132 +639,42 @@ function SipCalc({ nav }) {
       : 'Adjust the rate to see growth projections.';
   })();
 
-  // Helper: renders full Indian number + short bracket
-  const CardVal = ({ v, bold, accent, text }) => {
-    if (text) return (
-      <div className="ch-sip-card-row-val">
-        <div className={`ch-sip-card-row-full${bold?' ch-sip-card-row-bold':accent?' ch-sip-card-row-accent':''}`}
-          style={{ color: accent ? 'var(--gain)' : bold ? 'var(--text)' : 'var(--text2)' }}>
-          {text}
-        </div>
-      </div>
-    );
-    const { full, short } = INRFull(v);
-    return (
-      <div className="ch-sip-card-row-val">
-        <div className="ch-sip-card-row-full" style={{
-          fontSize: bold ? 15 : 13, fontWeight: bold ? 800 : 600,
-          color: accent ? 'var(--gain)' : bold ? 'var(--text)' : 'var(--text2)',
-          fontFamily: 'var(--mono)',
-        }}>{full}</div>
-        {short && <div className="ch-sip-card-row-short">{short}</div>}
-      </div>
-    );
-  };
-
-  const totalFmt = INRFull(total);
-  const paramLabel = mode === 'sip'
-    ? `₹${amount.toLocaleString('en-IN')}/mo · ${years}yr · ${rate}%`
-    : `₹${amount.toLocaleString('en-IN')} · ${years}yr · ${rate}%`;
-
   return (<>
-    <div className="ch-sip-layout">
-
-      {/* ── LEFT 60%: Inputs ───────────────────────────────────────────── */}
-      <div>
-        <div className="ch-sip-controls-row" style={{ display:'flex', justifyContent:'space-between',
-          alignItems:'center', marginBottom:20, flexWrap:'wrap', gap:10 }}>
-          <ModeTab
-            options={[{id:'sip',label:'SIP'},{id:'lumpsum',label:'Lumpsum'}]}
-            active={mode} set={m => { setMode(m); setPresetIdx(null); }}
-          />
-          {mode === 'sip' && (
-            <Presets presets={SIP_PRESETS} activeIdx={presetIdx}
-              onApply={(p,i) => { setAmount(p.amount); setRate(p.rate); setYears(p.years); setPresetIdx(i); }}/>
-          )}
-        </div>
+    <Shell
+      inputs={<>
+        <ModeTab options={[{id:'sip',label:'SIP'},{id:'lumpsum',label:'Lumpsum'}]}
+          active={mode} set={m => { setMode(m); setPresetIdx(null); }}/>
+        {mode === 'sip' && (
+          <Presets presets={SIP_PRESETS} activeIdx={presetIdx}
+            onApply={(p,i) => { setAmount(p.amount); setRate(p.rate); setYears(p.years); setPresetIdx(i); }}/>
+        )}
         <SliderRow
           label={mode === 'sip' ? 'Monthly investment' : 'Total investment'}
           value={amount} set={v => { setAmount(v); setPresetIdx(null); }}
-          min={500} max={500000} step={500} pre="₹"
-        />
+          min={500} max={500000} step={500} pre="₹"/>
         <SliderRow
           label="Expected return (p.a.)"
           value={rate} set={v => { setRate(v); setPresetIdx(null); }}
-          min={1} max={30} step={0.5} suf="%" hint="Nifty 50 avg ~12%"
-        />
+          min={1} max={30} step={0.5} suf="%" hint="Nifty 50 avg ~12%"/>
         <SliderRow
           label="Time period"
           value={years} set={v => { setYears(v); setPresetIdx(null); }}
-          min={1} max={40} suf="Yr"
-        />
-
-        {/* Bottom filler - related links */}
-        <div style={{ marginTop:'auto', paddingTop:24, borderTop:'1px solid var(--border)' }}>
-          <div style={{ fontSize:10, fontWeight:800, letterSpacing:'0.1em', color:'var(--text3)',
-            textTransform:'uppercase', marginBottom:10 }}>Also explore</div>
-          <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-            {['step-up-sip','swp','fd','inflation'].map(id => {
-              const c = CALC_REGISTRY.find(x => x.id === id);
-              return c ? (
-                <button key={id} onClick={() => nav(id)}
-                  style={{ padding:'6px 12px', borderRadius:6, border:'1px solid var(--border)',
-                    background:'var(--bg3)', color:'var(--text2)', fontSize:12,
-                    fontFamily:'var(--mono)', cursor:'pointer', fontWeight:600,
-                    transition:'border-color 0.12s, color 0.12s' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor=D_RETURNS; e.currentTarget.style.color=D_RETURNS; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.color='var(--text2)'; }}>
-                  {c.label.replace(' Calculator','')} →
-                </button>
-              ) : null;
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* ── RIGHT 40%: Result card ─────────────────────────────────────── */}
-      <div className="ch-sip-card">
-        <div className="ch-sip-card-label">Estimated Corpus</div>
-        <div className="ch-sip-card-total">{totalFmt.full}</div>
-        {totalFmt.short && <div className="ch-sip-card-short">{totalFmt.short}</div>}
-        <div className="ch-sip-card-sub">{paramLabel}</div>
-
-        {/* Donut */}
-        <div className="ch-sip-card-donut">
-          <Donut a={invested} b={returns} la="Invested" lb="Returns"/>
-        </div>
-
-        {/* Breakdown rows */}
-        <div style={{ marginBottom: 12 }}>
-          {[
-            { label: 'Total Corpus',     v: total,    bold: true  },
-            { label: 'Invested Amount',  v: invested, bold: false },
-            { label: 'Est. Returns',     v: returns,  bold: false, accent: true },
-            { label: 'Growth Multiple',  text: `${multStr}x`, accent: true },
-            ...(doublingYrs ? [{ label: 'Doubles every', text: `${doublingYrs} yrs at ${rate}%` }] : []),
-          ].map((r, i) => (
-            <div key={i} className="ch-sip-card-row">
-              <span className="ch-sip-card-row-label">{r.label}</span>
-              <CardVal v={r.v} bold={r.bold} accent={r.accent} text={r.text}/>
-            </div>
-          ))}
-        </div>
-
-        {/* Insight */}
-        {insight && (
-          <div style={{ display:'flex', gap:7, fontSize:12, color:'var(--text2)',
-            lineHeight:1.65, fontFamily:'var(--mono)',
-            background:'rgba(0,200,150,0.05)', borderLeft:`2px solid ${D_RETURNS}`,
-            padding:'9px 10px', borderRadius:'0 6px 6px 0' }}>
-            <span style={{ color:D_RETURNS, flexShrink:0 }}>◆</span>
-            <span>{insight}</span>
-          </div>
-        )}
-      </div>
-    </div>
+          min={1} max={40} suf="Yr"/>
+      </>}
+      donut={<Donut a={invested} b={returns} la="Invested" lb="Returns"/>}
+      results={<>
+        <RRow label="Invested amount"  value={INRF(invested)}/>
+        <RRow label="Est. returns"     value={INRF(returns)}/>
+        <RRow label="Total corpus"     value={INRF(total)} bold highlight/>
+        <RRow label="Growth multiple"  value={`${multStr}x`} accent/>
+        {doublingYrs && <RRow label="Doubles every" value={`${doublingYrs} yrs at ${rate}%`}/>}
+      </>}
+      insight={insight}
+    />
     <SipSEO nav={nav}/>
   </>);
 }
+
 function LumpsumCalc({ nav }) {
   const [amount, setAmount] = useState(100000);
   const [rate, setRate]     = useState(12);
@@ -755,76 +685,30 @@ function LumpsumCalc({ nav }) {
   const multStr = mult.toFixed(mult >= 10 ? 1 : 2);
   const doublingYrs = rate > 0 ? (72 / rate).toFixed(1) : null;
   const insight = doublingYrs
-    ? `At ${rate}% CAGR, money doubles every ${doublingYrs} years. In ${years} years that is ${multStr}x growth.`
+    ? `At ${rate}% CAGR, money doubles every ${doublingYrs} years. In ${years} years: ${multStr}x growth on ₹${amount.toLocaleString('en-IN')}.`
     : 'Adjust the rate to see growth projections.';
 
-  const CardVal = ({ v, bold, accent, text }) => {
-    if (text) return (
-      <div className="ch-sip-card-row-val">
-        <div style={{ fontSize:13, fontWeight:600, color: accent ? 'var(--gain)' : 'var(--text2)',
-          fontFamily:'var(--mono)' }}>{text}</div>
-      </div>
-    );
-    const { full, short } = INRFull(v);
-    return (
-      <div className="ch-sip-card-row-val">
-        <div style={{ fontSize: bold ? 15 : 13, fontWeight: bold ? 800 : 600,
-          color: accent ? 'var(--gain)' : bold ? 'var(--text)' : 'var(--text2)',
-          fontFamily:'var(--mono)' }}>{full}</div>
-        {short && <div className="ch-sip-card-row-short">{short}</div>}
-      </div>
-    );
-  };
-
-  const totalFmt = INRFull(total);
-
   return (<>
-    <div className="ch-sip-layout">
-      {/* LEFT 60%: Inputs */}
-      <div>
+    <Shell
+      inputs={<>
         <SliderRow label="Total investment" value={amount} set={setAmount} min={1000} max={10000000} step={1000} pre="₹"/>
         <SliderRow label="Expected return (p.a.)" value={rate} set={setRate} min={1} max={30} step={0.5} suf="%" hint="Nifty 50 avg ~12%"/>
         <SliderRow label="Time period" value={years} set={setYears} min={1} max={40} suf="Yr"/>
-      </div>
-
-      {/* RIGHT 40%: Result card */}
-      <div className="ch-sip-card">
-        <div className="ch-sip-card-label">Estimated Corpus</div>
-        <div className="ch-sip-card-total">{totalFmt.full}</div>
-        {totalFmt.short && <div className="ch-sip-card-short">{totalFmt.short}</div>}
-        <div className="ch-sip-card-sub">₹{amount.toLocaleString('en-IN')} · {years}yr · {rate}%</div>
-        <div className="ch-sip-card-donut">
-          <Donut a={amount} b={returns} la="Invested" lb="Returns"/>
-        </div>
-        <div style={{ marginBottom:12 }}>
-          {[
-            { label:'Total Corpus',     v: total,   bold: true  },
-            { label:'Invested Amount',  v: amount,  bold: false },
-            { label:'Est. Returns',     v: returns, bold: false, accent: true },
-            { label:'Growth Multiple',  text: `${multStr}x`, accent: true },
-            ...(doublingYrs ? [{ label:'Doubles every', text:`${doublingYrs} yrs at ${rate}%` }] : []),
-          ].map((r,i) => (
-            <div key={i} className="ch-sip-card-row">
-              <span className="ch-sip-card-row-label">{r.label}</span>
-              <CardVal v={r.v} bold={r.bold} accent={r.accent} text={r.text}/>
-            </div>
-          ))}
-        </div>
-        {insight && (
-          <div style={{ display:'flex', gap:7, fontSize:12, color:'var(--text2)',
-            lineHeight:1.65, fontFamily:'var(--mono)',
-            background:'rgba(0,200,150,0.05)', borderLeft:`2px solid ${D_RETURNS}`,
-            padding:'9px 10px', borderRadius:'0 6px 6px 0' }}>
-            <span style={{ color:D_RETURNS, flexShrink:0 }}>◆</span>
-            <span>{insight}</span>
-          </div>
-        )}
-      </div>
-    </div>
+      </>}
+      donut={<Donut a={amount} b={returns} la="Invested" lb="Returns"/>}
+      results={<>
+        <RRow label="Invested amount" value={INRF(amount)}/>
+        <RRow label="Est. returns"    value={INRF(returns)}/>
+        <RRow label="Total value"     value={INRF(total)} bold highlight/>
+        <RRow label="Growth multiple" value={`${multStr}x`} accent/>
+        {doublingYrs && <RRow label="Doubles every" value={`${doublingYrs} yrs at ${rate}%`}/>}
+      </>}
+      insight={insight}
+    />
     <div className="ch-section">
       <Section title="What is a Lumpsum Investment?">
-        <p>A lumpsum investment is when you put a single large amount into a mutual fund all at once, instead of spreading it out monthly. It works best when you have a windfall, a bonus, inheritance, or sale proceeds.</p>
-        <p>Unlike SIP, which benefits from rupee cost averaging, a lumpsum investment is entirely exposed to market timing. Invest at a peak and returns suffer; invest at a dip and they can be spectacular.</p>
+        <p>A lumpsum investment is when you put a single large amount into a mutual fund all at once. It works best when you have a windfall, bonus, or sale proceeds and want to put it to work immediately.</p>
+        <p>Unlike SIP, lumpsum is entirely exposed to market timing. Invest at a peak and returns suffer; invest at a dip and they can be spectacular.</p>
       </Section>
       <Section title="Formula">
         <div className="ch-formula-box">FV = P × (1 + r)ⁿ<br/>P = invested amount, r = annual return rate, n = years</div>
@@ -833,14 +717,13 @@ function LumpsumCalc({ nav }) {
         <FAQ faqs={[
           {q:'Is lumpsum better than SIP?',a:'Neither is universally better. SIP reduces timing risk through averaging. Lumpsum is better if you invest during market corrections.'},
           {q:'What is the minimum lumpsum investment?',a:'Most mutual funds have a minimum of ₹1,000 to ₹5,000. Direct plans often have lower minimums.'},
-          {q:'Is lumpsum investment taxable?',a:'Yes. Short-term capital gains (under 1 year for equity) at 20%. Long-term gains above ₹1.25L at 12.5%.'},
+          {q:'Is lumpsum investment taxable?',a:'Yes. STCG (under 1 year for equity) at 20%. LTCG above ₹1.25L at 12.5%.'},
         ]}/>
       </Section>
       <Section title="Related Calculators"><RelatedCalcs ids={['sip','step-up-sip','cagr']} nav={nav}/></Section>
     </div>
   </>);
 }
-
 
 function SipSEO({ nav }) {
   return (
@@ -902,11 +785,15 @@ function SwpCalc({ nav }) {
         <SliderRow label="Expected return rate (p.a)" value={rate} set={setRate} min={1} max={25} step={0.5} suf="%"/>
         <SliderRow label="Time period" value={years} set={setYears} min={1} max={40} suf="Yr"/>
       </>}
+      donut={<Donut a={corpus} b={Math.max(0, totalWithdrawn - corpus)} la="Corpus" lb="Net Gains"/>}
       results={<>
         <RRow label="Total investment" value={INRF(corpus)}/>
         <RRow label="Total withdrawal" value={INRF(totalWithdrawn)}/>
         <RRow label="Final value" value={finalVal > 0 ? INRF(finalVal) : '₹0 (depleted)'} bold accent={finalVal > 0}/>
       </>}
+      insight={finalVal > 0
+        ? `Corpus survives. You withdraw ₹${(withdrawal * 12 / corpus * 100).toFixed(1)}% of corpus annually. Safe withdrawal rate is 3-4%.`
+        : `Corpus depletes before ${years} years. Reduce withdrawal or increase expected return.`}
     />
     <div>
       <Section title="What is an SWP Calculator?">
@@ -1082,12 +969,14 @@ function NpsCalc({ nav }) {
         <SliderRow label="Expected return (p.a)" value={rate} set={setRate} min={4} max={15} step={0.5} suf="%"/>
         <SliderRow label="Your age" value={age} set={setAge} min={18} max={55} suf="Yr"/>
       </>}
+      donut={<Donut a={invested} b={interest} la="Invested" lb="Returns"/>}
       results={<>
         <RRow label="Total investment" value={INRF(invested)}/>
         <RRow label="Interest earned" value={INRF(interest)}/>
         <RRow label="Maturity amount" value={INRF(maturity)} bold/>
         <RRow label="Min. annuity investment (40%)" value={INRF(annuity)} accent/>
       </>}
+      insight={`You retire at 60 with ₹${(maturity/10000000).toFixed(2)} Cr. Monthly pension (annuity ~6%): ~${INRF(annuity*0.06/12)}/mo. Tax-free lump sum: ${INRF(maturity*0.6)}.`}
     />
     <div>
       <Section title="What is an NPS Calculator?">
@@ -1936,7 +1825,7 @@ function MobNav({ activeId, nav }) {
           ))}
           <div style={{ padding:'10px 12px 6px', borderTop:'1px solid var(--border)' }}>
             <button
-              onClick={() => { navigateSub && navigateSub('/calc', 'Risk Calculator | indexes.live'); setOpen(false); }}
+              onClick={() => { window.open('/risk-calculator', '_blank'); setOpen(false); }}
               style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
                 width:'100%', padding:'10px 12px', background:'rgba(0,200,150,0.08)',
                 border:`1px solid rgba(0,200,150,0.25)`, borderRadius:8, cursor:'pointer' }}>
@@ -1955,7 +1844,7 @@ function MobNav({ activeId, nav }) {
   );
 }
 
-export default function CalcHubPage({ initialTab, navigateSub }) {
+export default function CalcHubPage({ initialTab, navigateSub, navigateTo }) {
   const defaultId = CALC_REGISTRY.find(c => c.id === initialTab)?.id || 'sip';
   const [activeId, setActiveId] = useState(defaultId);
   const active = CALC_REGISTRY.find(c => c.id === activeId) || CALC_REGISTRY[0];
@@ -2006,7 +1895,7 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <div className="ch-sidebar" style={{ position:'sticky', top:60, paddingTop:24 }}>
         {/* Risk Tools - top, highlighted */}
-        <button onClick={() => navigateSub && navigateSub('/calc', 'Risk Calculator | indexes.live')}
+        <a href="/risk-calculator" target="_blank" rel="noopener noreferrer" 
           style={{ display:'block', width:'100%', textAlign:'left', marginBottom:10, padding:'12px 14px',
             background:'rgba(0,200,150,0.08)', border:`1px solid rgba(0,200,150,0.25)`,
             borderRadius:10, cursor:'pointer', transition:'background 0.15s' }}
@@ -2044,11 +1933,11 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
       {/* ── Content ─────────────────────────────────────────────────────────── */}
       <div className="ch-content" style={{ paddingTop:24 }}>
         {/* Trader banner - always visible at top */}
-        <button onClick={() => navigateSub && navigateSub('/calc', 'Risk Calculator | indexes.live')}
+        <a href="/risk-calculator" target="_blank" rel="noopener noreferrer"
           style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
-            width:'100%', marginBottom:20, padding:'12px 16px',
+            width:'100%', marginBottom:20, padding:'12px 16px', textDecoration:'none',
             background:'rgba(0,200,150,0.07)', border:`1px solid rgba(0,200,150,0.22)`,
-            borderRadius:8, cursor:'pointer', textAlign:'left', transition:'background 0.15s' }}
+            borderRadius:8, cursor:'pointer', transition:'background 0.15s' }}
           onMouseEnter={e => e.currentTarget.style.background='rgba(0,200,150,0.13)'}
           onMouseLeave={e => e.currentTarget.style.background='rgba(0,200,150,0.07)'}>
           <div>
@@ -2062,7 +1951,7 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
             </div>
           </div>
           <span style={{ fontSize:18, color:D_RETURNS, flexShrink:0, marginLeft:12 }}>→</span>
-        </button>
+        </a>
 
         <h1 style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginBottom:4, letterSpacing:'-0.02em' }}>
           {active.label}
