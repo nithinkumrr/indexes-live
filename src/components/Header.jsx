@@ -106,7 +106,9 @@ export default function Header({ lastUpdate, view, setView }) {
       );
       default: return <span style={{fontSize:size*0.7}}>···</span>;
     }
-  };t · F&O · MTF · Top Delivery · IPO · Calculators · Gold · Brokers · Insights
+  };
+
+  // Desktop order: Markets · Sentiment · F&O · MTF · Top Delivery · IPO · Calculators · Gold · Brokers · Insights
   const mainTabs = [
     { id: 'grid',        label: 'Markets',      icon: '◈' },
     { id: 'bubble',      label: 'Sentiment',    icon: '◉' },
