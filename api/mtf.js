@@ -409,18 +409,11 @@ export default async function handler(req, res) {
         if (apiKey && kToken) allLTP = await fetchLTPsKite(symbols, apiKey, kToken);
         const kHits = Object.values(allLTP).filter(v => v?.price != null).length;
         if (kHits === 0) allLTP = await fetchLTPsYahoo(symbols);
-        const allLTP = {};
-        for (let i = 0; i < symbols.length; i += 50) {
-          const batch = symbols.slice(i, i + 50);
-          const ltps = await fetchLTPs(batch);
-          Object.assign(allLTP, ltps);
-        }
         result.stocks = stocks.map(s => ({
           ...s,
           ltp:       allLTP[s.symbol]?.price     ?? null,
           ltpChange: allLTP[s.symbol]?.change    ?? null,
           ltpPct:    allLTP[s.symbol]?.changePct ?? null,
-          company:   allLTP[s.symbol]?.longName  ?? s.company,
         }));
         result.ltpUpdatedAt = new Date().toISOString();
         await kv.set(KEY_LATEST, result, { ex: 60 * 60 * 24 * 7 });
