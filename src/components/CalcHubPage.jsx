@@ -102,6 +102,9 @@ const CSS = `
 .ch-related a:hover { border-color: #00C896; color: #00C896; }
 .ch-val-input { background: none; border: none; outline: none; font-size: 14px; font-weight: 700; color: var(--text); font-family: var(--mono); text-align: right; width: 100%; }
 .ch-track-fill { transition: width 0.2s; }
+
+a { text-decoration: none; }
+.ch-risk-banner, .ch-risk-banner * { text-decoration: none !important; }
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type=number] { -moz-appearance: textfield; }
@@ -1894,23 +1897,6 @@ export default function CalcHubPage({ initialTab, navigateSub, navigateTo }) {
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <div className="ch-sidebar" style={{ position:'sticky', top:60, paddingTop:24 }}>
-        {/* Risk Tools - top, highlighted */}
-        <a href="/risk-calculator" target="_blank" rel="noopener noreferrer" 
-          style={{ display:'block', width:'100%', textAlign:'left', marginBottom:10, padding:'12px 14px',
-            background:'rgba(0,200,150,0.08)', border:`1px solid rgba(0,200,150,0.25)`,
-            borderRadius:10, cursor:'pointer', transition:'background 0.15s' }}
-          onMouseEnter={e => e.currentTarget.style.background='rgba(0,200,150,0.14)'}
-          onMouseLeave={e => e.currentTarget.style.background='rgba(0,200,150,0.08)'}>
-          <div style={{ fontSize:9, fontWeight:800, letterSpacing:'0.12em', color:D_RETURNS,
-            textTransform:'uppercase', marginBottom:4 }}>For Traders</div>
-          <div style={{ fontSize:13, fontWeight:700, color:'var(--text)', marginBottom:2 }}>
-            Risk Calculator
-          </div>
-          <div style={{ fontSize:11, color:'var(--text3)', fontFamily:'var(--mono)' }}>
-            Position size · Max loss · Recovery trap
-          </div>
-        </a>
-
         <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:12, overflow:'hidden', paddingBottom:8 }}>
           {CATS.map(cat => {
             const calcs = CALC_REGISTRY.filter(c => c.cat === cat);
@@ -1935,22 +1921,24 @@ export default function CalcHubPage({ initialTab, navigateSub, navigateTo }) {
         {/* Trader banner - always visible at top */}
         <a href="/risk-calculator" target="_blank" rel="noopener noreferrer"
           style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
-            width:'100%', marginBottom:20, padding:'12px 16px', textDecoration:'none',
-            background:'rgba(0,200,150,0.07)', border:`1px solid rgba(0,200,150,0.22)`,
-            borderRadius:8, cursor:'pointer', transition:'background 0.15s' }}
+            width:'100%', marginBottom:24, padding:'14px 20px',
+            textDecoration:'none', color:'inherit',
+            background:'rgba(0,200,150,0.07)', border:'1px solid rgba(0,200,150,0.22)',
+            borderRadius:8, cursor:'pointer', transition:'background 0.15s',
+            boxSizing:'border-box' }}
           onMouseEnter={e => e.currentTarget.style.background='rgba(0,200,150,0.13)'}
           onMouseLeave={e => e.currentTarget.style.background='rgba(0,200,150,0.07)'}>
           <div>
             <div style={{ fontSize:9, fontWeight:800, letterSpacing:'0.12em',
-              color:D_RETURNS, textTransform:'uppercase', marginBottom:3 }}>For Traders & Investors</div>
-            <div style={{ fontSize:14, fontWeight:700, color:'var(--text)' }}>
+              color:D_RETURNS, textTransform:'uppercase', marginBottom:3, textDecoration:'none' }}>For Traders &amp; Investors</div>
+            <div style={{ fontSize:14, fontWeight:700, color:'var(--text)', textDecoration:'none' }}>
               Risk Calculator
             </div>
-            <div style={{ fontSize:12, color:'var(--text3)', fontFamily:'var(--mono)', marginTop:2 }}>
+            <div style={{ fontSize:12, color:'var(--text3)', fontFamily:'var(--mono)', marginTop:2, textDecoration:'none' }}>
               Position sizing · Max daily loss · Recovery trap · 5 laws of risk
             </div>
           </div>
-          <span style={{ fontSize:18, color:D_RETURNS, flexShrink:0, marginLeft:12 }}>→</span>
+          <span style={{ fontSize:18, color:D_RETURNS, flexShrink:0, marginLeft:12, textDecoration:'none' }}>→</span>
         </a>
 
         <h1 style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginBottom:4, letterSpacing:'-0.02em' }}>
