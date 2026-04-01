@@ -1909,7 +1909,7 @@ export default function CalcHubPage({ initialTab, navigateSub, navigateTo }) {
           <div style={{ fontSize:11, color:'var(--text3)', fontFamily:'var(--mono)' }}>
             Position size · Max loss · Recovery trap
           </div>
-        </button>
+        </a>
 
         <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:12, overflow:'hidden', paddingBottom:8 }}>
           {CATS.map(cat => {
