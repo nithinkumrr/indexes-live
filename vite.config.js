@@ -7,8 +7,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'chart':        ['chart.js'],
+          'react-vendor':  ['react', 'react-dom'],
+          'chart':         ['chart.js'],
+          'brokers':       ['./src/components/BrokersPage.jsx'],
+          'calculators':   ['./src/components/CalcHubPage.jsx'],
+          'fno':           ['./src/components/FnOPage.jsx', './src/components/StrategyPage.jsx'],
+          'risk':          ['./src/components/RiskCalcPage.jsx'],
+          'insights':      ['./src/components/InsightsPage.jsx'],
         },
       },
     },
