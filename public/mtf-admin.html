@@ -143,16 +143,18 @@
 <body>
   <div class="card">
     <div class="logo">indexes<span>.</span>live</div>
-    <div class="subtitle">MTF DATA ADMIN — INTERNAL USE ONLY</div>
+    <div class="subtitle">MTF &amp; DELIVERY DATA ADMIN — INTERNAL USE ONLY</div>
 
     <label>Admin Secret</label>
     <input type="password" id="secret" placeholder="Enter MTF_SECRET value" autocomplete="off" />
+
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:12px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #2d3148;padding-bottom:10px;">MTF Upload</div>
 
     <label>NSE MTF CSV File</label>
     <div class="file-area" id="fileArea">
       <input type="file" id="csvFile" accept=".csv,.txt" />
       <div class="file-icon">📄</div>
-      <div class="file-label">Drop CSV here or click to browse</div>
+      <div class="file-label">Drop MTF CSV here or click to browse</div>
       <div class="file-name" id="fileName"></div>
     </div>
 
@@ -163,8 +165,28 @@
     </div>
 
     <button id="uploadBtn" disabled>Upload MTF Data</button>
-
     <div class="result" id="result"></div>
+
+    <hr class="divider" />
+
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:12px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #2d3148;padding-bottom:10px;">Top Delivery Upload</div>
+
+    <label>NSE MTO DAT File</label>
+    <div class="file-area" id="datFileArea">
+      <input type="file" id="datFile" accept=".dat,.DAT,.txt" />
+      <div class="file-icon">📦</div>
+      <div class="file-label">Drop MTO_DDMMYYYY.DAT here or click to browse</div>
+      <div class="file-name" id="datFileName"></div>
+    </div>
+
+    <div class="note">
+      File name format: <strong>MTO_DDMMYYYY.DAT</strong><br />
+      Download from NSE: Market Data → Equity → Security Wise Delivery Position<br />
+      EQ series only is parsed. LTP fetched automatically if uploaded after 3:40 PM IST.
+    </div>
+
+    <button id="datUploadBtn" disabled>Upload Delivery Data</button>
+    <div class="result" id="datResult"></div>
 
     <hr class="divider" />
 
@@ -178,9 +200,9 @@
 
     <hr class="divider" />
     <div class="curl-section">
-      <h3>Manual LTP refresh</h3>
-      <div class="curl-box">curl "https://indexes.live/api/mtf?action=ltp" \
-  -H "x-mtf-secret: YOUR_SECRET"</div>
+      <h3>Manual LTP refresh (MTF + Delivery)</h3>
+      <div class="curl-box">curl "https://indexes.live/api/mtf?action=ltp&secret=YOUR_SECRET"
+curl "https://indexes.live/api/delivery?action=ltp&secret=YOUR_SECRET"</div>
     </div>
   </div>
 
@@ -260,6 +282,77 @@
       uploadBtn.disabled = false;
       uploadBtn.textContent = 'Upload MTF Data';
       checkReady();
+    });
+
+    // ── DELIVERY UPLOAD ──────────────────────────────────────────────────
+    const datFileInput  = document.getElementById('datFile');
+    const datFileArea   = document.getElementById('datFileArea');
+    const datFileNameEl = document.getElementById('datFileName');
+    const datUploadBtn  = document.getElementById('datUploadBtn');
+    const datResultEl   = document.getElementById('datResult');
+
+    let datText = null;
+
+    datFileArea.addEventListener('dragover', e => { e.preventDefault(); datFileArea.classList.add('drag'); });
+    datFileArea.addEventListener('dragleave', () => datFileArea.classList.remove('drag'));
+    datFileArea.addEventListener('drop', e => {
+      e.preventDefault(); datFileArea.classList.remove('drag');
+      const f = e.dataTransfer.files[0];
+      if (f) readDatFile(f);
+    });
+    datFileInput.addEventListener('change', () => {
+      if (datFileInput.files[0]) readDatFile(datFileInput.files[0]);
+    });
+
+    function readDatFile(f) {
+      datFileNameEl.textContent = f.name;
+      const reader = new FileReader();
+      reader.onload = e => { datText = e.target.result; checkDatReady(); };
+      reader.readAsText(f);
+    }
+
+    function checkDatReady() {
+      datUploadBtn.disabled = !(datText && secretInput.value.trim());
+    }
+
+    secretInput.addEventListener('input', checkDatReady);
+
+    datUploadBtn.addEventListener('click', async () => {
+      if (!datText || !secretInput.value.trim()) return;
+      datUploadBtn.disabled = true;
+      datUploadBtn.innerHTML = '<span class="spinner"></span> Uploading...';
+      datResultEl.style.display = 'none';
+
+      try {
+        const r = await fetch('/api/delivery', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain',
+            'x-mtf-secret': secretInput.value.trim(),
+          },
+          body: datText,
+        });
+        const json = await r.json();
+        if (r.ok && json.ok) {
+          datResultEl.className = 'result ok';
+          datResultEl.textContent =
+            `Upload successful!\n` +
+            `Date: ${json.date}\n` +
+            `EQ stocks loaded: ${json.stockCount}\n` +
+            `LTP fetched: ${json.ltpFetched ? 'Yes (market closed)' : 'No (will fetch on button click)'}`;
+        } else {
+          datResultEl.className = 'result err';
+          datResultEl.textContent = `Error: ${json.error || 'Upload failed'}`;
+        }
+      } catch (err) {
+        datResultEl.className = 'result err';
+        datResultEl.textContent = `Network error: ${err.message}`;
+      }
+
+      datResultEl.style.display = 'block';
+      datUploadBtn.disabled = false;
+      datUploadBtn.textContent = 'Upload Delivery Data';
+      checkDatReady();
     });
   </script>
 </body>
