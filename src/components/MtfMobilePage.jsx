@@ -5,7 +5,7 @@ const fmtCr  = v => v != null ? `₹${Number(v).toLocaleString('en-IN', { minimu
 const fmtAmt = v => v != null ? Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '--';
 const fmtQty = v => v != null ? Number(v).toLocaleString('en-IN') : '--';
 const fmtPct = v => v != null ? `${Number(v).toFixed(2)}%` : '--';
-const pColor = v => v == null ? '#888' : v >= 0 ? '#00c896' : '#ff4455';
+const pColor = v => v == null ? 'var(--text3)' : v >= 0 ? 'var(--gain)' : 'var(--loss)';
 const PAGE_STEP = 30;
 
 function symbolColor(sym) {
@@ -52,19 +52,19 @@ function HeroCard({ summary }) {
   return (
     <div style={{
       margin: '12px 16px 0',
-      background: 'var(--card, #1a1a1a)',
-      border: '1px solid var(--border, #2a2a2a)',
+      background: 'var(--bg2)',
+      border: '1px solid var(--border)',
       borderRadius: 16,
       padding: '20px 20px 18px',
     }}>
       {/* Total book */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text3, #888)', textTransform: 'uppercase', marginBottom: 4 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text3)', textTransform: 'uppercase', marginBottom: 4 }}>
           Total MTF Book
         </div>
         <div style={{
           fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em',
-          color: 'var(--text, #f0f0f0)',
+          color: 'var(--text)',
           fontFamily: 'ui-monospace, monospace',
           lineHeight: 1,
         }}>
@@ -73,24 +73,24 @@ function HeroCard({ summary }) {
       </div>
 
       {/* Divider */}
-      <div style={{ height: 1, background: 'var(--border, #2a2a2a)', margin: '0 0 14px' }} />
+      <div style={{ height: 1, background: 'var(--border)', margin: '0 0 14px' }} />
 
       {/* Added vs Liquidated row */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 14 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.07em', color: '#00c896', textTransform: 'uppercase', marginBottom: 3 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.07em', color: 'var(--gain)', textTransform: 'uppercase', marginBottom: 3 }}>
             Added
           </div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#00c896', fontFamily: 'ui-monospace, monospace' }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--gain)', fontFamily: 'ui-monospace, monospace' }}>
             +{fmtCr(summary.positionsAdded)}
           </div>
         </div>
-        <div style={{ width: 1, background: 'var(--border, #2a2a2a)', margin: '0 16px' }} />
+        <div style={{ width: 1, background: 'var(--border)', margin: '0 16px' }} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.07em', color: '#ff4455', textTransform: 'uppercase', marginBottom: 3 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.07em', color: 'var(--loss)', textTransform: 'uppercase', marginBottom: 3 }}>
             Liquidated
           </div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#ff4455', fontFamily: 'ui-monospace, monospace' }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--loss)', fontFamily: 'ui-monospace, monospace' }}>
             -{fmtCr(summary.positionsLiquidated)}
           </div>
         </div>
@@ -99,20 +99,20 @@ function HeroCard({ summary }) {
       {/* Net */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        background: (isNet ? '#00c896' : '#ff4455') + '12',
-        border: `1px solid ${(isNet ? '#00c896' : '#ff4455')}30`,
+        background: isNet ? 'var(--gain-bg)' : 'var(--loss-bg)',
+        border: isNet ? '1px solid rgba(27,175,142,0.3)' : '1px solid rgba(232,98,26,0.3)',
         borderRadius: 10, padding: '8px 12px',
       }}>
-        <span style={{ fontSize: 14, fontWeight: 700, color: isNet ? '#00c896' : '#ff4455' }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: isNet ? 'var(--gain)' : 'var(--loss)' }}>
           {isNet ? '▲' : '▼'}
         </span>
         <div>
-          <span style={{ fontSize: 11, color: 'var(--text3, #888)', marginRight: 6 }}>
+          <span style={{ fontSize: 11, color: 'var(--text3)', marginRight: 6 }}>
             Net {isNet ? 'added' : 'liquidated'}
           </span>
           <span style={{
             fontSize: 15, fontWeight: 700,
-            color: isNet ? '#00c896' : '#ff4455',
+            color: isNet ? 'var(--gain)' : 'var(--loss)',
             fontFamily: 'ui-monospace, monospace',
           }}>
             {isNet ? '+' : '-'}{fmtCr(Math.abs(net))}
@@ -130,8 +130,8 @@ function TopStockCard({ stock, rank }) {
   return (
     <div style={{
       minWidth: '72vw', maxWidth: '72vw',
-      background: 'var(--card, #1a1a1a)',
-      border: '1px solid var(--border, #2a2a2a)',
+      background: 'var(--bg2)',
+      border: '1px solid var(--border)',
       borderRadius: 14, padding: '16px',
       flexShrink: 0, scrollSnapAlign: 'start',
       position: 'relative', overflow: 'hidden',
@@ -144,10 +144,10 @@ function TopStockCard({ stock, rank }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <Avatar symbol={stock.symbol} size={36} />
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text, #f0f0f0)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {stock.company}
           </div>
-          <div style={{ fontSize: 10, color: 'var(--text3, #888)', fontFamily: 'ui-monospace, monospace', marginTop: 1 }}>
+          <div style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'ui-monospace, monospace', marginTop: 1 }}>
             {stock.symbol}
           </div>
         </div>
@@ -161,16 +161,16 @@ function TopStockCard({ stock, rank }) {
       </div>
 
       <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 10, color: 'var(--text3, #888)', marginBottom: 2 }}>Funded value</div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text, #f0f0f0)', fontFamily: 'ui-monospace, monospace', lineHeight: 1 }}>
+        <div style={{ fontSize: 10, color: 'var(--text3)', marginBottom: 2 }}>Funded value</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', fontFamily: 'ui-monospace, monospace', lineHeight: 1 }}>
           ₹{fmtAmt(stock.fundedAmt)} Cr
         </div>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <div style={{ fontSize: 10, color: 'var(--text3, #888)', marginBottom: 2 }}>Price</div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text, #f0f0f0)', fontFamily: 'ui-monospace, monospace' }}>
+          <div style={{ fontSize: 10, color: 'var(--text3)', marginBottom: 2 }}>Price</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', fontFamily: 'ui-monospace, monospace' }}>
             {hasLTP ? `₹${fmtAmt(stock.ltp)}` : <LtpDots />}
           </div>
         </div>
@@ -184,8 +184,8 @@ function TopStockCard({ stock, rank }) {
           </div>
         )}
         <div style={{
-          fontSize: 9, fontWeight: 700, color: 'var(--text3, #888)',
-          background: 'var(--border, #2a2a2a)', borderRadius: 5, padding: '2px 6px',
+          fontSize: 9, fontWeight: 700, color: 'var(--text3)',
+          background: 'var(--border)', borderRadius: 5, padding: '2px 6px',
         }}>
           {fmtPct(stock.exposure)} of book
         </div>
@@ -202,8 +202,8 @@ function StockCard({ stock, rank, isNew }) {
 
   return (
     <div style={{
-      background: 'var(--card, #1a1a1a)',
-      border: '1px solid var(--border, #2a2a2a)',
+      background: 'var(--bg2)',
+      border: '1px solid var(--border)',
       borderRadius: 12, padding: '14px 16px',
       display: 'flex', alignItems: 'center', gap: 12,
       animation: isNew ? 'mtfm-fadein 0.2s ease' : 'none',
@@ -211,7 +211,7 @@ function StockCard({ stock, rank, isNew }) {
       {/* Rank */}
       <div style={{
         width: 26, textAlign: 'center', flexShrink: 0,
-        fontSize: 11, fontWeight: 700, color: 'var(--text3, #888)',
+        fontSize: 11, fontWeight: 700, color: 'var(--text3)',
         fontFamily: 'ui-monospace, monospace',
       }}>
         {rank}
@@ -223,7 +223,7 @@ function StockCard({ stock, rank, isNew }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
           <div style={{
-            fontSize: 14, fontWeight: 700, color: 'var(--text, #f0f0f0)',
+            fontSize: 14, fontWeight: 700, color: 'var(--text)',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {stock.company}
@@ -231,15 +231,15 @@ function StockCard({ stock, rank, isNew }) {
           {hasChange && (
             <span style={{
               fontSize: 9, fontWeight: 700, flexShrink: 0,
-              color: dayChange > 0 ? '#00c896' : '#ff4455',
-              background: (dayChange > 0 ? '#00c896' : '#ff4455') + '18',
+              color: dayChange > 0 ? 'var(--gain)' : 'var(--loss)',
+              background: dayChange > 0 ? 'var(--gain-bg)' : 'var(--loss-bg)',
               borderRadius: 5, padding: '1px 5px',
             }}>
               {dayChange > 0 ? 'Added' : 'Liquidated'}
             </span>
           )}
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text3, #888)', fontFamily: 'ui-monospace, monospace' }}>
+        <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'ui-monospace, monospace' }}>
           {stock.symbol} &middot; {fmtQty(stock.fundedQty)} shares
         </div>
       </div>
@@ -247,14 +247,14 @@ function StockCard({ stock, rank, isNew }) {
       {/* Right: funded + price */}
       <div style={{ flexShrink: 0, textAlign: 'right' }}>
         <div style={{
-          fontSize: 15, fontWeight: 700, color: 'var(--text, #f0f0f0)',
+          fontSize: 15, fontWeight: 700, color: 'var(--text)',
           fontFamily: 'ui-monospace, monospace', lineHeight: 1.2,
         }}>
           ₹{fmtAmt(stock.fundedAmt)} Cr
         </div>
         <div style={{
           fontSize: 11, marginTop: 3,
-          color: hasLTP ? pColor(stock.ltpPct) : 'var(--text3, #888)',
+          color: hasLTP ? pColor(stock.ltpPct) : 'var(--text3)',
           fontFamily: 'ui-monospace, monospace',
         }}>
           {hasLTP
@@ -297,7 +297,7 @@ function BottomNav({ setView, currentView }) {
         <div
           onClick={() => setMoreOpen(false)}
           style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
             zIndex: 99, backdropFilter: 'blur(2px)',
           }}
         />
@@ -307,8 +307,8 @@ function BottomNav({ setView, currentView }) {
       {moreOpen && (
         <div style={{
           position: 'fixed', bottom: 64, left: 16, right: 16,
-          background: 'var(--card, #1a1a1a)',
-          border: '1px solid var(--border, #2a2a2a)',
+          background: 'var(--bg2)',
+          border: '1px solid var(--border)',
           borderRadius: 16, zIndex: 100, padding: '8px 0',
           boxShadow: '0 -8px 32px rgba(0,0,0,0.4)',
         }}>
@@ -319,7 +319,7 @@ function BottomNav({ setView, currentView }) {
                 display: 'flex', alignItems: 'center', gap: 14,
                 width: '100%', padding: '14px 20px',
                 background: 'none', border: 'none', cursor: 'pointer',
-                color: 'var(--text, #f0f0f0)', fontSize: 15, fontWeight: 600,
+                color: 'var(--text)', fontSize: 15, fontWeight: 600,
                 textAlign: 'left',
               }}>
               <span style={{ fontSize: 20 }}>{item.icon}</span>
@@ -332,8 +332,8 @@ function BottomNav({ setView, currentView }) {
       {/* Nav bar */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: 'var(--card, #111)',
-        borderTop: '1px solid var(--border, #2a2a2a)',
+        background: 'var(--bg2)',
+        borderTop: '1px solid var(--border)',
         display: 'flex', height: 60, zIndex: 100,
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}>
@@ -347,7 +347,7 @@ function BottomNav({ setView, currentView }) {
                 flex: 1, display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center', gap: 3,
                 background: 'none', border: 'none', cursor: 'pointer',
-                color: active ? '#4A9EFF' : 'var(--text3, #666)',
+                color: active ? 'var(--accent)' : 'var(--text3)',
                 transition: 'color 0.15s',
               }}>
               <span style={{ fontSize: 18, lineHeight: 1, fontFamily: 'ui-monospace, monospace' }}>
@@ -423,9 +423,9 @@ export default function MtfMobilePage({ setView }) {
   // Shared wrapper
   const Wrapper = ({ children }) => (
     <div style={{
-      minHeight: '100dvh', background: 'var(--bg, #0d0d0d)',
+      minHeight: '100dvh', background: 'var(--bg)',
       fontFamily: 'var(--font, system-ui, sans-serif)',
-      color: 'var(--text, #f0f0f0)',
+      color: 'var(--text)',
     }}>
       {children}
     </div>
@@ -434,8 +434,8 @@ export default function MtfMobilePage({ setView }) {
   if (loading) return (
     <Wrapper>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100dvh', gap: 16 }}>
-        <div style={{ width: 28, height: 28, border: '2.5px solid var(--border,#333)', borderTopColor: '#4A9EFF', borderRadius: '50%', animation: 'mtfm-spin 0.8s linear infinite' }} />
-        <div style={{ fontSize: 13, color: 'var(--text3, #888)' }}>Loading MTF data...</div>
+        <div style={{ width: 28, height: 28, border: '2.5px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'mtfm-spin 0.8s linear infinite' }} />
+        <div style={{ fontSize: 13, color: 'var(--text3)' }}>Loading MTF data...</div>
       </div>
     </Wrapper>
   );
@@ -445,7 +445,7 @@ export default function MtfMobilePage({ setView }) {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100dvh', gap: 10, padding: '0 32px', textAlign: 'center' }}>
         <div style={{ fontSize: 40 }}>{error ? '⚠️' : '📊'}</div>
         <div style={{ fontWeight: 700, fontSize: 16 }}>{error ? 'Could not load data' : 'No data uploaded yet'}</div>
-        <div style={{ fontSize: 13, color: 'var(--text3, #888)', lineHeight: 1.6 }}>
+        <div style={{ fontSize: 13, color: 'var(--text3)', lineHeight: 1.6 }}>
           {error || 'Upload the NSE MTF CSV from the admin page to get started.'}
         </div>
       </div>
@@ -488,18 +488,18 @@ export default function MtfMobilePage({ setView }) {
       {/* ── Sticky header ──────────────────────────────────────────────────── */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: 'var(--bg, #0d0d0d)',
-        borderBottom: '1px solid var(--border, #1e1e1e)',
+        background: 'var(--bg)',
+        borderBottom: '1px solid var(--border)',
         padding: '12px 16px 11px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text, #f0f0f0)', lineHeight: 1 }}>
+          <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text)', lineHeight: 1 }}>
             MTF Flows
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text3, #888)', marginTop: 2 }}>
+          <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
             {fmtDate(date)}&nbsp;&bull;&nbsp;
-            <span style={{ color: '#00c896', fontWeight: 600 }}>LIVE</span>
+            <span style={{ color: 'var(--gain)', fontWeight: 600 }}>LIVE</span>
           </div>
         </div>
 
@@ -508,15 +508,15 @@ export default function MtfMobilePage({ setView }) {
           disabled={ltpLoading || remaining === 0}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            background: ltpLoading ? 'var(--border,#2a2a2a)' : '#4A9EFF20',
-            border: '1px solid #4A9EFF40',
+            background: ltpLoading ? 'var(--bg3)' : 'var(--accent-bg, rgba(74,158,255,0.12))',
+            border: '1px solid rgba(74,158,255,0.25)',
             borderRadius: 8, padding: '7px 12px',
-            color: remaining === 0 ? '#666' : '#4A9EFF',
+            color: remaining === 0 ? 'var(--text3)' : 'var(--accent)',
             fontSize: 12, fontWeight: 700, cursor: ltpLoading ? 'default' : 'pointer',
             opacity: remaining === 0 ? 0.5 : 1,
           }}>
           {ltpLoading
-            ? <span style={{ width: 12, height: 12, border: '2px solid #4A9EFF40', borderTopColor: '#4A9EFF', borderRadius: '50%', animation: 'mtfm-spin 0.7s linear infinite', display: 'inline-block' }} />
+            ? <span style={{ width: 12, height: 12, border: '2px solid rgba(74,158,255,0.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'mtfm-spin 0.7s linear infinite', display: 'inline-block' }} />
             : '↻'
           }
           Fetch LTP
@@ -528,10 +528,10 @@ export default function MtfMobilePage({ setView }) {
       {ltpMsg && (
         <div style={{
           margin: '8px 16px 0',
-          background: ltpMsg.ok ? '#00c89618' : '#ff445518',
-          border: `1px solid ${ltpMsg.ok ? '#00c89640' : '#ff445540'}`,
+          background: ltpMsg.ok ? 'var(--gain-bg)' : 'var(--loss-bg)',
+          border: ltpMsg.ok ? '1px solid rgba(27,175,142,0.3)' : '1px solid rgba(232,98,26,0.3)',
           borderRadius: 10, padding: '10px 14px',
-          fontSize: 12, color: ltpMsg.ok ? '#00c896' : '#ff4455',
+          fontSize: 12, color: ltpMsg.ok ? 'var(--gain)' : 'var(--loss)',
           fontWeight: 600,
         }}>
           {ltpMsg.text}
@@ -544,12 +544,12 @@ export default function MtfMobilePage({ setView }) {
       {/* ── Top 5 horizontal scroll ────────────────────────────────────────── */}
       <div style={{ marginTop: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', marginBottom: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text, #f0f0f0)' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
             Top funded stocks
           </div>
           <button
             onClick={() => { setTab('overall'); setSortBy('fundedAmt'); window.scrollTo({ top: document.getElementById('mtfm-list')?.offsetTop - 120, behavior: 'smooth' }); }}
-            style={{ fontSize: 12, color: '#4A9EFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+            style={{ fontSize: 12, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
             View all →
           </button>
         </div>
@@ -567,8 +567,8 @@ export default function MtfMobilePage({ setView }) {
       {/* ── Sticky filter tabs ─────────────────────────────────────────────── */}
       <div style={{
         position: 'sticky', top: 57, zIndex: 40,
-        background: 'var(--bg, #0d0d0d)',
-        borderBottom: '1px solid var(--border, #1e1e1e)',
+        background: 'var(--bg)',
+        borderBottom: '1px solid var(--border)',
         padding: '10px 16px',
         display: 'flex', gap: 8,
       }}>
@@ -583,14 +583,14 @@ export default function MtfMobilePage({ setView }) {
               padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
               fontSize: 12, fontWeight: 700, letterSpacing: '0.02em',
               background: tab === t.id
-                ? (t.id === 'added' ? '#00c89620' : t.id === 'liquidated' ? '#ff445520' : '#4A9EFF20')
-                : 'var(--card, #1a1a1a)',
+                ? (t.id === 'added' ? 'var(--gain-bg)' : t.id === 'liquidated' ? 'var(--loss-bg)' : 'var(--accent-bg, rgba(74,158,255,0.12))')
+                : 'var(--bg2)',
               color: tab === t.id
-                ? (t.id === 'added' ? '#00c896' : t.id === 'liquidated' ? '#ff4455' : '#4A9EFF')
-                : 'var(--text3, #888)',
+                ? (t.id === 'added' ? 'var(--gain)' : t.id === 'liquidated' ? 'var(--loss)' : 'var(--accent)')
+                : 'var(--text3)',
               border: tab === t.id
-                ? `1px solid ${t.id === 'added' ? '#00c89640' : t.id === 'liquidated' ? '#ff445540' : '#4A9EFF40'}`
-                : '1px solid var(--border, #2a2a2a)',
+                ? (t.id === 'added' ? '1px solid rgba(27,175,142,0.3)' : t.id === 'liquidated' ? '1px solid rgba(232,98,26,0.3)' : '1px solid rgba(74,158,255,0.25)')
+                : '1px solid var(--border)',
             }}>
             {t.label}
           </button>
@@ -601,17 +601,17 @@ export default function MtfMobilePage({ setView }) {
       <div id="mtfm-list" ref={listRef} style={{ padding: '12px 16px 0' }}>
         {/* Sort + count row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <div style={{ fontSize: 12, color: 'var(--text3, #888)' }}>
+          <div style={{ fontSize: 12, color: 'var(--text3)' }}>
             Showing {Math.min(visibleRows, sorted.length)} of {sorted.length}
           </div>
           <select
             value={sortBy}
             onChange={e => { setSortBy(e.target.value); setVisibleRows(PAGE_STEP); }}
             style={{
-              background: 'var(--card, #1a1a1a)',
-              border: '1px solid var(--border, #2a2a2a)',
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
               borderRadius: 8, padding: '5px 10px',
-              fontSize: 12, color: 'var(--text, #f0f0f0)', cursor: 'pointer',
+              fontSize: 12, color: 'var(--text)', cursor: 'pointer',
             }}>
             <option value="fundedAmt">Funded value</option>
             <option value="ltpPct">Change %</option>
@@ -637,9 +637,9 @@ export default function MtfMobilePage({ setView }) {
             style={{
               display: 'block', width: '100%', margin: '16px 0',
               padding: '14px', borderRadius: 12,
-              background: 'var(--card, #1a1a1a)',
-              border: '1px solid var(--border, #2a2a2a)',
-              color: '#4A9EFF', fontSize: 13, fontWeight: 700,
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
+              color: 'var(--accent)', fontSize: 13, fontWeight: 700,
               cursor: 'pointer', letterSpacing: '0.02em',
             }}>
             Load more stocks
@@ -647,20 +647,20 @@ export default function MtfMobilePage({ setView }) {
         )}
 
         {!canLoad && paged.length > 0 && (
-          <div style={{ textAlign: 'center', padding: '16px 0', fontSize: 12, color: 'var(--text3, #888)' }}>
+          <div style={{ textAlign: 'center', padding: '16px 0', fontSize: 12, color: 'var(--text3)' }}>
             All {sorted.length} stocks loaded
           </div>
         )}
 
         {sorted.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 0', fontSize: 13, color: 'var(--text3, #888)' }}>
+          <div style={{ textAlign: 'center', padding: '40px 0', fontSize: 13, color: 'var(--text3)' }}>
             No stocks in this category yet.
           </div>
         )}
 
         {/* Footer disclaimer */}
         <div style={{
-          textAlign: 'center', fontSize: 11, color: 'var(--text3, #666)',
+          textAlign: 'center', fontSize: 11, color: 'var(--text3)',
           lineHeight: 1.6, padding: '12px 8px 88px',
         }}>
           Data sourced from NSE. For informational purposes only.
