@@ -1814,14 +1814,19 @@ function MobNav({ activeId, nav }) {
               ))}
             </div>
           ))}
-          <div>
-            <div style={{ fontSize:9, fontWeight:800, letterSpacing:'0.12em', color:'var(--text3)',
-              textTransform:'uppercase', padding:'12px 16px 4px' }}>Risk Tools</div>
-            <button style={{ display:'block', width:'100%', textAlign:'left',
-              padding:'10px 16px', background:'none', border:'none',
-              borderLeft:'3px solid transparent', color:'var(--text2)',
-              fontSize:13, fontWeight:500, cursor:'pointer', fontFamily:'var(--mono)' }}>
-              Position Sizing & Risk →
+          <div style={{ padding:'10px 12px 6px', borderTop:'1px solid var(--border)' }}>
+            <button
+              onClick={() => { navigateSub && navigateSub('/calc', 'Risk Calculator | indexes.live'); setOpen(false); }}
+              style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
+                width:'100%', padding:'10px 12px', background:'rgba(0,200,150,0.08)',
+                border:`1px solid rgba(0,200,150,0.25)`, borderRadius:8, cursor:'pointer' }}>
+              <div>
+                <div style={{ fontSize:9, fontWeight:800, letterSpacing:'0.1em',
+                  color:D_RETURNS, textTransform:'uppercase', marginBottom:2 }}>For Traders</div>
+                <div style={{ fontSize:13, fontWeight:700, color:'var(--text)', fontFamily:'var(--mono)' }}>
+                  Risk Calculator →
+                </div>
+              </div>
             </button>
           </div>
         </div>
@@ -1880,6 +1885,23 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <div className="ch-sidebar" style={{ position:'sticky', top:60, paddingTop:24 }}>
+        {/* Risk Tools - top, highlighted */}
+        <button onClick={() => navigateSub && navigateSub('/calc', 'Risk Calculator | indexes.live')}
+          style={{ display:'block', width:'100%', textAlign:'left', marginBottom:10, padding:'12px 14px',
+            background:'rgba(0,200,150,0.08)', border:`1px solid rgba(0,200,150,0.25)`,
+            borderRadius:10, cursor:'pointer', transition:'background 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(0,200,150,0.14)'}
+          onMouseLeave={e => e.currentTarget.style.background='rgba(0,200,150,0.08)'}>
+          <div style={{ fontSize:9, fontWeight:800, letterSpacing:'0.12em', color:D_RETURNS,
+            textTransform:'uppercase', marginBottom:4 }}>For Traders</div>
+          <div style={{ fontSize:13, fontWeight:700, color:'var(--text)', marginBottom:2 }}>
+            Risk Calculator
+          </div>
+          <div style={{ fontSize:11, color:'var(--text3)', fontFamily:'var(--mono)' }}>
+            Position size · Max loss · Recovery trap
+          </div>
+        </button>
+
         <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:12, overflow:'hidden', paddingBottom:8 }}>
           {CATS.map(cat => {
             const calcs = CALC_REGISTRY.filter(c => c.cat === cat);
@@ -1893,18 +1915,6 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
               </div>
             );
           })}
-          <div>
-            <div style={{ fontSize:10, fontWeight:800, letterSpacing:'0.1em', color:'var(--text3)',
-              textTransform:'uppercase', padding:'14px 14px 6px' }}>Risk Tools</div>
-            <button
-              onClick={() => navigateSub && navigateSub('/calc', 'Risk Calculator | indexes.live')}
-              style={{ display:'block', width:'100%', textAlign:'left', padding:'8px 14px',
-                background:'none', border:'none', borderLeft:'3px solid transparent',
-                color:'var(--text2)', fontSize:13, fontWeight:500, cursor:'pointer',
-                borderRadius:'0 6px 6px 0' }}>
-              Position Sizing & Risk →
-            </button>
-          </div>
         </div>
       </div>
 
@@ -1913,6 +1923,27 @@ export default function CalcHubPage({ initialTab, navigateSub }) {
 
       {/* ── Content ─────────────────────────────────────────────────────────── */}
       <div className="ch-content" style={{ paddingTop:24 }}>
+        {/* Trader banner - always visible at top */}
+        <button onClick={() => navigateSub && navigateSub('/calc', 'Risk Calculator | indexes.live')}
+          style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
+            width:'100%', marginBottom:20, padding:'12px 16px',
+            background:'rgba(0,200,150,0.07)', border:`1px solid rgba(0,200,150,0.22)`,
+            borderRadius:8, cursor:'pointer', textAlign:'left', transition:'background 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(0,200,150,0.13)'}
+          onMouseLeave={e => e.currentTarget.style.background='rgba(0,200,150,0.07)'}>
+          <div>
+            <div style={{ fontSize:9, fontWeight:800, letterSpacing:'0.12em',
+              color:D_RETURNS, textTransform:'uppercase', marginBottom:3 }}>For Traders & Investors</div>
+            <div style={{ fontSize:14, fontWeight:700, color:'var(--text)' }}>
+              Risk Calculator
+            </div>
+            <div style={{ fontSize:12, color:'var(--text3)', fontFamily:'var(--mono)', marginTop:2 }}>
+              Position sizing · Max daily loss · Recovery trap · 5 laws of risk
+            </div>
+          </div>
+          <span style={{ fontSize:18, color:D_RETURNS, flexShrink:0, marginLeft:12 }}>→</span>
+        </button>
+
         <h1 style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginBottom:4, letterSpacing:'-0.02em' }}>
           {active.label}
         </h1>
