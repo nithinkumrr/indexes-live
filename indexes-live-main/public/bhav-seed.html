@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>NSE Bhav Copy Seeder</title>
+  <style>
+    body { background:#111; color:#eee; font-family:monospace; padding:24px; max-width:800px; }
+    h2 { color:#4A9EFF; }
+    p  { color:#9CA3AF; font-size:13px; line-height:1.6; }
+    button { background:#4A9EFF; color:#000; border:none; padding:10px 20px; font-family:monospace; font-size:13px; cursor:pointer; border-radius:4px; margin:4px; }
+    button:disabled { background:#333; color:#666; cursor:not-allowed; }
+    button.red { background:#FF4455; }
+    input, select { background:#1a1a1a; border:1px solid #333; color:#eee; padding:6px 10px; font-family:monospace; border-radius:4px; margin:4px; }
+    #log { margin-top:16px; background:#0a0a0a; border:1px solid #222; padding:16px; border-radius:4px; height:500px; overflow-y:auto; font-size:11px; line-height:1.7; }
+    .ok   { color:#00C896; } .err  { color:#FF4455; } .info { color:#F59E0B; } .dim  { color:#555; }
+    .prog { display:flex; align-items:center; gap:12px; margin:8px 0; }
+    .prog-bar { flex:1; height:8px; background:#222; border-radius:4px; overflow:hidden; }
+    .prog-fill { height:100%; background:#4A9EFF; border-radius:4px; transition:width .3s; }
+    table { border-collapse:collapse; margin:8px 0; font-size:11px; }
+    td,th { padding:4px 12px; border:1px solid #222; }
+    th { color:#9CA3AF; background:#1a1a1a; }
+  </style>
+</head>
+<body>
+  <h2>🇮🇳 NSE Bhav Copy Seeder</h2>
+  <p>Downloads real NSE F&O settlement prices and stores in KV for accurate backtesting.
+  Each day takes ~2-3 seconds. Run in background — you can close and reopen, it skips already-stored dates.</p>
+
+  <div style="margin-bottom:12px">
+    <div style="font-size:10px;color:#666;margin-bottom:6px">QUICK PRESETS</div>
+    <button onclick="setRange('2025-01','2026-03')" style="background:#1a1a1a;color:#4A9EFF;border:1px solid #4A9EFF">2025-2026 (latest)</button>
+    <button onclick="setRange('2023-01','2024-12')" style="background:#1a1a1a;color:#4A9EFF;border:1px solid #333">2023-2024</button>
+    <button onclick="setRange('2021-01','2022-12')" style="background:#1a1a1a;color:#4A9EFF;border:1px solid #333">2021-2022</button>
+    <button onclick="setRange('2020-01','2020-12')" style="background:#1a1a1a;color:#FF4455;border:1px solid #FF4455">2020 (COVID)</button>
+    <button onclick="setRange('2018-01','2019-12')" style="background:#1a1a1a;color:#9CA3AF;border:1px solid #333">2018-2019</button>
+  </div>
+
+  <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px">
+    <div>
+      <div style="font-size:10px;color:#666;margin-bottom:3px">FROM</div>
+      <input type="month" id="fromMonth" value="2025-01" />
+    </div>
+    <div>
+      <div style="font-size:10px;color:#666;margin-bottom:3px">TO</div>
+      <input type="month" id="toMonth" value="2026-03" />
+    </div>
+    <button id="btnStart" onclick="startSeed()">▶ Start Download</button>
+    <button onclick="checkCoverage()">🔍 Check Coverage</button>
+    <button onclick="clearLog()">Clear</button>
+  </div>
+
+  <div class="prog" id="progWrap" style="display:none">
+    <span id="progText" style="font-size:11px;color:#9CA3AF;min-width:120px">0 / 0</span>
+    <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    <span id="progPct" style="font-size:11px;color:#4A9EFF">0%</span>
+  </div>
+
+  <div id="log"><div class="dim">Ready. Select date range and click Start Download.</div></div>
+
+  <script>
+    const BASE = window.location.origin;
+    let running = false;
+
+    function log(msg, cls='') {
+      const el = document.getElementById('log');
+      const d = document.createElement('div');
+      d.className = cls; d.innerHTML = msg;
+      el.appendChild(d); el.scrollTop = el.scrollHeight;
+    }
+    function clearLog() { document.getElementById('log').innerHTML = ''; }
+    function setRange(from, to) {
+      document.getElementById('fromMonth').value = from;
+      document.getElementById('toMonth').value = to.slice(0,7);
+    }
+
+    function getTradingDays(from, to) {
+      const days = [], cur = new Date(from), end = new Date(to);
+      while (cur <= end) {
+        const iso = cur.toISOString().slice(0,10);
+        if (cur.getDay() !== 0 && cur.getDay() !== 6) days.push(iso);
+        cur.setDate(cur.getDate()+1);
+      }
+      return days;
+    }
+
+    async function checkCoverage() {
+      clearLog();
+      log('🔍 Checking coverage...', 'info');
+      const from = document.getElementById('fromMonth').value;
+      const to   = document.getElementById('toMonth').value;
+      try {
+        const r = await fetch(`${BASE}/api/bhav-download?action=coverage&from=${from.slice(0,4)}&to=${to.slice(0,4)}`);
+        const d = await r.json();
+        log(`Coverage: ${d.pct}% of sampled dates stored`, d.pct > 80 ? 'ok' : d.pct > 40 ? 'info' : 'err');
+        log('<table><tr><th>Date</th><th>Status</th></tr>' +
+          Object.entries(d.coverage).map(([date,status]) =>
+            `<tr><td>${date}</td><td class="${status==='stored'?'ok':'err'}">${status}</td></tr>`
+          ).join('') + '</table>');
+      } catch(e) { log(`Error: ${e.message}`, 'err'); }
+    }
+
+    async function startSeed() {
+      if (running) return;
+      running = true;
+      document.getElementById('btnStart').disabled = true;
+      clearLog();
+
+      const from = document.getElementById('fromMonth').value + '-01';
+      const toRaw = document.getElementById('toMonth').value;
+      const toDate = new Date(toRaw + '-01');
+      toDate.setMonth(toDate.getMonth()+1); toDate.setDate(0);
+      const to = toDate.toISOString().slice(0,10);
+
+      const days = getTradingDays(from, to);
+      log(`📅 ${days.length} trading days from ${from} to ${to}`, 'info');
+      log(`⏱ Estimated time: ${Math.ceil(days.length*2/60)} minutes`, 'dim');
+      log('');
+
+      document.getElementById('progWrap').style.display = 'flex';
+
+      let stored=0, skipped=0, failed=0, done=0;
+      const BATCH = 5; // 5 dates per API call
+
+      for (let i=0; i<days.length; i+=BATCH) {
+        if (!running) break;
+        const batch = days.slice(i, i+BATCH);
+
+        try {
+          const r = await fetch(`${BASE}/api/bhav-download`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ dates: batch }),
+          });
+          const d = await r.json();
+
+          d.stored?.forEach(s => {
+            stored++;
+            log(`✅ ${s.date} · ${s.indices.join(', ')}`, 'ok');
+          });
+          d.skipped?.forEach(s => {
+            if (s.reason !== 'weekend') {
+              skipped++;
+              log(`⏭ ${s.date} · ${s.reason}`, 'dim');
+            }
+          });
+          d.failed?.forEach(f => {
+            failed++;
+            log(`❌ ${f.date} · ${f.reason}`, 'err');
+          });
+
+        } catch(e) {
+          log(`❌ Batch error: ${e.message}`, 'err');
+          failed += batch.length;
+        }
+
+        done = Math.min(i + BATCH, days.length);
+        const pct = Math.round(done/days.length*100);
+        document.getElementById('progText').textContent = `${done} / ${days.length}`;
+        document.getElementById('progFill').style.width = pct + '%';
+        document.getElementById('progPct').textContent = pct + '%';
+
+        await new Promise(r => setTimeout(r, 300)); // small delay between batches
+      }
+
+      log('');
+      log(`🎉 Done! Stored: ${stored} · Skipped: ${skipped} · Failed: ${failed}`, stored > 0 ? 'ok' : 'info');
+      if (stored > 0) log('Backtest will now use real NSE data for these dates.', 'ok');
+      if (failed > 0) log(`${failed} days failed (holidays, NSE server issues). Try running again — it will skip already-stored dates.`, 'err');
+
+      running = false;
+      document.getElementById('btnStart').disabled = false;
+    }
+  </script>
+</body>
+</html>

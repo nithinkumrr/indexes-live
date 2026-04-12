@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FiiDii Backfill Tool</title>
+  <style>
+    body { background: #111; color: #eee; font-family: monospace; padding: 24px; max-width: 700px; }
+    h2 { color: #4A9EFF; }
+    button { background: #4A9EFF; color: #000; border: none; padding: 10px 24px; font-size: 14px; font-family: monospace; cursor: pointer; border-radius: 4px; margin-right: 10px; margin-bottom: 10px; }
+    button:disabled { background: #333; color: #666; cursor: not-allowed; }
+    #log { margin-top: 20px; background: #1a1a1a; border: 1px solid #333; padding: 16px; border-radius: 4px; height: 400px; overflow-y: auto; font-size: 12px; line-height: 1.8; }
+    .ok   { color: #00C896; }
+    .err  { color: #FF4455; }
+    .info { color: #F59E0B; }
+    .dim  { color: #666; }
+    table { border-collapse: collapse; margin: 12px 0; font-size: 11px; }
+    td, th { padding: 5px 14px; border: 1px solid #333; text-align: right; }
+    th { color: #9CA3AF; background: #1a1a1a; }
+    .neg { color: #FF4455; } .pos { color: #00C896; }
+  </style>
+</head>
+<body>
+  <h2>🇮🇳 FiiDii Historical Seed Tool</h2>
+  <p style="color:#9CA3AF;font-size:12px">Seeds KV with real historical FII/DII data from Moneycontrol (March 2026). Click once — done.</p>
+
+  <table>
+    <tr><th>Date</th><th>FII CM (Cr)</th><th>DII CM (Cr)</th></tr>
+    <tr><td>17 Mar</td><td class="neg">-4,741.22</td><td class="pos">+5,225.32</td></tr>
+    <tr><td>18 Mar</td><td class="neg">-2,714.35</td><td class="pos">+3,253.03</td></tr>
+    <tr><td>19 Mar</td><td class="neg">-7,558.19</td><td class="pos">+3,863.96</td></tr>
+    <tr><td>20 Mar</td><td class="neg">-5,518.39</td><td class="pos">+5,706.23</td></tr>
+    <tr><td>23 Mar</td><td class="neg">-10,414.23</td><td class="pos">+12,033.97</td></tr>
+    <tr><td>24 Mar</td><td class="neg">-8,009.56</td><td class="pos">+5,867.15</td></tr>
+    <tr><td>25 Mar</td><td class="neg">-1,805.37</td><td class="pos">+5,429.78</td></tr>
+  </table>
+
+  <button id="btnSeed" onclick="seedData()">▶ Seed Historical Data to KV</button>
+  <button onclick="checkKV()">🔍 Check What's Stored</button>
+
+  <div id="log"><div class="dim">Click the button to seed historical data...</div></div>
+
+  <script>
+    const BASE = window.location.origin;
+
+    // Real data from Moneycontrol — FII CM* and DII CM* (Cash Market only)
+    const HISTORICAL = [
+      { date: '2026-03-17', fiiNet: -4741.22, fiiBuy: 0, fiiSell: 0, diiNet:  5225.32, diiBuy: 0, diiSell: 0 },
+      { date: '2026-03-18', fiiNet: -2714.35, fiiBuy: 0, fiiSell: 0, diiNet:  3253.03, diiBuy: 0, diiSell: 0 },
+      { date: '2026-03-19', fiiNet: -7558.19, fiiBuy: 0, fiiSell: 0, diiNet:  3863.96, diiBuy: 0, diiSell: 0 },
+      { date: '2026-03-20', fiiNet: -5518.39, fiiBuy: 0, fiiSell: 0, diiNet:  5706.23, diiBuy: 0, diiSell: 0 },
+      { date: '2026-03-23', fiiNet:-10414.23, fiiBuy: 0, fiiSell: 0, diiNet: 12033.97, diiBuy: 0, diiSell: 0 },
+      { date: '2026-03-24', fiiNet: -8009.56, fiiBuy: 0, fiiSell: 0, diiNet:  5867.15, diiBuy: 0, diiSell: 0 },
+      { date: '2026-03-25', fiiNet: -1805.37, fiiBuy: 0, fiiSell: 0, diiNet:  5429.78, diiBuy: 0, diiSell: 0 },
+    ];
+
+    function log(msg, cls='') {
+      const el = document.getElementById('log');
+      el.innerHTML += `<div class="${cls}">${msg}</div>`;
+      el.scrollTop = el.scrollHeight;
+    }
+    function clearLog() { document.getElementById('log').innerHTML = ''; }
+
+    async function seedData() {
+      clearLog();
+      document.getElementById('btnSeed').disabled = true;
+      log('🚀 Seeding historical data to KV...', 'info');
+      log(`📡 POST → ${BASE}/api/fiidii-store`, 'dim');
+      log('');
+
+      try {
+        const r = await fetch(`${BASE}/api/fiidii-store`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ records: HISTORICAL }),
+        });
+        const result = await r.json();
+
+        if (result.success) {
+          log(`✅ Stored ${result.stored.length} days:`, 'ok');
+          result.stored.forEach(d => {
+            const rec = HISTORICAL.find(h => h.date === d);
+            log(`   ${d}  FII: ${rec.fiiNet.toFixed(0)} Cr  |  DII: +${rec.diiNet.toFixed(0)} Cr`, 'dim');
+          });
+          log('');
+          log('🎉 Done! Refresh indexes.live — chart will now show real daily data.', 'ok');
+        } else {
+          log(`❌ Failed: ${result.error}`, 'err');
+        }
+      } catch(e) {
+        log(`❌ Request failed: ${e.message}`, 'err');
+      }
+
+      document.getElementById('btnSeed').disabled = false;
+    }
+
+    async function checkKV() {
+      clearLog();
+      log('🔍 Checking KV...', 'info');
+      try {
+        const r = await fetch(`${BASE}/api/fiidii-store`);
+        const result = await r.json();
+        if (result.stored === 0) {
+          log('KV is empty — run the seed first.', 'err');
+        } else {
+          log(`✅ ${result.stored} days in KV:`, 'ok');
+          Object.entries(result.data).sort().forEach(([k, v]) => {
+            const date = k.replace('fiidii:', '');
+            log(`   ${date}  FII: ${v.fiiNet >= 0 ? '+' : ''}${Math.round(v.fiiNet)} Cr  |  DII: ${v.diiNet >= 0 ? '+' : ''}${Math.round(v.diiNet)} Cr`, 'dim');
+          });
+        }
+      } catch(e) {
+        log(`❌ ${e.message}`, 'err');
+      }
+    }
+  </script>
+</body>
+</html>
