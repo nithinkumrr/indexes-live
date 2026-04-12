@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://www.indexes.live/sitemap.xml
+Sitemap: https://indexes.live/sitemap.xml
