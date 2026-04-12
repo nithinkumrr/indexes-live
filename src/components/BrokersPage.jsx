@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 // ── COMPLETE BROKER DATA ──────────────────────────────────────────────────────
 const BROKERS = [
   {
-    id: 'zerodha', name: 'Zerodha', type: 'discount', rank: 2, featured: true,
+    id: 'zerodha', name: 'Zerodha', type: 'discount', rank: 1, featured: true,
     tagline: "The broker that changed Indian markets. Zero delivery brokerage, traders' fav platform, highest networth.",
     delivery: 0, deliveryLabel: 'Zero',
     intraday: '0.03% or ₹20', intradayB: 20,
@@ -31,7 +31,7 @@ const BROKERS = [
     best: ['equity','options','algo','longterm'], url: 'https://zerodha.com',
   },
   {
-    id: 'dhan', name: 'Dhan', type: 'discount', rank: 1, featured: false,
+    id: 'dhan', name: 'Dhan', type: 'discount', rank: 2, featured: false,
     tagline: 'Zero delivery brokerage, zero AMC. Lower by ₹0.59 compared to Zerodha.',
     delivery: 0, deliveryLabel: 'Zero',
     intraday: '0.03% or ₹20', intradayB: 20,
@@ -56,7 +56,7 @@ const BROKERS = [
     delayedPayment: '0.0438% per day',
     cuspaCharge: '₹15/instruction/ISIN + GST',
     strengths: ['Zero AMC','Lowest DP charge (₹14.75 = ₹12.50 + 18% GST)','Dext trading terminal','Online SLB'],
-    watch: ['UI not as refined as top brokers','MTF rates vary by slab','MTF interest charged both days on BTST','Newer broker  -  less track record vs Zerodha'],
+    watch: ['MTF rates vary by slab','MTF interest charged both days on BTST'],
     best: ['equity','longterm','beginner'], url: 'https://dhan.co',
   },
   {
@@ -2294,6 +2294,12 @@ export default function BrokersPage({ initialTab = null, navigateSub = null }) {
     let list = [...BROKERS];
     if (filter !== 'all') list = list.filter(b => b.type === filter);
     list.sort((a,b) => (a[sort]??9999)-(b[sort]??9999));
+    // Pin Zerodha at #2 always
+    const zIdx = list.findIndex(b => b.id === 'zerodha');
+    if (zIdx > -1 && zIdx !== 1) {
+      const [z] = list.splice(zIdx, 1);
+      list.splice(1, 0, z);
+    }
     return list;
   }, [sort, filter]);
 
